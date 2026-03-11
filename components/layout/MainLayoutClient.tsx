@@ -1,0 +1,64 @@
+"use client";
+
+import { useMemo } from "react";
+
+import Navbar from "@/components/common/navbar/Navbar";
+import Sidebar from "@/components/common/sidebar/Sidebar";
+import type { SidebarNavItem } from "@/data/sidebar";
+
+
+// import { useGetCounts } from "@/hooks/api/counts/useGetCounts";
+
+interface MainLayoutClientProps {
+  children: React.ReactNode;
+  initialSidebarData: SidebarNavItem[];
+}
+
+export function MainLayoutClient({ children, initialSidebarData }: MainLayoutClientProps) {
+  // const { data: counts } = useGetCounts();
+  const counts = undefined;
+
+  // Update sidebar data with real counts from the hook
+  const updatedSidebarData = useMemo(() => {
+    if (!counts) return initialSidebarData;
+
+    return initialSidebarData.map((item) => {
+      if (item.children) {
+        return {
+          ...item,
+          children: item.children.map((child) => {
+            if (child.value === "inventory.products") {
+              // return { ...child, count: counts.totalProducts };
+              return child;
+            }
+
+            if (child.value === "inventory.category") {
+              // return { ...child, count: counts.totalCategories };
+              return child;
+            }
+
+            return child;
+          }),
+        };
+      }
+      
+      return item;
+    });
+  }, [initialSidebarData, counts]);
+
+  return (
+    <div className="fixed inset-0 flex w-full overflow-hidden bg-background">
+      <Sidebar filteredSidebarData={updatedSidebarData} />
+      
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <Navbar filteredSidebarData={updatedSidebarData} />
+        
+        <main className="flex-1 overflow-hidden">
+          <div className="h-full overflow-auto">
+            {children}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}

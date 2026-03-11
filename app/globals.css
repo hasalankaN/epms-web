@@ -1,0 +1,481 @@
+/* Force rebuild */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+
+    --foreground: 0 0% 3.9%;
+
+    --card: 0 0% 100%;
+
+    --card-foreground: 0 0% 3.9%;
+
+    --popover: 0 0% 100%;
+
+    --popover-foreground: 0 0% 3.9%;
+
+    --primary: 0 0% 9%;
+
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 0 0% 96.1%;
+
+    --secondary-foreground: 0 0% 9%;
+
+    --muted: 0 0% 96.1%;
+
+    --muted-foreground: 0 0% 45.1%;
+
+    --accent: 0 0% 96.1%;
+
+    --accent-foreground: 0 0% 9%;
+
+    --destructive: 0 84.2% 60.2%;
+
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 89.8%;
+
+    --input: 0 0% 89.8%;
+
+    --ring: 0 0% 3.9%;
+
+    --chart-1: 12 76% 61%;
+
+    --chart-2: 173 58% 39%;
+
+    --chart-3: 197 37% 24%;
+
+    --chart-4: 43 74% 66%;
+
+    --chart-5: 27 87% 67%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+  .dark {
+    --background: 0 0% 3.9%;
+
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 3.9%;
+
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 3.9%;
+
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 0% 98%;
+
+    --primary-foreground: 0 0% 9%;
+
+    --secondary: 0 0% 14.9%;
+
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 14.9%;
+
+    --muted-foreground: 0 0% 63.9%;
+
+    --accent: 0 0% 14.9%;
+
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 14.9%;
+
+    --input: 0 0% 14.9%;
+
+    --ring: 0 0% 83.1%;
+
+    --chart-1: 220 70% 50%;
+
+    --chart-2: 160 60% 45%;
+
+    --chart-3: 30 80% 55%;
+
+    --chart-4: 280 65% 60%;
+
+    --chart-5: 340 75% 55%;
+
+    --sidebar-background: 240 5.9% 10%;
+
+    --sidebar-foreground: 240 4.8% 95.9%;
+
+    --sidebar-primary: 224.3 76.3% 48%;
+
+    --sidebar-primary-foreground: 0 0% 100%;
+
+    --sidebar-accent: 240 3.7% 15.9%;
+
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+
+    --sidebar-border: 240 3.7% 15.9%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body {
+    @apply h-full m-0 p-0 bg-background text-foreground;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+/* Hide native password reveal button in Edge/IE */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+textarea:-webkit-autofill:active {
+  /* Use theme variables so autofill text matches current foreground and input background.
+     Remove background-clip/text-fill hardcoded white which can hide text on light themes. */
+  -webkit-text-fill-color: hsl(var(--foreground)) !important;
+  color: hsl(var(--foreground));
+  /* Prevent the browser from applying the yellow background by drawing an inset box-shadow
+     using the input background color variable. */
+  -webkit-box-shadow: 0 0 0px 1000px hsl(var(--input)) inset !important;
+  box-shadow: 0 0 0px 1000px hsl(var(--input)) inset !important;
+  /* Ensure the caret is visible and matches text */
+  caret-color: hsl(var(--foreground)) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+@layer utilities {
+  .scrollbar-stylish::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-stylish::-webkit-scrollbar-track {
+    background: white;
+    border-top: 64px solid white;
+    border-top: 64px solid white;
+  }
+
+  .scrollbar-stylish::-webkit-scrollbar-thumb {
+    background: #3d3d3d;
+    border-radius: 100vh;
+    height: 100px;
+  }
+}
+
+@layer base {
+  button {
+    outline: none;
+  }
+}
+
+@layer utilities {
+  .scrollbar-stylish-1::-webkit-scrollbar {
+    width: 11px;
+  }
+
+  .scrollbar-stylish-2::-webkit-scrollbar {
+    width: 17px;
+  }
+
+  .scrollbar-stylish-1::-webkit-scrollbar-thumb {
+    background: #d9d9d9;
+    border-radius: 100vh;
+    height: 100px;
+  }
+
+  .scrollbar-stylish-2::-webkit-scrollbar-thumb {
+    background: #d9d9d9;
+    border-radius: 100vh;
+    height: 100px;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Tiptap list styling */
+.tiptap ul, .tiptap ol {
+  padding-left: 1.75rem;
+}
+
+.tiptap ul {
+  list-style-type: disc;
+}
+
+.tiptap ol {
+  list-style-type: decimal;
+}
+
+
+/* Custom Scrollbar Styling */
+
+/* Works on Chrome, Edge, and Safari */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background-clip: content-box;
+}
+
+/* Show scrollbar when hovering over the scrollable element */
+*:hover::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--border));
+}
+
+*:hover::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground));
+}
+
+/* For Firefox */
+@supports (scrollbar-color: auto) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+  *:hover {
+    scrollbar-color: hsl(var(--muted-foreground)) transparent;
+  }
+}
+
+/* Custom styles for the OTP Input */
+.otp-group {
+  gap: 8px;
+}
+
+.otp-slot {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 9px !important;
+  border: 0.8px solid #6B7280 !important;
+  font-size: 1.25rem;
+}
+
+/* Validation styling: only affect text-like inputs and textareas when their wrapper/form control has aria-invalid="true" */
+@layer components {
+  [aria-invalid="true"] input[type="text"],
+  [aria-invalid="true"] input[type="email"],
+  [aria-invalid="true"] input[type="search"],
+  [aria-invalid="true"] input[type="tel"],
+  [aria-invalid="true"] input[type="url"],
+  [aria-invalid="true"] input[type="password"],
+  [aria-invalid="true"] textarea,
+  [aria-invalid="true"] .input {
+    border-color: hsl(var(--destructive));
+  }
+
+  [aria-invalid="true"] input[type="text"]:focus,
+  [aria-invalid="true"] input[type="email"]:focus,
+  [aria-invalid="true"] input[type="search"]:focus,
+  [aria-invalid="true"] input[type="tel"]:focus,
+  [aria-invalid="true"] input[type="url"]:focus,
+  [aria-invalid="true"] input[type="password"]:focus,
+  [aria-invalid="true"] textarea:focus,
+  [aria-invalid="true"] .input:focus {
+    box-shadow: 0 0 0 6px hsl(var(--destructive) / 0.28);
+    outline: none;
+  }
+
+  /* Also target inputs/textareas that themselves have aria-invalid="true" (Slot applies attrs to child) */
+  input[aria-invalid="true"],
+  textarea[aria-invalid="true"] {
+    border-color: hsl(var(--destructive));
+  }
+
+  input[aria-invalid="true"]:focus,
+  textarea[aria-invalid="true"]:focus {
+    box-shadow: 0 0 0 6px hsl(var(--destructive) / 0.28);
+    outline: none;
+  }
+
+  /* TipTap editor: show red border when invalid */
+  [aria-invalid="true"] .tiptap,
+  .tiptap[aria-invalid="true"] {
+    border: 1px solid hsl(var(--destructive));
+    border-radius: 0.375rem;
+  }
+
+  [aria-invalid="true"] .tiptap:focus,
+  .tiptap[aria-invalid="true"]:focus {
+    box-shadow: 0 0 0 6px hsl(var(--destructive) / 0.28);
+    outline: none;
+  }
+
+  /* Style Radix radio items when their wrapper is invalid */
+  [aria-invalid="true"] [role="radio"] {
+    border-color: hsl(var(--destructive));
+    box-shadow: none;
+  }
+
+  [aria-invalid="true"] [role="radio"][data-state="checked"] {
+    border-color: hsl(var(--destructive));
+    color: hsl(var(--destructive));
+  }
+
+  [aria-invalid="true"] [role="radio"]:focus {
+    box-shadow: 0 0 0 6px hsl(var(--destructive) / 0.28);
+    outline: none;
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-down {
+  animation: fadeInDown 0.8s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.hero-text-title {
+  opacity: 0;
+}
+
+.hero-text-subtitle {
+  opacity: 0;
+  animation-delay: 0.2s;
+}
+@keyframes wave {
+  0% { transform: rotate(0.0deg) }
+  10% { transform: rotate(14.0deg) }
+  20% { transform: rotate(-8.0deg) }
+  30% { transform: rotate(14.0deg) }
+  40% { transform: rotate(-4.0deg) }
+  50% { transform: rotate(10.0deg) }
+  60% { transform: rotate(0.0deg) }
+  100% { transform: rotate(0.0deg) }
+}
+
+.animate-wave {
+  animation-name: wave;
+  animation-duration: 2.5s;
+  animation-iteration-count: infinite;
+  transform-origin: 70% 70%;
+  display: inline-block;
+}
+
+.wave-on-hover {
+  display: inline-block;
+  transform-origin: 70% 70%;
+}
+
+.group:hover .wave-on-hover {
+  animation-name: wave;
+  animation-duration: 2.5s;
+  animation-iteration-count: infinite;
+}
+
+.wave-once {
+  animation-name: wave;
+  animation-duration: 2.5s;
+  animation-iteration-count: 1;
+  transform-origin: 70% 70%;
+  display: inline-block;
+}
+
+/* TipTap Rich Text Editor Styles */
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #90A1B9;
+  font-style: italic;
+  pointer-events: none;
+  height: 0;
+}
+
+.tiptap:focus {
+  outline: none;
+}
+
+.tiptap ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+}
+
+.tiptap ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+}
+
+.tiptap a {
+  color: #2563EB;
+  text-decoration: underline;
+  cursor: pointer;
+}
