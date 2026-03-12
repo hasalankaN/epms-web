@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 import { X, ChevronDown, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -110,7 +110,7 @@ export function EditProductPanel({ isOpen, onClose, product: listProduct }: Edit
   const [galleryUrls, setGalleryUrls] = useState<string[]>(["", "", "", ""]);
 
   // Dirty guard
-  const [isDirty, setIsDirty] = useState(false);
+  const [imagesDirty, setImagesDirty] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
 
   const {
@@ -120,7 +120,7 @@ export function EditProductPanel({ isOpen, onClose, product: listProduct }: Edit
     watch,
     setValue,
     trigger,
-    formState: { errors },
+    formState: { errors, isDirty: formIsDirty },
   } = useForm<EditProductFormValues>({
     resolver: zodResolver(editProductSchema),
     mode: "onChange",
@@ -141,6 +141,8 @@ export function EditProductPanel({ isOpen, onClose, product: listProduct }: Edit
 
   const watchedType = watch("type");
   const watchedCommissionType = watch("commission_type");
+
+  const isDirty = formIsDirty || imagesDirty;
 
   // Prefill form when API data is loaded
   useEffect(() => {
@@ -175,7 +177,7 @@ export function EditProductPanel({ isOpen, onClose, product: listProduct }: Edit
         galleryImages[3]?.url ?? "",
       ]);
 
-      setIsDirty(false);
+      setImagesDirty(false);
       setShowDiscardModal(false);
     }
   }, [isOpen, product, reset]);
@@ -183,7 +185,7 @@ export function EditProductPanel({ isOpen, onClose, product: listProduct }: Edit
   // Reset dirty when closed
   useEffect(() => {
     if (!isOpen) {
-      setIsDirty(false);
+      setImagesDirty(false);
       setShowDiscardModal(false);
     }
   }, [isOpen]);
@@ -230,7 +232,7 @@ export function EditProductPanel({ isOpen, onClose, product: listProduct }: Edit
         images: images,
       });
 
-      setIsDirty(false);
+      setImagesDirty(false);
       onClose();
     } catch {
       // errors handled by hook's onError
@@ -271,7 +273,6 @@ export function EditProductPanel({ isOpen, onClose, product: listProduct }: Edit
             id="edit-product-form"
             onSubmit={handleSubmit(onSubmit)}
             className="flex-1 overflow-y-auto p-4 sm:p-6 sm:pt-4 pt-4 custom-scrollbar"
-            onChange={() => setIsDirty(true)}
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
 
@@ -300,7 +301,6 @@ export function EditProductPanel({ isOpen, onClose, product: listProduct }: Edit
                   onValueChange={(val) => {
                     setValue("type", val as "DIGITAL" | "DELIVERY", { shouldDirty: true });
                     trigger("type");
-                    setIsDirty(true);
                   }}
                 >
                   <SelectTrigger
@@ -397,8 +397,14 @@ export function EditProductPanel({ isOpen, onClose, product: listProduct }: Edit
                     >
                       <ImageUpload
                         imageUrl={mainImageUrl}
-                        setImage={(url) => { setMainImageUrl(url); setIsDirty(true); }}
-                        removeImage={() => { setMainImageUrl(""); setIsDirty(true); }}
+                        setImage={(url: string) => {
+                          setMainImageUrl(url);
+                          setImagesDirty(true);
+                        }}
+                        removeImage={() => {
+                          setMainImageUrl("");
+                          setImagesDirty(true);
+                        }}
                         showSupportedFormats={false}
                         className="h-full w-full"
                         dropzoneClassName="!h-full !border-none !rounded-none !bg-transparent !p-0"
@@ -427,7 +433,7 @@ export function EditProductPanel({ isOpen, onClose, product: listProduct }: Edit
                         >
                           <ImageUpload
                             imageUrl={url}
-                            setImage={(imgUrl) => {
+                            setImage={(imgUrl: string) => {
                               setGalleryUrls((prev) => {
                                 const next = [...prev];
 
@@ -435,16 +441,17 @@ export function EditProductPanel({ isOpen, onClose, product: listProduct }: Edit
 
                                 return next;
                               });
-                              setIsDirty(true);
+                              setImagesDirty(true);
                             }}
                             removeImage={() => {
                               setGalleryUrls((prev) => {
                                 const next = [...prev];
-
+                                
                                 next[i] = "";
 
                                 return next;
                               });
+                              setImagesDirty(true);
                             }}
                             showSupportedFormats={false}
                             className="h-full w-full"
@@ -503,7 +510,6 @@ export function EditProductPanel({ isOpen, onClose, product: listProduct }: Edit
                   value={watchedCommissionType}
                   onValueChange={(val) => {
                     setValue("commission_type", val as "PERCENTAGE" | "FIXED", { shouldDirty: true });
-                    setIsDirty(true);
                   }}
                 >
                   <SelectTrigger
@@ -563,7 +569,7 @@ export function EditProductPanel({ isOpen, onClose, product: listProduct }: Edit
             <Button
               type="submit"
               form="edit-product-form"
-              disabled={isUpdating}
+              disabled={isUpdating || !isDirty}
               className={cn(BUTTON_STYLES.primary.md, "text-sm font-semibold text-white")}
             >
               {isUpdating ? (
