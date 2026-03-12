@@ -1,3 +1,6 @@
+"use client";
+
+import { useGetBranchById } from "@/hooks/api/branches/useGetBranchById";
 import { mockBranchData } from "@/components/admin-panel/branch-management/mockData";
 import { BranchGeneralInfo } from "./BranchGeneralInfo";
 import { BranchStatCard } from "./BranchStatCard";
@@ -9,32 +12,42 @@ interface BranchDetailsViewProps {
 }
 
 export function BranchDetailsView({ branchId }: BranchDetailsViewProps) {
-  // Find the exact branch from mock data using ID
-  const branchData = mockBranchData.find((b) => b.id === branchId) || mockBranchData[0];
+  const { data: branch, isLoading } = useGetBranchById(branchId);
+
+  // We are currently using mock data for the stats portion, so keeping it temporarily
+  const mockStats = mockBranchData[0];
 
   return (
     <div className="px-4 md:px-6 pb-12">
       <div className="flex flex-col gap-4 xl:flex-row xl:gap-6 mt-4">
         {/* Left Side: General Info Card */}
-        <BranchGeneralInfo branch={branchData} />
+        <BranchGeneralInfo 
+            isLoading={isLoading}
+            name={branch?.name}
+            branchType={branch?.branch_type}
+            address={branch?.address}
+            email={branch?.email}
+            phone={branch?.phone}
+            whatsApp={branch?.whatsapp}
+        />
 
         {/* Right Side: Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
           <BranchStatCard 
             label="Total No. of Staff" 
-            value={branchData.staff_count} 
+            value={mockStats.staff_count} 
           />
           <BranchStatCard 
             label="Total No. of Batches" 
-            value={branchData.batch_count} 
+            value={mockStats.batch_count} 
           />
           <BranchStatCard 
             label="Total Income" 
-            value={`LKR ${branchData.total_income}`} 
+            value={`LKR ${mockStats.total_income}`} 
           />
           <BranchStatCard 
             label="Total Expenses" 
-            value={`LKR ${branchData.total_expenses}`} 
+            value={`LKR ${mockStats.total_expenses}`} 
           />
         </div>
       </div>

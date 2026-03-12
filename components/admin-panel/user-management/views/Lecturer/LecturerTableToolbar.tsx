@@ -70,6 +70,8 @@ interface LecturerTableToolbarProps {
   onSearchChange: (value: string) => void;
   onApplyFilters: (filters: Record<string, string | null>) => void;
   onClearFilters: () => void;
+  onExportCSV: () => void;
+  isExporting?: boolean;
   activeUrlFilters: {
     status?: string;
     salaryStatus?: string;
@@ -88,6 +90,8 @@ export function LecturerTableToolbar({
   onSearchChange,
   onApplyFilters,
   onClearFilters,
+  onExportCSV,
+  isExporting = false,
   activeUrlFilters,
 }: LecturerTableToolbarProps) {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
@@ -224,9 +228,13 @@ export function LecturerTableToolbar({
               label="Filter Option"
               className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
             />
-            <button className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}>
+            <button
+              className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}
+              onClick={onExportCSV}
+              disabled={isExporting}
+            >
               <i className="file-csv h-4 w-4" />
-              Export CSV
+              {isExporting ? "Exporting..." : "Export CSV"}
             </button>
           </div>
         </div>
@@ -270,9 +278,13 @@ export function LecturerTableToolbar({
               label="Filter"
               className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
             />
-            <button className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap px-3", buttonTextStyles)}>
+            <button
+              className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap px-3", buttonTextStyles)}
+              onClick={onExportCSV}
+              disabled={isExporting}
+            >
               <i className="file-csv h-4 w-4" />
-              Export CSV
+              {isExporting ? "Exporting..." : "Export CSV"}
             </button>
           </div>
         </div>
@@ -325,9 +337,9 @@ export function LecturerTableToolbar({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[160px]">
-                <DropdownMenuItem onClick={() => console.log("Export CSV")} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
+                <DropdownMenuItem onClick={onExportCSV} disabled={isExporting} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
                   <i className="file-csv mr-2 h-4 w-4" />
-                  Export CSV
+                  {isExporting ? "Exporting..." : "Export CSV"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

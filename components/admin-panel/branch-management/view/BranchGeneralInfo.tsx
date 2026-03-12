@@ -1,28 +1,74 @@
 import React from "react";
 
-import type { BranchRow } from "@/types/branch";
-
 import { StatusPopover } from "@/components/common/StatusPopover";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const BRANCH_STATUS_OPTIONS = [
-  { value: "TYPE_1", bg: "#FCE7F3", text: "#E60076", label: "Main" },
-  { value: "TYPE_2", bg: "#FCE7F3", text: "#E60076", label: "Sub" },
-  { value: "TYPE_3", bg: "#FCE7F3", text: "#E60076", label: "Regional" },
+  { bg: "#FCE7F3", text: "#E60076", value: "TYPE_1"},
+  { bg: "#FCE7F3", text: "#E60076", value: "TYPE_2"},
+  { bg: "#FCE7F3", text: "#E60076", value: "TYPE_3"},
 ];
 
 interface BranchGeneralInfoProps {
-  branch: BranchRow;
+  isLoading?: boolean;
+  name?: string;
+  branchType?: string;
+  address?: string;
+  email?: string;
+  phone?: string;
+  whatsApp?: string;
 }
 
-export function BranchGeneralInfo({ branch }: BranchGeneralInfoProps) {
+export function BranchGeneralInfo({ 
+  isLoading,
+  name = "-",
+  branchType = "TYPE_1",
+  address = "-",
+  email = "-",
+  phone = "-",
+  whatsApp = "-",
+}: BranchGeneralInfoProps) {
+  if (isLoading) {
+    return (
+      <div className="flex w-full flex-col items-start justify-center gap-3 rounded-lg border border-[#E2E8F0] p-3 xl:w-[648px] xl:shrink-0 bg-white">
+        <div className="flex items-center gap-3 w-full">
+          <Skeleton className="h-7 w-48 rounded" />
+          <Skeleton className="h-9 w-24 rounded-full" />
+        </div>
+
+        <div className="flex w-full flex-col gap-2 mt-1">
+           <Skeleton className="h-4 w-24 rounded" />
+           <Skeleton className="h-14 w-full max-w-[300px] rounded" />
+        </div>
+
+        <div className="flex w-full flex-col gap-2 mt-1">
+           <Skeleton className="h-4 w-24 rounded" />
+           <Skeleton className="h-5 w-40 rounded" />
+        </div>
+
+        <div className="flex w-full items-start gap-8 mt-1">
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-4 w-24 rounded" />
+            <Skeleton className="h-5 w-32 rounded" />
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-4 w-32 rounded" />
+            <Skeleton className="h-5 w-32 rounded" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex w-full flex-col items-start justify-center gap-3 rounded-lg border border-[#E2E8F0] p-3 xl:w-[648px] xl:flex-shrink-0">
+    <div className="flex w-full flex-col items-start justify-center gap-3 rounded-lg border border-[#E2E8F0] p-3 xl:w-[648px] xl:shrink-0 bg-white">
       <div className="flex items-center gap-3">
         <h2 className="text-lg font-medium leading-[30px] text-[#1D293D] font-inter">
-          {branch.name}
+          {name}
         </h2>
         <StatusPopover
-          value={branch.branch_type}
+          value={branchType}
           options={BRANCH_STATUS_OPTIONS}
           readOnly
         />
@@ -32,10 +78,8 @@ export function BranchGeneralInfo({ branch }: BranchGeneralInfoProps) {
         <span className="text-xs font-normal leading-4 text-[#90A1B9] font-inter">
           Branch Address
         </span>
-        <span className="text-sm font-normal leading-5 text-[#314158] font-inter">
-          No. XX/X <br />
-          Road Name, City, Postal Office. <br />
-          Postal Code.
+        <span className="text-sm font-normal leading-5 text-[#314158] font-inter whitespace-pre-line">
+          {address}
         </span>
       </div>
 
@@ -44,7 +88,7 @@ export function BranchGeneralInfo({ branch }: BranchGeneralInfoProps) {
           Branch Email
         </span>
         <span className="text-sm font-normal leading-5 text-[#314158] font-inter">
-          branch@gmail.com
+          {email}
         </span>
       </div>
 
@@ -54,7 +98,7 @@ export function BranchGeneralInfo({ branch }: BranchGeneralInfoProps) {
             Contact Number
           </span>
           <span className="text-sm font-normal leading-5 text-[#314158] font-inter">
-            +70 XXX XXXX
+            {phone}
           </span>
         </div>
         
@@ -63,7 +107,7 @@ export function BranchGeneralInfo({ branch }: BranchGeneralInfoProps) {
             WhatsApp Number
           </span>
           <span className="text-sm font-normal leading-5 text-[#314158] font-inter">
-            +70 XXX XXXX
+            {whatsApp || "-"}
           </span>
         </div>
       </div>
