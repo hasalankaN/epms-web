@@ -11,6 +11,8 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  motion,
+  itemVariants,
 } from "@/components/ui/dialog";
 
 import { FilterChip } from "./FilterChip";
@@ -274,13 +276,14 @@ export function FilterModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        animateChildren
         className={cn(
           "flex max-h-[90vh] w-full max-w-[720px] flex-col gap-4 overflow-hidden rounded-xl border border-[#E2E8F0] bg-white p-6 shadow-[0_4px_6px_-4px_rgba(16,24,40,0.10),0_10px_15px_-3px_rgba(0,0,0,0.10)] [&>button]:hidden",
           className
         )}
       >
         {/* ===== STATIC HEADER ===== */}
-        <div className="flex flex-col gap-4">
+        <motion.div variants={itemVariants} className="flex flex-col gap-4">
           {/* Title */}
           <div className="flex items-center justify-between">
             <DialogTitle className="flex-1 text-lg font-semibold leading-[30px] text-[#0F172B]">
@@ -339,19 +342,18 @@ export function FilterModal({
             </div>
           )}
 
-          {/* Separator 8px below chips */}
-          <div className="border-b border-[#CAD5E2]" />
-        </div>
+          <div className="mb-2 border-b border-[#CAD5E2]" />
+        </motion.div>
 
         {/* ===== SCROLLABLE BODY ===== */}
-        <div className="flex-1 overflow-y-auto">
+        <motion.div variants={itemVariants} className="flex-1 overflow-y-auto">
           <div className="flex flex-col gap-4">
             {categories.map(renderCategory)}
           </div>
-        </div>
+        </motion.div>
 
         {/* ===== STATIC FOOTER ===== */}
-        <div className="flex items-center justify-end gap-3 border-t border-[#E2E8F0] pt-4">
+        <motion.div variants={itemVariants} className="flex items-center justify-end gap-3 mt-5 border-t border-[#E2E8F0] pt-4">
           <button
             type="button"
             onClick={handleClearAll}
@@ -367,7 +369,7 @@ export function FilterModal({
           >
             Show Results
           </button>
-        </div>
+        </motion.div>
       </DialogContent>
     </Dialog>
   );
