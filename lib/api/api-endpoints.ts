@@ -12,6 +12,7 @@ export const API_ENDPOINTS = {
     GET_ALL: `/api/v1/products`,
     GET_BY_ID: (id: string) => `/api/v1/products/${id}`,
     CREATE: `/api/v1/products`,
+    UPDATE: (id: string) => `/api/v1/products/${id}`,
   },
   files: {
     UPLOAD: `/api/v1/files/upload`,
