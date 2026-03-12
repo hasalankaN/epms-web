@@ -11,6 +11,7 @@ import type { LecturerDataType, SalaryStatus } from "@/types/user-management";
 import { LecturerTableToolbar } from "./views/Lecturer/LecturerTableToolbar";
 import { LecturerTable } from "./views/Lecturer/LecturerTable";
 import { useGetLecturers } from "@/hooks/api/lecturers/useGetLecturers";
+import { generateLecturerCSV } from "@/utils/export/CSV/generate-lecturer-csv";
 
 export function LecturerTab() {
   const router = useRouter();
@@ -57,6 +58,7 @@ export function LecturerTab() {
 
   // ===== SHARED STATE =====
   const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
+  const [isExportingCSV, setIsExportingCSV] = useState(false);
 
   // ===== DERIVED VALUES =====
   const selectedIds = useMemo(
@@ -176,6 +178,25 @@ export function LecturerTab() {
     console.log("Send Email to:", selectedLecturers);
   }, [selectedIds, selectedLecturers]);
 
+  const handleExportCSV = useCallback(async () => {
+    setIsExportingCSV(true);
+
+    try {
+      await generateLecturerCSV({
+        search: search || undefined,
+        status,
+        salaryStatus,
+        from: fromDate,
+        to: toDate,
+      });
+      toast.success("CSV exported successfully");
+    } catch {
+      toast.error("Failed to export CSV. Please try again.");
+    } finally {
+      setIsExportingCSV(false);
+    }
+  }, [search, status, salaryStatus, fromDate, toDate]);
+
   // ===== BULK ACTIONS CONFIG =====
   const bulkActions = useMemo(
     () => ({
@@ -200,6 +221,8 @@ export function LecturerTab() {
           onSearchChange={setLocalSearch}
           onApplyFilters={handleMultiFilterChange}
           onClearFilters={handleClearFilters}
+          onExportCSV={handleExportCSV}
+          isExporting={isExportingCSV}
           activeUrlFilters={{
             status,
             salaryStatus,
