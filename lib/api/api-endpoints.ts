@@ -9,8 +9,8 @@ export const API_ENDPOINTS = {
     UPDATE_STATUS: (id: string) => `/api/v1/admin/branches/${id}/status`,
   },
   products: {
-    GET_ALL: `/api/v1/v1/products`,
-    GET_BY_ID: (id: string) => `/api/v1/v1/products/${id}`,
+    GET_ALL: `/api/v1/products`,
+    GET_BY_ID: (id: string) => `/api/v1/products/${id}`,
   },
   lecturers: {
     GET_ALL: `/api/v1/admin/lecturers`,
