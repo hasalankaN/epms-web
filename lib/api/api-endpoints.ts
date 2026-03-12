@@ -14,5 +14,6 @@ export const API_ENDPOINTS = {
   },
   lecturers: {
     GET_ALL: `/api/v1/admin/lecturers`,
+    CREATE: `/api/v1/admin/lecturers`,
   },
 };
