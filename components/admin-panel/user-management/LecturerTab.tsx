@@ -50,7 +50,7 @@ export function LecturerTab() {
       whatsApp: item.whatsapp_number || "-",
       email: item.email,
       salaryType: item.salary_type || "-",
-      salaryStatus: (item.salary_payment_status as SalaryStatus) || "-",
+      salaryStatus: (item.salary_payment_status as SalaryStatus) || "NO_RECORD",
       status: item.status,
     })) as LecturerDataType[];
   }, [apiData]);
