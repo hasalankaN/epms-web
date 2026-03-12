@@ -28,6 +28,7 @@ import {
   type LecturerPaymentHistoryData,
 } from "@/components/admin-panel/user-management/modals/lecturer/LecturerPaymentHistoryModal";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
+import { useUpdateLecturerStatus } from "@/hooks/api/lecturers/useUpdateLecturerStatus";
 
 
 interface LecturerTableProps {
@@ -57,6 +58,8 @@ export function LecturerTable({
   
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   const [selectedLecturer, setSelectedLecturer] = useState<LecturerDataType | null>(null);
+
+  const { mutate: updateStatus, isPending: isUpdatingStatus } = useUpdateLecturerStatus();
 
   const itemsPerPage = 10;
 
@@ -130,7 +133,7 @@ export function LecturerTable({
       setPaymentModalOpen(true);
 
       return;
-    } else if (action === "deactivate") {
+    } else if (action === "deactivate" || action === "activate") {
       setSelectedLecturer(lecturer);
       setIsDeactivateModalOpen(true);
 
@@ -141,8 +144,18 @@ export function LecturerTable({
   };
 
   const handleDeactivateConfirm = () => {
-    console.log("Deactivating lecturer:", selectedLecturer?.id);
-    setIsDeactivateModalOpen(false);
+    if (!selectedLecturer) return;
+
+    const newStatus = selectedLecturer.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+
+    updateStatus(
+      { id: selectedLecturer.id, status: newStatus },
+      {
+        onSuccess: () => {
+          setIsDeactivateModalOpen(false);
+        },
+      }
+    );
   };
 
   const columns: Column<LecturerDataType>[] = [
@@ -321,9 +334,21 @@ export function LecturerTable({
               <DropdownMenuItem onClick={() => handleAction("lecturer-report", lecturer)} className="cursor-pointer focus:bg-[#FDF2F8]">
                 Lecturer Report
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAction("deactivate", lecturer)} className="cursor-pointer text-red-600 focus:bg-[#FDF2F8] focus:text-red-600">
-                Deactivate
-              </DropdownMenuItem>
+              {lecturer.status === "ACTIVE" ? (
+                <DropdownMenuItem
+                  onClick={() => handleAction("deactivate", lecturer)}
+                  className="cursor-pointer focus:bg-[#FDF2F8]"
+                >
+                  Deactivate
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onClick={() => handleAction("activate", lecturer)}
+                  className="cursor-pointer focus:bg-[#FDF2F8]"
+                >
+                  Activate
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -356,15 +381,16 @@ export function LecturerTable({
         data={paymentModalData}
       />
 
-      {/* Deactivate Lecturer Modal */}
+      {/* Deactivate/Activate Lecturer Modal */}
       <DeleteConfirmationModal
         isOpen={isDeactivateModalOpen}
         onClose={() => setIsDeactivateModalOpen(false)}
         onConfirm={handleDeactivateConfirm}
-        title="Confirm Deactivation"
-        description={`Are you sure you want to deactivate this lecturer [${selectedLecturer?.name}]?`}
-        confirmText="Confirm Deactivation"
-        confirmVariant="destructive"
+        title={selectedLecturer?.status === "ACTIVE" ? "Confirm Deactivation" : "Confirm Activation"}
+        description={`Are you sure you want to ${selectedLecturer?.status === "ACTIVE" ? "deactivate" : "activate"} this lecturer [${selectedLecturer?.name}]?`}
+        confirmText={selectedLecturer?.status === "ACTIVE" ? "Confirm Deactivation" : "Confirm Activation"}
+        confirmVariant={selectedLecturer?.status === "ACTIVE" ? "destructive" : "primary"}
+        isDeleting={isUpdatingStatus}
       />
     </>
   );
