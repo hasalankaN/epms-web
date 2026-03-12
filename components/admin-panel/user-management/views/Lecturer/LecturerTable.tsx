@@ -28,6 +28,8 @@ import {
   type LecturerPaymentHistoryData,
 } from "@/components/admin-panel/user-management/modals/lecturer/LecturerPaymentHistoryModal";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
+import { useUpdateLecturerStatus } from "@/hooks/api/lecturers/useUpdateLecturerStatus";
+import { EditLecturerModal } from "@/components/admin-panel/user-management/modals/lecturer/EditLecturerModal";
 
 
 interface LecturerTableProps {
@@ -38,6 +40,7 @@ interface LecturerTableProps {
   isError?: boolean;
   currentPage: number;
   onPageChange: (page: number) => void;
+  totalResults: number;
 }
 
 export function LecturerTable({
@@ -48,6 +51,7 @@ export function LecturerTable({
   isError = false,
   currentPage,
   onPageChange,
+  totalResults,
 }: LecturerTableProps) {
   const router = useRouter();
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -56,18 +60,16 @@ export function LecturerTable({
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   const [selectedLecturer, setSelectedLecturer] = useState<LecturerDataType | null>(null);
 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editLecturerId, setEditLecturerId] = useState<string | null>(null);
+
+  const { mutate: updateStatus, isPending: isUpdatingStatus } = useUpdateLecturerStatus();
+
   const itemsPerPage = 10;
 
   const filteredData = useMemo(() => data || [], [data]);
-  const totalCount = filteredData.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-
-    return filteredData.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, currentPage, itemsPerPage]);
 
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
@@ -86,6 +88,11 @@ export function LecturerTable({
   const handleAction = (action: string, lecturer: LecturerDataType) => {
     if (action === "view-lecturer") {
       router.push(`/admin-panel/user-management/lecturer/${lecturer.id}`);
+
+      return;
+    } else if (action === "edit") {
+      setEditLecturerId(lecturer.id);
+      setIsEditModalOpen(true);
 
       return;
     } else if (action === "payment-history") {
@@ -135,7 +142,7 @@ export function LecturerTable({
       setPaymentModalOpen(true);
 
       return;
-    } else if (action === "deactivate") {
+    } else if (action === "deactivate" || action === "activate") {
       setSelectedLecturer(lecturer);
       setIsDeactivateModalOpen(true);
 
@@ -146,8 +153,18 @@ export function LecturerTable({
   };
 
   const handleDeactivateConfirm = () => {
-    console.log("Deactivating lecturer:", selectedLecturer?.id);
-    setIsDeactivateModalOpen(false);
+    if (!selectedLecturer) return;
+
+    const newStatus = selectedLecturer.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+
+    updateStatus(
+      { id: selectedLecturer.id, status: newStatus },
+      {
+        onSuccess: () => {
+          setIsDeactivateModalOpen(false);
+        },
+      }
+    );
   };
 
   const columns: Column<LecturerDataType>[] = [
@@ -203,7 +220,18 @@ export function LecturerTable({
       ),
       accessorKey: "phone",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.phone}</div>,
+      cell: (item) => (
+        item.phone && item.phone !== "-" ? (
+          <a
+            href={`tel:${item.phone}`}
+            className="text-[11px] font-medium text-[#45556C] transition-colors hover:text-[#E60076]"
+          >
+            {item.phone}
+          </a>
+        ) : (
+          <span className="text-[11px] font-medium text-[#45556C]">{item.phone || "-"}</span>
+        )
+      ),
     },
     {
       header: () => (
@@ -213,7 +241,20 @@ export function LecturerTable({
       ),
       accessorKey: "whatsApp",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.whatsApp}</div>,
+      cell: (item) => (
+        item.whatsApp && item.whatsApp !== "-" ? (
+          <a
+            href={`https://wa.me/${item.whatsApp.replace(/\s+/g, "")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] font-medium text-[#45556C] transition-colors hover:text-[#E60076]"
+          >
+            {item.whatsApp}
+          </a>
+        ) : (
+          <span className="text-[11px] font-medium text-[#45556C]">{item.whatsApp || "-"}</span>
+        )
+      ),
     },
     {
       header: "Email",
@@ -225,7 +266,15 @@ export function LecturerTable({
       header: "Salary Type",
       accessorKey: "salaryType",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[120px]",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.salaryType}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
+          {item.salaryType
+            .toLowerCase()
+            .split("_")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ")}
+        </div>
+      ),
     },
     {
       header: "Salary Status",
@@ -234,6 +283,7 @@ export function LecturerTable({
       cell: (lecturer) => {
         const options = Object.entries(SALARY_STATUS_CONFIG).map(([status, config]) => ({
           value: status,
+          label: status.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(" "),
           bg: config.bg,
           text: config.text,
         }));
@@ -254,7 +304,7 @@ export function LecturerTable({
       cell: (lecturer) => {
         const options = Object.entries(MEMBER_STATUS_CONFIG).map(([status, config]) => ({
           value: status,
-          label: status.charAt(0).toUpperCase() + status.slice(1),
+          label: status.charAt(0).toUpperCase() + status.slice(1).toLowerCase(),
           bg: config.bg,
           text: config.text,
         }));
@@ -301,9 +351,21 @@ export function LecturerTable({
               <DropdownMenuItem onClick={() => handleAction("lecturer-report", lecturer)} className="cursor-pointer focus:bg-[#FDF2F8]">
                 Lecturer Report
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAction("deactivate", lecturer)} className="cursor-pointer text-red-600 focus:bg-[#FDF2F8] focus:text-red-600">
-                Deactivate
-              </DropdownMenuItem>
+              {lecturer.status === "ACTIVE" ? (
+                <DropdownMenuItem
+                  onClick={() => handleAction("deactivate", lecturer)}
+                  className="cursor-pointer focus:bg-[#FDF2F8]"
+                >
+                  Deactivate
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onClick={() => handleAction("activate", lecturer)}
+                  className="cursor-pointer focus:bg-[#FDF2F8]"
+                >
+                  Activate
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -314,14 +376,14 @@ export function LecturerTable({
   return (
     <>
       <DataTable
-        data={paginatedData}
+        data={filteredData}
         columns={columns}
         keyExtractor={(item) => item.id}
         isLoading={isLoading}
         isError={isError}
         pagination={{
           variant: "simple",
-          totalCount,
+          totalCount: totalResults,
           selectedRowCount,
           currentPage,
           totalPages,
@@ -336,15 +398,23 @@ export function LecturerTable({
         data={paymentModalData}
       />
 
-      {/* Deactivate Lecturer Modal */}
+      {/* Edit Lecturer Modal */}
+      <EditLecturerModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        lecturerId={editLecturerId}
+      />
+
+      {/* Deactivate/Activate Lecturer Modal */}
       <DeleteConfirmationModal
         isOpen={isDeactivateModalOpen}
         onClose={() => setIsDeactivateModalOpen(false)}
         onConfirm={handleDeactivateConfirm}
-        title="Confirm Deactivation"
-        description={`Are you sure you want to deactivate this lecturer [${selectedLecturer?.name}]?`}
-        confirmText="Confirm Deactivation"
-        confirmVariant="destructive"
+        title={selectedLecturer?.status === "ACTIVE" ? "Confirm Deactivation" : "Confirm Activation"}
+        description={`Are you sure you want to ${selectedLecturer?.status === "ACTIVE" ? "deactivate" : "activate"} this lecturer [${selectedLecturer?.name}]?`}
+        confirmText={selectedLecturer?.status === "ACTIVE" ? "Confirm Deactivation" : "Confirm Activation"}
+        confirmVariant={selectedLecturer?.status === "ACTIVE" ? "destructive" : "primary"}
+        isDeleting={isUpdatingStatus}
       />
     </>
   );

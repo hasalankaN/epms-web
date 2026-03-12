@@ -1,15 +1,15 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, User } from "lucide-react";
 
 // ============================
 // Types
 // ============================
 interface LecturerGeneralDetailsProps {
   name?: string;
-  lecturerId?: string;
+  lecturerId?: React.ReactNode;
   enrolledDate?: string;
   mobileNumber?: string;
   whatsAppNumber?: string;
@@ -42,10 +42,14 @@ export function LecturerGeneralDetails({
   enrolledDate = "2025/01/01",
   mobileNumber = "+70 XXX XXXX",
   whatsAppNumber = "+70 XXX XXXX",
-  gender = "XXXX",
+  gender = "-",
   emailAddress = "user@gmail.com",
   profileImageUrl,
 }: LecturerGeneralDetailsProps) {
+  const [imgError, setImgError] = useState(false);
+
+  const showPlaceholder = !profileImageUrl || profileImageUrl.trim() === "" || imgError;
+
   return (
     <div
       className="flex w-full flex-col md:flex-row items-start md:items-center gap-6 md:gap-12 rounded-[8px] border border-[#E2E8F0] bg-white p-6"
@@ -54,20 +58,22 @@ export function LecturerGeneralDetails({
       {/* ========== Profile Isolated Section ========== */}
       <div className="flex items-center gap-6 shrink-0 md:border-r border-transparent md:pr-12">
         <div
-          className="h-[108px] w-[108px] shrink-0 overflow-hidden rounded-full bg-[#D9D9D9]"
+          className="flex h-[108px] w-[108px] shrink-0 items-center justify-center overflow-hidden rounded-full"
           style={{
-            background:
-              profileImageUrl && profileImageUrl.trim() !== ""
-                ? `url(${profileImageUrl}) lightgray 50% / cover no-repeat`
-                : "#D9D9D9",
+            background: showPlaceholder
+              ? "linear-gradient(315deg, #FFCFEA 0.35%, #F8FAFC 99.65%)"
+              : "#D9D9D9",
           }}
         >
-          {profileImageUrl && profileImageUrl.trim() !== "" && (
+          {!showPlaceholder ? (
             <img
               src={profileImageUrl}
               alt={name}
               className="h-full w-full object-cover"
+              onError={() => setImgError(true)}
             />
+          ) : (
+            <User className="h-12 w-12" style={{ color: "#1D293D" }} />
           )}
         </div>
 

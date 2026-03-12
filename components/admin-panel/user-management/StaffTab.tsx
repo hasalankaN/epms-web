@@ -24,8 +24,8 @@ const mockStaff: StaffDataType[] = Array.from({ length: 15 }, (_, i) => ({
   commissions: "N/A",
   district: "Colombo",
   branch: "Main",
-  salaryStatus: (["Over Due", "Pending", "Paid"] as SalaryStatus[])[i % 3],
-  status: (["active", "inactive"] as MemberStatus[])[i % 2],
+  salaryStatus: (["OVER_DUE", "PENDING", "PAID"] as SalaryStatus[])[i % 3],
+  status: (["ACTIVE", "SUSPENDED"] as MemberStatus[])[i % 2],
   role: i % 3 === 2 ? "Manager" : "",
 }));
 
