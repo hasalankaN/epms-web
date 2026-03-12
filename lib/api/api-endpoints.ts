@@ -11,6 +11,10 @@ export const API_ENDPOINTS = {
   products: {
     GET_ALL: `/api/v1/products`,
     GET_BY_ID: (id: string) => `/api/v1/products/${id}`,
+    CREATE: `/api/v1/products`,
+  },
+  files: {
+    UPLOAD: `/api/v1/files/upload`,
   },
   lecturers: {
     GET_ALL: `/api/v1/admin/lecturers`,

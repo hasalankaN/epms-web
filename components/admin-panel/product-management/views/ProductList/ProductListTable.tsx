@@ -153,7 +153,11 @@ export function ProductListTable({
       header: "Quantity",
       accessorKey: "quantity",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[100px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.quantity}</div>,
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
+          {item.productType === "Digital" ? "N/A" : item.quantity}
+        </div>
+      ),
     },
     {
       header: "Barcode/SKU",
