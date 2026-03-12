@@ -21,6 +21,8 @@ import {
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
 import { EditProductPanel } from "@/components/admin-panel/product-management/modals/EditProductPanel";
 import { ViewProductModal } from "@/components/admin-panel/product-management/modals/ViewProductModal";
+import { useArchiveProduct } from "@/hooks/api/products/useArchiveProduct";
+import { useDeleteProduct } from "@/hooks/api/products/useDeleteProduct";
 
 interface ProductListTableProps {
   data: ProductDataType[];
@@ -69,6 +71,9 @@ export function ProductListTable({
   const [editProduct, setEditProduct] = useState<ProductDataType | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewProduct, setViewProduct] = useState<ProductDataType | null>(null);
+
+  const { mutateAsync: archiveProduct, isPending: isArchiving } = useArchiveProduct();
+  const { mutateAsync: deleteProduct, isPending: isDeleting } = useDeleteProduct();
 
   const handleAction = (action: string, product: ProductDataType) => {
     setActionProduct(product);
@@ -153,7 +158,11 @@ export function ProductListTable({
       header: "Quantity",
       accessorKey: "quantity",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[100px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.quantity}</div>,
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
+          {item.productType === "Digital" ? "N/A" : item.quantity}
+        </div>
+      ),
     },
     {
       header: "Barcode/SKU",
@@ -241,10 +250,14 @@ export function ProductListTable({
       <DeleteConfirmationModal
         isOpen={isArcModalOpen}
         onClose={() => setIsArcModalOpen(false)}
-        onConfirm={() => {
-          console.log("Archiving product:", actionProduct);
+        onConfirm={async () => {
+          if (actionProduct) {
+            await archiveProduct(actionProduct.id);
+          }
+
           setIsArcModalOpen(false);
         }}
+        isDeleting={isArchiving}
         title="Add to Archive List"
         description="Are you sure you want to archive this product?"
         confirmText="Confirm"
@@ -255,10 +268,14 @@ export function ProductListTable({
       <DeleteConfirmationModal
         isOpen={isDelModalOpen}
         onClose={() => setIsDelModalOpen(false)}
-        onConfirm={() => {
-          console.log("Deleting product:", actionProduct);
+        onConfirm={async () => {
+          if (actionProduct) {
+            await deleteProduct(actionProduct.id);
+          }
+
           setIsDelModalOpen(false);
         }}
+        isDeleting={isDeleting}
         title="Confirm Deletion"
         description="Are you sure you want to delete this product? This action cannot be undone."
         confirmText="Confirm Delete"

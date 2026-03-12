@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 import { X } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
 
 import { cn } from "@/lib/utils";
 import {
@@ -128,7 +129,7 @@ export function EditLecturerModal({
     reset,
     setValue,
     watch,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<EditLecturerFormValues>({
     resolver: zodResolver(editLecturerSchema),
     defaultValues: {
@@ -149,6 +150,16 @@ export function EditLecturerModal({
   const mobileCountryCode = watch("mobileCountryCode");
   const whatsappCountryCode = watch("whatsappCountryCode");
   const salaryType = watch("salary_type");
+
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+
+  const handleCloseAttempt = () => {
+    if (isDirty) {
+      setShowDiscardModal(true);
+    } else {
+      onClose();
+    }
+  };
 
   // Prefill form when lecturer data is loaded
   useEffect(() => {
@@ -201,8 +212,9 @@ export function EditLecturerModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && handleCloseAttempt()}>
+        <DialogContent
         isLoading={isLoadingLecturer}
         animateChildren={true}
         className="flex max-h-[90vh] w-[95%] max-w-[720px] flex-col gap-0 overflow-hidden rounded-lg sm:rounded-xl border border-[#E2E8F0] bg-white p-0 shadow-[0_4px_6px_-4px_rgba(16,24,40,0.10),0_10px_15px_-3px_rgba(0,0,0,0.10)] [&>button]:hidden"
@@ -214,7 +226,7 @@ export function EditLecturerModal({
               Edit Lecturer
             </DialogTitle>
             <button
-              onClick={onClose}
+              onClick={handleCloseAttempt}
               aria-label="Close"
               className="flex h-8 w-8 items-center justify-center rounded-md border border-[#E2E8F0] bg-white transition-colors hover:bg-slate-50"
             >
@@ -480,7 +492,7 @@ export function EditLecturerModal({
           <Button
             type="submit"
             form="edit-lecturer-form"
-            disabled={isUpdating}
+            disabled={isUpdating || !isDirty}
             className={cn(
               BUTTON_STYLES.primary.full,
               "w-auto px-6 font-inter text-[14px] font-semibold text-white leading-5"
@@ -491,5 +503,19 @@ export function EditLecturerModal({
         </motion.div>
       </DialogContent>
     </Dialog>
+
+    <DeleteConfirmationModal
+      isOpen={showDiscardModal}
+      onClose={() => setShowDiscardModal(false)}
+      onConfirm={() => {
+        setShowDiscardModal(false);
+        onClose();
+      }}
+      title="Save Your Edits First"
+      description="Unsaved changes detected, remember to save your edits before you close!"
+      confirmText="Proceed Without Saving"
+      cancelText="Go Back and Save"
+    />
+    </>
   );
 }

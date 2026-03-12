@@ -16,7 +16,7 @@ export type CertificateStatus = "Pending" | "Completed";
 /**
  * Salary status options (shared by Lecturer + Staff)
  */
-export type SalaryStatus = "OVER_DUE" | "PENDING" | "PAID";
+export type SalaryStatus = "OVER_DUE" | "PENDING" | "PAID" | "NO_RECORD";
 
 /**
  * Member status options (shared by Lecturer + Staff)
@@ -118,6 +118,7 @@ export const SALARY_STATUS_CONFIG: Record<SalaryStatus, { bg: string; text: stri
   "OVER_DUE": { bg: "#FFDEDE", text: "#FB2C36" },
   "PENDING": { bg: "#FFF7D7", text: "#F59E0B" },
   "PAID": { bg: "#DFFFF0", text: "#16A34A" },
+  "NO_RECORD": { bg: "#F1F5F9", text: "#64748B" },
 };
 
 export const MEMBER_STATUS_CONFIG: Record<MemberStatus, { bg: string; text: string }> = {

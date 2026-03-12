@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 
 import {
   Dialog,
@@ -24,12 +24,10 @@ interface ViewProductModalProps {
 
 // Build image list from product detail, filtering out empty entries
 function buildImageList(product: ProductDetailItem): string[] {
-  const images = (product.images || [])
+  return (product.images || [])
+    .filter(img => img.url)
     .sort((a, b) => a.display_order - b.display_order)
     .map(img => img.url);
-
-  // Always show 4 slots, fill missing with ""
-  return Array.from({ length: 4 }, (_, i) => images[i] ?? "");
 }
 
 export function ViewProductModal({ isOpen, onClose, product: listProduct }: ViewProductModalProps) {
@@ -46,8 +44,7 @@ export function ViewProductModal({ isOpen, onClose, product: listProduct }: View
   };
 
   const images = product ? buildImageList(product) : [];
-  const filledImages = images.filter(Boolean);
-  const totalImages = filledImages.length;
+  const totalImages = images.length;
 
   const handlePrev = () =>
     setSelectedIndex((prev) => (prev === 0 ? Math.max(0, totalImages - 1) : prev - 1));
@@ -167,51 +164,52 @@ export function ViewProductModal({ isOpen, onClose, product: listProduct }: View
                 )}
               </div>
 
-              {/* ── THUMBNAIL STRIP ── */}
-              <div className="flex flex-row md:flex-col gap-3 md:gap-[16px] lg:gap-[20px] shrink-0 md:ml-[16px] lg:ml-[20px] overflow-x-auto md:overflow-x-visible pb-1 md:pb-0">
-                {Array.from({ length: 4 }).map((_, i) => {
-                  const imgUrl = images[i] ?? "";
-                  const isSelected = i === selectedIndex;
+              {/* ── THUMBNAIL STRIP — only renders when there are real images ── */}
+              {images.length > 0 && (
+                <div
+                  className="flex flex-row md:flex-col gap-3 md:gap-[12px] shrink-0 md:ml-[16px] lg:ml-[20px] pb-1 md:pb-0"
+                  style={{
+                    maxHeight: 300,
+                    overflowY: "auto",
+                    overflowX: "auto",
+                    scrollbarWidth: "none",
+                    msOverflowStyle: "none",
+                  }}
+                >
+                  {images.map((imgUrl, i) => {
+                    const isSelected = i === selectedIndex;
 
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => imgUrl && setSelectedIndex(i)}
-                      className={cn(
-                        "relative flex-shrink-0 transition-all overflow-hidden",
-                        !isSelected && "opacity-70 hover:opacity-100"
-                      )}
-                      style={{
-                        width: 60,
-                        height: 60,
-                        borderRadius: 4,
-                        boxShadow: "0 1px 4px 0 rgba(0, 0, 0, 0.05)",
-                        border: isSelected ? "2px solid #FFF" : "none",
-                        background: imgUrl ? `url(${imgUrl}) lightgray 50% / cover no-repeat` : `url(/images/placeholder.jpg) lightgray 50% / cover no-repeat`,
-                      }}
-                    >
-                      {isSelected && imgUrl ? (
-                        <>
-                          <div className="absolute inset-0 bg-black/40 rounded" />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div
-                              className="view-icon"
-                              style={{
-                                width: 20,
-                                height: 20,
-                                aspectRatio: "1/1",
-                                color: "#FFF",
-                                backgroundColor: "#FFF",
-                                fill: "#FFF",
-                              }}
-                            />
-                          </div>
-                        </>
-                      ) : null}
-                    </button>
-                  );
-                })}
-              </div>
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => setSelectedIndex(i)}
+                        className={cn(
+                          "relative flex-shrink-0 transition-all overflow-hidden",
+                          !isSelected && "opacity-60 hover:opacity-100"
+                        )}
+                        style={{
+                          width: 60,
+                          height: 60,
+                          borderRadius: 4,
+                          boxShadow: "0 1px 4px 0 rgba(0, 0, 0, 0.06)",
+                          border: isSelected ? "2px solid #E60076" : "1.5px solid #E2E8F0",
+                          background: `url(${imgUrl}) lightgray 50% / cover no-repeat`,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {isSelected && (
+                          <>
+                            <div className="absolute inset-0 bg-black/40 rounded" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <Eye className="h-5 w-5 text-white" />
+                            </div>
+                          </>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* ── VERTICAL DIVIDER ── lg+ only */}
@@ -247,13 +245,15 @@ export function ViewProductModal({ isOpen, onClose, product: listProduct }: View
                 {formatPrice(product.price)}
               </p>
 
-              {/* Stock */}
-              <p
-                className="font-inter text-sm font-semibold leading-[20px] mt-4 lg:mt-[26px]"
-                style={{ color: stockColor }}
-              >
-                {stockLabel}
-              </p>
+              {/* Stock — only for DELIVERY products */}
+              {product.type === "DELIVERY" && (
+                <p
+                  className="font-inter text-sm font-semibold leading-[20px] mt-4 lg:mt-[26px]"
+                  style={{ color: stockColor }}
+                >
+                  {stockLabel}
+                </p>
+              )}
 
               {/* Long Description */}
               <p

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 import { X } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
 
 import { cn } from "@/lib/utils";
 import {
@@ -105,13 +106,15 @@ export function AddEditBranchModal({
 
   const isPending = isCreating || isUpdating;
 
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+
   const {
     register,
     handleSubmit,
     reset,
     setValue,
     watch,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<BranchFormValues>({
     resolver: zodResolver(branchSchema),
     defaultValues: {
@@ -129,6 +132,14 @@ export function AddEditBranchModal({
   const contactCountryCode = watch("contactCountryCode");
   const whatsappCountryCode = watch("whatsappCountryCode");
   const branchType = watch("branch_type");
+
+  const handleCloseAttempt = () => {
+    if (isDirty) {
+      setShowDiscardModal(true);
+    } else {
+      onClose();
+    }
+  };
 
   // Prefill or reset when modal opens or data is fetched
   useEffect(() => {
@@ -194,28 +205,29 @@ export function AddEditBranchModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent
-        isLoading={isEditing && isLoadingBranch}
-        animateChildren={true}
-        className="flex max-h-[90vh] w-[95%] max-w-[720px] flex-col gap-0 overflow-hidden rounded-lg sm:rounded-xl border border-[#E2E8F0] bg-white p-0 shadow-[0_4px_6px_-4px_rgba(16,24,40,0.10),0_10px_15px_-3px_rgba(0,0,0,0.10)] [&>button]:hidden"
-      >
-        {/* ===== HEADER ===== */}
-        <motion.div variants={itemVariants} className="flex flex-col gap-4 p-4 sm:p-6 pb-0 shrink-0">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="flex-1 font-inter text-lg font-semibold leading-[30px] text-[#0F172B]">
-              {isEditing ? "Edit Branch" : "Add New Branch"}
-            </DialogTitle>
-            <button
-              onClick={onClose}
-              aria-label="Close"
-              className="flex h-8 w-8 items-center justify-center rounded-md border border-[#E2E8F0] bg-white transition-colors hover:bg-slate-50"
-            >
-              <X className="h-4 w-4 text-[#64748B]" />
-            </button>
-          </div>
-          <div className="border-b border-[#E2E8F0]" />
-        </motion.div>
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && handleCloseAttempt()}>
+        <DialogContent
+          isLoading={isEditing && isLoadingBranch}
+          animateChildren={true}
+          className="flex max-h-[90vh] w-[95%] max-w-[720px] flex-col gap-0 overflow-hidden rounded-lg sm:rounded-xl border border-[#E2E8F0] bg-white p-0 shadow-[0_4px_6px_-4px_rgba(16,24,40,0.10),0_10px_15px_-3px_rgba(0,0,0,0.10)] [&>button]:hidden"
+        >
+          {/* ===== HEADER ===== */}
+          <motion.div variants={itemVariants} className="flex flex-col gap-4 p-4 sm:p-6 pb-0 shrink-0">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex-1 font-inter text-lg font-semibold leading-[30px] text-[#0F172B]">
+                {isEditing ? "Edit Branch" : "Add New Branch"}
+              </DialogTitle>
+              <button
+                onClick={handleCloseAttempt}
+                aria-label="Close"
+                className="flex h-8 w-8 items-center justify-center rounded-md border border-[#E2E8F0] bg-white transition-colors hover:bg-slate-50"
+              >
+                <X className="h-4 w-4 text-[#64748B]" />
+              </button>
+            </div>
+            <div className="border-b border-[#E2E8F0]" />
+          </motion.div>
 
         {/* ===== BODY (Scrollable) ===== */}
         <motion.form variants={itemVariants}
@@ -273,7 +285,7 @@ export function AddEditBranchModal({
               >
                 <Select
                   value={contactCountryCode}
-                  onValueChange={(val) => setValue("contactCountryCode", val)}
+                  onValueChange={(val) => setValue("contactCountryCode", val, { shouldDirty: true })}
                   disabled
                 >
                   <SelectTrigger className="h-full w-[90px] rounded-l-md rounded-r-none border-0 border-r border-slate-200 bg-transparent px-2 ring-0 focus:ring-0 focus:ring-offset-0">
@@ -313,7 +325,7 @@ export function AddEditBranchModal({
               >
                 <Select
                   value={whatsappCountryCode}
-                  onValueChange={(val) => setValue("whatsappCountryCode", val)}
+                  onValueChange={(val) => setValue("whatsappCountryCode", val, { shouldDirty: true })}
                   disabled
                 >
                   <SelectTrigger className="h-full w-[90px] rounded-l-md rounded-r-none border-0 border-r border-slate-200 bg-transparent px-2 ring-0 focus:ring-0 focus:ring-offset-0">
@@ -368,7 +380,7 @@ export function AddEditBranchModal({
                       name="branch-type"
                       value={type.value}
                       checked={branchType === type.value}
-                      onChange={() => setValue("branch_type", type.value, { shouldValidate: true })}
+                      onChange={() => setValue("branch_type", type.value, { shouldValidate: true, shouldDirty: true })}
                       className="accent-[#0F172B] w-4 h-4 cursor-pointer"
                     />
                     <label
@@ -393,7 +405,7 @@ export function AddEditBranchModal({
             <Button
               type="submit"
               form="branch-form"
-              disabled={isPending}
+              disabled={isPending || !isDirty}
               className={cn(
                 BUTTON_STYLES.primary.full,
                 "w-auto px-6 font-inter text-[14px] font-semibold text-white leading-5"
@@ -430,6 +442,20 @@ export function AddEditBranchModal({
         </motion.div>
       </DialogContent>
     </Dialog>
+
+    <DeleteConfirmationModal
+      isOpen={showDiscardModal}
+      onClose={() => setShowDiscardModal(false)}
+      onConfirm={() => {
+        setShowDiscardModal(false);
+        onClose();
+      }}
+      title="Save Your Edits First"
+      description="Unsaved changes detected, remember to save your edits before you close!"
+      confirmText="Proceed Without Saving"
+      cancelText="Go Back and Save"
+    />
+    </>
   );
 }
 

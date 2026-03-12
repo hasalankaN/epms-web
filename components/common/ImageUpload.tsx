@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
 // Removed next/image import to use standard HTML img
 
@@ -11,9 +11,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { useUploadFile } from "@/hooks/api/files/useUploadFile";
 
 interface ImageUploadProps {
-  setImage: (image: string) => void;
+  setImage: (image: string, file?: File) => void;
   removeImage: () => void;
   imageUrl: string;
   className?: string;
@@ -42,11 +43,19 @@ export default function ImageUpload({
   showSupportedFormats = true,
 }: ImageUploadProps) {
   const [preview, setPreview] = useState<string | null>(imageUrl || null);
+
+  // Keep internal preview state synced with external imageUrl prop
+  // This is crucial for form resets when the panel is closed and reopened
+  useEffect(() => {
+    setPreview(imageUrl || null);
+  }, [imageUrl]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cancelTokenSourceRef = useRef<any>(null);
+
+  const { mutateAsync: uploadFile } = useUploadFile();
 
   const handleFile = useCallback(
     async (file: File) => {
@@ -63,40 +72,39 @@ export default function ImageUpload({
 
       const reader = new FileReader();
 
-      reader.onloadend = () => setPreview(reader.result as string);
-      reader.readAsDataURL(file);
+      reader.onloadend = async () => {
+        const dataUrl = reader.result as string;
 
-      setIsUploading(true);
-      setUploadProgress(0);
+        setPreview(dataUrl);
+        setIsUploading(true);
+        setUploadProgress(0);
 
-      const formData = new FormData();
+        try {
+          const res = await uploadFile({
+            file,
+            onUploadProgress: (progressEvent: any) => {
+              const percentCompleted = Math.round(
+                (progressEvent.loaded * 100) / (progressEvent.total || file.size)
+              );
 
-      formData.append("files", file);
-
-      const res = await Promise.resolve({
-        status: "FAILED",
-        message: "Failed to upload image",
-        data: ["https://via.placeholder.com/150"],
-      });
-
-      if (res.status === "SUCCESS") {
-        setImage(res.data[0]);
-        setUploadProgress(100);
-      } else {
-        if (res.message === "canceled") {
+              setUploadProgress(percentCompleted);
+            },
+          });
+          
+          // Image successfully uploaded to server
+          setImage(res.data.url, file);
+        } catch (error) {
+          console.log(error);
+          setPreview(null);
+        } finally {
           setIsUploading(false);
-
-          return resetUploadState();
         }
+      };
 
-        toast.error(res.message || "Failed to upload image");
-        resetUploadState();
-      }
-
-      setIsUploading(false);
+      reader.readAsDataURL(file);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [setImage]
+    [setImage, uploadFile, limit]
   );
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -151,42 +159,52 @@ export default function ImageUpload({
   };
 
   return (
-    <div className="w-full mx-auto">
+    <div className="w-full h-full mx-auto">
       <div
-        className="relative"
+        className={cn("relative h-full w-full", isUploading && "pointer-events-none")}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
         {preview && (
-          <div className={cn("flex flex-col", className)}>
+          <div className={cn("flex flex-col w-full h-full relative", className)}>
             <div
               className={cn(
-                "relative w-full h-full bg-gray-100 rounded-lg overflow-hidden"
+                "relative w-full h-full bg-slate-100 rounded-lg overflow-hidden",
+                isUploading && "animate-pulse"
               )}
             >
               <img
                 src={preview}
                 alt="Selected file preview"
-                style={{ opacity: isUploading ? uploadProgress / 100 : 1 }}
-                className="w-full h-full object-cover"
+                className={cn("w-full h-full object-cover transition-opacity duration-300", isUploading && "opacity-20")}
               />
-              <Button
-                variant="destructive"
-                size="icon"
-                className="absolute top-1 right-1 h-5 w-5 rounded-sm bg-red-500 hover:bg-red-600"
-                onClick={handleDiscard}
-                aria-label="Remove image"
-              >
-                <X className="h-3 w-3" />
-              </Button>
+              {!isUploading && (
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-1 right-1 h-5 w-5 rounded-sm bg-red-500 hover:bg-red-600 z-10"
+                  onClick={(e) => { e.stopPropagation(); handleDiscard(); }}
+                  aria-label="Remove image"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+              {isUploading && (
+                 <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                    <span className="text-sm font-bold text-[#E60076]">{uploadProgress}%</span>
+                 </div>
+              )}
+              {isUploading && (
+                 <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
+                    <Progress 
+                      value={uploadProgress} 
+                      className="h-1.5 w-full bg-slate-200 [&>div]:bg-[#E60076]" 
+                    />
+                 </div>
+              )}
             </div>
-            {isUploading && (
-              <div className={cn("mt-2", uploadProgress === 100 && "hidden")}>
-                <Progress value={uploadProgress} className="w-full h-2" />
-              </div>
-            )}
           </div>
         )}
         {!isUploading && !preview && (

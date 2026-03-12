@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import type { ProductDataType } from "@/types/product";
 
 import { useGetProducts } from "@/hooks/api/products/useGetProducts";
+import { useBulkDeleteProducts } from "@/hooks/api/products/useBulkDeleteProducts";
 import type { ProductType, ProductStockStatus } from "@/hooks/api/products/useGetProducts";
 
 import { ProductListToolbar } from "./views/ProductList/ProductListToolbar";
@@ -60,6 +61,8 @@ export function ProductList() {
     () => Object.entries(rowSelection).filter(([, selected]) => selected).map(([id]) => id),
     [rowSelection]
   );
+
+  const { mutateAsync: bulkDeleteProducts, isPending: isBulkDeleting } = useBulkDeleteProducts();
 
   // ===== HANDLERS =====
   const [localSearch, setLocalSearch] = useState(search);
@@ -142,16 +145,20 @@ export function ProductList() {
     router.push(`${pathname}?${params.toString()}`);
   }, [searchParams, pathname, router]);
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async () => {
     if (selectedIds.length === 0) {
       toast.warning("Please select at least one product");
-      
-    return;
+
+      return;
     }
 
-    toast.error(`Deleting ${selectedIds.length} selected product(s)`);
-    setRowSelection({});
-  }, [selectedIds]);
+    try {
+      await bulkDeleteProducts({ ids: selectedIds });
+      setRowSelection({});
+    } catch {
+      // errors handled by hook
+    }
+  }, [selectedIds, bulkDeleteProducts]);
 
   // ===== BULK ACTIONS CONFIG =====
   const bulkActions = useMemo(
@@ -178,6 +185,7 @@ export function ProductList() {
           stockFilter={stockStatus}
           onFilterChange={handleFilterChange}
           onClearFilters={handleClearFilters}
+          isDeleting={isBulkDeleting}
         />
       </div>
 
