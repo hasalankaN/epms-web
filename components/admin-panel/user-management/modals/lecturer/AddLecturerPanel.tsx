@@ -113,6 +113,27 @@ const SALARY_TYPES = [
   { value: "HYBRID", label: "Hybrid" },
 ] as const;
 
+// ===== ANIMATION VARIANTS =====
+const sidePanelVariants = {
+  hidden: { x: "100%" },
+  show: {
+    x: 0,
+    transition: {
+      type: "spring",
+      damping: 25,
+      stiffness: 200,
+      staggerChildren: 0.08,
+      delayChildren: 0.35,
+    },
+  },
+  exit: { x: "100%" },
+} as const;
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  show: { opacity: 1, y: 0 },
+};
+
 // ===== COMPONENT =====
 
 export function AddLecturerPanel({ isOpen, onClose }: AddLecturerPanelProps) {
@@ -216,10 +237,10 @@ export function AddLecturerPanel({ isOpen, onClose }: AddLecturerPanelProps) {
               {/* Side Panel */}
               <motion.div
                 key="panel"
-                initial={{ x: "100%" }}
-                animate={{ x: 0 }}
-                exit={{ x: "100%" }}
-                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                variants={sidePanelVariants}
+                initial="hidden"
+                animate="show"
+                exit="exit"
                 className="fixed right-0 top-0 z-[99999] flex h-screen w-full max-w-[500px] flex-col bg-white shadow-2xl"
                 style={{
                   borderLeft: "1px solid #E2E8F0",
@@ -229,7 +250,10 @@ export function AddLecturerPanel({ isOpen, onClose }: AddLecturerPanelProps) {
                 }}
               >
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-[#E2E8F0] px-6 py-4 shrink-0">
+                <motion.div
+                  variants={itemVariants}
+                  className="flex items-center justify-between border-b border-[#E2E8F0] px-6 py-4 shrink-0"
+                >
                   <h2 className="text-lg font-semibold leading-[30px] text-[#0F172B]">
                     Lecturer Registration Form
                   </h2>
@@ -241,15 +265,19 @@ export function AddLecturerPanel({ isOpen, onClose }: AddLecturerPanelProps) {
                   >
                     <X className="h-4 w-4 text-[#64748B]" />
                   </button>
-                </div>
+                </motion.div>
 
                 {/* Scrollable Content */}
-                <form
-                  id="add-lecturer-form"
-                  onSubmit={handleSubmit(onSubmit)}
-                  className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar"
+                <motion.div
+                  variants={itemVariants}
+                  className="flex-1 overflow-y-auto"
                 >
-                  <div className="flex flex-col gap-5">
+                  <form
+                    id="add-lecturer-form"
+                    onSubmit={handleSubmit(onSubmit)}
+                    className="px-6 py-6 custom-scrollbar"
+                  >
+                    <div className="flex flex-col gap-5">
 
                     {/* --- Names row --- */}
                     <div className="grid grid-cols-2 gap-4">
@@ -492,12 +520,15 @@ export function AddLecturerPanel({ isOpen, onClose }: AddLecturerPanelProps) {
                         ))}
                       </div>
                     </div>
-
-                  </div>
-                </form>
+                    </div>
+                  </form>
+                </motion.div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-end gap-3 border-t border-[#E2E8F0] px-6 py-4 shrink-0">
+                <motion.div
+                  variants={itemVariants}
+                  className="flex items-center justify-end gap-3 border-t border-[#E2E8F0] px-6 py-4 shrink-0"
+                >
                   <Button
                     type="button"
                     variant="ghost"
@@ -520,7 +551,7 @@ export function AddLecturerPanel({ isOpen, onClose }: AddLecturerPanelProps) {
                   >
                     {isPending ? "Creating..." : "Create"}
                   </Button>
-                </div>
+                </motion.div>
               </motion.div>
             </>
           )}
