@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 
 import { motion } from "framer-motion";
+import { Inbox } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { CustomPaginationProps } from "@/components/common/CustomPagination";
@@ -37,6 +38,7 @@ interface DataTableProps<T> {
   rowClassName?: (item: T) => string;
   showCheckboxes?: boolean;
   tableContainerClassName?: string;
+  emptyState?: React.ReactNode;
 }
 
 export function DataTable<T>({
@@ -49,6 +51,7 @@ export function DataTable<T>({
   rowClassName,
   showCheckboxes = true,
   tableContainerClassName,
+  emptyState,
 }: DataTableProps<T>) {
   const [animationData, setAnimationData] = useState<any>(cachedLoadingAnimationData);
 
@@ -128,33 +131,53 @@ export function DataTable<T>({
             }}
             className="[&_tr:last-child]:border-0"
           >
-            {data.map((item) => (
-              <motion.tr
-                key={keyExtractor(item)}
-                variants={itemVariants}
-                className={cn(
-                  "h-[50px] border-b border-[#E7E5E4] transition-colors hover:bg-[#FFF9FC] data-[state=selected]:bg-muted",
-                  rowClassName?.(item)
-                )}
-              >
-                {columns.map((col, index) => (
-                  <td
-                    key={col.id || index}
-                    className={cn(
-                      "p-1.5 align-middle",
-                      showCheckboxes && "[&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
-                      col.className
+            {data.length > 0 ? (
+              data.map((item) => (
+                <motion.tr
+                  key={keyExtractor(item)}
+                  variants={itemVariants}
+                  className={cn(
+                    "h-[50px] border-b border-[#E7E5E4] transition-colors hover:bg-[#FFF9FC] data-[state=selected]:bg-muted",
+                    rowClassName?.(item)
+                  )}
+                >
+                  {columns.map((col, index) => (
+                    <td
+                      key={col.id || index}
+                      className={cn(
+                        "p-1.5 align-middle",
+                        showCheckboxes && "[&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+                        col.className
+                      )}
+                    >
+                      {col.cell
+                        ? col.cell(item)
+                        : col.accessorKey
+                          ? (item[col.accessorKey] as React.ReactNode)
+                          : null}
+                    </td>
+                  ))}
+                </motion.tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={columns.length} className="h-full">
+                  <div className="flex flex-col items-center justify-center py-20">
+                    {emptyState || (
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FDF2F8]">
+                          <Inbox className="h-6 w-6 text-[#E60076]" />
+                        </div>
+                        <h3 className="mt-4 text-sm font-semibold text-[#1D293D]">No results found</h3>
+                        <p className="mt-1 text-sm text-[#64748B]">
+                          Try adjusting your search or filters to find what you&apos;re looking for.
+                        </p>
+                      </div>
                     )}
-                  >
-                    {col.cell
-                      ? col.cell(item)
-                      : col.accessorKey
-                        ? (item[col.accessorKey] as React.ReactNode)
-                        : null}
-                  </td>
-                ))}
-              </motion.tr>
-            ))}
+                  </div>
+                </td>
+              </tr>
+            )}
           </motion.tbody>
         </table>
       </div>

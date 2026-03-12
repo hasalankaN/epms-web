@@ -23,6 +23,7 @@ export interface FilterCategory {
   label: string;
   type: "chips" | "date" | "dateRange";
   items?: FilterItem[];
+  multiSelect?: boolean;
 }
 
 export interface FilterItem {
@@ -109,24 +110,37 @@ export function FilterModal({
   const totalSelectedCount = useMemo(() => {
     let count = selectedChips.length;
 
-    // Count date selections
-    if (dateSelection.start || dateSelection.end) {
+    // Count date selections (only if both are present for range)
+    if (dateSelection.start && dateSelection.end) {
       count += 1;
     }
 
-    if (followUpDates.start || followUpDates.end) {
+    if (followUpDates.start && followUpDates.end) {
+      count += 1;
+    } else if (!isFollowUpRange && followUpDates.start) {
+      // If single date mode, only start is needed
       count += 1;
     }
 
     return count;
-  }, [selectedChips, dateSelection, followUpDates]);
+  }, [selectedChips, dateSelection, followUpDates, isFollowUpRange]);
 
   // ===== HANDLERS =====
 
   const handleChipToggle = useCallback((categoryKey: string, itemKey: string) => {
     setSelections((prev) => {
+      const category = categories.find((c) => c.key === categoryKey);
+      const isMultiSelect = category?.multiSelect !== false; // Default to true
+
       const current = (prev[categoryKey] as string[]) || [];
       const isSelected = current.includes(itemKey);
+
+      if (!isMultiSelect) {
+        return {
+          ...prev,
+          [categoryKey]: isSelected ? [] : [itemKey],
+        };
+      }
 
       return {
         ...prev,
@@ -135,7 +149,7 @@ export function FilterModal({
           : [...current, itemKey],
       };
     });
-  }, []);
+  }, [categories]);
 
   const handleDateChange = useCallback((start: Date | null, end: Date | null) => {
     setSelections((prev) => ({
