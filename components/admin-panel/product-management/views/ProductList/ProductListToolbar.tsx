@@ -54,6 +54,7 @@ interface ProductListToolbarProps {
   stockFilter: string | null;
   onFilterChange: (key: string, value: string | null) => void;
   onClearFilters: () => void;
+  isDeleting?: boolean;
 }
 
 // ===== COMPONENT =====
@@ -68,6 +69,7 @@ export function ProductListToolbar({
   stockFilter,
   onFilterChange,
   onClearFilters,
+  isDeleting = false,
 }: ProductListToolbarProps) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
@@ -270,6 +272,7 @@ export function ProductListToolbar({
           bulkActions.onDelete();
           setDeleteModalOpen(false);
         }}
+        isDeleting={isDeleting}
         title="Confirm Bulk Deletion"
         description={`Are you sure you want to delete ${selectedCount} selected product(s)? This action cannot be undone.`}
       />
