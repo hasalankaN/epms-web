@@ -29,6 +29,7 @@ import {
 } from "@/components/admin-panel/user-management/modals/lecturer/LecturerPaymentHistoryModal";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
 import { useUpdateLecturerStatus } from "@/hooks/api/lecturers/useUpdateLecturerStatus";
+import { EditLecturerModal } from "@/components/admin-panel/user-management/modals/lecturer/EditLecturerModal";
 
 
 interface LecturerTableProps {
@@ -59,6 +60,9 @@ export function LecturerTable({
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   const [selectedLecturer, setSelectedLecturer] = useState<LecturerDataType | null>(null);
 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editLecturerId, setEditLecturerId] = useState<string | null>(null);
+
   const { mutate: updateStatus, isPending: isUpdatingStatus } = useUpdateLecturerStatus();
 
   const itemsPerPage = 10;
@@ -84,6 +88,11 @@ export function LecturerTable({
   const handleAction = (action: string, lecturer: LecturerDataType) => {
     if (action === "view-lecturer") {
       router.push(`/admin-panel/user-management/lecturer/${lecturer.id}`);
+
+      return;
+    } else if (action === "edit") {
+      setEditLecturerId(lecturer.id);
+      setIsEditModalOpen(true);
 
       return;
     } else if (action === "payment-history") {
@@ -212,12 +221,16 @@ export function LecturerTable({
       accessorKey: "phone",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
       cell: (item) => (
-        <a
-          href={`tel:${item.phone}`}
-          className="text-[11px] font-medium text-[#45556C] transition-colors hover:text-[#E60076]"
-        >
-          {item.phone}
-        </a>
+        item.phone && item.phone !== "-" ? (
+          <a
+            href={`tel:${item.phone}`}
+            className="text-[11px] font-medium text-[#45556C] transition-colors hover:text-[#E60076]"
+          >
+            {item.phone}
+          </a>
+        ) : (
+          <span className="text-[11px] font-medium text-[#45556C]">{item.phone || "-"}</span>
+        )
       ),
     },
     {
@@ -229,14 +242,18 @@ export function LecturerTable({
       accessorKey: "whatsApp",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
       cell: (item) => (
-        <a
-          href={`https://wa.me/${item.whatsApp.replace(/\s+/g, "")}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[11px] font-medium text-[#45556C] transition-colors hover:text-[#E60076]"
-        >
-          {item.whatsApp}
-        </a>
+        item.whatsApp && item.whatsApp !== "-" ? (
+          <a
+            href={`https://wa.me/${item.whatsApp.replace(/\s+/g, "")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] font-medium text-[#45556C] transition-colors hover:text-[#E60076]"
+          >
+            {item.whatsApp}
+          </a>
+        ) : (
+          <span className="text-[11px] font-medium text-[#45556C]">{item.whatsApp || "-"}</span>
+        )
       ),
     },
     {
@@ -379,6 +396,13 @@ export function LecturerTable({
         isOpen={paymentModalOpen}
         onClose={() => setPaymentModalOpen(false)}
         data={paymentModalData}
+      />
+
+      {/* Edit Lecturer Modal */}
+      <EditLecturerModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        lecturerId={editLecturerId}
       />
 
       {/* Deactivate/Activate Lecturer Modal */}
