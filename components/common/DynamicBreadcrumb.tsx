@@ -46,7 +46,7 @@ export default function DynamicBreadcrumb({ sidebarData }: { sidebarData: Sideba
 
   // Try to find an exact match for the current URL in the sidebar
   const exactMatch = findLinkWithParent(pathname);
-  const IGNORED_LABELS = ["Lecturer Panel", "Referral Panel"];
+  const IGNORED_LABELS = ["Admin Panel", "Lecturer Panel", "Referral Panel"];
 
   if (exactMatch) {
     const { parentTitle, linkTitle } = exactMatch;
@@ -81,11 +81,15 @@ export default function DynamicBreadcrumb({ sidebarData }: { sidebarData: Sideba
   }
 
   // Fallback: Generate breadcrumbs from path segments
-  const allSegments = pathSegments.map((segment, index) => ({
-    segment,
-    href: "/" + pathSegments.slice(0, index + 1).join("/"),
-    formatted: formatBreadcrumbSegment(segment)
-  }));
+  const allSegments = pathSegments.map((segment, index) => {
+    const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(segment);
+    
+    return {
+      segment,
+      href: "/" + pathSegments.slice(0, index + 1).join("/"),
+      formatted: isUUID ? "View" : formatBreadcrumbSegment(segment)
+    };
+  });
 
   const displayedSegments = allSegments.filter(
     (item) => !IGNORED_LABELS.includes(item.formatted)

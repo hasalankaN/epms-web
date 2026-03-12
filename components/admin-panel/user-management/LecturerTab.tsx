@@ -1,29 +1,16 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 import { toast } from "sonner";
 
-import type { LecturerDataType, SalaryStatus, MemberStatus } from "@/types/user-management";
+import type { LecturerDataType, SalaryStatus } from "@/types/user-management";
 
 import { LecturerTableToolbar } from "./views/Lecturer/LecturerTableToolbar";
 import { LecturerTable } from "./views/Lecturer/LecturerTable";
-
-// ===== MOCK DATA =====
-const mockLecturers: LecturerDataType[] = Array.from({ length: 15 }, (_, i) => ({
-  id: `lecturer-${i + 1}`,
-  regDate: "01/21",
-  idNo: `#${String(i + 1).padStart(6, "0")}`,
-  name: "Amali Perera",
-  phone: "+9470 492 2345",
-  whatsApp: "+9470 492 2345",
-  email: "user@gmail.com",
-  salaryType: i % 2 === 0 ? "Monthly" : "Percentage",
-  salaryStatus: (["Over Due", "Pending", "Paid"] as SalaryStatus[])[i % 3],
-  status: (["active", "inactive"] as MemberStatus[])[i % 2],
-}));
+import { useGetLecturers } from "@/hooks/api/lecturers/useGetLecturers";
 
 export function LecturerTab() {
   const router = useRouter();
@@ -33,9 +20,42 @@ export function LecturerTab() {
   // ===== URL STATE =====
   const pageParam = searchParams.get("page");
   const currentPage = pageParam ? parseInt(pageParam) : 1;
+  const search = searchParams.get("search") || "";
+  const status = searchParams.get("status") || undefined;
+  const salaryStatus = searchParams.get("salaryStatus") || undefined;
+  const fromDate = searchParams.get("from") || undefined;
+  const toDate = searchParams.get("to") || undefined;
+
+  // ===== API HOOK =====
+  const { data: apiData, isLoading, isError } = useGetLecturers({
+    page: currentPage,
+    size: 10,
+    search: search || undefined,
+    status: status,
+    salary_payment_status: salaryStatus,
+    from: fromDate,
+    to: toDate,
+  });
+
+  const data = useMemo(() => {
+    if (!apiData?.results) return [];
+    
+    // Transform API data to match UI type LecturerDataType
+    return apiData.results.map(item => ({
+      id: item.user_id,
+      regDate: new Date(item.created_at).toLocaleDateString(),
+      idNo: `#${item.user_id.substring(0, 6)}`, // Fallback since API doesn't seem to return idNo
+      name: `${item.first_name} ${item.last_name}`,
+      phone: item.mobile_number,
+      whatsApp: item.whatsapp_number || "-",
+      email: item.email,
+      salaryType: item.salary_type || "-",
+      salaryStatus: (item.salary_payment_status as SalaryStatus) || "-",
+      status: item.status,
+    })) as LecturerDataType[];
+  }, [apiData]);
 
   // ===== SHARED STATE =====
-  const [data] = useState<LecturerDataType[]>(mockLecturers);
   const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
 
   // ===== DERIVED VALUES =====
@@ -50,10 +70,64 @@ export function LecturerTab() {
   );
 
   // ===== HANDLERS =====
+  const [localSearch, setLocalSearch] = useState(search);
+
+  // Sync local search when URL search changes (e.g. back button)
+  useEffect(() => {
+    setLocalSearch(search);
+  }, [search]);
+
+  // Debounce search update to URL
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Check if localSearch differs from URL search
+      if (localSearch.trim() !== search.trim()) {
+        const params = new URLSearchParams(searchParams.toString());
+
+        if (localSearch.trim()) {
+          params.set("search", localSearch.trim());
+        } else {
+          params.delete("search");
+        }
+
+        params.set("page", "1");
+        router.push(`${pathname}?${params.toString()}`);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [localSearch, search, searchParams, pathname, router]);
+
   const handlePageChange = useCallback((page: number) => {
     const params = new URLSearchParams(searchParams.toString());
 
     params.set("page", page.toString());
+    router.push(`${pathname}?${params.toString()}`);
+  }, [searchParams, pathname, router]);
+
+  const handleMultiFilterChange = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
+  }, [searchParams, pathname, router]);
+
+  const handleClearFilters = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.delete("status");
+    params.delete("salaryStatus");
+    params.delete("from");
+    params.delete("to");
+    params.set("page", "1");
     router.push(`${pathname}?${params.toString()}`);
   }, [searchParams, pathname, router]);
 
@@ -122,6 +196,16 @@ export function LecturerTab() {
           bulkActions={bulkActions}
           selectedCount={selectedIds.length}
           totalCount={data.length}
+          search={localSearch}
+          onSearchChange={setLocalSearch}
+          onApplyFilters={handleMultiFilterChange}
+          onClearFilters={handleClearFilters}
+          activeUrlFilters={{
+            status,
+            salaryStatus,
+            from: fromDate,
+            to: toDate,
+          }}
         />
       </div>
 
@@ -129,10 +213,13 @@ export function LecturerTab() {
       <div>
         <LecturerTable
           data={data}
+          isLoading={isLoading}
+          isError={isError}
           currentPage={currentPage}
           onPageChange={handlePageChange}
           rowSelection={rowSelection}
           setRowSelection={setRowSelection}
+          totalResults={apiData?.totalResults || 0}
         />
       </div>
     </div>

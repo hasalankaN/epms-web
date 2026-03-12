@@ -12,4 +12,11 @@ export const API_ENDPOINTS = {
     GET_ALL: `/api/v1/v1/products`,
     GET_BY_ID: (id: string) => `/api/v1/v1/products/${id}`,
   },
+  lecturers: {
+    GET_ALL: `/api/v1/admin/lecturers`,
+    CREATE: `/api/v1/admin/lecturers`,
+    GET_BY_ID: (id: string) => `/api/v1/admin/lecturers/${id}`,
+    UPDATE: (id: string) => `/api/v1/admin/lecturers/${id}`,
+    UPDATE_STATUS: (id: string) => `/api/v1/admin/lecturers/${id}/status`,
+  },
 };

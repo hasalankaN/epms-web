@@ -12,7 +12,7 @@ RUN npm install --legacy-peer-deps
 COPY . .
 
 # Add ENV variables
-ENV NEXT_PUBLIC_API_BASE_URL=https://blanche-dev-api-802944447655.asia-south1.run.app
+ENV NEXT_PUBLIC_API_BASE_URL=https://lms-binzo-backend-dev-956769189464.asia-southeast1.run.app
 ENV JWT_SECRET=binzo-admin-jwt-secret-2026
 
 # Build the Next.js application
