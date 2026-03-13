@@ -237,8 +237,8 @@ export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProp
 
       Object.entries(tagPositions).forEach(([key, tagState]) => {
         tagLayout[key] = {
-          x: Math.round((tagState.x / 100) * naturalWidth),
-          y: Math.round((tagState.y / 100) * naturalHeight),
+          x: tagState.x,    // Passed as percentage per API docs
+          y: tagState.y,    // Passed as percentage per API docs
           fontSize: tagState.properties.fontSize,
           fontColor: tagState.properties.fontColor,
           fontFamily: tagState.properties.fontFamily,
@@ -247,17 +247,15 @@ export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProp
         };
       });
 
-      // ── 4. Build signature layout (% → pixels) ──────────────────────────
+      // ── 4. Build signature layout (% → API structure) ───────────────────
       let signatureLayout: Record<string, ApiSignatureEntry> | null = null;
 
       if (signatureState.enabled && signatureImageUrl) {
-        const sigWidthPx = Math.round((signatureState.width / 100) * naturalWidth);
-
         signatureLayout = {
           director_sig: {
-            x: Math.round((signatureState.x / 100) * naturalWidth),
-            y: Math.round((signatureState.y / 100) * naturalHeight),
-            width: sigWidthPx,
+            x: signatureState.x,           // Percentage
+            y: signatureState.y,           // Percentage
+            width: signatureState.width,   // Percentage
             opacity: signatureState.opacity,
             rotation: signatureState.rotation,
           },

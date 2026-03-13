@@ -17,7 +17,7 @@ import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationM
 
 import { cn } from "@/lib/utils";
 import { AUTH_TYPOGRAPHY, AUTH_INPUT, BUTTON_STYLES } from "@/lib/constants/theme";
-import type { CertificateTemplateRow } from "@/types/certificate";
+import type { CertificateTemplateItem } from "@/types/certificate";
 
 import {
   type TagPositions,
@@ -37,7 +37,7 @@ import { ExpandedPreviewModal } from "./ExpandedPreviewModal";
 interface EditCertificateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  certificate: CertificateTemplateRow | null;
+  certificate: CertificateTemplateItem | null;
 }
 
 // ===== Reusable FieldLabel helper =====
@@ -103,17 +103,13 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
   // Pre-fill form when certificate changes or modal opens
   useEffect(() => {
     if (isOpen && certificate) {
-      setCertificateName(certificate.certificateName || "");
-      
-      // Clean up price string "5,000 LKR" -> "5000" or allow mock "XXXX.00"
-      const cleanPrice = certificate.price?.replace(/[^0-9.xX]/g, '') || "";
-      
-      setPrice(cleanPrice);
-      
-      // Setup mock initial template for preview
-      setPreviewUrl("https://placehold.co/800x600/f8fafc/94a3b8?text=Certificate+Template");
-      setSelectedFileName(certificate.certificateName ? `${certificate.certificateName} Template.png` : "Existing Template.png");
-      
+      setCertificateName(certificate.name || "");
+      setPrice(parseFloat(certificate.price || "0").toString());
+
+      // Use the real template file URL for preview
+      setPreviewUrl(certificate.template_file_url || null);
+      setSelectedFileName(certificate.name ? `${certificate.name} Template` : "Existing Template");
+
       // Reset editor state
       setIsExpandedPreviewOpen(false);
       setSelectedTag(null);
@@ -123,9 +119,13 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
       setShowSampleValues(true);
       setImageAspectRatio(null);
       setTagPositions(JSON.parse(JSON.stringify(DEFAULT_TAG_POSITIONS)) as TagPositions);
-      setSignatureState({ ...DEFAULT_SIGNATURE_STATE });
+      setSignatureState({
+        ...DEFAULT_SIGNATURE_STATE,
+        enabled: !!certificate.signature_image_url,
+        imageUrl: certificate.signature_image_url ?? null,
+      });
       setIsSignatureSelected(false);
-      
+
       // Clean dirty state
       setIsDirty(false);
       setShowDiscardModal(false);

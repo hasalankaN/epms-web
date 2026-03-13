@@ -19,28 +19,19 @@ import { BulkActionDropdown } from "@/components/common/dropdowns/BulkActionDrop
 import type { FilterCategory, FilterSelections } from "@/components/common/filters/FilterModal";
 import { FilterModal, FilterModalTrigger } from "@/components/common/filters/FilterModal";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
+import type { CertificateTemplateStatus } from "@/types/certificate";
 
 const buttonTextStyles = "text-[14px] font-semibold leading-[20px] text-[#0F172B]";
 
+// Course/Batch filter items are left as placeholders until integration is done
 const templateFilterCategories: FilterCategory[] = [
-  {
-    key: "courseBatch",
-    label: "By Course / Batch Name",
-    type: "chips",
-    items: [
-      { key: "batch1", label: "Batch 1" },
-      { key: "batch2", label: "Batch 2" },
-      { key: "course1", label: "Course 1" },
-      { key: "course2", label: "Course 2" },
-    ],
-  },
   {
     key: "status",
     label: "By Template Status",
     type: "chips",
     items: [
-      { key: "Active", label: "Active" },
-      { key: "Inactive", label: "Inactive" },
+      { key: "ACTIVE", label: "Active" },
+      { key: "INACTIVE", label: "Inactive" },
     ],
   },
 ];
@@ -56,14 +47,28 @@ interface AllTemplateToolbarProps {
   bulkActions: BulkActionsHandlers;
   selectedCount: number;
   totalCount: number;
+  search: string;
+  onSearchChange: (value: string) => void;
+  statusFilter?: CertificateTemplateStatus;
+  onStatusFilterChange: (status: CertificateTemplateStatus | undefined) => void;
 }
 
-export function AllTemplateToolbar({ bulkActions, selectedCount, totalCount }: AllTemplateToolbarProps) {
+export function AllTemplateToolbar({
+  bulkActions,
+  selectedCount,
+  totalCount,
+  search,
+  onSearchChange,
+  statusFilter,
+  onStatusFilterChange,
+}: AllTemplateToolbarProps) {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<FilterSelections>({});
 
-  const hasActiveFilters = Object.keys(activeFilters).length > 0;
+  // Build FilterSelections from current controlled state
+  const activeFilters: FilterSelections = statusFilter ? { status: [statusFilter] } : {};
+  const hasActiveFilters = !!statusFilter || !!search;
+
   const isAllSelected = totalCount > 0 && selectedCount === totalCount;
   const hasSelection = selectedCount > 0;
 
@@ -89,12 +94,32 @@ export function AllTemplateToolbar({ bulkActions, selectedCount, totalCount }: A
   ];
 
   const handleApplyFilters = useCallback((selections: FilterSelections) => {
-    setActiveFilters(selections);
-  }, []);
+    const statusVal = selections.status;
+
+    const selectedStatus = Array.isArray(statusVal)
+      ? (statusVal[0] as CertificateTemplateStatus | undefined)
+      : undefined;
+
+    onStatusFilterChange(selectedStatus);
+  }, [onStatusFilterChange]);
 
   const handleClearFilters = useCallback(() => {
-    setActiveFilters({});
-  }, []);
+    onSearchChange("");
+    onStatusFilterChange(undefined);
+  }, [onSearchChange, onStatusFilterChange]);
+
+  const SearchInput = ({ placeholder, className }: { placeholder: string; className?: string }) => (
+    <div className={cn("relative", className)}>
+      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#90A1B9]" />
+      <Input
+        type="text"
+        value={search}
+        onChange={(e) => onSearchChange(e.target.value)}
+        placeholder={placeholder}
+        className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "w-full border border-[#E2E8F0] pl-10 pr-4")}
+      />
+    </div>
+  );
 
   return (
     <>
@@ -103,14 +128,7 @@ export function AllTemplateToolbar({ bulkActions, selectedCount, totalCount }: A
         <div className="hidden w-full items-center justify-between gap-4 lg:flex">
           <div className="flex items-center gap-4">
             <BulkActionDropdown items={bulkItems} />
-            <div className="relative w-[320px]">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#90A1B9]" />
-              <Input
-                type="text"
-                placeholder="Search by certificate name"
-                className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "w-full border border-[#E2E8F0] pl-10 pr-4")}
-              />
-            </div>
+            <SearchInput placeholder="Search by certificate name" className="w-[320px]" />
           </div>
           <div className="flex items-center gap-3">
             {hasActiveFilters && (
@@ -127,14 +145,7 @@ export function AllTemplateToolbar({ bulkActions, selectedCount, totalCount }: A
         <div className="hidden w-full items-center justify-between gap-4 md:flex lg:hidden">
           <div className="flex items-center gap-3 flex-1">
             <BulkActionDropdown items={bulkItems} className="min-w-[110px]" />
-            <div className="relative w-full max-w-[260px]">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#90A1B9]" />
-              <Input
-                type="text"
-                placeholder="Search..."
-                className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "w-full border border-[#E2E8F0] pl-10 pr-4")}
-              />
-            </div>
+            <SearchInput placeholder="Search..." className="w-full max-w-[260px]" />
           </div>
           <div className="flex items-center gap-3">
             {hasActiveFilters && (
@@ -149,14 +160,7 @@ export function AllTemplateToolbar({ bulkActions, selectedCount, totalCount }: A
 
         {/* ===== MOBILE (<md) ===== */}
         <div className="flex w-full flex-col gap-3 md:hidden">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#90A1B9]" />
-            <Input
-              type="text"
-              placeholder="Search by certificate name"
-              className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "w-full border border-[#E2E8F0] pl-10 pr-4")}
-            />
-          </div>
+          <SearchInput placeholder="Search by certificate name" />
           <div className="flex items-center gap-2">
             {hasActiveFilters && (
               <button title="Clear Filters" type="button" onClick={handleClearFilters} className={cn(BUTTON_STYLES.outline.md, "px-3 border-dashed text-[#64748B] hover:text-[#0F172B]")}>
@@ -183,7 +187,13 @@ export function AllTemplateToolbar({ bulkActions, selectedCount, totalCount }: A
         </div>
       </div>
 
-      <FilterModal open={filterModalOpen} onOpenChange={setFilterModalOpen} categories={templateFilterCategories} onApply={handleApplyFilters} initialSelections={activeFilters} />
+      <FilterModal
+        open={filterModalOpen}
+        onOpenChange={setFilterModalOpen}
+        categories={templateFilterCategories}
+        onApply={handleApplyFilters}
+        initialSelections={activeFilters}
+      />
 
       <DeleteConfirmationModal
         isOpen={deleteModalOpen}

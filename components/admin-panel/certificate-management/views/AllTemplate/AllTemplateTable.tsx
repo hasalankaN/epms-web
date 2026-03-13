@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 
 import { MoreVertical } from "lucide-react";
 
-import type { CertificateTemplateRow } from "@/types/certificate";
+import type { CertificateTemplateItem } from "@/types/certificate";
 
 import { DataTable } from "@/components/common/table/DataTable";
 import type { Column } from "@/components/common/table/DataTable";
@@ -20,19 +20,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ViewCertificateTemplateModal } from "@/components/admin-panel/certificate-management/modals/ViewCertificateTemplateModal";
 
 const TEMPLATE_STATUS_OPTIONS = [
-  { value: "Active", bg: "#DFFFF0", text: "#16A34A" },
-  { value: "Inactive", bg: "#F1F5F9", text: "#000000" },
+  { value: "ACTIVE", bg: "#DFFFF0", text: "#16A34A" },
+  { value: "INACTIVE", bg: "#F1F5F9", text: "#000000" },
 ];
 
 interface AllTemplateTableProps {
-  data: CertificateTemplateRow[];
+  data: CertificateTemplateItem[];
   rowSelection: { [key: string]: boolean };
   setRowSelection: React.Dispatch<React.SetStateAction<{ [key: string]: boolean }>>;
   isLoading?: boolean;
   isError?: boolean;
   currentPage: number;
+  totalCount: number;
+  totalPages: number;
   onPageChange: (page: number) => void;
 }
 
@@ -43,19 +46,11 @@ export function AllTemplateTable({
   isLoading = false,
   isError = false,
   currentPage,
+  totalCount,
+  totalPages,
   onPageChange,
 }: AllTemplateTableProps) {
-  const itemsPerPage = 10;
-
-  const totalCount = data.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-
-    return data.slice(startIndex, startIndex + itemsPerPage);
-  }, [data, currentPage]);
 
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
@@ -72,23 +67,24 @@ export function AllTemplateTable({
   };
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<CertificateTemplateRow | null>(null);
+  const [selectedItem, setSelectedItem] = useState<CertificateTemplateItem | null>(null);
 
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editItem, setEditItem] = useState<CertificateTemplateRow | null>(null);
+  const [editItem, setEditItem] = useState<CertificateTemplateItem | null>(null);
+
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [viewItem, setViewItem] = useState<CertificateTemplateItem | null>(null);
 
   const [issueModalOpen, setIssueModalOpen] = useState(false);
-  const [issueItem, setIssueItem] = useState<CertificateTemplateRow | null>(null);
+  const [issueItem, setIssueItem] = useState<CertificateTemplateItem | null>(null);
 
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
-  const [deactivateItem, setDeactivateItem] = useState<CertificateTemplateRow | null>(null);
+  const [deactivateItem, setDeactivateItem] = useState<CertificateTemplateItem | null>(null);
 
   const [activateModalOpen, setActivateModalOpen] = useState(false);
-  const [activateItem, setActivateItem] = useState<CertificateTemplateRow | null>(null);
+  const [activateItem, setActivateItem] = useState<CertificateTemplateItem | null>(null);
 
-  const handleAction = (action: string, item: CertificateTemplateRow) => {
-    console.log(`Action: ${action}`, item);
-
+  const handleAction = (action: string, item: CertificateTemplateItem) => {
     if (action === "delete") {
       setSelectedItem(item);
       setDeleteModalOpen(true);
@@ -107,7 +103,7 @@ export function AllTemplateTable({
     }
   };
 
-  const columns: Column<CertificateTemplateRow>[] = [
+  const columns: Column<CertificateTemplateItem>[] = [
     {
       id: "select",
       header: () => (
@@ -128,7 +124,7 @@ export function AllTemplateTable({
         <Checkbox
           checked={!!rowSelection[item.id]}
           onCheckedChange={(checked) => handleSelectRow(item.id, !!checked)}
-          aria-label={`Select ${item.certificateName}`}
+          aria-label={`Select ${item.name}`}
           className="data-[state=checked]:bg-[#E60076] data-[state=checked]:border-[#E60076]"
         />
       ),
@@ -136,43 +132,56 @@ export function AllTemplateTable({
     },
     {
       header: "Added Date",
-      accessorKey: "addedDate",
+      accessorKey: "created_at",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[110px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.addedDate}</div>,
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
+          {new Date(item.created_at).toLocaleDateString("en-GB").replace(/\//g, "/")}
+        </div>
+      ),
     },
     {
       header: "Certificate Name",
-      accessorKey: "certificateName",
+      accessorKey: "name",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[160px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#0F172B] whitespace-nowrap overflow-hidden text-ellipsis">{item.certificateName}</div>,
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#0F172B] whitespace-nowrap overflow-hidden text-ellipsis">
+          {item.name}
+        </div>
+      ),
     },
     {
       header: "Template",
-      accessorKey: "template",
+      accessorKey: "template_file_url",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[100px]",
-      cell: () => (
-        <button className="text-[11px] font-medium text-[#E60076] hover:underline whitespace-nowrap">View</button>
+      cell: (item) => (
+        <button
+          onClick={() => { setViewItem(item); setViewModalOpen(true); }}
+          className="text-[11px] font-medium text-[#E60076] hover:underline whitespace-nowrap"
+        >
+          View
+        </button>
       ),
     },
     {
       header: "Assigned Courses/Batches",
-      accessorKey: "assignedCoursesBatches",
+      accessorKey: "id",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[180px]",
       cell: () => (
-        <button className="text-[11px] font-medium text-[#E60076] hover:underline whitespace-nowrap">View</button>
+        <button className="text-[11px] font-medium text-[#90A1B9] cursor-not-allowed whitespace-nowrap" disabled>
+          — N/A
+        </button>
       ),
-    },
-    {
-      header: "Issued Number",
-      accessorKey: "issuedNumber",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[120px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.issuedNumber}</div>,
     },
     {
       header: "Price",
       accessorKey: "price",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[100px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.price}</div>,
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
+          {`LKR ${parseFloat(item.price).toLocaleString("en-LK", { minimumFractionDigits: 2 })}`}
+        </div>
+      ),
     },
     {
       header: "Status",
@@ -199,7 +208,7 @@ export function AllTemplateTable({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[120px]">
               <DropdownMenuItem onClick={() => handleAction("edit", item)} className="cursor-pointer focus:bg-[#FDF2F8]">Edit</DropdownMenuItem>
-              {item.status === "Active" ? (
+              {item.status === "ACTIVE" ? (
                 <>
                   <DropdownMenuItem onClick={() => handleAction("issue", item)} className="cursor-pointer focus:bg-[#FDF2F8]">Issue</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleAction("deactivate", item)} className="cursor-pointer focus:bg-[#FDF2F8]">Deactivate</DropdownMenuItem>
@@ -218,7 +227,7 @@ export function AllTemplateTable({
   return (
     <>
       <DataTable
-        data={paginatedData}
+        data={data}
         columns={columns}
         keyExtractor={(item) => item.id}
         isLoading={isLoading}
@@ -244,6 +253,12 @@ export function AllTemplateTable({
         description="Are you sure you want to delete this certificate template? This action cannot be undone."
       />
 
+      <ViewCertificateTemplateModal
+        isOpen={viewModalOpen}
+        onClose={() => setViewModalOpen(false)}
+        certificate={viewItem}
+      />
+
       <DeleteConfirmationModal
         isOpen={deactivateModalOpen}
         onClose={() => setDeactivateModalOpen(false)}
@@ -252,7 +267,7 @@ export function AllTemplateTable({
           setDeactivateModalOpen(false);
         }}
         title="Confirm Deactivation"
-        description={`Are you sure you want to deactivate ${deactivateItem?.certificateName}?`}
+        description={`Are you sure you want to deactivate ${deactivateItem?.name}?`}
         confirmText="Confirm Deactivation"
         cancelText="Go Back"
         confirmVariant="destructive"
@@ -266,13 +281,13 @@ export function AllTemplateTable({
           setActivateModalOpen(false);
         }}
         title="Confirm Activation"
-        description={`Are you sure you want to activate ${activateItem?.certificateName}?`}
+        description={`Are you sure you want to activate ${activateItem?.name}?`}
         confirmText="Confirm Re - Activation"
         cancelText="Go Back"
         confirmVariant="primary"
       />
 
-      <EditCertificateModal 
+      <EditCertificateModal
         isOpen={editModalOpen}
         onClose={() => setEditModalOpen(false)}
         certificate={editItem}
@@ -281,9 +296,9 @@ export function AllTemplateTable({
       <IssueTemplateModal
         isOpen={issueModalOpen}
         onClose={() => setIssueModalOpen(false)}
-        templateName={issueItem?.certificateName}
-        onIssue={(data) => {
-          console.log("Issuing certificate:", data);
+        templateName={issueItem?.name}
+        onIssue={(issueData) => {
+          console.log("Issuing certificate:", issueData);
         }}
       />
     </>

@@ -28,6 +28,7 @@ export const API_ENDPOINTS = {
     UPDATE_STATUS: (id: string) => `/api/v1/admin/lecturers/${id}/status`,
   },
   certificateTemplates: {
+    GET_ALL: `/api/v1/admin/certificate-templates`,
     CREATE: `/api/v1/admin/certificate-templates`,
   },
 };
