@@ -11,4 +11,7 @@ export const queryKeys = {
 
   // Lecturers
   lecturers: "lecturers",
+
+  // Certificate Templates
+  certificateTemplates: "certificateTemplates",
 };

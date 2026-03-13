@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronDown, Maximize2, RotateCcw, Grid3X3, PenTool } from "lucide-react";
+import { X, ChevronDown, Maximize2, RotateCcw, Grid3X3, PenTool, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,12 @@ import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationM
 
 import { cn } from "@/lib/utils";
 import { COLORS, AUTH_TYPOGRAPHY, AUTH_INPUT, BUTTON_STYLES } from "@/lib/constants/theme";
+import { useUploadFile } from "@/hooks/api/files/useUploadFile";
+import {
+  useCreateCertificateTemplate,
+  type ApiTagEntry,
+  type ApiSignatureEntry,
+} from "@/hooks/api/certificates/useCreateCertificateTemplate";
 
 import {
   type TagPositions,
@@ -65,11 +71,21 @@ const FieldLabel = ({
 );
 
 export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProps) {
+  // ── Form state ──────────────────────────────────────────────────────────────
+  const [certificateName, setCertificateName] = useState("");
+  const [price, setPrice] = useState("");
+
+  // ── Editor state ─────────────────────────────────────────────────────────────
   const [isDirty, setIsDirty] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fileType, setFileType] = useState<string | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string>("");
+  const [templateFile, setTemplateFile] = useState<File | null>(null);
+  const [signatureFile, setSignatureFile] = useState<File | null>(null);
+  const [naturalWidth, setNaturalWidth] = useState(0);
+  const [naturalHeight, setNaturalHeight] = useState(0);
+  const [loadingStep, setLoadingStep] = useState<"idle" | "template" | "signature" | "creating">("idle");
   const [tagPositions, setTagPositions] = useState<TagPositions>(DEFAULT_TAG_POSITIONS);
   const [isExpandedPreviewOpen, setIsExpandedPreviewOpen] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -84,6 +100,10 @@ export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProp
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const signatureInputRef = useRef<HTMLInputElement>(null);
+
+  // ── API hooks ─────────────────────────────────────────────────────────────────
+  const { mutateAsync: uploadFileAsync } = useUploadFile();
+  const { mutateAsync: createTemplateAsync } = useCreateCertificateTemplate();
 
   // Track container width for proportional font scaling
   useEffect(() => {
@@ -103,11 +123,18 @@ export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProp
   // Reset state on open
   useEffect(() => {
     if (isOpen) {
+      setCertificateName("");
+      setPrice("");
       setIsDirty(false);
       setShowDiscardModal(false);
       setPreviewUrl(null);
       setFileType(null);
       setSelectedFileName("");
+      setTemplateFile(null);
+      setSignatureFile(null);
+      setNaturalWidth(0);
+      setNaturalHeight(0);
+      setLoadingStep("idle");
       setIsExpandedPreviewOpen(false);
       setSelectedTag(null);
       setSnapEnabled(false);
@@ -146,8 +173,11 @@ export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProp
     if (!file) return;
     setSelectedFileName(file.name);
     setFileType(file.type);
+    setTemplateFile(file);
     markDirty();
     setImageAspectRatio(null);
+    setNaturalWidth(0);
+    setNaturalHeight(0);
     const objectUrl = URL.createObjectURL(file);
 
     setPreviewUrl(objectUrl);
@@ -157,9 +187,101 @@ export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProp
     fileInputRef.current?.click();
   };
 
-  const handleCreate = () => {
-    toast.success("Certificate template created successfully");
-    onClose();
+  const handleCreate = async () => {
+    // ── Validation ──────────────────────────────────────────────────────────
+    if (!certificateName.trim()) {
+      toast.error("Please enter a certificate name");
+
+      return;
+    }
+
+    const parsedPrice = parseFloat(price);
+
+    if (!price || isNaN(parsedPrice) || parsedPrice < 0) {
+      toast.error("Please enter a valid price");
+
+      return;
+    }
+
+    if (!templateFile) {
+      toast.error("Please upload a certificate template");
+
+      return;
+    }
+
+    if (naturalWidth === 0 || naturalHeight === 0) {
+      toast.error("Template image dimensions could not be detected. Please re-upload.");
+
+      return;
+    }
+
+    try {
+      // ── 1. Upload template file ──────────────────────────────────────────
+      setLoadingStep("template");
+      const templateUpload = await uploadFileAsync({ file: templateFile });
+      const templateFileUrl = templateUpload.data.url;
+
+      // ── 2. Upload signature file (if present) ───────────────────────────
+      let signatureImageUrl: string | null = null;
+
+      if (signatureFile && signatureState.enabled) {
+        setLoadingStep("signature");
+        const sigUpload = await uploadFileAsync({ file: signatureFile });
+
+        signatureImageUrl = sigUpload.data.url;
+      }
+
+      // ── 3. Convert tag positions: % → pixels ────────────────────────────
+      // ... conversion logic ...
+      const tagLayout: Record<string, ApiTagEntry> = {};
+
+      Object.entries(tagPositions).forEach(([key, tagState]) => {
+        tagLayout[key] = {
+          x: Math.round((tagState.x / 100) * naturalWidth),
+          y: Math.round((tagState.y / 100) * naturalHeight),
+          fontSize: tagState.properties.fontSize,
+          fontColor: tagState.properties.fontColor,
+          fontFamily: tagState.properties.fontFamily,
+          fontWeight: tagState.properties.fontWeight,
+          opacity: tagState.properties.opacity,
+        };
+      });
+
+      // ── 4. Build signature layout (% → pixels) ──────────────────────────
+      let signatureLayout: Record<string, ApiSignatureEntry> | null = null;
+
+      if (signatureState.enabled && signatureImageUrl) {
+        const sigWidthPx = Math.round((signatureState.width / 100) * naturalWidth);
+
+        signatureLayout = {
+          director_sig: {
+            x: Math.round((signatureState.x / 100) * naturalWidth),
+            y: Math.round((signatureState.y / 100) * naturalHeight),
+            width: sigWidthPx,
+            opacity: signatureState.opacity,
+            rotation: signatureState.rotation,
+          },
+        };
+      }
+
+      // ── 5. Create certificate template ──────────────────────────────────
+      setLoadingStep("creating");
+      await createTemplateAsync({
+        name: certificateName.trim(),
+        price: parsedPrice,
+        template_file_url: templateFileUrl,
+        file_type: templateFile.type,
+        tag_layout: tagLayout,
+        signature_layout: signatureLayout,
+        signature_image_url: signatureImageUrl,
+      });
+
+      onClose();
+    } catch {
+      // Errors already shown by the individual hooks via toast
+    } finally {
+      setLoadingStep("idle");
+    }
   };
 
   const handlePositionChange = useCallback(
@@ -219,6 +341,7 @@ export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProp
 
     const objectUrl = URL.createObjectURL(file);
 
+    setSignatureFile(file);
     setSignatureState((prev) => ({ ...prev, imageUrl: objectUrl, enabled: true }));
     markDirty();
 
@@ -310,8 +433,9 @@ export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProp
                       <FieldLabel required>Certificate Name</FieldLabel>
                       <Input
                         className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder)}
-                        placeholder="lorem ipsum"
-                        onChange={markDirty}
+                        placeholder="e.g. Advanced Diploma in SWE 2026"
+                        value={certificateName}
+                        onChange={(e) => { setCertificateName(e.target.value); markDirty(); }}
                       />
                     </div>
 
@@ -321,8 +445,11 @@ export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProp
                       <div className="relative">
                         <Input
                           className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "pr-16")}
-                          placeholder="XXXX"
-                          onChange={markDirty}
+                          placeholder="e.g. 5000"
+                          type="number"
+                          min={0}
+                          value={price}
+                          onChange={(e) => { setPrice(e.target.value); markDirty(); }}
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
                           <span className={`text-sm font-semibold text-[${COLORS.slate800}]`}>LKR</span>
@@ -541,6 +668,8 @@ export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProp
                                 const img = e.currentTarget;
 
                                 setImageAspectRatio(img.naturalWidth / img.naturalHeight);
+                                setNaturalWidth(img.naturalWidth);
+                                setNaturalHeight(img.naturalHeight);
                               }}
                               onClick={handleDeselectTag}
                             />
@@ -646,12 +775,22 @@ export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProp
                 <div className={`flex items-center justify-end gap-3 border-t border-[${COLORS.line}] px-6 py-4`}>
                   <Button
                     onClick={handleCreate}
+                    disabled={loadingStep !== "idle"}
                     className={cn(
                       BUTTON_STYLES.primary.full,
                       "w-auto px-[38.5px] text-sm font-semibold text-white"
                     )}
                   >
-                    Create
+                    {loadingStep !== "idle" ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {loadingStep === "template" && "Uploading Template..."}
+                        {loadingStep === "signature" && "Uploading Signature..."}
+                        {loadingStep === "creating" && "Creating..."}
+                      </>
+                    ) : (
+                      "Create"
+                    )}
                   </Button>
                 </div>
               </motion.div>
