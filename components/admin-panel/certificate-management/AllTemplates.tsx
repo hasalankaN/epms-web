@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 
 import { useGetCertificateTemplates } from "@/hooks/api/certificates/useGetCertificateTemplates";
 import type { CertificateTemplateStatus } from "@/types/certificate";
@@ -13,7 +13,17 @@ export function AllTemplates() {
   const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [localSearch, setLocalSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<CertificateTemplateStatus | undefined>(undefined);
+
+  // Debounce localSearch to search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(localSearch);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [localSearch]);
 
   const { data, isLoading, isError } = useGetCertificateTemplates({
     page: currentPage,
@@ -34,7 +44,7 @@ export function AllTemplates() {
   }, []);
 
   const handleSearchChange = useCallback((value: string) => {
-    setSearch(value);
+    setLocalSearch(value);
     setCurrentPage(1);
     setRowSelection({});
   }, []);
@@ -50,7 +60,7 @@ export function AllTemplates() {
       <AllTemplateToolbar
         selectedCount={selectedCount}
         totalCount={totalCount}
-        search={search}
+        search={localSearch}
         onSearchChange={handleSearchChange}
         statusFilter={statusFilter}
         onStatusFilterChange={handleStatusFilterChange}
