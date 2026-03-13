@@ -70,6 +70,27 @@ const FieldLabel = ({
   </Label>
 );
 
+// ===== ANIMATION VARIANTS =====
+const sidePanelVariants = {
+  hidden: { x: "100%" },
+  show: {
+    x: 0,
+    transition: {
+      type: "spring",
+      damping: 25,
+      stiffness: 200,
+      staggerChildren: 0.08,
+      delayChildren: 0.35,
+    },
+  },
+  exit: { x: "100%" },
+} as const;
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35 } },
+};
+
 export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProps) {
   // ── Form state ──────────────────────────────────────────────────────────────
   const [certificateName, setCertificateName] = useState("");
@@ -397,10 +418,10 @@ export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProp
               {/* Side Panel */}
               <motion.div
                 key="panel"
-                initial={{ x: "100%" }}
-                animate={{ x: 0 }}
-                exit={{ x: "100%" }}
-                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                variants={sidePanelVariants}
+                initial="hidden"
+                animate="show"
+                exit="exit"
                 className="fixed right-0 top-0 z-[99999] flex h-screen w-full max-w-[540px] flex-col bg-white shadow-2xl"
                 style={{
                   borderLeft: "1px solid #E2E8F0",
@@ -410,21 +431,28 @@ export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProp
                 }}
               >
                 {/* Header */}
-                <div className={`flex items-center justify-between border-b border-[${COLORS.line}] px-6 py-4`}>
+                <motion.div 
+                  variants={itemVariants} 
+                  className={`flex items-center justify-between border-b border-[${COLORS.line}] px-6 py-4 shrink-0`}
+                >
                   <h2 className={`text-lg font-semibold leading-[30px] text-[${COLORS.slate900}]`}>
                     New Certificate
                   </h2>
                   <button
+                    type="button"
                     title="close"
                     onClick={handleCloseAttempt}
                     className={`flex h-8 w-8 items-center justify-center rounded-md border border-[${COLORS.line}] bg-transparent shadow-[0_1px_2px_0_rgba(16,24,40,0.05)] transition-colors hover:bg-slate-50`}
                   >
                     <X className={`h-4 w-4 text-[${COLORS.slate600}]`} />
                   </button>
-                </div>
+                </motion.div>
 
                 {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto px-6 py-6 scrollbar-hide">
+                <motion.div 
+                  variants={itemVariants}
+                  className="flex-1 overflow-y-auto px-6 py-6 scrollbar-hide"
+                >
                   <div className="flex flex-col gap-6">
                     {/* Certificate Name */}
                     <div className="space-y-1">
@@ -767,10 +795,13 @@ export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProp
                       </div>
                     )}
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Footer */}
-                <div className={`flex items-center justify-end gap-3 border-t border-[${COLORS.line}] px-6 py-4`}>
+                <motion.div 
+                  variants={itemVariants}
+                  className={`flex items-center justify-end gap-3 border-t border-[${COLORS.line}] px-6 py-4 shrink-0`}
+                >
                   <Button
                     onClick={handleCreate}
                     disabled={loadingStep !== "idle"}
@@ -790,7 +821,7 @@ export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProp
                       "Create"
                     )}
                   </Button>
-                </div>
+                </motion.div>
               </motion.div>
             </>
           )}
