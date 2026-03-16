@@ -416,7 +416,6 @@ export const DraggableSignature = ({
   // onDeselect — kept in interface for callers, not needed internally
   snapEnabled,
   gridDensity,
-  containerWidth,
 }: {
   signatureState: SignatureState;
   containerRef: React.RefObject<HTMLDivElement | null>;
@@ -433,8 +432,8 @@ export const DraggableSignature = ({
   const pendingResetRef = useRef(false);
   const isDraggingRef = useRef(false);
 
-  const scale = containerWidth ? Math.min(1, containerWidth / REFERENCE_CONTAINER_WIDTH) : 1;
-  const scaledWidth = Math.max(5, signatureState.width * scale);
+  // Width is already a percentage of the container — it scales naturally.
+  // Only font sizes (in px) need the containerWidth-based scale factor.
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -515,7 +514,7 @@ export const DraggableSignature = ({
         position: "absolute",
         left: `${signatureState.x}%`,
         top: `${signatureState.y}%`,
-        width: `${scaledWidth}%`,
+        width: `${signatureState.width}%`,
         x: dragX,
         y: dragY,
         opacity: signatureState.opacity / 100,
