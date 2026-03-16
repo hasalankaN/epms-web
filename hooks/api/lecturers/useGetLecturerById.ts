@@ -6,6 +6,7 @@ import { queryKeys } from "@/lib/constants/queryKeys";
 
 export interface LecturerProfile {
   user_id: string;
+  public_id: string;
   first_name: string;
   last_name: string;
   email: string;
@@ -15,8 +16,12 @@ export interface LecturerProfile {
   district: string | null;
   gender: "MALE" | "FEMALE" | null;
   profile_image_url: string | null;
-  salary_type: "MONTHLY" | "COMMISSION" | "HYBRID";
-  status: "ACTIVE" | "SUSPENDED";
+  salary_type:
+    | "MONTHLY"
+    | "PERCENTAGE_FROM_BATCH_DEPOSITS"
+    | "COURSE_WISE_PAYMENTS"
+    | "BATCH_WISE_PAYMENTS";
+  status: "ACTIVE" | "INACTIVE";
   branch_id: string | null;
   branch_name: string | null;
   created_at: string;

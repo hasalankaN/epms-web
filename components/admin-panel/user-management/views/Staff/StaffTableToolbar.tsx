@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 
 import { Search, MoreHorizontal, CheckSquare2, X } from "lucide-react";
 
@@ -18,6 +18,7 @@ import type { BulkActionItem } from "@/components/common/dropdowns/BulkActionDro
 import { BulkActionDropdown } from "@/components/common/dropdowns/BulkActionDropdown";
 import type { FilterCategory, FilterSelections } from "@/components/common/filters/FilterModal";
 import { FilterModal, FilterModalTrigger } from "@/components/common/filters/FilterModal";
+import { useGetBranches } from "@/hooks/api/branches/useGetBranches";
 
 const buttonTextStyles = "text-[14px] font-semibold leading-[20px] text-[#0F172B]";
 
@@ -33,35 +34,38 @@ const staffFilterCategories: FilterCategory[] = [
     key: "salaryStatus",
     label: "By Salary Status",
     type: "chips",
+    multiSelect: false,
     items: [
-      { key: "overDue", label: "Over Due" },
-      { key: "pending", label: "Pending" },
-      { key: "paid", label: "Paid" },
+      { key: "OVER_DUE", label: "Over Due" },
+      { key: "PENDING", label: "Pending" },
+      { key: "PAID", label: "Paid" },
     ],
   },
   {
     key: "status",
     label: "By Status",
     type: "chips",
+    multiSelect: false,
     items: [
-      { key: "active", label: "Active" },
-      { key: "inactive", label: "Inactive" },
+      { key: "ACTIVE", label: "Active" },
+      { key: "INACTIVE", label: "Inactive" },
     ],
   },
   {
     key: "role",
     label: "By Role",
     type: "chips",
+    multiSelect: false,
     items: [
-      { key: "manager", label: "Manager" },
-      { key: "admin", label: "Admin" },
-      { key: "staff", label: "Staff" },
+      { key: "MANAGER", label: "Manager" },
+      { key: "MEMBER", label: "Staff" },
     ],
   },
   {
     key: "branches",
     label: "By Branches",
     type: "chips",
+    multiSelect: false,
     items: [
       { key: "colombo", label: "Colombo" },
       { key: "negombo", label: "Negombo" },
@@ -85,15 +89,92 @@ interface StaffTableToolbarProps {
   bulkActions: StaffBulkActionsHandlers;
   selectedCount: number;
   totalCount: number;
+  search: string;
+  onSearchChange: (value: string) => void;
+  onApplyFilters: (filters: Record<string, string | null>) => void;
+  onClearFilters: () => void;
+  activeUrlFilters: {
+    status?: string;
+    salaryStatus?: string;
+    branch_id?: string;
+    role?: string;
+    regDateFrom?: string;
+    regDateTo?: string;
+  };
 }
 
 // ===== COMPONENT =====
 
-export function StaffTableToolbar({ bulkActions, selectedCount, totalCount }: StaffTableToolbarProps) {
+export function StaffTableToolbar({ 
+  bulkActions, 
+  selectedCount, 
+  totalCount,
+  search,
+  onSearchChange,
+  onApplyFilters,
+  onClearFilters,
+  activeUrlFilters,
+}: StaffTableToolbarProps) {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<FilterSelections>({});
 
-  const hasActiveFilters = Object.keys(activeFilters).length > 0;
+  // Fetch branches dynamically for the filter modal
+  const { data: branchesData } = useGetBranches({ size: 100 });
+
+  // Update categories with dynamic branches
+  const categories = useMemo(() => {
+    const updatedCategories = [...staffFilterCategories];
+    const branchCategoryIndex = updatedCategories.findIndex(c => c.key === "branches");
+    
+    if (branchCategoryIndex !== -1 && branchesData?.results) {
+      updatedCategories[branchCategoryIndex] = {
+        ...updatedCategories[branchCategoryIndex],
+        items: branchesData.results.map(b => ({
+          key: b.id,
+          label: b.name,
+        })),
+      };
+    }
+    
+    return updatedCategories;
+  }, [branchesData]);
+
+  // Create an initialSelections object based on activeUrlFilters
+  const initialSelections = useMemo(() => {
+    const selections: FilterSelections = {};
+
+    if (activeUrlFilters.status) {
+      selections.status = activeUrlFilters.status.split(",");
+    }
+
+    if (activeUrlFilters.salaryStatus) {
+      selections.salaryStatus = activeUrlFilters.salaryStatus.split(",");
+    }
+
+    if (activeUrlFilters.branch_id) {
+      selections.branches = activeUrlFilters.branch_id.split(",");
+    }
+
+    if (activeUrlFilters.role) {
+      selections.role = activeUrlFilters.role.split(",");
+    }
+
+    if (activeUrlFilters.regDateFrom || activeUrlFilters.regDateTo) {
+      selections.date = {
+        start: activeUrlFilters.regDateFrom ? new Date(activeUrlFilters.regDateFrom) : null,
+        end: activeUrlFilters.regDateTo ? new Date(activeUrlFilters.regDateTo) : null,
+      };
+    }
+
+    return selections;
+  }, [activeUrlFilters]);
+
+  const hasActiveFilters = 
+    !!activeUrlFilters.status || 
+    !!activeUrlFilters.salaryStatus || 
+    !!activeUrlFilters.branch_id || 
+    !!activeUrlFilters.role ||
+    !!activeUrlFilters.regDateFrom ||
+    !!activeUrlFilters.regDateTo;
 
   const isAllSelected = totalCount > 0 && selectedCount === totalCount;
   const hasSelection = selectedCount > 0;
@@ -126,12 +207,48 @@ export function StaffTableToolbar({ bulkActions, selectedCount, totalCount }: St
 
   const handleApplyFilters = useCallback((selections: FilterSelections) => {
     console.log("Applied filters:", selections);
-    setActiveFilters(selections);
-  }, []);
 
-  const handleClearFilters = useCallback(() => {
-    setActiveFilters({});
-  }, []);
+    const updates: Record<string, string | null> = {
+      status: null,
+      salaryStatus: null,
+      branch_id: null,
+      role: null,
+      regDateFrom: null,
+      regDateTo: null,
+    };
+
+    if (selections.status && Array.isArray(selections.status) && selections.status.length > 0) {
+      updates.status = selections.status.join(",");
+    }
+
+    if (selections.salaryStatus && Array.isArray(selections.salaryStatus) && selections.salaryStatus.length > 0) {
+      updates.salaryStatus = selections.salaryStatus.join(",");
+    }
+
+    if (selections.branches && Array.isArray(selections.branches) && selections.branches.length > 0) {
+      updates.branch_id = selections.branches.join(",");
+    }
+
+    if (selections.role && Array.isArray(selections.role) && selections.role.length > 0) {
+      updates.role = selections.role.join(",");
+    }
+
+    if (selections.date && !Array.isArray(selections.date)) {
+      if (selections.date.start) {
+        const d = selections.date.start;
+
+        updates.regDateFrom = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      }
+
+      if (selections.date.end) {
+        const d = selections.date.end;
+
+        updates.regDateTo = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      }
+    }
+
+    onApplyFilters(updates);
+  }, [onApplyFilters]);
 
   return (
     <>
@@ -147,6 +264,8 @@ export function StaffTableToolbar({ bulkActions, selectedCount, totalCount }: St
               <Input
                 type="text"
                 placeholder="Search by Name, NIC, Phone Number"
+                value={search}
+                onChange={(e) => onSearchChange(e.target.value)}
                 className={cn(
                   AUTH_INPUT.base,
                   AUTH_INPUT.placeholder,
@@ -161,7 +280,7 @@ export function StaffTableToolbar({ bulkActions, selectedCount, totalCount }: St
             {hasActiveFilters && (
               <button
                 type="button"
-                onClick={handleClearFilters}
+                onClick={onClearFilters}
                 className={cn(BUTTON_STYLES.outline.md, "border-dashed text-[#64748B] hover:text-[#0F172B]")}
               >
                 <X className="h-4 w-4" />
@@ -191,6 +310,8 @@ export function StaffTableToolbar({ bulkActions, selectedCount, totalCount }: St
               <Input
                 type="text"
                 placeholder="Search..."
+                value={search}
+                onChange={(e) => onSearchChange(e.target.value)}
                 className={cn(
                   AUTH_INPUT.base,
                   AUTH_INPUT.placeholder,
@@ -205,7 +326,7 @@ export function StaffTableToolbar({ bulkActions, selectedCount, totalCount }: St
             {hasActiveFilters && (
               <button
                 type="button"
-                onClick={handleClearFilters}
+                onClick={onClearFilters}
                 className={cn(BUTTON_STYLES.outline.md, "border-dashed text-[#64748B] hover:text-[#0F172B]")}
               >
                 <X className="h-4 w-4" />
@@ -232,6 +353,8 @@ export function StaffTableToolbar({ bulkActions, selectedCount, totalCount }: St
             <Input
               type="text"
               placeholder="Search by Name, NIC, Phone Number"
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
               className={cn(
                 AUTH_INPUT.base,
                 AUTH_INPUT.placeholder,
@@ -245,7 +368,7 @@ export function StaffTableToolbar({ bulkActions, selectedCount, totalCount }: St
             {hasActiveFilters && (
               <button
                 type="button"
-                onClick={handleClearFilters}
+                onClick={onClearFilters}
                 className={cn(BUTTON_STYLES.outline.md, "px-3 border-dashed text-[#64748B] hover:text-[#0F172B]")}
                 aria-label="Clear filters"
                 title="Clear filters"
@@ -289,9 +412,9 @@ export function StaffTableToolbar({ bulkActions, selectedCount, totalCount }: St
       <FilterModal
         open={filterModalOpen}
         onOpenChange={setFilterModalOpen}
-        categories={staffFilterCategories}
+        categories={categories}
         onApply={handleApplyFilters}
-        initialSelections={activeFilters}
+        initialSelections={initialSelections}
       />
     </>
   );

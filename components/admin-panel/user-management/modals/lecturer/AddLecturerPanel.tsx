@@ -62,9 +62,17 @@ const lecturerSchema = z.object({
     .min(1, "WhatsApp number is required.")
     .regex(/^[0-9]{9}$/, "WhatsApp must be exactly 9 digits."),
   district: z.string().optional(),
-  salary_type: z.enum(["MONTHLY", "COMMISSION", "HYBRID"], {
-    required_error: "Salary type is required.",
-  }),
+  salary_type: z.enum(
+    [
+      "MONTHLY",
+      "PERCENTAGE_FROM_BATCH_DEPOSITS",
+      "COURSE_WISE_PAYMENTS",
+      "BATCH_WISE_PAYMENTS",
+    ],
+    {
+      required_error: "Salary type is required.",
+    }
+  ),
   branch_id: z.string().optional(),
 });
 
@@ -109,8 +117,12 @@ const FieldLabel = ({
 // ===== SALARY TYPES =====
 const SALARY_TYPES = [
   { value: "MONTHLY", label: "Monthly Salary" },
-  { value: "COMMISSION", label: "Commission per Enrollment" },
-  { value: "HYBRID", label: "Hybrid" },
+  {
+    value: "PERCENTAGE_FROM_BATCH_DEPOSITS",
+    label: "Percentage from Batch Deposits",
+  },
+  { value: "COURSE_WISE_PAYMENTS", label: "Course-wise Payments" },
+  { value: "BATCH_WISE_PAYMENTS", label: "Batch-wise Payments" },
 ] as const;
 
 // ===== ANIMATION VARIANTS =====

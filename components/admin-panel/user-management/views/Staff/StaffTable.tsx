@@ -12,10 +12,13 @@ import {
   MEMBER_STATUS_CONFIG,
 } from "@/types/user-management";
 
+import { cn } from "@/lib/utils";
+
 import { DataTable } from "@/components/common/table/DataTable";
 import { StatusPopover } from "@/components/common/StatusPopover";
 import type { Column } from "@/components/common/table/DataTable";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useUpdateStaffStatus } from "@/hooks/api/staff/useUpdateStaffStatus";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -28,8 +31,8 @@ import {
   type StaffPaymentHistoryData,
 } from "@/components/admin-panel/user-management/modals/staff/StaffPaymentHistoryModal";
 import { EditStaffModal } from "@/components/admin-panel/user-management/modals/staff/EditStaffModal";
+import { StaffPrivilegesModal } from "@/components/admin-panel/user-management/modals/staff/StaffPrivilegesModal";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
-
 
 interface StaffTableProps {
   data: StaffDataType[];
@@ -39,6 +42,7 @@ interface StaffTableProps {
   isError?: boolean;
   currentPage: number;
   onPageChange: (page: number) => void;
+  totalResults: number;
 }
 
 export function StaffTable({
@@ -49,6 +53,7 @@ export function StaffTable({
   isError = false,
   currentPage,
   onPageChange,
+  totalResults,
 }: StaffTableProps) {
   const router = useRouter();
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -60,18 +65,14 @@ export function StaffTable({
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<StaffDataType | null>(null);
 
+  const [privilegesModalOpen, setPrivilegesModalOpen] = useState(false);
+  const [selectedStaffForPrivileges, setSelectedStaffForPrivileges] = useState<StaffDataType | null>(null);
+
   const itemsPerPage = 10;
 
   const filteredData = useMemo(() => data || [], [data]);
-  const totalCount = filteredData.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-
-    return filteredData.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, currentPage, itemsPerPage]);
 
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
@@ -142,9 +143,19 @@ export function StaffTable({
     console.log(`Action: ${action}`, staff);
   };
 
-  const handleDeactivateConfirm = () => {
-    console.log("Deactivating staff:", selectedStaff?.id);
-    setIsDeactivateModalOpen(false);
+  const { mutateAsync: updateStatus, isPending: isUpdatingStatus } = useUpdateStaffStatus(
+    selectedStaff?.id || ""
+  );
+
+  const handleDeactivateConfirm = async () => {
+    try {
+      const newStatus = selectedStaff?.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+
+      await updateStatus({ status: newStatus });
+      setIsDeactivateModalOpen(false);
+    } catch {
+      // toast handled in hook
+    }
   };
 
   const columns: Column<StaffDataType>[] = [
@@ -211,7 +222,18 @@ export function StaffTable({
       ),
       accessorKey: "phone",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.phone}</div>,
+      cell: (item) => (
+        item.phone && item.phone !== "-" ? (
+          <a
+            href={`tel:${item.phone}`}
+            className="text-[11px] font-medium text-[#45556C] transition-colors hover:text-[#E60076]"
+          >
+            {item.phone}
+          </a>
+        ) : (
+          <span className="text-[11px] font-medium text-[#45556C]">{item.phone || "-"}</span>
+        )
+      ),
     },
     {
       header: () => (
@@ -221,7 +243,20 @@ export function StaffTable({
       ),
       accessorKey: "whatsApp",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.whatsApp}</div>,
+      cell: (item) => (
+        item.whatsApp && item.whatsApp !== "-" ? (
+          <a
+            href={`https://wa.me/${item.whatsApp.replace(/\s+/g, "")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] font-medium text-[#45556C] transition-colors hover:text-[#E60076]"
+          >
+            {item.whatsApp}
+          </a>
+        ) : (
+          <span className="text-[11px] font-medium text-[#45556C]">{item.whatsApp || "-"}</span>
+        )
+      ),
     },
     {
       header: "Email",
@@ -233,7 +268,17 @@ export function StaffTable({
       header: "Privileges",
       accessorKey: "privileges",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[110px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.privileges}</div>,
+      cell: (item) => (
+        <button
+          onClick={() => {
+            setSelectedStaffForPrivileges(item);
+            setPrivilegesModalOpen(true);
+          }}
+          className="text-[12px] font-semibold text-[#E60076] hover:underline whitespace-nowrap bg-transparent border-none p-0 cursor-pointer"
+        >
+          View
+        </button>
+      ),
     },
     {
       header: "Commissions",
@@ -274,7 +319,6 @@ export function StaffTable({
       cell: (staff) => {
         const options = Object.entries(MEMBER_STATUS_CONFIG).map(([status, config]) => ({
           value: status,
-          label: status.charAt(0).toUpperCase() + status.slice(1),
           bg: config.bg,
           text: config.text,
         }));
@@ -315,8 +359,13 @@ export function StaffTable({
               <DropdownMenuItem onClick={() => handleAction("staff-report", staff)} className="cursor-pointer focus:bg-[#FDF2F8]">
                 Staff Report
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAction("deactivate", staff)} className="cursor-pointer text-red-600 focus:bg-[#FDF2F8] focus:text-red-600">
-                Deactivate
+              <DropdownMenuItem 
+                onClick={() => handleAction("deactivate", staff)} 
+                className={cn(
+                  "cursor-pointer focus:bg-[#FDF2F8]",
+                )}
+              >
+                {staff.status === "ACTIVE" ? "Deactivate" : "Activate"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -328,14 +377,14 @@ export function StaffTable({
   return (
     <>
       <DataTable
-        data={paginatedData}
+        data={filteredData}
         columns={columns}
         keyExtractor={(item) => item.id}
         isLoading={isLoading}
         isError={isError}
         pagination={{
           variant: "simple",
-          totalCount,
+          totalCount: totalResults,
           selectedRowCount,
           currentPage,
           totalPages,
@@ -354,7 +403,7 @@ export function StaffTable({
       <EditStaffModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        staff={staffToEdit}
+        staffId={staffToEdit?.id || null}
       />
 
       {/* Deactivate Staff Modal */}
@@ -362,10 +411,22 @@ export function StaffTable({
         isOpen={isDeactivateModalOpen}
         onClose={() => setIsDeactivateModalOpen(false)}
         onConfirm={handleDeactivateConfirm}
-        title="Confirm Deactivation"
-        description={`Are you sure you want to deactivate this staff [${selectedStaff?.name}]?`}
-        confirmText="Confirm Deactivation"
-        confirmVariant="destructive"
+        title={selectedStaff?.status === "ACTIVE" ? "Confirm Deactivation" : "Confirm Activation"}
+        description={
+          selectedStaff?.status === "ACTIVE" 
+            ? `Are you sure you want to deactivate this staff [${selectedStaff?.name}]?`
+            : `Are you sure you want to activate this staff [${selectedStaff?.name}]?`
+        }
+        confirmText={selectedStaff?.status === "ACTIVE" ? "Confirm Deactivation" : "Confirm Activation"}
+        confirmVariant={selectedStaff?.status === "ACTIVE" ? "destructive" : "primary"}
+        isDeleting={isUpdatingStatus}
+      />
+      <StaffPrivilegesModal
+        isOpen={privilegesModalOpen}
+        onClose={() => setPrivilegesModalOpen(false)}
+        staffId={selectedStaffForPrivileges?.id || ""}
+        staffName={selectedStaffForPrivileges?.name || ""}
+        currentPrivileges={selectedStaffForPrivileges?.rawPrivileges || []}
       />
     </>
   );

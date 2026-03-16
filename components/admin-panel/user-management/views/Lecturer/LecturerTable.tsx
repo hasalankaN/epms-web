@@ -155,7 +155,7 @@ export function LecturerTable({
   const handleDeactivateConfirm = () => {
     if (!selectedLecturer) return;
 
-    const newStatus = selectedLecturer.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+    const newStatus = selectedLecturer.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
 
     updateStatus(
       { id: selectedLecturer.id, status: newStatus },
@@ -283,7 +283,6 @@ export function LecturerTable({
       cell: (lecturer) => {
         const options = Object.entries(SALARY_STATUS_CONFIG).map(([status, config]) => ({
           value: status,
-          label: status.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(" "),
           bg: config.bg,
           text: config.text,
         }));
@@ -304,7 +303,6 @@ export function LecturerTable({
       cell: (lecturer) => {
         const options = Object.entries(MEMBER_STATUS_CONFIG).map(([status, config]) => ({
           value: status,
-          label: status.charAt(0).toUpperCase() + status.slice(1).toLowerCase(),
           bg: config.bg,
           text: config.text,
         }));

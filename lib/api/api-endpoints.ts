@@ -32,5 +32,23 @@ export const API_ENDPOINTS = {
     CREATE: `/api/v1/admin/certificate-templates`,
     GET_TEMPLATE_BY_ID: (id: string) => `/api/v1/admin/certificate-templates/${id}`,
     UPDATE_TEMPLATE: (id: string) => `/api/v1/admin/certificate-templates/${id}`,
+    ACTIVATE_TEMPLATE: (id: string) => `/api/v1/admin/certificate-templates/${id}/activate`,
+    DEACTIVATE_TEMPLATE: (id: string) => `/api/v1/admin/certificate-templates/${id}/deactivate`,
+    DELETE_TEMPLATE: (id: string) => `/api/v1/admin/certificate-templates/${id}`,
+    DELETE_BULK: `/api/v1/admin/certificate-templates/bulk`,
+  },
+  courseCategories: {
+    GET_ALL: `/api/v1/categories`,
+    CREATE: `/api/v1/categories`,
+    UPDATE: (id: string) => `/api/v1/categories/${id}`,
+    UPDATE_STATUS: (id: string) => `/api/v1/categories/${id}/status`,
+  },
+  staff: {
+    GET_ALL: `/api/v1/admin/staff`,
+    CREATE: `/api/v1/admin/staff`,
+    GET_BY_ID: (id: string) => `/api/v1/admin/staff/${id}`,
+    UPDATE: (id: string) => `/api/v1/admin/staff/${id}`,
+    UPDATE_STATUS: (id: string) => `/api/v1/admin/staff/${id}/status`,
+    UPDATE_PRIVILEGES: (id: string) => `/api/v1/admin/staff/${id}/privileges`,
   },
 };

@@ -1,33 +1,18 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 import { toast } from "sonner";
 
-import type { StaffDataType, SalaryStatus, MemberStatus } from "@/types/user-management";
+import type { StaffDataType, MemberStatus } from "@/types/user-management";
 
 import { StaffTableToolbar } from "./views/Staff/StaffTableToolbar";
 import { StaffTable } from "./views/Staff/StaffTable";
+import { useGetStaff } from "@/hooks/api/staff/useGetStaff";
 
-// ===== MOCK DATA =====
-const mockStaff: StaffDataType[] = Array.from({ length: 15 }, (_, i) => ({
-  id: `staff-${i + 1}`,
-  regDate: "01/21",
-  idNo: `#${String(i + 1).padStart(6, "0")}`,
-  name: "Amali Perera",
-  phone: "+9470 492 2345",
-  whatsApp: "+9470 492 2345",
-  email: "user@gmail.com",
-  privileges: "Privilege 1",
-  commissions: "N/A",
-  district: "Colombo",
-  branch: "Main",
-  salaryStatus: (["OVER_DUE", "PENDING", "PAID"] as SalaryStatus[])[i % 3],
-  status: (["ACTIVE", "SUSPENDED"] as MemberStatus[])[i % 2],
-  role: i % 3 === 2 ? "Manager" : "",
-}));
+
 
 export function StaffTab() {
   const router = useRouter();
@@ -37,10 +22,78 @@ export function StaffTab() {
   // ===== URL STATE =====
   const pageParam = searchParams.get("page");
   const currentPage = pageParam ? parseInt(pageParam) : 1;
+  const search = searchParams.get("search") || "";
+  const status = searchParams.get("status") as MemberStatus || undefined;
+  const salaryStatus = searchParams.get("salaryStatus") || undefined;
+  const branchId = searchParams.get("branch_id") || undefined;
+  const role = searchParams.get("role") as "MEMBER" | "MANAGER" || undefined;
+  const regDateFrom = searchParams.get("regDateFrom") || undefined;
+  const regDateTo = searchParams.get("regDateTo") || undefined;
+
+  // ===== API HOOK =====
+  const { data: apiData, isLoading, isError } = useGetStaff({
+    page: currentPage,
+    size: 10,
+    search: search || undefined,
+    status: status,
+    salaryStatus: salaryStatus,
+    branch_id: branchId,
+    role: role,
+    regDateFrom,
+    regDateTo,
+  });
+
+  const data = useMemo(() => {
+    if (!apiData?.results) return [];
+    
+    return apiData.results.map(item => ({
+      id: item.userId,
+      regDate: new Date(item.createdAt).toLocaleDateString("en-GB", { month: "2-digit", year: "2-digit" }),
+      idNo: item.customId,
+      name: `${item.firstName} ${item.lastName}`,
+      phone: item.mobile,
+      whatsApp: item.whatsapp || "-",
+      email: item.email,
+      privileges: item.privileges.length > 0 ? item.privileges[0].split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ") : "None",
+      rawPrivileges: item.privileges || [],
+      commissions: item.commissionEarned || "0.00",
+      district: item.branchName || "-",
+      branch: item.branchName || "-",
+      salaryStatus: item.salaryStatus || "PENDING",
+      status: item.status,
+      role: item.isBranchManager ? "Manager" : "",
+      isBranchManager: item.isBranchManager,
+    })) as StaffDataType[];
+  }, [apiData]);
 
   // ===== SHARED STATE =====
-  const [data] = useState<StaffDataType[]>(mockStaff);
   const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
+  const [localSearch, setLocalSearch] = useState(search);
+
+  // Sync local search when URL search changes
+  useEffect(() => {
+    setLocalSearch(search);
+  }, [search]);
+
+  // Debounce search update to URL
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localSearch.trim() !== search.trim()) {
+        const params = new URLSearchParams(searchParams.toString());
+
+        if (localSearch.trim()) {
+          params.set("search", localSearch.trim());
+        } else {
+          params.delete("search");
+        }
+
+        params.set("page", "1");
+        router.push(`${pathname}?${params.toString()}`);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [localSearch, search, searchParams, pathname, router]);
 
   // ===== DERIVED VALUES =====
   const selectedIds = useMemo(
@@ -106,6 +159,34 @@ export function StaffTab() {
     console.log("Send Email to:", selectedStaff);
   }, [selectedIds, selectedStaff]);
 
+  const handleMultiFilterChange = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
+  }, [searchParams, pathname, router]);
+
+  const handleClearFilters = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.delete("status");
+    params.delete("salaryStatus");
+    params.delete("branch_id");
+    params.delete("role");
+    params.delete("regDateFrom");
+    params.delete("regDateTo");
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
+  }, [searchParams, pathname, router]);
+
   // ===== BULK ACTIONS CONFIG =====
   const bulkActions = useMemo(
     () => ({
@@ -126,6 +207,18 @@ export function StaffTab() {
           bulkActions={bulkActions}
           selectedCount={selectedIds.length}
           totalCount={data.length}
+          search={localSearch}
+          onSearchChange={setLocalSearch}
+          onApplyFilters={handleMultiFilterChange}
+          onClearFilters={handleClearFilters}
+          activeUrlFilters={{
+            status,
+            salaryStatus,
+            branch_id: branchId,
+            role,
+            regDateFrom,
+            regDateTo,
+          }}
         />
       </div>
 
@@ -133,10 +226,13 @@ export function StaffTab() {
       <div>
         <StaffTable
           data={data}
+          isLoading={isLoading}
+          isError={isError}
           currentPage={currentPage}
           onPageChange={handlePageChange}
           rowSelection={rowSelection}
           setRowSelection={setRowSelection}
+          totalResults={apiData?.totalResults || 0}
         />
       </div>
     </div>

@@ -21,6 +21,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ViewCertificateTemplateModal } from "@/components/admin-panel/certificate-management/modals/ViewCertificateTemplateModal";
+import { useActivateTemplate } from "@/hooks/api/certificates/useActivateTemplate";
+import { useDeactivateTemplate } from "@/hooks/api/certificates/useDeactivateTemplate";
+import { useDeleteCertificateTemplate } from "@/hooks/api/certificates/useDeleteCertificateTemplate";
 
 const TEMPLATE_STATUS_OPTIONS = [
   { value: "ACTIVE", bg: "#DFFFF0", text: "#16A34A" },
@@ -83,6 +86,10 @@ export function AllTemplateTable({
 
   const [activateModalOpen, setActivateModalOpen] = useState(false);
   const [activateItem, setActivateItem] = useState<CertificateTemplateItem | null>(null);
+
+  const { mutate: activateTemplate, isPending: isActivating } = useActivateTemplate();
+  const { mutate: deactivateTemplate, isPending: isDeactivating } = useDeactivateTemplate();
+  const { mutate: deleteTemplate, isPending: isDeleting } = useDeleteCertificateTemplate();
 
   const handleAction = (action: string, item: CertificateTemplateItem) => {
     if (action === "delete") {
@@ -246,9 +253,16 @@ export function AllTemplateTable({
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={() => {
-          console.log("Deleting:", selectedItem?.id);
-          setDeleteModalOpen(false);
+          if (selectedItem) {
+            deleteTemplate(selectedItem.id, {
+              onSuccess: () => {
+                setDeleteModalOpen(false);
+                setSelectedItem(null);
+              },
+            });
+          }
         }}
+        isDeleting={isDeleting}
         title="Confirm Deletion"
         description="Are you sure you want to delete this certificate template? This action cannot be undone."
       />
@@ -263,11 +277,15 @@ export function AllTemplateTable({
         isOpen={deactivateModalOpen}
         onClose={() => setDeactivateModalOpen(false)}
         onConfirm={() => {
-          console.log("Deactivating:", deactivateItem?.id);
-          setDeactivateModalOpen(false);
+          if (deactivateItem) {
+            deactivateTemplate(deactivateItem.id, {
+              onSuccess: () => setDeactivateModalOpen(false),
+            });
+          }
         }}
         title="Confirm Deactivation"
         description={`Are you sure you want to deactivate ${deactivateItem?.name}?`}
+        isDeleting={isDeactivating}
         confirmText="Confirm Deactivation"
         cancelText="Go Back"
         confirmVariant="destructive"
@@ -277,11 +295,15 @@ export function AllTemplateTable({
         isOpen={activateModalOpen}
         onClose={() => setActivateModalOpen(false)}
         onConfirm={() => {
-          console.log("Activating:", activateItem?.id);
-          setActivateModalOpen(false);
+          if (activateItem) {
+            activateTemplate(activateItem.id, {
+              onSuccess: () => setActivateModalOpen(false),
+            });
+          }
         }}
         title="Confirm Activation"
         description={`Are you sure you want to activate ${activateItem?.name}?`}
+        isDeleting={isActivating}
         confirmText="Confirm Re - Activation"
         cancelText="Go Back"
         confirmVariant="primary"
