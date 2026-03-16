@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { X } from "lucide-react";
-import { toast } from "sonner";
+
 
 import {
   Dialog,
@@ -14,6 +14,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+
+import { useCreateCategory } from "@/hooks/api/course-categories/useCreateCategory";
+import { useUpdateCategory } from "@/hooks/api/course-categories/useUpdateCategory";
 
 import { cn } from "@/lib/utils";
 import { AUTH_TYPOGRAPHY, AUTH_INPUT, BUTTON_STYLES } from "@/lib/constants/theme";
@@ -32,8 +35,12 @@ interface AddCategoryModalProps {
 }
 
 export function AddCategoryModal({ isOpen, onClose, category }: AddCategoryModalProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditing = !!category;
+
+  const { mutateAsync: createCategory, isPending: isCreating } = useCreateCategory();
+  const { mutateAsync: updateCategory, isPending: isUpdating } = useUpdateCategory();
+
+  const isSubmitting = isCreating || isUpdating;
 
   const {
     register,
@@ -56,27 +63,22 @@ export function AddCategoryModal({ isOpen, onClose, category }: AddCategoryModal
   }, [isOpen, category, setValue]);
 
   const onSubmit = async (data: CategoryValues) => {
-    setIsSubmitting(true);
-
     try {
-      // TODO: Implement API call
-      if (isEditing) {
-        console.log("Updating category:", { id: category.id, ...data });
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        toast.success("Category updated successfully");
+      if (isEditing && category) {
+        await updateCategory({
+          id: category.id,
+          name: data.categoryName,
+        });
       } else {
-        console.log("Creating category:", data);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        toast.success("Category created successfully");
+        await createCategory({
+          name: data.categoryName,
+        });
       }
 
       reset();
       onClose();
     } catch (error) {
-      toast.error(isEditing ? "Failed to update category" : "Failed to create category");
       console.error(error);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

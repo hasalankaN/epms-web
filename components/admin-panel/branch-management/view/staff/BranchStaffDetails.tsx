@@ -24,6 +24,8 @@ const mockStaff: StaffDataType[] = [
     salaryStatus: "OVER_DUE",
     status: "ACTIVE",
     role: "Manager",
+    rawPrivileges: [],
+    isBranchManager: false
   },
   {
     id: "staff-2",
@@ -40,6 +42,8 @@ const mockStaff: StaffDataType[] = [
     salaryStatus: "PENDING",
     status: "ACTIVE",
     role: "",
+    rawPrivileges: [],
+    isBranchManager: false
   },
   {
     id: "staff-3",
@@ -56,6 +60,8 @@ const mockStaff: StaffDataType[] = [
     salaryStatus: "PAID",
     status: "ACTIVE",
     role: "",
+    rawPrivileges: [],
+    isBranchManager: false
   },
   {
     id: "staff-4",
@@ -70,8 +76,10 @@ const mockStaff: StaffDataType[] = [
     commissions: "N/A",
     branch: "Colombo",
     salaryStatus: "OVER_DUE",
-    status: "SUSPENDED",
+    status: "INACTIVE",
     role: "",
+    rawPrivileges: [],
+    isBranchManager: false
   },
   {
     id: "staff-5",
@@ -86,8 +94,10 @@ const mockStaff: StaffDataType[] = [
     commissions: "N/A",
     branch: "Colombo",
     salaryStatus: "PAID",
-    status: "SUSPENDED",
+    status: "INACTIVE",
     role: "",
+    rawPrivileges: [],
+    isBranchManager: false
   },
 ];
 

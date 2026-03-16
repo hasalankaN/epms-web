@@ -21,7 +21,7 @@ export type SalaryStatus = "OVER_DUE" | "PENDING" | "PAID" | "NO_RECORD";
 /**
  * Member status options (shared by Lecturer + Staff)
  */
-export type MemberStatus = "ACTIVE" | "SUSPENDED";
+export type MemberStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED";
 
 /**
  * Student data structure for the table
@@ -61,6 +61,7 @@ export interface LecturerDataType {
  */
 export interface ApiLecturerRow {
   user_id: string;
+  public_id: string;
   first_name: string;
   last_name: string;
   email: string;
@@ -77,6 +78,28 @@ export interface ApiLecturerRow {
 }
 
 /**
+ * API Response structure for a Staff Member
+ */
+export interface ApiStaffRow {
+  userId: string;
+  customId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  mobile: string;
+  whatsapp: string;
+  salaryType: string;
+  isBranchManager: boolean;
+  status: MemberStatus;
+  branchId: string | null;
+  branchName: string | null;
+  privileges: string[];
+  salaryStatus: SalaryStatus | string;
+  createdAt: string;
+  commissionEarned: string;
+}
+
+/**
  * Staff data structure for the table
  */
 export interface StaffDataType {
@@ -89,11 +112,13 @@ export interface StaffDataType {
   whatsApp: string;
   email: string;
   privileges: string;
+  rawPrivileges: string[];
   commissions: string;
   branch: string;
-  salaryStatus: SalaryStatus;
+  salaryStatus: SalaryStatus | string;
   status: MemberStatus;
   role: string;
+  isBranchManager: boolean;
 }
 
 /**
@@ -123,5 +148,13 @@ export const SALARY_STATUS_CONFIG: Record<SalaryStatus, { bg: string; text: stri
 
 export const MEMBER_STATUS_CONFIG: Record<MemberStatus, { bg: string; text: string }> = {
   "ACTIVE": { bg: "#D9E9FF", text: "#2563EB" },
-  "SUSPENDED": { bg: "#F1F5F9", text: "#000000" },
+  "INACTIVE": { bg: "#F1F5F9", text: "#000000" },
+  "SUSPENDED": { bg: "#F1F5F9", text: "#64748B" },
+};
+
+export const SALARY_TYPE_CONFIG: Record<string, { label: string }> = {
+  MONTHLY: { label: "Monthly Salary" },
+  PERCENTAGE_FROM_BATCH_DEPOSITS: { label: "Percentage from Batch Deposits" },
+  COURSE_WISE_PAYMENTS: { label: "Course-wise Payments" },
+  BATCH_WISE_PAYMENTS: { label: "Batch-wise Payments" },
 };

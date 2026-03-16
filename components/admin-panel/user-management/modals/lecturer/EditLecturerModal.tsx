@@ -69,9 +69,17 @@ const editLecturerSchema = z.object({
       { message: "WhatsApp must be exactly 9 digits." }
     ),
   district: z.string().optional(),
-  salary_type: z.enum(["MONTHLY", "COMMISSION", "HYBRID"], {
-    required_error: "Salary type is required.",
-  }),
+  salary_type: z.enum(
+    [
+      "MONTHLY",
+      "PERCENTAGE_FROM_BATCH_DEPOSITS",
+      "COURSE_WISE_PAYMENTS",
+      "BATCH_WISE_PAYMENTS",
+    ],
+    {
+      required_error: "Salary type is required.",
+    }
+  ),
   branch_id: z.string().optional(),
 });
 
@@ -103,8 +111,12 @@ const FieldLabel = ({
 // ===== SALARY TYPES =====
 const SALARY_TYPES = [
   { value: "MONTHLY", label: "Monthly Salary" },
-  { value: "COMMISSION", label: "Commission per Enrollment" },
-  { value: "HYBRID", label: "Hybrid" },
+  {
+    value: "PERCENTAGE_FROM_BATCH_DEPOSITS",
+    label: "Percentage from Batch Deposits",
+  },
+  { value: "COURSE_WISE_PAYMENTS", label: "Course-wise Payments" },
+  { value: "BATCH_WISE_PAYMENTS", label: "Batch-wise Payments" },
 ] as const;
 
 // ===== COMPONENT =====
@@ -142,7 +154,7 @@ export function EditLecturerModal({
       whatsappCountryCode: "+94",
       whatsapp_number: "",
       district: undefined,
-      salary_type: undefined,
+      salary_type: undefined as any,
       branch_id: undefined,
     },
   });
@@ -454,7 +466,7 @@ export function EditLecturerModal({
               {errors.salary_type && (
                 <p className="text-xs text-red-500">{errors.salary_type.message}</p>
               )}
-              <div className="flex items-center gap-6">
+              <div className="flex flex-col gap-3">
                 {SALARY_TYPES.map((type) => (
                   <div key={type.value} className="flex items-center gap-2">
                     <input

@@ -7,7 +7,7 @@ import { queryKeys } from "@/lib/constants/queryKeys";
 
 interface UpdateLecturerStatusParams {
   id: string;
-  status: "ACTIVE" | "SUSPENDED";
+  status: "ACTIVE" | "INACTIVE";
 }
 
 export function useUpdateLecturerStatus() {

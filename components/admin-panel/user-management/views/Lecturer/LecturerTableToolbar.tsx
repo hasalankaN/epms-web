@@ -47,7 +47,7 @@ const lecturerFilterCategories: FilterCategory[] = [
     multiSelect: false,
     items: [
       { key: "ACTIVE", label: "Active" },
-      { key: "SUSPENDED", label: "Suspended" },
+      { key: "INACTIVE", label: "Inactive" },
     ],
   },
 ];

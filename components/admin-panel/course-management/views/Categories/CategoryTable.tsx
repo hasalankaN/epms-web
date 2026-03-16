@@ -19,10 +19,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { useUpdateCategoryStatus } from "@/hooks/api/course-categories/useUpdateCategoryStatus";
+
 interface CategoryTableProps {
   data: CategoryDataType[];
   isLoading?: boolean;
   isError?: boolean;
+  totalCount: number;
   currentPage: number;
   onPageChange: (page: number) => void;
   onRename?: (category: CategoryDataType) => void;
@@ -32,6 +35,7 @@ export function CategoryTable({
   data,
   isLoading = false,
   isError = false,
+  totalCount,
   currentPage,
   onPageChange,
   onRename,
@@ -39,17 +43,12 @@ export function CategoryTable({
   const itemsPerPage = 10;
 
   const filteredData = useMemo(() => data || [], [data]);
-  const totalCount = filteredData.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-
-    return filteredData.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, currentPage, itemsPerPage]);
 
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryDataType | null>(null);
+
+  const { mutateAsync: updateCategoryStatus, isPending: isUpdatingStatus } = useUpdateCategoryStatus();
 
   const handleAction = (action: string, category: CategoryDataType) => {
     console.log(`Action: ${action}`, category);
@@ -67,10 +66,20 @@ export function CategoryTable({
     console.log("View courses for category:", category.id);
   };
 
-  const handleDeactivateConfirm = () => {
-    // Implement actual deactivate logic (e.g., API call)
-    console.log("Deactivating category:", selectedCategory?.id);
-    setIsDeactivateModalOpen(false);
+  const handleDeactivateConfirm = async () => {
+    if (!selectedCategory) return;
+    
+    try {
+      const isActive = selectedCategory.status !== "Active";
+
+      await updateCategoryStatus({
+        id: selectedCategory.id,
+        isActive,
+      });
+      setIsDeactivateModalOpen(false);
+    } catch (error) {
+      console.error("Failed to update status", error);
+    }
   };
 
   const columns: Column<CategoryDataType>[] = [
@@ -134,8 +143,11 @@ export function CategoryTable({
               <DropdownMenuItem onClick={() => handleAction("rename", category)} className="cursor-pointer focus:bg-[#FDF2F8]">
                 Rename
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAction("deactivate", category)} className="cursor-pointer text-red-600 focus:bg-[#FDF2F8] focus:text-red-600">
-                Deactivate
+              <DropdownMenuItem 
+                onClick={() => handleAction("deactivate", category)} 
+                className={category.status === "Active" ? "cursor-pointer focus:bg-[#FDF2F8]" : "cursor-pointer focus:bg-[#FDF2F8]"}
+              >
+                {category.status === "Active" ? "Deactivate" : "Activate"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -147,7 +159,7 @@ export function CategoryTable({
   return (
     <>
       <DataTable
-        data={paginatedData}
+        data={filteredData}
         columns={columns}
         keyExtractor={(item) => item.id}
         isLoading={isLoading}
@@ -165,11 +177,12 @@ export function CategoryTable({
         isOpen={isDeactivateModalOpen}
         onClose={() => setIsDeactivateModalOpen(false)}
         onConfirm={handleDeactivateConfirm}
-        title="Confirm Deactivation"
-        description={`Are you sure you want to deactivate [${selectedCategory?.categoryName || 'Category Name'}]?`}
-        confirmText="Confirm Deactivation"
+        isDeleting={isUpdatingStatus}
+        title={selectedCategory?.status === "Active" ? "Confirm Deactivation" : "Confirm Activation"}
+        description={`Are you sure you want to ${selectedCategory?.status === "Active" ? "deactivate" : "activate"} [${selectedCategory?.categoryName || 'Category Name'}]?`}
+        confirmText={selectedCategory?.status === "Active" ? "Confirm Deactivation" : "Confirm Activation"}
         cancelText="Go Back"
-        confirmVariant="destructive"
+        confirmVariant={selectedCategory?.status === "Active" ? "destructive" : "primary"}
       />
     </>
   );

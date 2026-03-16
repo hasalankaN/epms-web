@@ -4,17 +4,20 @@ import React, { useState } from "react";
 
 import { CalendarDays, User } from "lucide-react";
 
+import { SALARY_TYPE_CONFIG } from "@/types/user-management";
+
 // ============================
 // Types
 // ============================
 interface LecturerGeneralDetailsProps {
   name?: string;
-  lecturerId?: React.ReactNode;
+  publicId?: React.ReactNode;
   enrolledDate?: string;
   mobileNumber?: string;
   whatsAppNumber?: string;
   gender?: string;
   emailAddress?: string;
+  salaryType?: string;
   profileImageUrl?: string;
 }
 
@@ -38,12 +41,13 @@ const FieldValue = ({ children }: { children: React.ReactNode }) => (
 // ============================
 export function LecturerGeneralDetails({
   name = "Lecturer Name",
-  lecturerId = "Lec ID",
+  publicId = "LEC-ID",
   enrolledDate = "2025/01/01",
   mobileNumber = "+70 XXX XXXX",
   whatsAppNumber = "+70 XXX XXXX",
   gender = "-",
   emailAddress = "user@gmail.com",
+  salaryType = "MONTHLY",
   profileImageUrl,
 }: LecturerGeneralDetailsProps) {
   const [imgError, setImgError] = useState(false);
@@ -58,7 +62,7 @@ export function LecturerGeneralDetails({
       {/* ========== Profile Isolated Section ========== */}
       <div className="flex items-center gap-6 shrink-0 md:border-r border-transparent md:pr-12">
         <div
-          className="flex h-[108px] w-[108px] shrink-0 items-center justify-center overflow-hidden rounded-full"
+          className="flex h-[108px] w-[108px] shrink-0 items-center justify-center overflow-hidden rounded-full font-inter"
           style={{
             background: showPlaceholder
               ? "linear-gradient(315deg, #FFCFEA 0.35%, #F8FAFC 99.65%)"
@@ -79,7 +83,7 @@ export function LecturerGeneralDetails({
 
         <div className="flex flex-col gap-1">
           <FieldLabel>{name}</FieldLabel>
-          <FieldValue>{lecturerId}</FieldValue>
+          <FieldValue>{publicId}</FieldValue>
           <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#F1F5F9] px-2 py-[2px] w-fit text-[12px] font-medium leading-[16px] text-[#45556C]">
             <CalendarDays className="h-3.5 w-3.5" />
             <span>{enrolledDate}</span>
@@ -88,7 +92,7 @@ export function LecturerGeneralDetails({
       </div>
 
       {/* ========== Details Grid Section ========== */}
-      <div className="grid flex-1 grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
+      <div className="grid flex-1 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8">
         {/* Mobile Number */}
         <div className="flex flex-col gap-1">
           <FieldLabel>Mobile Number</FieldLabel>
@@ -111,6 +115,14 @@ export function LecturerGeneralDetails({
         <div className="flex flex-col gap-1">
           <FieldLabel>Email Address</FieldLabel>
           <FieldValue>{emailAddress}</FieldValue>
+        </div>
+
+        {/* Salary Type */}
+        <div className="flex flex-col gap-1">
+          <FieldLabel>Salary Type</FieldLabel>
+          <FieldValue>
+            {SALARY_TYPE_CONFIG[salaryType as keyof typeof SALARY_TYPE_CONFIG]?.label || salaryType}
+          </FieldValue>
         </div>
       </div>
     </div>
