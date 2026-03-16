@@ -39,6 +39,7 @@ interface StaffTableProps {
   isError?: boolean;
   currentPage: number;
   onPageChange: (page: number) => void;
+  totalResults: number;
 }
 
 export function StaffTable({
@@ -49,6 +50,7 @@ export function StaffTable({
   isError = false,
   currentPage,
   onPageChange,
+  totalResults,
 }: StaffTableProps) {
   const router = useRouter();
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -63,15 +65,8 @@ export function StaffTable({
   const itemsPerPage = 10;
 
   const filteredData = useMemo(() => data || [], [data]);
-  const totalCount = filteredData.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-
-    return filteredData.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, currentPage, itemsPerPage]);
 
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
@@ -211,7 +206,18 @@ export function StaffTable({
       ),
       accessorKey: "phone",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.phone}</div>,
+      cell: (item) => (
+        item.phone && item.phone !== "-" ? (
+          <a
+            href={`tel:${item.phone}`}
+            className="text-[11px] font-medium text-[#45556C] transition-colors hover:text-[#E60076]"
+          >
+            {item.phone}
+          </a>
+        ) : (
+          <span className="text-[11px] font-medium text-[#45556C]">{item.phone || "-"}</span>
+        )
+      ),
     },
     {
       header: () => (
@@ -221,7 +227,20 @@ export function StaffTable({
       ),
       accessorKey: "whatsApp",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.whatsApp}</div>,
+      cell: (item) => (
+        item.whatsApp && item.whatsApp !== "-" ? (
+          <a
+            href={`https://wa.me/${item.whatsApp.replace(/\s+/g, "")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] font-medium text-[#45556C] transition-colors hover:text-[#E60076]"
+          >
+            {item.whatsApp}
+          </a>
+        ) : (
+          <span className="text-[11px] font-medium text-[#45556C]">{item.whatsApp || "-"}</span>
+        )
+      ),
     },
     {
       header: "Email",
@@ -274,7 +293,6 @@ export function StaffTable({
       cell: (staff) => {
         const options = Object.entries(MEMBER_STATUS_CONFIG).map(([status, config]) => ({
           value: status,
-          label: status.charAt(0).toUpperCase() + status.slice(1),
           bg: config.bg,
           text: config.text,
         }));
@@ -328,14 +346,14 @@ export function StaffTable({
   return (
     <>
       <DataTable
-        data={paginatedData}
+        data={filteredData}
         columns={columns}
         keyExtractor={(item) => item.id}
         isLoading={isLoading}
         isError={isError}
         pagination={{
           variant: "simple",
-          totalCount,
+          totalCount: totalResults,
           selectedRowCount,
           currentPage,
           totalPages,

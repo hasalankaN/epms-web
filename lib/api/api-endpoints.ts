@@ -39,4 +39,8 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/api/v1/categories/${id}`,
     UPDATE_STATUS: (id: string) => `/api/v1/categories/${id}/status`,
   },
+  staff: {
+    GET_ALL: `/api/v1/admin/staff`,
+    CREATE: `/api/v1/admin/staff`,
+  },
 };

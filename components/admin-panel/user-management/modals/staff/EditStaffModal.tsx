@@ -70,7 +70,6 @@ export function EditStaffModal({ isOpen, onClose, staff }: EditStaffModalProps) 
   const [isBranchManager, setIsBranchManager] = useState(false);
   
   const [salaryType, setSalaryType] = useState("Monthly Salary");
-  const [commissionRate, setCommissionRate] = useState("");
   
   const [privileges, setPrivileges] = useState<{ [key: string]: boolean }>({
     "1": true,
@@ -138,7 +137,6 @@ export function EditStaffModal({ isOpen, onClose, staff }: EditStaffModalProps) 
       setIsBranchManager(false); // Placeholder
       
       setSalaryType("Monthly Salary"); // Default or derived from staff data
-      setCommissionRate("");
 
       setIsDirty(false);
       setShowDiscardModal(false);
@@ -386,31 +384,33 @@ export function EditStaffModal({ isOpen, onClose, staff }: EditStaffModalProps) 
                       Monthly Salary
                     </label>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        id="edit-commission-staff"
-                        value="Commissions per enrollments by staff"
-                        name="edit-salary-type"
-                        checked={salaryType === "Commissions per enrollments by staff"}
-                        onChange={(e) => { setSalaryType(e.target.value); markDirty(); }}
-                        className="accent-[#0F172B] w-4 h-4 cursor-pointer"
-                      />
-                      <label htmlFor="edit-commission-staff" className="text-sm font-medium text-[#45556C] cursor-pointer">
-                        Commissions per enrollments by staff
-                      </label>
-                    </div>
-                    {salaryType === "Commissions per enrollments by staff" && (
-                      <div className="pl-6 pt-1">
-                        <Input
-                          value={commissionRate}
-                          onChange={(e) => { setCommissionRate(e.target.value); markDirty(); }}
-                          className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "bg-white")}
-                          placeholder="Commission Rate"
-                        />
-                      </div>
-                    )}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      id="edit-commission-enrollments"
+                      value="Commission per enrollments"
+                      name="edit-salary-type"
+                      checked={salaryType === "Commission per enrollments"}
+                      onChange={(e) => { setSalaryType(e.target.value); markDirty(); }}
+                      className="accent-[#0F172B] w-4 h-4 cursor-pointer"
+                    />
+                    <label htmlFor="edit-commission-enrollments" className="text-sm font-medium text-[#45556C] cursor-pointer">
+                      Commission per enrollments
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      id="edit-commission-branch-enrollments"
+                      value="Commission per enrollments by branch"
+                      name="edit-salary-type"
+                      checked={salaryType === "Commission per enrollments by branch"}
+                      onChange={(e) => { setSalaryType(e.target.value); markDirty(); }}
+                      className="accent-[#0F172B] w-4 h-4 cursor-pointer"
+                    />
+                    <label htmlFor="edit-commission-branch-enrollments" className="text-sm font-medium text-[#45556C] cursor-pointer">
+                      Commission per enrollments by branch
+                    </label>
                   </div>
                 </div>
               </div>

@@ -17,4 +17,7 @@ export const queryKeys = {
 
   // Course Categories
   courseCategories: "courseCategories",
+
+  // Staff
+  staff: "staff",
 };
