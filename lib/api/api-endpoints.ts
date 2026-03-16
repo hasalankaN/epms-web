@@ -32,6 +32,10 @@ export const API_ENDPOINTS = {
     CREATE: `/api/v1/admin/certificate-templates`,
     GET_TEMPLATE_BY_ID: (id: string) => `/api/v1/admin/certificate-templates/${id}`,
     UPDATE_TEMPLATE: (id: string) => `/api/v1/admin/certificate-templates/${id}`,
+    ACTIVATE_TEMPLATE: (id: string) => `/api/v1/admin/certificate-templates/${id}/activate`,
+    DEACTIVATE_TEMPLATE: (id: string) => `/api/v1/admin/certificate-templates/${id}/deactivate`,
+    DELETE_TEMPLATE: (id: string) => `/api/v1/admin/certificate-templates/${id}`,
+    DELETE_BULK: `/api/v1/admin/certificate-templates/bulk`,
   },
   courseCategories: {
     GET_ALL: `/api/v1/categories`,

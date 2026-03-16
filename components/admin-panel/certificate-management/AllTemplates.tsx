@@ -6,6 +6,7 @@ import { useGetCertificateTemplates } from "@/hooks/api/certificates/useGetCerti
 import type { CertificateTemplateStatus } from "@/types/certificate";
 import { AllTemplateToolbar } from "@/components/admin-panel/certificate-management/views/AllTemplate/AllTemplateToolbar";
 import { AllTemplateTable } from "@/components/admin-panel/certificate-management/views/AllTemplate/AllTemplateTable";
+import { useBulkDeleteCertificateTemplates } from "@/hooks/api/certificates/useBulkDeleteCertificateTemplates";
 
 const PAGE_SIZE = 10;
 
@@ -15,6 +16,9 @@ export function AllTemplates() {
   const [search, setSearch] = useState("");
   const [localSearch, setLocalSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<CertificateTemplateStatus | undefined>(undefined);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
+  const { mutate: bulkDeleteTemplates, isPending: isDeleting } = useBulkDeleteCertificateTemplates();
 
   // Debounce localSearch to search
   useEffect(() => {
@@ -64,6 +68,9 @@ export function AllTemplates() {
         onSearchChange={handleSearchChange}
         statusFilter={statusFilter}
         onStatusFilterChange={handleStatusFilterChange}
+        isDeleting={isDeleting}
+        deleteModalOpen={deleteModalOpen}
+        setDeleteModalOpen={setDeleteModalOpen}
         bulkActions={{
           onSelectAll: () => {
             const newSelection: Record<string, boolean> = {};
@@ -76,8 +83,18 @@ export function AllTemplates() {
           onClear: () => setRowSelection({}),
           onIssue: () => console.log("Issue selected templates"),
           onDelete: () => {
-            console.log("Delete selected templates");
-            setRowSelection({});
+            const selectedIds = Object.entries(rowSelection)
+              .filter(([, selected]) => selected)
+              .map(([id]) => id);
+
+            if (selectedIds.length > 0) {
+              bulkDeleteTemplates({ ids: selectedIds }, {
+                onSuccess: () => {
+                  setRowSelection({});
+                  setDeleteModalOpen(false);
+                },
+              });
+            }
           },
         }}
       />

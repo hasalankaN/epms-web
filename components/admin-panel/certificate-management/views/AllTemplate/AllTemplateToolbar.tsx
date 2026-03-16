@@ -51,6 +51,9 @@ interface AllTemplateToolbarProps {
   onSearchChange: (value: string) => void;
   statusFilter?: CertificateTemplateStatus;
   onStatusFilterChange: (status: CertificateTemplateStatus | undefined) => void;
+  isDeleting?: boolean;
+  deleteModalOpen: boolean;
+  setDeleteModalOpen: (open: boolean) => void;
 }
 
 export function AllTemplateToolbar({
@@ -61,9 +64,11 @@ export function AllTemplateToolbar({
   onSearchChange,
   statusFilter,
   onStatusFilterChange,
+  isDeleting = false,
+  deleteModalOpen,
+  setDeleteModalOpen,
 }: AllTemplateToolbarProps) {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   // Build FilterSelections from current controlled state
   const activeFilters: FilterSelections = statusFilter ? { status: [statusFilter] } : {};
@@ -213,7 +218,8 @@ export function AllTemplateToolbar({
       <DeleteConfirmationModal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        onConfirm={() => { bulkActions.onDelete(); setDeleteModalOpen(false); }}
+        onConfirm={bulkActions.onDelete}
+        isDeleting={isDeleting}
         title="Confirm Bulk Deletion"
         description={`Are you sure you want to delete ${selectedCount} selected template(s)? This action cannot be undone.`}
       />
