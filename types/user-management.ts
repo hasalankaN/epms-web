@@ -150,3 +150,9 @@ export const MEMBER_STATUS_CONFIG: Record<MemberStatus, { bg: string; text: stri
   "INACTIVE": { bg: "#F1F5F9", text: "#000000" },
   "SUSPENDED": { bg: "#F1F5F9", text: "#64748B" },
 };
+
+export const SALARY_TYPE_CONFIG: Record<string, { label: string }> = {
+  MONTHLY: { label: "Monthly Salary" },
+  COMMISSION_PER_ENROLLMENT: { label: "Commission per enrollment" },
+  COMMISSION_PER_ENROLLMENT_BY_BRANCH: { label: "Commission per enrollment by branch" },
+};
