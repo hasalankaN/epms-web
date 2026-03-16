@@ -9,7 +9,7 @@ import { CalendarDays, User } from "lucide-react";
 // ============================
 interface LecturerGeneralDetailsProps {
   name?: string;
-  lecturerId?: React.ReactNode;
+  publicId?: React.ReactNode;
   enrolledDate?: string;
   mobileNumber?: string;
   whatsAppNumber?: string;
@@ -38,7 +38,7 @@ const FieldValue = ({ children }: { children: React.ReactNode }) => (
 // ============================
 export function LecturerGeneralDetails({
   name = "Lecturer Name",
-  lecturerId = "Lec ID",
+  publicId = "LEC-ID",
   enrolledDate = "2025/01/01",
   mobileNumber = "+70 XXX XXXX",
   whatsAppNumber = "+70 XXX XXXX",
@@ -58,7 +58,7 @@ export function LecturerGeneralDetails({
       {/* ========== Profile Isolated Section ========== */}
       <div className="flex items-center gap-6 shrink-0 md:border-r border-transparent md:pr-12">
         <div
-          className="flex h-[108px] w-[108px] shrink-0 items-center justify-center overflow-hidden rounded-full"
+          className="flex h-[108px] w-[108px] shrink-0 items-center justify-center overflow-hidden rounded-full font-inter"
           style={{
             background: showPlaceholder
               ? "linear-gradient(315deg, #FFCFEA 0.35%, #F8FAFC 99.65%)"
@@ -79,7 +79,7 @@ export function LecturerGeneralDetails({
 
         <div className="flex flex-col gap-1">
           <FieldLabel>{name}</FieldLabel>
-          <FieldValue>{lecturerId}</FieldValue>
+          <FieldValue>{publicId}</FieldValue>
           <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#F1F5F9] px-2 py-[2px] w-fit text-[12px] font-medium leading-[16px] text-[#45556C]">
             <CalendarDays className="h-3.5 w-3.5" />
             <span>{enrolledDate}</span>

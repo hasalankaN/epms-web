@@ -57,11 +57,7 @@ export default function ViewLecturerPage({ params }: { params: Promise<{ id: str
         ) : (
           <LecturerGeneralDetails
             name={`${lecturer.first_name} ${lecturer.last_name}`}
-            lecturerId={
-              <span>
-                #{lecturer.user_id?.split("-")[0]?.toLowerCase() || "-"}
-              </span>
-            }
+            publicId={lecturer.public_id}
             enrolledDate={new Date(lecturer.created_at).toISOString().split('T')[0].replace(/-/g, '/')}
             mobileNumber={lecturer.mobile_number}
             whatsAppNumber={lecturer.whatsapp_number || "-"}

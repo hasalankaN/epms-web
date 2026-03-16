@@ -61,6 +61,7 @@ export interface LecturerDataType {
  */
 export interface ApiLecturerRow {
   user_id: string;
+  public_id: string;
   first_name: string;
   last_name: string;
   email: string;

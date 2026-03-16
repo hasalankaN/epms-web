@@ -155,7 +155,7 @@ export function LecturerTable({
   const handleDeactivateConfirm = () => {
     if (!selectedLecturer) return;
 
-    const newStatus = selectedLecturer.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+    const newStatus = selectedLecturer.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
 
     updateStatus(
       { id: selectedLecturer.id, status: newStatus },

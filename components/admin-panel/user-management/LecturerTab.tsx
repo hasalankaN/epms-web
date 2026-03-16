@@ -45,7 +45,7 @@ export function LecturerTab() {
     return apiData.results.map(item => ({
       id: item.user_id,
       regDate: new Date(item.created_at).toLocaleDateString(),
-      idNo: `#${item.user_id.substring(0, 6)}`, // Fallback since API doesn't seem to return idNo
+      idNo: item.public_id,
       name: `${item.first_name} ${item.last_name}`,
       phone: item.mobile_number,
       whatsApp: item.whatsapp_number || "-",
