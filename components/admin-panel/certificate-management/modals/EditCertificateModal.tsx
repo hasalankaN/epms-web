@@ -9,6 +9,8 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  motion,
+  itemVariants,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -418,10 +420,14 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && handleCloseAttempt()}>
-        <DialogContent className="flex max-h-[90vh] w-[95%] max-w-[900px] flex-col gap-4 overflow-hidden rounded-lg sm:rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-6 shadow-[0_4px_6px_-4px_rgba(16,24,40,0.10),0_10px_15px_-3px_rgba(0,0,0,0.10)] [&>button]:hidden">
+        <DialogContent 
+          isLoading={isFetching}
+          animateChildren={true}
+          className="flex max-h-[90vh] w-[95%] max-w-[900px] flex-col gap-4 overflow-hidden rounded-lg sm:rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-6 shadow-[0_4px_6px_-4px_rgba(16,24,40,0.10),0_10px_15px_-3px_rgba(0,0,0,0.10)] [&>button]:hidden"
+        >
           
           {/* ===== HEADER ===== */}
-          <div className="flex flex-col gap-4 shrink-0">
+          <motion.div variants={itemVariants} className="flex flex-col gap-4 shrink-0">
             <div className="flex items-center justify-between">
               <DialogTitle className="flex-1 flex gap-3 items-center text-lg font-bold leading-[30px] text-[#0F172B]">
                 Edit Certificate
@@ -436,10 +442,10 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
               </button>
             </div>
             <div className="border-b border-[#E2E8F0]" />
-          </div>
+          </motion.div>
 
           {/* ===== BODY (scrollable) ===== */}
-          <div className="flex-1 overflow-y-auto px-1 py-1 sm:px-2 sm:py-2 scrollbar-hide">
+          <motion.div variants={itemVariants} className="flex-1 overflow-y-auto px-1 py-1 sm:px-2 sm:py-2 scrollbar-hide">
             <div className="flex flex-col gap-6">
 
               {/* TOP ROW: Form Fields (2 columns) */}
@@ -716,10 +722,10 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
               )}
 
             </div>
-          </div>
+          </motion.div>
 
           {/* ===== FOOTER (static) ===== */}
-          <div className="flex items-center justify-end gap-3 border-t border-[#E2E8F0] pt-4 shrink-0">
+          <motion.div variants={itemVariants} className="flex items-center justify-end gap-3 border-t border-[#E2E8F0] pt-4 shrink-0 mt-auto">
             <Button
               onClick={handleUpdate}
               disabled={loadingStep !== "idle" || isUpdating || !isDirty}
@@ -737,7 +743,7 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
                 "Update"
               )}
             </Button>
-          </div>
+          </motion.div>
 
         </DialogContent>
       </Dialog>
