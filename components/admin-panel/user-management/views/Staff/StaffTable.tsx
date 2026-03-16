@@ -386,7 +386,7 @@ export function StaffTable({
       <EditStaffModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        staff={staffToEdit}
+        staffId={staffToEdit?.id || null}
       />
 
       {/* Deactivate Staff Modal */}
