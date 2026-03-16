@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 
-import { X, Maximize2, RotateCcw, Grid3X3 } from "lucide-react";
+import { X, Maximize2, RotateCcw, Grid3X3, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
   Dialog,
   DialogContent,
   DialogTitle,
+  motion,
+  itemVariants,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +19,10 @@ import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationM
 
 import { cn } from "@/lib/utils";
 import { AUTH_TYPOGRAPHY, AUTH_INPUT, BUTTON_STYLES } from "@/lib/constants/theme";
-import type { CertificateTemplateRow } from "@/types/certificate";
+import type { CertificateTemplateItem } from "@/types/certificate";
+import { useGetCertificateTemplateById } from "@/hooks/api/certificates/useGetCertificateTemplateById";
+import { useUpdateCertificateTemplate } from "@/hooks/api/certificates/useUpdateCertificateTemplate";
+import { useUploadFile } from "@/hooks/api/files/useUploadFile";
 
 import {
   type TagPositions,
@@ -37,7 +42,7 @@ import { ExpandedPreviewModal } from "./ExpandedPreviewModal";
 interface EditCertificateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  certificate: CertificateTemplateRow | null;
+  certificate: CertificateTemplateItem | null;
 }
 
 // ===== Reusable FieldLabel helper =====
@@ -57,12 +62,24 @@ const FieldLabel = ({
 );
 
 export function EditCertificateModal({ isOpen, onClose, certificate }: EditCertificateModalProps) {
+  // ===== API Hooks =====
+  const { data: templateData, isLoading: isFetching } = useGetCertificateTemplateById(
+    isOpen && certificate ? certificate.id : null
+  );
+
+  const { mutateAsync: updateTemplate, isPending: isUpdating } = useUpdateCertificateTemplate(
+    certificate?.id || ""
+  );
+
+  const { mutateAsync: uploadFile } = useUploadFile();
+
   // ===== Form state =====
   const [certificateName, setCertificateName] = useState("");
   const [price, setPrice] = useState("");
   
   // ===== Unified Editor state =====
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [rawTemplateFile, setRawTemplateFile] = useState<File | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string>("");
   const [tagPositions, setTagPositions] = useState<TagPositions>(DEFAULT_TAG_POSITIONS);
   const [isExpandedPreviewOpen, setIsExpandedPreviewOpen] = useState(false);
@@ -76,10 +93,14 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
   
   const [signatureState, setSignatureState] = useState<SignatureState>({ ...DEFAULT_SIGNATURE_STATE });
   const [isSignatureSelected, setIsSignatureSelected] = useState(false);
+  const [rawSignatureFile, setRawSignatureFile] = useState<File | null>(null);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const signatureInputRef = useRef<HTMLInputElement>(null);
+
+  // ===== Loading State =====
+  const [loadingStep, setLoadingStep] = useState<"idle" | "template" | "signature" | "updating">("idle");
 
   // ===== Dirty-state guard =====
   const [isDirty, setIsDirty] = useState(false);
@@ -100,21 +121,17 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
     return () => ro.disconnect();
   }, [previewUrl, isOpen]);
 
-  // Pre-fill form when certificate changes or modal opens
+  // Pre-fill form when templateData changes
   useEffect(() => {
-    if (isOpen && certificate) {
-      setCertificateName(certificate.certificateName || "");
-      
-      // Clean up price string "5,000 LKR" -> "5000" or allow mock "XXXX.00"
-      const cleanPrice = certificate.price?.replace(/[^0-9.xX]/g, '') || "";
-      
-      setPrice(cleanPrice);
-      
-      // Setup mock initial template for preview
-      setPreviewUrl("https://placehold.co/800x600/f8fafc/94a3b8?text=Certificate+Template");
-      setSelectedFileName(certificate.certificateName ? `${certificate.certificateName} Template.png` : "Existing Template.png");
-      
-      // Reset editor state
+    if (isOpen && templateData) {
+      setCertificateName(templateData.name || "");
+      setPrice(parseFloat(templateData.price || "0").toString());
+
+      setPreviewUrl(templateData.template_file_url || null);
+      setSelectedFileName(templateData.name ? `${templateData.name} Template` : "Existing Template");
+      setRawTemplateFile(null); // Reset raw file as we are using existing url
+
+      // Reset editor visual state
       setIsExpandedPreviewOpen(false);
       setSelectedTag(null);
       setSnapEnabled(false);
@@ -122,15 +139,52 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
       setGridDensity(10);
       setShowSampleValues(true);
       setImageAspectRatio(null);
-      setTagPositions(JSON.parse(JSON.stringify(DEFAULT_TAG_POSITIONS)) as TagPositions);
-      setSignatureState({ ...DEFAULT_SIGNATURE_STATE });
-      setIsSignatureSelected(false);
       
+      // Parse layout
+      const dbTags = typeof templateData.tag_layout === 'string' 
+        ? JSON.parse(templateData.tag_layout) 
+        : (templateData.tag_layout || {});
+
+      // Merge DB positions with default tag states
+      const mergedTagPositions: TagPositions = JSON.parse(JSON.stringify(DEFAULT_TAG_POSITIONS));
+
+      Object.keys(dbTags).forEach((key) => {
+        if (mergedTagPositions[key]) {
+          mergedTagPositions[key].x = dbTags[key].x;
+          mergedTagPositions[key].y = dbTags[key].y;
+          if (dbTags[key].fontSize) mergedTagPositions[key].properties.fontSize = dbTags[key].fontSize;
+          if (dbTags[key].fontColor) mergedTagPositions[key].properties.fontColor = dbTags[key].fontColor;
+          if (dbTags[key].fontFamily) mergedTagPositions[key].properties.fontFamily = dbTags[key].fontFamily;
+          if (dbTags[key].fontWeight) mergedTagPositions[key].properties.fontWeight = dbTags[key].fontWeight;
+          if (dbTags[key].opacity) mergedTagPositions[key].properties.opacity = dbTags[key].opacity;
+        }
+      });
+      
+      setTagPositions(mergedTagPositions);
+
+      // Parse signature
+      const dbSig = typeof templateData.signature_layout === 'string'
+        ? JSON.parse(templateData.signature_layout)
+        : (templateData.signature_layout || {});
+
+      setSignatureState({
+        ...DEFAULT_SIGNATURE_STATE,
+        enabled: !!templateData.signature_image_url,
+        imageUrl: templateData.signature_image_url ?? null,
+        x: dbSig.director_sig?.x ?? DEFAULT_SIGNATURE_STATE.x,
+        y: dbSig.director_sig?.y ?? DEFAULT_SIGNATURE_STATE.y,
+        width: dbSig.director_sig?.width ?? DEFAULT_SIGNATURE_STATE.width,
+        rotation: dbSig.director_sig?.rotation ?? DEFAULT_SIGNATURE_STATE.rotation,
+        opacity: dbSig.director_sig?.opacity ?? DEFAULT_SIGNATURE_STATE.opacity,
+      });
+      setIsSignatureSelected(false);
+      setRawSignatureFile(null);
+
       // Clean dirty state
       setIsDirty(false);
       setShowDiscardModal(false);
     }
-  }, [isOpen, certificate]);
+  }, [isOpen, templateData]);
 
   const markDirty = useCallback(() => {
     setIsDirty((prev) => (prev ? prev : true));
@@ -149,16 +203,111 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
     onClose();
   };
 
-  const handleUpdate = () => {
-    toast.success("Certificate template updated successfully");
-    onClose();
+  const handleUpdate = async () => {
+    if (!certificateName.trim()) {
+      toast.error("Please enter a certificate name");
+      
+      return;
+    }
+
+    if (!price || isNaN(Number(price))) {
+      toast.error("Please enter a valid price");
+      
+      return;
+    }
+
+    if (!previewUrl && !rawTemplateFile) {
+      toast.error("Please upload a certificate template");
+      
+      return;
+    }
+
+    if (signatureState.enabled && !signatureState.imageUrl && !rawSignatureFile) {
+      toast.error("Please upload a signature image, or disable Digital Signature");
+      
+      return;
+    }
+
+    try {
+      let finalTemplateUrl = previewUrl || "";
+      let finalTemplateType = templateData?.file_type || "image/jpeg";
+
+      // 1. Upload new template if changed
+      if (rawTemplateFile) {
+        setLoadingStep("template");
+        const res = await uploadFile({ file: rawTemplateFile });
+
+        finalTemplateUrl = res.data.url;
+        finalTemplateType = rawTemplateFile.type;
+      }
+
+      // 2. Upload new signature if changed
+      let finalSignatureUrl = signatureState.enabled ? signatureState.imageUrl : null;
+
+      if (signatureState.enabled && rawSignatureFile) {
+        setLoadingStep("signature");
+        const res = await uploadFile({ file: rawSignatureFile });
+
+        finalSignatureUrl = res.data.url;
+      }
+
+      // 3. Format tag layout
+      setLoadingStep("updating");
+      const tag_layout: Record<string, any> = {};
+
+      Object.entries(tagPositions).forEach(([key, tag]) => {
+        tag_layout[key] = {
+          x: tag.x,
+          y: tag.y,
+          fontSize: tag.properties.fontSize,
+          fontColor: tag.properties.fontColor,
+          fontFamily: tag.properties.fontFamily,
+          fontWeight: tag.properties.fontWeight,
+          opacity: tag.properties.opacity,
+        };
+      });
+
+      // 4. Format signature layout
+      const signature_layout: Record<string, any> = {};
+
+      if (signatureState.enabled) {
+        signature_layout.director_sig = {
+          x: signatureState.x,
+          y: signatureState.y,
+          width: signatureState.width,
+          rotation: signatureState.rotation,
+          opacity: signatureState.opacity,
+        };
+      }
+
+      // 5. Build payload and mutate
+      await updateTemplate({
+        name: certificateName.trim(),
+        price: Number(price),
+        template_file_url: finalTemplateUrl,
+        file_type: finalTemplateType,
+        tag_layout,
+        signature_layout,
+        signature_image_url: signatureState.enabled ? finalSignatureUrl : null,
+        status: templateData?.status === "INACTIVE" ? "INACTIVE" : "ACTIVE",
+      });
+
+      onClose();
+    } catch (error) {
+      console.error(error);
+
+      // Toast is handled by hook
+    } finally {
+      setLoadingStep("idle");
+    }
   };
 
-  // ===== Editor Handlers =====
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     if (!file) return;
+    
+    setRawTemplateFile(file);
     setSelectedFileName(file.name);
     markDirty();
     setImageAspectRatio(null);
@@ -227,6 +376,7 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
       return;
     }
 
+    setRawSignatureFile(file);
     const objectUrl = URL.createObjectURL(file);
 
     setSignatureState((prev) => ({ ...prev, imageUrl: objectUrl, enabled: true }));
@@ -240,6 +390,7 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
   const handleRemoveSignatureImage = useCallback(() => {
     setSignatureState((prev) => ({ ...prev, imageUrl: null, enabled: false }));
     setIsSignatureSelected(false);
+    setRawSignatureFile(null);
     markDirty();
   }, [markDirty]);
 
@@ -269,13 +420,18 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && handleCloseAttempt()}>
-        <DialogContent className="flex max-h-[90vh] w-[95%] max-w-[900px] flex-col gap-4 overflow-hidden rounded-lg sm:rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-6 shadow-[0_4px_6px_-4px_rgba(16,24,40,0.10),0_10px_15px_-3px_rgba(0,0,0,0.10)] [&>button]:hidden">
+        <DialogContent 
+          isLoading={isFetching}
+          animateChildren={true}
+          className="flex max-h-[90vh] w-[95%] max-w-[900px] flex-col gap-4 overflow-hidden rounded-lg sm:rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-6 shadow-[0_4px_6px_-4px_rgba(16,24,40,0.10),0_10px_15px_-3px_rgba(0,0,0,0.10)] [&>button]:hidden"
+        >
           
           {/* ===== HEADER ===== */}
-          <div className="flex flex-col gap-4 shrink-0">
+          <motion.div variants={itemVariants} className="flex flex-col gap-4 shrink-0">
             <div className="flex items-center justify-between">
-              <DialogTitle className="flex-1 text-lg font-bold leading-[30px] text-[#0F172B]">
+              <DialogTitle className="flex-1 flex gap-3 items-center text-lg font-bold leading-[30px] text-[#0F172B]">
                 Edit Certificate
+                {isFetching && <Loader2 className="h-4 w-4 animate-spin text-[#90A1B9]" />}
               </DialogTitle>
               <button
                 title="Close"
@@ -286,10 +442,10 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
               </button>
             </div>
             <div className="border-b border-[#E2E8F0]" />
-          </div>
+          </motion.div>
 
           {/* ===== BODY (scrollable) ===== */}
-          <div className="flex-1 overflow-y-auto px-1 py-1 sm:px-2 sm:py-2 scrollbar-hide">
+          <motion.div variants={itemVariants} className="flex-1 overflow-y-auto px-1 py-1 sm:px-2 sm:py-2 scrollbar-hide">
             <div className="flex flex-col gap-6">
 
               {/* TOP ROW: Form Fields (2 columns) */}
@@ -566,21 +722,32 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
               )}
 
             </div>
-          </div>
+          </motion.div>
 
           {/* ===== FOOTER (static) ===== */}
-          <div className="flex items-center justify-end gap-3 border-t border-[#E2E8F0] pt-4 shrink-0">
+          <motion.div variants={itemVariants} className="flex items-center justify-end gap-3 border-t border-[#E2E8F0] pt-4 shrink-0 mt-auto">
             <Button
               onClick={handleUpdate}
+              disabled={loadingStep !== "idle" || isUpdating || !isDirty}
               className={cn(BUTTON_STYLES.primary.full, "w-auto min-w-[120px] px-6 text-sm font-semibold text-white")}
             >
-              Update
+              {(loadingStep !== "idle" || isUpdating) ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {loadingStep === "template" && "Uploading Template..."}
+                  {loadingStep === "signature" && "Uploading Signature..."}
+                  {(loadingStep === "updating" || isUpdating) && "Updating..."}
+                  {loadingStep === "idle" && isUpdating && "Updating..."}
+                </>
+              ) : (
+                "Update"
+              )}
             </Button>
-          </div>
+          </motion.div>
 
         </DialogContent>
       </Dialog>
-      
+
       {/* Required for the Expanded view */}
       {previewUrl && isOpen && (
         <ExpandedPreviewModal

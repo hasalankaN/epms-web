@@ -88,6 +88,7 @@ export function ExpandedPreviewModal({
 }: ExpandedPreviewModalProps) {
   const expandedContainerRef = useRef<HTMLDivElement>(null);
   const [expandedContainerWidth, setExpandedContainerWidth] = useState(0);
+  const [imageAspectRatio, setImageAspectRatio] = useState<number | null>(null);
 
   // Track container width for proportional font scaling
   useEffect(() => {
@@ -102,6 +103,11 @@ export function ExpandedPreviewModal({
     ro.observe(el);
 
     return () => ro.disconnect();
+  }, [open]);
+
+  // Reset aspect ratio when modal reopens
+  useEffect(() => {
+    if (open) setImageAspectRatio(null);
   }, [open]);
 
   const handleClose = useCallback(() => {
@@ -217,14 +223,23 @@ export function ExpandedPreviewModal({
           >
             <div
               ref={expandedContainerRef}
-              className="relative max-w-full"
+              className="relative w-full"
+              style={{
+                maxWidth: "900px",
+                ...(imageAspectRatio ? { aspectRatio: String(imageAspectRatio) } : {}),
+              }}
               onPointerDown={(e) => e.stopPropagation()}
             >
               <img
                 src={previewUrl}
                 alt="Certificate Preview"
-                className={`max-w-full max-h-[55vh] sm:max-h-[62vh] lg:max-h-[70vh] object-contain shadow-sm border border-[${COLORS.line}] rounded-sm pointer-events-none select-none`}
+                className={`block w-full h-auto shadow-sm border border-[${COLORS.line}] rounded-sm pointer-events-none select-none`}
                 draggable={false}
+                onLoad={(e) => {
+                  const img = e.currentTarget;
+
+                  setImageAspectRatio(img.naturalWidth / img.naturalHeight);
+                }}
               />
               <GridOverlay visible={gridVisible} density={gridDensity} />
               <CertificatePreviewTags
