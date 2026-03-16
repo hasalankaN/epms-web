@@ -55,6 +55,7 @@ export function StaffTab() {
       whatsApp: item.whatsapp || "-",
       email: item.email,
       privileges: item.privileges.length > 0 ? item.privileges[0].split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ") : "None",
+      rawPrivileges: item.privileges || [],
       commissions: item.commissionEarned || "0.00",
       district: item.branchName || "-",
       branch: item.branchName || "-",

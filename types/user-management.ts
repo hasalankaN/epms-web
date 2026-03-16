@@ -111,6 +111,7 @@ export interface StaffDataType {
   whatsApp: string;
   email: string;
   privileges: string;
+  rawPrivileges: string[];
   commissions: string;
   branch: string;
   salaryStatus: SalaryStatus | string;

@@ -42,5 +42,6 @@ export const API_ENDPOINTS = {
   staff: {
     GET_ALL: `/api/v1/admin/staff`,
     CREATE: `/api/v1/admin/staff`,
+    UPDATE_PRIVILEGES: (id: string) => `/api/v1/admin/staff/${id}/privileges`,
   },
 };

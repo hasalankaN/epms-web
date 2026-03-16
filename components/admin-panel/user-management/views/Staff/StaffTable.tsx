@@ -28,6 +28,7 @@ import {
   type StaffPaymentHistoryData,
 } from "@/components/admin-panel/user-management/modals/staff/StaffPaymentHistoryModal";
 import { EditStaffModal } from "@/components/admin-panel/user-management/modals/staff/EditStaffModal";
+import { StaffPrivilegesModal } from "@/components/admin-panel/user-management/modals/staff/StaffPrivilegesModal";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
 
 
@@ -61,6 +62,9 @@ export function StaffTable({
 
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<StaffDataType | null>(null);
+
+  const [privilegesModalOpen, setPrivilegesModalOpen] = useState(false);
+  const [selectedStaffForPrivileges, setSelectedStaffForPrivileges] = useState<StaffDataType | null>(null);
 
   const itemsPerPage = 10;
 
@@ -252,7 +256,17 @@ export function StaffTable({
       header: "Privileges",
       accessorKey: "privileges",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[110px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.privileges}</div>,
+      cell: (item) => (
+        <button
+          onClick={() => {
+            setSelectedStaffForPrivileges(item);
+            setPrivilegesModalOpen(true);
+          }}
+          className="text-[12px] font-semibold text-[#E60076] hover:underline whitespace-nowrap bg-transparent border-none p-0 cursor-pointer"
+        >
+          View
+        </button>
+      ),
     },
     {
       header: "Commissions",
@@ -384,6 +398,13 @@ export function StaffTable({
         description={`Are you sure you want to deactivate this staff [${selectedStaff?.name}]?`}
         confirmText="Confirm Deactivation"
         confirmVariant="destructive"
+      />
+      <StaffPrivilegesModal
+        isOpen={privilegesModalOpen}
+        onClose={() => setPrivilegesModalOpen(false)}
+        staffId={selectedStaffForPrivileges?.id || ""}
+        staffName={selectedStaffForPrivileges?.name || ""}
+        currentPrivileges={selectedStaffForPrivileges?.rawPrivileges || []}
       />
     </>
   );
