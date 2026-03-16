@@ -14,4 +14,7 @@ export const queryKeys = {
 
   // Certificate Templates
   certificateTemplates: "certificateTemplates",
+
+  // Course Categories
+  courseCategories: "courseCategories",
 };

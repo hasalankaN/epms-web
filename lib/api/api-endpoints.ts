@@ -33,4 +33,10 @@ export const API_ENDPOINTS = {
     GET_TEMPLATE_BY_ID: (id: string) => `/api/v1/admin/certificate-templates/${id}`,
     UPDATE_TEMPLATE: (id: string) => `/api/v1/admin/certificate-templates/${id}`,
   },
+  courseCategories: {
+    GET_ALL: `/api/v1/categories`,
+    CREATE: `/api/v1/categories`,
+    UPDATE: (id: string) => `/api/v1/categories/${id}`,
+    UPDATE_STATUS: (id: string) => `/api/v1/categories/${id}/status`,
+  },
 };

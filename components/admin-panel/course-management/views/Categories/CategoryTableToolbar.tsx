@@ -11,7 +11,18 @@ import { Input } from "@/components/ui/input";
 
 // ===== COMPONENT =====
 
-export function CategoryTableToolbar() {
+// ===== TYPES =====
+interface CategoryTableToolbarProps {
+  search: string;
+  onSearchChange: (value: string) => void;
+}
+
+// ===== COMPONENT =====
+
+export function CategoryTableToolbar({
+  search,
+  onSearchChange,
+}: CategoryTableToolbarProps) {
   return (
     <div className="flex w-full flex-col gap-4">
       {/* Search */}
@@ -21,6 +32,8 @@ export function CategoryTableToolbar() {
           <Input
             type="text"
             placeholder="Category name."
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
             className={cn(
               AUTH_INPUT.base,
               AUTH_INPUT.placeholder,
