@@ -44,6 +44,7 @@ export const API_ENDPOINTS = {
     CREATE: `/api/v1/admin/staff`,
     GET_BY_ID: (id: string) => `/api/v1/admin/staff/${id}`,
     UPDATE: (id: string) => `/api/v1/admin/staff/${id}`,
+    UPDATE_STATUS: (id: string) => `/api/v1/admin/staff/${id}/status`,
     UPDATE_PRIVILEGES: (id: string) => `/api/v1/admin/staff/${id}/privileges`,
   },
 };

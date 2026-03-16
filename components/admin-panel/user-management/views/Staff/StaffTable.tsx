@@ -12,10 +12,13 @@ import {
   MEMBER_STATUS_CONFIG,
 } from "@/types/user-management";
 
+import { cn } from "@/lib/utils";
+
 import { DataTable } from "@/components/common/table/DataTable";
 import { StatusPopover } from "@/components/common/StatusPopover";
 import type { Column } from "@/components/common/table/DataTable";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useUpdateStaffStatus } from "@/hooks/api/staff/useUpdateStaffStatus";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -30,7 +33,6 @@ import {
 import { EditStaffModal } from "@/components/admin-panel/user-management/modals/staff/EditStaffModal";
 import { StaffPrivilegesModal } from "@/components/admin-panel/user-management/modals/staff/StaffPrivilegesModal";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
-
 
 interface StaffTableProps {
   data: StaffDataType[];
@@ -141,9 +143,19 @@ export function StaffTable({
     console.log(`Action: ${action}`, staff);
   };
 
-  const handleDeactivateConfirm = () => {
-    console.log("Deactivating staff:", selectedStaff?.id);
-    setIsDeactivateModalOpen(false);
+  const { mutateAsync: updateStatus, isPending: isUpdatingStatus } = useUpdateStaffStatus(
+    selectedStaff?.id || ""
+  );
+
+  const handleDeactivateConfirm = async () => {
+    try {
+      const newStatus = selectedStaff?.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+
+      await updateStatus({ status: newStatus });
+      setIsDeactivateModalOpen(false);
+    } catch {
+      // toast handled in hook
+    }
   };
 
   const columns: Column<StaffDataType>[] = [
@@ -347,8 +359,13 @@ export function StaffTable({
               <DropdownMenuItem onClick={() => handleAction("staff-report", staff)} className="cursor-pointer focus:bg-[#FDF2F8]">
                 Staff Report
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAction("deactivate", staff)} className="cursor-pointer text-red-600 focus:bg-[#FDF2F8] focus:text-red-600">
-                Deactivate
+              <DropdownMenuItem 
+                onClick={() => handleAction("deactivate", staff)} 
+                className={cn(
+                  "cursor-pointer focus:bg-[#FDF2F8]",
+                )}
+              >
+                {staff.status === "ACTIVE" ? "Deactivate" : "Activate"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -394,10 +411,15 @@ export function StaffTable({
         isOpen={isDeactivateModalOpen}
         onClose={() => setIsDeactivateModalOpen(false)}
         onConfirm={handleDeactivateConfirm}
-        title="Confirm Deactivation"
-        description={`Are you sure you want to deactivate this staff [${selectedStaff?.name}]?`}
-        confirmText="Confirm Deactivation"
-        confirmVariant="destructive"
+        title={selectedStaff?.status === "ACTIVE" ? "Confirm Deactivation" : "Confirm Activation"}
+        description={
+          selectedStaff?.status === "ACTIVE" 
+            ? `Are you sure you want to deactivate this staff [${selectedStaff?.name}]?`
+            : `Are you sure you want to activate this staff [${selectedStaff?.name}]?`
+        }
+        confirmText={selectedStaff?.status === "ACTIVE" ? "Confirm Deactivation" : "Confirm Activation"}
+        confirmVariant={selectedStaff?.status === "ACTIVE" ? "destructive" : "primary"}
+        isDeleting={isUpdatingStatus}
       />
       <StaffPrivilegesModal
         isOpen={privilegesModalOpen}
