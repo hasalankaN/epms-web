@@ -15,7 +15,11 @@ export interface CreateLecturerPayload {
   district?: string;
   gender?: "MALE" | "FEMALE";
   profile_image_url?: string;
-  salary_type: "MONTHLY" | "COMMISSION" | "HYBRID";
+  salary_type:
+    | "MONTHLY"
+    | "PERCENTAGE_FROM_BATCH_DEPOSITS"
+    | "COURSE_WISE_PAYMENTS"
+    | "BATCH_WISE_PAYMENTS";
   branch_id?: string;
 }
 

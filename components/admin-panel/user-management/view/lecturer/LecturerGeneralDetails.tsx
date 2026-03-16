@@ -4,6 +4,8 @@ import React, { useState } from "react";
 
 import { CalendarDays, User } from "lucide-react";
 
+import { SALARY_TYPE_CONFIG } from "@/types/user-management";
+
 // ============================
 // Types
 // ============================
@@ -15,6 +17,7 @@ interface LecturerGeneralDetailsProps {
   whatsAppNumber?: string;
   gender?: string;
   emailAddress?: string;
+  salaryType?: string;
   profileImageUrl?: string;
 }
 
@@ -44,6 +47,7 @@ export function LecturerGeneralDetails({
   whatsAppNumber = "+70 XXX XXXX",
   gender = "-",
   emailAddress = "user@gmail.com",
+  salaryType = "MONTHLY",
   profileImageUrl,
 }: LecturerGeneralDetailsProps) {
   const [imgError, setImgError] = useState(false);
@@ -88,7 +92,7 @@ export function LecturerGeneralDetails({
       </div>
 
       {/* ========== Details Grid Section ========== */}
-      <div className="grid flex-1 grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
+      <div className="grid flex-1 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8">
         {/* Mobile Number */}
         <div className="flex flex-col gap-1">
           <FieldLabel>Mobile Number</FieldLabel>
@@ -111,6 +115,14 @@ export function LecturerGeneralDetails({
         <div className="flex flex-col gap-1">
           <FieldLabel>Email Address</FieldLabel>
           <FieldValue>{emailAddress}</FieldValue>
+        </div>
+
+        {/* Salary Type */}
+        <div className="flex flex-col gap-1">
+          <FieldLabel>Salary Type</FieldLabel>
+          <FieldValue>
+            {SALARY_TYPE_CONFIG[salaryType as keyof typeof SALARY_TYPE_CONFIG]?.label || salaryType}
+          </FieldValue>
         </div>
       </div>
     </div>

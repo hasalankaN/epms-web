@@ -16,7 +16,11 @@ export interface LecturerProfile {
   district: string | null;
   gender: "MALE" | "FEMALE" | null;
   profile_image_url: string | null;
-  salary_type: "MONTHLY" | "COMMISSION" | "HYBRID";
+  salary_type:
+    | "MONTHLY"
+    | "PERCENTAGE_FROM_BATCH_DEPOSITS"
+    | "COURSE_WISE_PAYMENTS"
+    | "BATCH_WISE_PAYMENTS";
   status: "ACTIVE" | "INACTIVE";
   branch_id: string | null;
   branch_name: string | null;

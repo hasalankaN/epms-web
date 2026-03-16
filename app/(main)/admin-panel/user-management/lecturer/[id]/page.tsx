@@ -63,6 +63,7 @@ export default function ViewLecturerPage({ params }: { params: Promise<{ id: str
             whatsAppNumber={lecturer.whatsapp_number || "-"}
             gender={lecturer.gender === "MALE" ? "Male" : lecturer.gender === "FEMALE" ? "Female" : "-"}
             emailAddress={lecturer.email}
+            salaryType={lecturer.salary_type}
             profileImageUrl={lecturer.profile_image_url || undefined}
           />
         )}

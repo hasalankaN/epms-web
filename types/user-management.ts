@@ -154,6 +154,7 @@ export const MEMBER_STATUS_CONFIG: Record<MemberStatus, { bg: string; text: stri
 
 export const SALARY_TYPE_CONFIG: Record<string, { label: string }> = {
   MONTHLY: { label: "Monthly Salary" },
-  COMMISSION_PER_ENROLLMENT: { label: "Commission per enrollment" },
-  COMMISSION_PER_ENROLLMENT_BY_BRANCH: { label: "Commission per enrollment by branch" },
+  PERCENTAGE_FROM_BATCH_DEPOSITS: { label: "Percentage from Batch Deposits" },
+  COURSE_WISE_PAYMENTS: { label: "Course-wise Payments" },
+  BATCH_WISE_PAYMENTS: { label: "Batch-wise Payments" },
 };
