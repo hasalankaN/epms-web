@@ -54,6 +54,7 @@ export const API_ENDPOINTS = {
   complaints: {
     GET_ALL: `/api/v1/admin/complaints`,
     GET_PENDING_ASSIGNMENT: `/api/v1/admin/complaints/pending-assignment`,
+    GET_BY_ID: (id: string) => `/api/v1/admin/complaints/${id}`,
     CREATE: `/api/v1/admin/complaints`,
   },
 };
