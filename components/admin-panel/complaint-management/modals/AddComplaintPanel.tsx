@@ -123,9 +123,9 @@ export function AddComplaintPanel({ isOpen, onClose }: AddComplaintPanelProps) {
 
   const { mutateAsync: createComplaint, isPending } = useCreateComplaint();
 
-  const { data: staffData } = useGetStaff({ 
+  const { data: staffData, isLoading: isStaffLoading } = useGetStaff({ 
     page: 1,
-    size: 5, 
+    size: 50, 
     search: debouncedSearchTerm || undefined 
   }); 
 
@@ -336,6 +336,7 @@ export function AddComplaintPanel({ isOpen, onClose }: AddComplaintPanelProps) {
                           searchPlaceholder="Search staff..."
                           emptyMessage="No staff found."
                           error={!!errors.assignee_user_id}
+                          isLoading={isStaffLoading}
                         />
                         {errors.assignee_user_id && (
                           <p className="mt-1 text-xs text-red-500">

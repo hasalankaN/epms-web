@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { Check, ChevronDown, Search } from "lucide-react";
+import { Check, ChevronDown, Search, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ interface SearchableSelectProps {
   searchPlaceholder?: string;
   emptyMessage?: string;
   error?: boolean;
+  isLoading?: boolean;
   className?: string;
 }
 
@@ -43,6 +44,7 @@ export function SearchableSelect({
   searchPlaceholder = "Search...",
   emptyMessage = "No results found.",
   error,
+  isLoading,
   className,
 }: SearchableSelectProps) {
   const [open, setOpen] = React.useState(false);
@@ -66,7 +68,11 @@ export function SearchableSelect({
           <span className="truncate">
             {selectedOption ? selectedOption.label : placeholder}
           </span>
-          <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin opacity-50 shrink-0" />
+          ) : (
+            <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -90,7 +96,11 @@ export function SearchableSelect({
           
           {/* Results List */}
           <div className="max-h-[220px] space-y-1 overflow-y-auto overflow-x-hidden p-1">
-            {options.length === 0 ? (
+            {isLoading && options.length === 0 ? (
+              <div className="py-6 text-center text-sm text-[#64748B]">
+                Loading...
+              </div>
+            ) : options.length === 0 ? (
               <div className="py-6 text-center text-sm text-[#64748B]">
                 {emptyMessage}
               </div>

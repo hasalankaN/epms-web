@@ -36,9 +36,9 @@ export function AssignStaffMemberModal({
 
   const debouncedSearch = useDebounce(searchTerm, 500);
 
-  const { data: staffData } = useGetStaff({
+  const { data: staffData, isLoading: isStaffLoading } = useGetStaff({
     page: 1,
-    size: 5,
+    size: 50,
     search: debouncedSearch || undefined,
   });
 
@@ -115,6 +115,7 @@ export function AssignStaffMemberModal({
               placeholder="Select a team member"
               searchPlaceholder="Search staff..."
               emptyMessage="No staff found."
+              isLoading={isStaffLoading}
             />
           </div>
 
