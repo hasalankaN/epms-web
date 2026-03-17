@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 
-import { X, Plus, Filter } from "lucide-react";
+import { X, Plus, Filter, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
 import { cn } from "@/lib/utils";
@@ -48,6 +48,8 @@ interface FilterModalProps {
 
 // ===== COMPONENT =====
 
+const PAGE_SIZE = 10;
+
 export function FilterModal({
   open,
   onOpenChange,
@@ -57,6 +59,8 @@ export function FilterModal({
   initialSelections = {},
 }: FilterModalProps) {
   const [selections, setSelections] = useState<FilterSelections>(initialSelections);
+  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({});
+  const [loadingCategories, setLoadingCategories] = useState<Record<string, boolean>>({});
 
   const [followUpDates, setFollowUpDates] = useState<{ start: Date | null; end: Date | null }>(
     (initialSelections["followUp"] as { start: Date | null; end: Date | null }) || {
@@ -69,7 +73,7 @@ export function FilterModal({
     !!(initialSelections["followUp"] as { start: Date | null; end: Date | null })
   );
 
-  // Reset state when modal opens
+  // Initialize visible counts when modal opens or categories change
   useEffect(() => {
     if (open) {
       setSelections(initialSelections);
@@ -77,8 +81,16 @@ export function FilterModal({
 
       setFollowUpDates(initialFollowUp);
       setIsFollowUpRange(!!initialSelections["followUp"]);
+
+      // Reset visible counts to PAGE_SIZE
+      const counts: Record<string, number> = {};
+
+      categories.forEach((cat) => {
+        counts[cat.key] = PAGE_SIZE;
+      });
+      setVisibleCounts(counts);
     }
-  }, [open, initialSelections]);
+  }, [open, initialSelections, categories]);
 
   // Calculate dateSelection early to use in useMemo dependencies
   const dateSelection = useMemo(
@@ -152,6 +164,19 @@ export function FilterModal({
       };
     });
   }, [categories]);
+
+  const handleShowMore = useCallback((categoryKey: string) => {
+    setLoadingCategories(prev => ({ ...prev, [categoryKey]: true }));
+    
+    // Simulate loading
+    setTimeout(() => {
+      setVisibleCounts(prev => ({
+        ...prev,
+        [categoryKey]: (prev[categoryKey] || PAGE_SIZE) + PAGE_SIZE,
+      }));
+      setLoadingCategories(prev => ({ ...prev, [categoryKey]: false }));
+    }, 600);
+  }, []);
 
   const handleDateChange = useCallback((start: Date | null, end: Date | null) => {
     setSelections((prev) => ({
@@ -239,12 +264,17 @@ export function FilterModal({
 
     if (category.type === "chips" && category.items) {
       const selectedItems = (selections[category.key] as string[]) || [];
+      const visibleCount = visibleCounts[category.key] || PAGE_SIZE;
+      const isLoading = loadingCategories[category.key];
+      
+      const visibleItems = category.items.slice(0, visibleCount);
+      const hasMore = category.items.length > visibleCount;
 
       return (
         <div key={category.key} className="flex flex-col gap-4">
           <h3 className="text-sm font-semibold leading-5 text-[#0F172B]">{category.label}</h3>
           <div className="flex flex-wrap gap-2">
-            {category.items.map((item) => (
+            {visibleItems.map((item) => (
               <FilterChip
                 key={item.key}
                 label={item.label}
@@ -252,6 +282,30 @@ export function FilterModal({
                 onClick={() => handleChipToggle(category.key, item.key)}
               />
             ))}
+            
+            {hasMore && (
+              <button
+                type="button"
+                onClick={() => handleShowMore(category.key)}
+                disabled={isLoading}
+                className={cn(
+                  "inline-flex h-[26px] items-center justify-center gap-1 rounded-md border border-[#E2E8F0] bg-white px-2 py-[2px] text-sm font-semibold transition-colors hover:border-[#CBD5E1] hover:bg-[#F8FAFC]",
+                  isLoading ? "text-[#90A1B9] cursor-not-allowed" : "text-[#F6339A]"
+                )}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Loading...</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Show More</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
       );
@@ -301,7 +355,6 @@ export function FilterModal({
           {/* Separator 12px below title */}
           <div className="border-b border-[#E2E8F0]" />
 
-          {/* Selected Count - 16px below separator */}
           {/* Selected Count - 16px below separator */}
           <div className="text-sm font-normal leading-5">
             <span className="text-[#90A1B9]">Selected </span>
