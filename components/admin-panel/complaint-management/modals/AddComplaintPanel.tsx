@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils";
 import { AUTH_TYPOGRAPHY, AUTH_INPUT, BUTTON_STYLES } from "@/lib/constants/theme";
 import { useCreateComplaint } from "@/hooks/api/complaints/useCreateComplaint";
 import { useGetStaff } from "@/hooks/api/staff/useGetStaff";
+import { useDebounce } from "@/hooks/useDebounce";
+import { SearchableSelect, type SearchableSelectOption } from "@/components/ui/searchable-select";
 
 // ===== SCHEMA =====
 
@@ -115,9 +117,17 @@ const COMPLAINT_TYPES = [
 
 export function AddComplaintPanel({ isOpen, onClose }: AddComplaintPanelProps) {
   const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   const { mutateAsync: createComplaint, isPending } = useCreateComplaint();
-  const { data: staffData } = useGetStaff({ size: 100, role: "MANAGER" }); // Assuming we assign to managers/staff
+
+  const { data: staffData } = useGetStaff({ 
+    page: 1,
+    size: 5, 
+    search: debouncedSearchTerm || undefined 
+  }); 
 
   const {
     register,
@@ -140,6 +150,14 @@ export function AddComplaintPanel({ isOpen, onClose }: AddComplaintPanelProps) {
   });
 
   const mobileCountryCode = watch("mobileCountryCode");
+  const assigneeUserId = watch("assignee_user_id");
+
+  const staffOptions: SearchableSelectOption[] = staffData?.results?.slice(0, 5).map(staff => ({
+    value: staff.userId,
+    label: `${staff.firstName} ${staff.lastName}`,
+    subLabel: staff.email,
+    avatarInitials: `${staff.firstName?.[0] || ""}${staff.lastName?.[0] || ""}`,
+  })) || [];
 
   // Reset state when panel opens
   useEffect(() => {
@@ -303,30 +321,22 @@ export function AddComplaintPanel({ isOpen, onClose }: AddComplaintPanelProps) {
                       {/* Assignee */}
                       <div className="space-y-1">
                         <FieldLabel required>Assignee</FieldLabel>
-                        <Select
-                          onValueChange={(val) =>
+                        <SearchableSelect
+                          options={staffOptions}
+                          value={assigneeUserId}
+                          onChange={(val) => {
                             setValue("assignee_user_id", val, {
                               shouldDirty: true,
                               shouldValidate: true,
-                            })
-                          }
-                        >
-                          <SelectTrigger
-                            className={cn(
-                              AUTH_INPUT.base,
-                              "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic"
-                            )}
-                          >
-                            <SelectValue placeholder="Select Assignee" />
-                          </SelectTrigger>
-                          <SelectContent className="z-[99999999]">
-                            {staffData?.results?.map((staff) => (
-                              <SelectItem key={staff.userId} value={staff.userId}>
-                                {staff.firstName} {staff.lastName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                            });
+                          }}
+                          searchValue={searchTerm}
+                          onSearchChange={setSearchTerm}
+                          placeholder="Select Assignee"
+                          searchPlaceholder="Search staff..."
+                          emptyMessage="No staff found."
+                          error={!!errors.assignee_user_id}
+                        />
                         {errors.assignee_user_id && (
                           <p className="mt-1 text-xs text-red-500">
                             {errors.assignee_user_id.message}

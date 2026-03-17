@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 
 
 import { cn } from "@/lib/utils";
@@ -26,6 +26,7 @@ interface StatusPopoverProps {
   options: StatusOption[];
   className?: string;
   readOnly?: boolean;
+  isLoading?: boolean;
 }
 
 export function StatusPopover({
@@ -34,6 +35,7 @@ export function StatusPopover({
   options,
   className,
   readOnly = false,
+  isLoading = false,
 }: StatusPopoverProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -56,10 +58,11 @@ export function StatusPopover({
 
   const Chip = ({ option, onClick }: { option: StatusOption; onClick?: () => void }) => (
     <div
-      onClick={onClick}
+      onClick={!isLoading && !readOnly ? onClick : undefined}
       className={cn(
         "inline-flex h-[24px] cursor-pointer items-center justify-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition-all",
         "shadow-[0_1px_2px_0_rgba(16,24,40,0.05)]", // Shadow from spec
+        isLoading && "opacity-70 cursor-not-allowed",
         className
       )}
       style={{
@@ -68,9 +71,13 @@ export function StatusPopover({
         color: option.text,
       }}
     >
-      {option.icon}
+      {isLoading ? (
+        <Loader2 className="h-3 w-3 animate-spin" />
+      ) : (
+        option.icon
+      )}
       <span>{option.label || formatStatusLabel(option.value)}</span>
-      {!readOnly && <ChevronDown className="h-3.5 w-3.5 opacity-50" />}
+      {!readOnly && !isLoading && <ChevronDown className="h-3.5 w-3.5 opacity-50" />}
     </div>
   );
 
@@ -79,9 +86,16 @@ export function StatusPopover({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={!isLoading ? setOpen : undefined}>
       <PopoverTrigger asChild>
-        <button title="Change status" className="outline-none ring-0 focus:ring-0">
+        <button 
+          title="Change status" 
+          className={cn(
+            "outline-none ring-0 focus:ring-0",
+            isLoading && "cursor-not-allowed"
+          )}
+          disabled={isLoading}
+        >
            <Chip option={selectedOption} />
         </button>
       </PopoverTrigger>

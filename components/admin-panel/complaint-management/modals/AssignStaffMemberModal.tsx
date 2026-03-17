@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-import { X, UserPlus } from "lucide-react";
-import { toast } from "sonner";
+import { X } from "lucide-react";
 
 import {
   Dialog,
@@ -12,17 +11,14 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SearchableSelect, type SearchableSelectOption } from "@/components/ui/searchable-select";
 
 import { cn } from "@/lib/utils";
 import type { ComplaintDataType } from "@/types/complaint";
-import { AUTH_TYPOGRAPHY, AUTH_INPUT, BUTTON_STYLES } from "@/lib/constants/theme";
+import { AUTH_TYPOGRAPHY, BUTTON_STYLES } from "@/lib/constants/theme";
+import { useGetStaff } from "@/hooks/api/staff/useGetStaff";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useAssignStaff } from "@/hooks/api/complaints/useAssignStaff";
 
 interface AssignStaffMemberModalProps {
   isOpen: boolean;
@@ -35,21 +31,45 @@ export function AssignStaffMemberModal({
   onClose,
   complaint,
 }: AssignStaffMemberModalProps) {
-  const [staff, setStaff] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStaffId, setSelectedStaffId] = useState("");
+
+  const debouncedSearch = useDebounce(searchTerm, 500);
+
+  const { data: staffData } = useGetStaff({
+    page: 1,
+    size: 5,
+    search: debouncedSearch || undefined,
+  });
+
+  const { mutateAsync: assignStaff, isPending } = useAssignStaff(complaint?.id || "");
+
+  // Reset local state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setSearchTerm("");
+      setSelectedStaffId("");
+    }
+  }, [isOpen]);
 
   if (!complaint) return null;
 
-  const handleSave = () => {
-    if (!staff) {
-      toast.warning("Please select a staff member");
+  const staffOptions: SearchableSelectOption[] = staffData?.results?.slice(0, 5).map(staff => ({
+    value: staff.userId,
+    label: `${staff.firstName} ${staff.lastName}`,
+    subLabel: staff.email,
+    avatarInitials: `${staff.firstName?.[0] || ""}${staff.lastName?.[0] || ""}`,
+  })) || [];
 
-      return;
+  const handleSave = async () => {
+    if (!selectedStaffId) return;
+
+    try {
+      await assignStaff({ assignee_user_id: selectedStaffId });
+      onClose();
+    } catch (error) {
+      console.error(error);
     }
-
-    // Handle assignment logic
-    toast.success(`Complaint assigned to ${staff}`);
-
-    onClose();
   };
 
   const FieldLabel = ({ children, required = false }: { children: React.ReactNode; required?: boolean }) => (
@@ -86,45 +106,16 @@ export function AssignStaffMemberModal({
           {/* Staff Member Field */}
           <div className="space-y-1">
             <FieldLabel required>Staff Member</FieldLabel>
-            <Select onValueChange={setStaff}>
-              <SelectTrigger className={cn(AUTH_INPUT.base, "w-full text-left font-normal")}>
-                <SelectValue placeholder={
-                   <span className="flex items-center gap-2 text-[#90A1B9]">
-                      <UserPlus className="h-4 w-4" />
-                      Select a team member
-                   </span>
-                } />
-              </SelectTrigger>
-              <SelectContent className="z-[99999999]">
-                <SelectItem value="Kalpa Perera">
-                  <div className="flex items-center gap-2">
-                     <div className="h-6 w-6 rounded-full bg-gray-300 overflow-hidden shrink-0">
-                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${"kalpa"}`} alt="avatar" />
-                     </div>
-                     <span className="text-[#0F172B]">Kalpa Perera</span>
-                     <span className="text-[#64748B]">@kalpa</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="Supun Silva">
-                  <div className="flex items-center gap-2">
-                     <div className="h-6 w-6 rounded-full bg-gray-300 overflow-hidden shrink-0">
-                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${"supun"}`} alt="avatar" />
-                     </div>
-                     <span className="text-[#0F172B]">Supun Silva</span>
-                     <span className="text-[#64748B]">@supun</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="Ruwini Gomez">
-                  <div className="flex items-center gap-2">
-                     <div className="h-6 w-6 rounded-full bg-gray-300 overflow-hidden shrink-0">
-                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${"ruwini"}`} alt="avatar" />
-                     </div>
-                     <span className="text-[#0F172B]">Ruwini Gomez</span>
-                     <span className="text-[#64748B]">@ruwini</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              options={staffOptions}
+              value={selectedStaffId}
+              onChange={setSelectedStaffId}
+              searchValue={searchTerm}
+              onSearchChange={setSearchTerm}
+              placeholder="Select a team member"
+              searchPlaceholder="Search staff..."
+              emptyMessage="No staff found."
+            />
           </div>
 
           {/* Spacer */}
@@ -134,9 +125,10 @@ export function AssignStaffMemberModal({
           <div className="flex justify-end">
             <Button 
               onClick={handleSave}
-              className={cn(BUTTON_STYLES.primary.md, "w-auto px-10 font-inter text-[14px] font-semibold leading-[20px] bg-[#E60076] hover:bg-[#D0006A]")}
+              disabled={isPending || !selectedStaffId}
+              className={cn(BUTTON_STYLES.primary.md, "w-auto px-10")}
             >
-              Save
+              {isPending ? "Assigning..." : "Save"}
             </Button>
           </div>
 

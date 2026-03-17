@@ -32,7 +32,6 @@ export function PendingAssignment() {
     type: type,
     date_start: dateStart,
     date_end: dateEnd,
-    status: "PENDING", // By default for this tab
   });
 
   const data = useMemo(() => apiData?.data || [], [apiData?.data]);

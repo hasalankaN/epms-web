@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ViewComplaintModal } from "@/components/admin-panel/complaint-management/modals/ViewComplaintModal";
+import { useUpdateComplaintStatus } from "@/hooks/api/complaints/useUpdateComplaintStatus";
 
 interface AllComplaintTableProps {
   data: ComplaintDataType[];
@@ -84,6 +85,22 @@ export function AllComplaintTable({
     bg: config.bg,
     text: config.text,
   }));
+
+  const StatusCell = ({ complaint }: { complaint: ComplaintDataType }) => {
+    const { mutate: updateStatus, isPending } = useUpdateComplaintStatus(complaint.id);
+
+    return (
+      <StatusPopover
+        value={complaint.status}
+        options={statusOptions}
+        onValueChange={(newStatus) => {
+          updateStatus({ target_status: newStatus as any });
+        }}
+        readOnly={false}
+        isLoading={isPending}
+      />
+    );
+  };
 
   const columns: Column<ComplaintDataType>[] = [
     {
@@ -156,13 +173,7 @@ export function AllComplaintTable({
       header: "Complain Status",
       accessorKey: "status",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[180px]",
-      cell: (complaint) => (
-        <StatusPopover
-          value={complaint.status}
-          options={statusOptions}
-          readOnly={true}
-        />
-      ),
+      cell: (complaint) => <StatusCell complaint={complaint} />,
     },
     {
       header: "Assignee",
