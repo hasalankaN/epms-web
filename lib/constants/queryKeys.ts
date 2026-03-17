@@ -20,4 +20,7 @@ export const queryKeys = {
 
   // Staff
   staff: "staff",
+  
+  // Complaints
+  complaints: "complaints",
 };

@@ -29,6 +29,8 @@ interface AllComplaintTableProps {
   isError?: boolean;
   currentPage: number;
   onPageChange: (page: number) => void;
+  totalResults: number;
+  totalPages: number;
 }
 
 export function AllComplaintTable({
@@ -39,19 +41,11 @@ export function AllComplaintTable({
   isError = false,
   currentPage,
   onPageChange,
+  totalResults,
+  totalPages,
 }: AllComplaintTableProps) {
-  const itemsPerPage = 10;
-
   const filteredData = useMemo(() => data || [], [data]);
-  const totalCount = filteredData.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-
-    return filteredData.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, currentPage]);
 
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
@@ -112,7 +106,7 @@ export function AllComplaintTable({
         <Checkbox
           checked={!!rowSelection[complaint.id]}
           onCheckedChange={(checked) => handleSelectRow(complaint.id, !!checked)}
-          aria-label={`Select ${complaint.idNo}`}
+          aria-label={`Select ${complaint.complaint_id}`}
           className="data-[state=checked]:bg-[#E60076] data-[state=checked]:border-[#E60076]"
         />
       ),
@@ -120,69 +114,69 @@ export function AllComplaintTable({
     },
     {
       header: "Submitted Date",
-      accessorKey: "submittedDate",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[140px]",
+      accessorKey: "submitted_date",
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[180px]",
       cell: (item) => (
         <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
-          {item.submittedDate}
+          {new Date(item.submitted_date).toLocaleString("en-GB")}
         </div>
       ),
     },
     {
       header: "ID No.",
-      accessorKey: "idNo",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[100px]",
+      accessorKey: "complaint_id",
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[120px]",
       cell: (item) => (
         <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
-          {item.idNo}
+          {item.complaint_id}
         </div>
       ),
     },
     {
       header: "Submitted By",
-      accessorKey: "submittedBy",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[180px]",
+      accessorKey: "submitted_by",
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[200px]",
       cell: (item) => (
         <div className="text-[11px] font-medium text-[#0F172B] whitespace-nowrap overflow-hidden text-ellipsis">
-          {item.submittedBy}
+          {item.submitted_by}
         </div>
       ),
     },
     {
       header: "Complain Type",
-      accessorKey: "complainType",
+      accessorKey: "type",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[140px]",
       cell: (item) => (
         <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
-          {item.complainType}
+          {item.type.charAt(0).toUpperCase() + item.type.slice(1).toLowerCase()}
         </div>
       ),
     },
     {
       header: "Complain Status",
-      accessorKey: "complainStatus",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[150px]",
+      accessorKey: "status",
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[180px]",
       cell: (complaint) => (
         <StatusPopover
-          value={complaint.complainStatus}
+          value={complaint.status}
           options={statusOptions}
-          readOnly={false}
+          readOnly={true}
         />
       ),
     },
     {
       header: "Assignee",
       accessorKey: "assignee",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[130px]",
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[150px]",
       cell: (item) => (
         <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
-          {item.assignee}
+          {item.assignee || "-"}
         </div>
       ),
     },
     {
       header: "Action",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap text-right w-[80px]",
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap text-right w-[100px]",
       cell: (complaint) => (
         <div className="text-right">
           <DropdownMenu>
@@ -220,14 +214,14 @@ export function AllComplaintTable({
   return (
     <>
       <DataTable
-        data={paginatedData}
+        data={filteredData}
         columns={columns}
         keyExtractor={(item) => item.id}
         isLoading={isLoading}
         isError={isError}
         pagination={{
           variant: "simple",
-          totalCount,
+          totalCount: totalResults,
           selectedRowCount,
           currentPage,
           totalPages,
