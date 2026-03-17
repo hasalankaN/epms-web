@@ -58,5 +58,6 @@ export const API_ENDPOINTS = {
     CREATE: `/api/v1/admin/complaints`,
     ASSIGN: (id: string) => `/api/v1/admin/complaints/${id}/assign`,
     UPDATE_STATUS: (id: string) => `/api/v1/admin/complaints/${id}/status`,
+    DELETE: () => `/api/v1/admin/complaints`,
   },
 };

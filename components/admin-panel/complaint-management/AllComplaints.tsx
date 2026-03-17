@@ -11,6 +11,7 @@ import type { ComplaintStatus, ComplaintType } from "@/types/complaint";
 import { AllComplaintToolbar } from "./views/AllComplaints/AllComplaintToolbar";
 import { AllComplaintTable } from "./views/AllComplaints/AllComplaintTable";
 import { useGetComplaints } from "@/hooks/api/complaints/useGetComplaints";
+import { useDeleteComplaint } from "@/hooks/api/complaints/useDeleteComplaint";
 
 export function AllComplaints() {
   const router = useRouter();
@@ -26,6 +27,9 @@ export function AllComplaints() {
   const assignee = searchParams.get("assignee") || undefined;
   const dateStart = searchParams.get("date_start") || undefined;
   const dateEnd = searchParams.get("date_end") || undefined;
+
+  // ===== MUTATION HOOK =====
+  const { mutate: deleteComplaints, isPending: isDeleting } = useDeleteComplaint();
 
   // ===== API HOOK =====
   const { data: apiData, isLoading, isError } = useGetComplaints({
@@ -46,6 +50,7 @@ export function AllComplaints() {
   // ===== SHARED STATE =====
   const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
   const [localSearch, setLocalSearch] = useState(search);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   // Sync local search when URL search changes
   useEffect(() => {
@@ -104,13 +109,16 @@ export function AllComplaints() {
   const handleDelete = useCallback(() => {
     if (selectedIds.length === 0) {
       toast.warning("Please select at least one complaint");
-
       return;
     }
 
-    toast.error(`Deleting ${selectedIds.length} selected complaint(s)`);
-    setRowSelection({});
-  }, [selectedIds]);
+    deleteComplaints(selectedIds, {
+      onSuccess: () => {
+        setRowSelection({});
+        setDeleteModalOpen(false);
+      }
+    });
+  }, [selectedIds, deleteComplaints]);
 
   const handleMultiFilterChange = useCallback((updates: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -166,6 +174,9 @@ export function AllComplaints() {
           date_start: dateStart,
           date_end: dateEnd,
         }}
+        isDeleting={isDeleting}
+        deleteModalOpen={deleteModalOpen}
+        setDeleteModalOpen={setDeleteModalOpen}
       />
 
       {/* Table */}

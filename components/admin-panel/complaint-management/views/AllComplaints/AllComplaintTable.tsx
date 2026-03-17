@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ViewComplaintModal } from "@/components/admin-panel/complaint-management/modals/ViewComplaintModal";
 import { useUpdateComplaintStatus } from "@/hooks/api/complaints/useUpdateComplaintStatus";
+import { useDeleteComplaint } from "@/hooks/api/complaints/useDeleteComplaint";
 
 interface AllComplaintTableProps {
   data: ComplaintDataType[];
@@ -67,6 +68,8 @@ export function AllComplaintTable({
 
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewComplaint, setViewComplaint] = useState<ComplaintDataType | null>(null);
+
+  const { mutate: deleteComplaint, isPending: isDeleting } = useDeleteComplaint();
 
   const handleAction = (action: string, complaint: ComplaintDataType) => {
     if (action === "view") {
@@ -249,9 +252,15 @@ export function AllComplaintTable({
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={() => {
-          console.log("Deleting complaint:", selectedComplaint?.id);
-          setIsDeleteModalOpen(false);
+          if (selectedComplaint) {
+            deleteComplaint(selectedComplaint.id, {
+              onSuccess: () => {
+                setIsDeleteModalOpen(false);
+              },
+            });
+          }
         }}
+        isDeleting={isDeleting}
         title="Confirm Deletion"
         description="Are you sure you want to delete this complaint? This action cannot be undone."
       />

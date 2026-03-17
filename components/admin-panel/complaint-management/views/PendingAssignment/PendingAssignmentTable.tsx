@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ViewComplaintModal } from "@/components/admin-panel/complaint-management/modals/ViewComplaintModal";
 import { AssignStaffMemberModal } from "@/components/admin-panel/complaint-management/modals/AssignStaffMemberModal";
+import { useDeleteComplaint } from "@/hooks/api/complaints/useDeleteComplaint";
 
 interface PendingAssignmentTableProps {
   data: ComplaintDataType[];
@@ -68,6 +69,8 @@ export function PendingAssignmentTable({
 
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [assignComplaint, setAssignComplaint] = useState<ComplaintDataType | null>(null);
+
+  const { mutate: deleteComplaint, isPending: isDeleting } = useDeleteComplaint();
 
   const handleAction = (action: string, complaint: ComplaintDataType) => {
     if (action === "view") {
@@ -220,9 +223,15 @@ export function PendingAssignmentTable({
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={() => {
-          console.log("Deleting complaint:", selectedComplaint?.id);
-          setIsDeleteModalOpen(false);
+          if (selectedComplaint) {
+            deleteComplaint(selectedComplaint.id, {
+              onSuccess: () => {
+                setIsDeleteModalOpen(false);
+              },
+            });
+          }
         }}
+        isDeleting={isDeleting}
         title="Confirm Deletion"
         description="Are you sure you want to delete this complaint? This action cannot be undone."
       />

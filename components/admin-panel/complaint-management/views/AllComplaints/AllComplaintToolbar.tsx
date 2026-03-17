@@ -52,6 +52,9 @@ interface AllComplaintToolbarProps {
     date_start?: string;
     date_end?: string;
   };
+  isDeleting?: boolean;
+  deleteModalOpen: boolean;
+  setDeleteModalOpen: (open: boolean) => void;
 }
 
 // ===== COMPONENT =====
@@ -65,9 +68,11 @@ export function AllComplaintToolbar({
   onApplyFilters,
   onClearFilters,
   activeUrlFilters,
+  isDeleting = false,
+  deleteModalOpen,
+  setDeleteModalOpen,
 }: AllComplaintToolbarProps) {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   // Fetch staff list for assignee filter
   const { data: staffData } = useGetStaff({ page: 1, size: 100 });
@@ -339,10 +344,8 @@ export function AllComplaintToolbar({
       <DeleteConfirmationModal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        onConfirm={() => {
-          bulkActions.onDelete();
-          setDeleteModalOpen(false);
-        }}
+        onConfirm={bulkActions.onDelete}
+        isDeleting={isDeleting}
         title="Confirm Bulk Deletion"
         description={`Are you sure you want to delete ${selectedCount} selected complaint(s)? This action cannot be undone.`}
       />
