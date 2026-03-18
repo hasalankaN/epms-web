@@ -168,18 +168,27 @@ export default function ImageUpload({
         onDrop={handleDrop}
       >
         {preview && (
-          <div className={cn("flex flex-col w-full h-full relative", className)}>
+          <div className={cn("flex flex-col w-full h-[171px] relative", className)}>
             <div
               className={cn(
                 "relative w-full h-full bg-slate-100 rounded-lg overflow-hidden",
                 isUploading && "animate-pulse"
               )}
             >
-              <img
-                src={preview}
-                alt="Selected file preview"
-                className={cn("w-full h-full object-cover transition-opacity duration-300", isUploading && "opacity-20")}
-              />
+              {preview.startsWith("data:video") || preview.match(/\.(mp4|webm|mov)$/i) || accept?.includes("video") ? (
+                <video
+                  src={preview}
+                  className={cn("w-full h-full object-cover transition-opacity duration-300", isUploading && "opacity-20")}
+                  controls
+                  muted
+                />
+              ) : (
+                <img
+                  src={preview}
+                  alt="Selected file preview"
+                  className={cn("w-full h-full object-cover transition-opacity duration-300", isUploading && "opacity-20")}
+                />
+              )}
               {!isUploading && (
                 <Button
                   variant="destructive"

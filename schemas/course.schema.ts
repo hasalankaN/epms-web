@@ -15,6 +15,7 @@ export const courseGeneralDetailsSchema = z.object({
   language: z.string().min(1, "Language is required"),
   lessonDuration: z.string().optional(),
   hierarchy: z.string().min(1, "Hierarchy is required"),
+  subject: z.string().optional(),
   shortDescription: z.string().optional(),
   longDescription: z.string().min(1, "Course long description is required"),
   coverImage: z.string().optional(), // TODO: Make required after upload API integration
@@ -94,6 +95,10 @@ export const courseCommissionDetailsSchema = z.object({
   teamValue: z.string().optional(),
   lecturerType: z.string().optional(),
   lecturerValue: z.string().optional(),
+  staffType: z.string().optional(),
+  staffValue: z.string().optional(),
+  branchStaffType: z.string().optional(),
+  branchStaffValue: z.string().optional(),
 });
 
 export type CourseCommissionDetailsValues = z.infer<typeof courseCommissionDetailsSchema>;
@@ -120,6 +125,7 @@ export const defaultCourseGeneralDetailsValues: Partial<CourseGeneralDetailsValu
   language: "",
   lessonDuration: "",
   hierarchy: "3 Tiers",
+  subject: "",
   shortDescription: "",
   longDescription: "",
   coverImage: "",
@@ -140,4 +146,8 @@ export const defaultCourseCommissionDetailsValues: Partial<CourseCommissionDetai
   teamValue: "",
   lecturerType: "",
   lecturerValue: "",
+  staffType: "",
+  staffValue: "",
+  branchStaffType: "",
+  branchStaffValue: "",
 };

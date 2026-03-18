@@ -218,12 +218,12 @@ export function ExpandedPreviewModal({
         <div className="flex-1 relative flex flex-row overflow-hidden min-h-0">
           {/* Preview area always takes full space */}
           <div
-            className={`flex-1 overflow-auto bg-[${COLORS.slate100}] p-3 sm:p-4 lg:p-6 flex items-center justify-center min-h-0`}
+            className={`flex-1 overflow-auto bg-[${COLORS.slate100}] p-3 sm:p-4 lg:p-6 min-h-0`}
             onPointerDown={() => { onSelectTag(null); onDeselectSignature(); }}
           >
             <div
               ref={expandedContainerRef}
-              className="relative w-full"
+              className="relative w-full mx-auto"
               style={{
                 maxWidth: "900px",
                 ...(imageAspectRatio ? { aspectRatio: String(imageAspectRatio) } : {}),

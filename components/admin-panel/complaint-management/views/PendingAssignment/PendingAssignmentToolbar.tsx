@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from "react";
 
 import { Search, X } from "lucide-react";
+import { format } from "date-fns";
 
 import { cn } from "@/lib/utils";
 import { BUTTON_STYLES, AUTH_INPUT } from "@/lib/constants/theme";
@@ -14,38 +15,71 @@ import { DateRangeFilter } from "@/components/common/filters/DateRangeFilter";
 // ===== FILTER DATA =====
 
 const complainTypeFilter: FilterCategory = {
-  key: "complainType",
+  key: "type",
   label: "Complain Type",
   items: [
-    { key: "request", label: "Request" },
-    { key: "complaint", label: "Complaint" },
+    { key: "REQUEST", label: "Request" },
+    { key: "COMPLAINT", label: "Complaint" },
   ],
 };
 
+// ===== TYPES =====
+
+interface PendingAssignmentToolbarProps {
+  search: string;
+  onSearchChange: (value: string) => void;
+  onApplyFilters: (filters: Record<string, string | null>) => void;
+  onClearFilters: () => void;
+  activeUrlFilters: {
+    type?: string;
+    date_start?: string;
+    date_end?: string;
+  };
+}
+
 // ===== COMPONENT =====
 
-export function PendingAssignmentToolbar() {
-  const [typeFilter, setTypeFilter] = useState<string | null>(null);
-  const [hasDateFilter, setHasDateFilter] = useState(false);
+export function PendingAssignmentToolbar({
+  search,
+  onSearchChange,
+  onApplyFilters,
+  onClearFilters,
+  activeUrlFilters,
+}: PendingAssignmentToolbarProps) {
   const [clearKey, setClearKey] = useState(0);
 
-  const hasActiveFilters = hasDateFilter || typeFilter !== null;
+  const hasActiveFilters = !!activeUrlFilters.type || !!activeUrlFilters.date_start || !!activeUrlFilters.date_end;
 
   const handleClearFilters = useCallback(() => {
-    setTypeFilter(null);
-    setHasDateFilter(false);
+    onClearFilters();
     setClearKey((k) => k + 1);
-  }, []);
+  }, [onClearFilters]);
 
-  const handleFilterSelect = useCallback((_categoryKey: string, _itemKey: string, itemLabel: string) => {
-    setTypeFilter(itemLabel);
-  }, []);
+  const handleFilterSelect = useCallback((key: string, _itemKey: string) => {
+    // We expect "REQUEST" or "COMPLAINT" as keys but previous logic used label?
+    // Let's use _itemKey which should be REQUEST/COMPLAINT
+    onApplyFilters({ [key]: _itemKey });
+  }, [onApplyFilters]);
+
+  const handleDateApply = useCallback((start: Date | null, end: Date | null) => {
+    onApplyFilters({
+      date_start: start ? format(start, "yyyy-MM-dd") : null,
+      date_end: end ? format(end, "yyyy-MM-dd") : null,
+    });
+  }, [onApplyFilters]);
+
+  // Sync clearKey if external clear happens? 
+  // Probably better to just rely on props stability.
 
   const dateFilter = (
     <DateRangeFilter
       key={clearKey}
       placeholder="Pick a date"
-      onApply={(start, end) => setHasDateFilter(start !== null || end !== null)}
+      initialRange={{
+        from: activeUrlFilters.date_start ? new Date(activeUrlFilters.date_start) : undefined,
+        to: activeUrlFilters.date_end ? new Date(activeUrlFilters.date_end) : undefined,
+      }}
+      onApply={handleDateApply}
     />
   );
 
@@ -59,6 +93,8 @@ export function PendingAssignmentToolbar() {
           <Input
             type="text"
             placeholder="Search by ID"
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
             className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "w-full border border-[#E2E8F0] pl-10 pr-4")}
           />
         </div>
@@ -80,7 +116,7 @@ export function PendingAssignmentToolbar() {
             categories={[complainTypeFilter]}
             onFilterSelect={handleFilterSelect}
             label="Complain Type"
-            value={typeFilter}
+            value={activeUrlFilters.type ? (activeUrlFilters.type === "REQUEST" ? "Request" : "Complaint") : null}
           />
         </div>
       </div>
@@ -92,6 +128,8 @@ export function PendingAssignmentToolbar() {
           <Input
             type="text"
             placeholder="Search..."
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
             className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "w-full border border-[#E2E8F0] pl-10 pr-4")}
           />
         </div>
@@ -112,7 +150,7 @@ export function PendingAssignmentToolbar() {
             categories={[complainTypeFilter]}
             onFilterSelect={handleFilterSelect}
             label="Complain Type"
-            value={typeFilter}
+            value={activeUrlFilters.type ? (activeUrlFilters.type === "REQUEST" ? "Request" : "Complaint") : null}
           />
         </div>
       </div>
@@ -124,6 +162,8 @@ export function PendingAssignmentToolbar() {
           <Input
             type="text"
             placeholder="Search by ID"
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
             className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "w-full border border-[#E2E8F0] pl-10 pr-4")}
           />
         </div>
@@ -145,7 +185,7 @@ export function PendingAssignmentToolbar() {
               categories={[complainTypeFilter]}
               onFilterSelect={handleFilterSelect}
               label="Complain Type"
-              value={typeFilter}
+              value={activeUrlFilters.type ? (activeUrlFilters.type === "REQUEST" ? "Request" : "Complaint") : null}
             />
           </div>
         </div>
