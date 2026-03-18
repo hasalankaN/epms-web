@@ -2,12 +2,19 @@
 
 import React, { useState, useCallback } from "react";
 
-import { Search, X } from "lucide-react";
+import { Search, X, MoreHorizontal } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { BUTTON_STYLES, AUTH_INPUT } from "@/lib/constants/theme";
 import { Input } from "@/components/ui/input";
 import { DateRangeFilter } from "@/components/common/filters/DateRangeFilter";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const buttonTextStyles = "text-[14px] font-semibold leading-[20px] text-[#0F172B]";
 
@@ -110,25 +117,38 @@ export function FinanceToolbar() {
           />
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={handleClearFilters}
-              className={cn(BUTTON_STYLES.outline.md, "px-3 border-dashed text-[#64748B] hover:text-[#0F172B] shrink-0")}
-              title="Clear Filters"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
+        <div className="flex items-center justify-between gap-2 overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+          <div className="flex items-center gap-2 flex-1 justify-end">
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                className={cn(BUTTON_STYLES.outline.md, "px-3 border-dashed text-[#64748B] hover:text-[#0F172B] shrink-0")}
+                title="Clear Filters"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
 
-          <div className="shrink-0">{dateFilter}</div>
+            <div className="shrink-0">{dateFilter}</div>
 
-          <div className="shrink-0">
-            <button className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap px-3", buttonTextStyles)}>
-              <i className="file-csv h-4 w-4" />
-              Export CSV
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn(BUTTON_STYLES.outline.md, "px-3 shrink-0")}
+                  aria-label="More actions"
+                  title="More actions"
+                >
+                  <MoreHorizontal className="h-4 w-4 text-[#0F172B]" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[160px]">
+                <DropdownMenuItem onClick={() => console.log("Export CSV")} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
+                  <i className="file-csv mr-2 h-4 w-4" />
+                  Export CSV
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
