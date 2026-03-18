@@ -60,36 +60,61 @@ function ReportTable({
   totalBgClass: string;
 }) {
   return (
-    <div className="overflow-hidden rounded-[8px] border border-[#E2E8F0]">
-      <Table className="min-w-full">
-        <TableHeader className="bg-pink-50">
-          <TableRow className="border-none hover:bg-pink-50">
-            <TableHead className="py-3 pl-4 pr-2 text-[13px] font-semibold text-[#1D293D] w-[100px]">Date</TableHead>
-            <TableHead className="py-3 px-2 text-[13px] font-semibold text-[#1D293D] w-[140px]">Description</TableHead>
-            <TableHead className="py-3 px-2 text-[13px] font-semibold text-[#1D293D]">Batch/Course/Product</TableHead>
-            <TableHead className="py-3 pl-2 pr-4 text-[13px] font-semibold text-[#1D293D] text-right w-[110px]">Amount</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {items.map((item) => (
-            <TableRow key={item.id} className="border-b border-[#F1F5F9] last:border-none hover:bg-transparent">
-              <TableCell className="py-3 pl-4 pr-2 text-[12px] font-medium text-[#45556C] whitespace-nowrap">{item.date}</TableCell>
-              <TableCell className="py-3 px-2 text-[12px] font-medium text-[#45556C]">{item.description}</TableCell>
-              <TableCell className="py-3 px-2 text-[12px] font-medium text-[#45556C]">{item.batchCourseProduct}</TableCell>
-              <TableCell className="py-3 pl-2 pr-4 text-[12px] font-medium text-[#45556C] text-right whitespace-nowrap">{item.amount}</TableCell>
+    <>
+      {/* Desktop/Tablet Table */}
+      <div className="hidden sm:block overflow-hidden rounded-[8px] border border-[#E2E8F0]">
+        <Table className="min-w-full">
+          <TableHeader className="bg-pink-50">
+            <TableRow className="border-none hover:bg-pink-50">
+              <TableHead className="py-3 pl-4 pr-2 text-[13px] font-semibold text-[#1D293D] w-[100px]">Date</TableHead>
+              <TableHead className="py-3 px-2 text-[13px] font-semibold text-[#1D293D] w-[140px]">Description</TableHead>
+              <TableHead className="py-3 px-2 text-[13px] font-semibold text-[#1D293D]">Batch/Course/Product</TableHead>
+              <TableHead className="py-3 pl-2 pr-4 text-[13px] font-semibold text-[#1D293D] text-right w-[110px]">Amount</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-        <TableFooter className={totalBgClass}>
-          <TableRow className="border-t border-[#E2E8F0] hover:bg-transparent h-14">
-            <TableCell colSpan={3} className="py-3 px-4 text-base font-semibold leading-6 text-[#45556C]">Total</TableCell>
-            <TableCell className="py-3 pl-2 pr-4 text-base font-semibold leading-6 text-[#45556C] text-right whitespace-nowrap">{totalAmount}</TableCell>
-          </TableRow>
-        </TableFooter>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {items.map((item) => (
+              <TableRow key={item.id} className="border-b border-[#F1F5F9] last:border-none hover:bg-transparent">
+                <TableCell className="py-3 pl-4 pr-2 text-[12px] font-medium text-[#45556C] whitespace-nowrap">{item.date}</TableCell>
+                <TableCell className="py-3 px-2 text-[12px] font-medium text-[#45556C]">{item.description}</TableCell>
+                <TableCell className="py-3 px-2 text-[12px] font-medium text-[#45556C]">{item.batchCourseProduct}</TableCell>
+                <TableCell className="py-3 pl-2 pr-4 text-[12px] font-medium text-[#45556C] text-right whitespace-nowrap">{item.amount}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+          <TableFooter className={totalBgClass}>
+            <TableRow className="border-t border-[#E2E8F0] hover:bg-transparent h-14">
+              <TableCell colSpan={3} className="py-3 px-4 text-base font-semibold leading-6 text-[#45556C]">Total</TableCell>
+              <TableCell className="py-3 pl-2 pr-4 text-base font-semibold leading-6 text-[#45556C] text-right whitespace-nowrap">{totalAmount}</TableCell>
+            </TableRow>
+          </TableFooter>
+        </Table>
+      </div>
+
+      {/* Mobile Card List */}
+      <div className="flex flex-col gap-2 sm:hidden">
+        {items.map((item) => (
+          <div key={item.id} className="flex flex-col gap-2 rounded-lg border border-[#E2E8F0] bg-white p-3 shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-medium text-[#64748B]">{item.date}</span>
+              <span className="text-[12px] font-semibold text-[#1D293D]">{item.amount}</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-[12px] font-medium text-[#45556C] line-clamp-2">{item.description}</span>
+              <span className="text-[10px] font-medium text-[#94A3B8]">{item.batchCourseProduct}</span>
+            </div>
+          </div>
+        ))}
+        {/* Mobile Total Card */}
+        <div className={cn("flex items-center justify-between rounded-lg border border-[#E2E8F0] p-4 shadow-sm", totalBgClass)}>
+          <span className="text-base font-semibold text-[#45556C]">Total</span>
+          <span className="text-base font-semibold text-[#45556C]">{totalAmount}</span>
+        </div>
+      </div>
+    </>
   );
 }
+
 
 // ===== MAIN MODAL =====
 

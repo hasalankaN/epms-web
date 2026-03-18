@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 
 import { MoreVertical } from "lucide-react";
 
@@ -14,6 +14,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+import { IncomeExpenseReportModal } from "./IncomeExpenseReportModal";
 
 export interface ProfitLossTableDataType {
   id: string;
@@ -47,6 +49,9 @@ export function ProfitLossTable({
   currentPage,
   onPageChange,
 }: Omit<ProfitLossTableProps, "rowSelection" | "setRowSelection">) {
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<ProfitLossTableDataType | null>(null);
+
   const itemsPerPage = 10;
   const filteredData = useMemo(() => data || [], [data]);
   const totalPages = Math.max(1, Math.ceil(filteredData.length / itemsPerPage));
@@ -56,6 +61,11 @@ export function ProfitLossTable({
 
     return filteredData.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredData, currentPage, itemsPerPage]);
+
+  const handleViewReport = (row: ProfitLossTableDataType) => {
+    setSelectedRow(row);
+    setReportModalOpen(true);
+  };
 
   const columns: Column<ProfitLossTableDataType>[] = [
     {
@@ -130,7 +140,7 @@ export function ProfitLossTable({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[120px]">
               <DropdownMenuItem 
-                onClick={() => console.log("View clicked for", item.id)} 
+                onClick={() => handleViewReport(item)} 
                 className="cursor-pointer focus:bg-[#FDF2F8]"
               >
                 View
@@ -143,20 +153,45 @@ export function ProfitLossTable({
   ];
 
   return (
-    <DataTable
-      data={paginatedData}
-      columns={columns}
-      keyExtractor={(item) => item.id}
-      isLoading={isLoading}
-      isError={isError}
-      pagination={{
-        variant: "simple",
-        totalCount: filteredData.length,
-        selectedRowCount: 0,
-        currentPage,
-        totalPages,
-        onPageChange,
-      }}
-    />
+    <>
+      <DataTable
+        data={paginatedData}
+        columns={columns}
+        keyExtractor={(item) => item.id}
+        isLoading={isLoading}
+        isError={isError}
+        pagination={{
+          variant: "simple",
+          totalCount: filteredData.length,
+          selectedRowCount: 0,
+          currentPage,
+          totalPages,
+          onPageChange,
+        }}
+      />
+
+      {selectedRow && (
+        <IncomeExpenseReportModal
+          isOpen={reportModalOpen}
+          onClose={() => {
+            setReportModalOpen(false);
+            setSelectedRow(null);
+          }}
+          reportId={selectedRow.id}
+          incomeItems={[
+            { id: "1", date: "2026/01/21", description: "Lorrem ipsum", transactionVia: "via", amount: "XXXX.00" },
+            { id: "2", date: "2026/01/21", description: "Lorrem ipsum", transactionVia: "via", amount: "XXXX.00" },
+          ]}
+          incomeTotal="+XXXX.00"
+          expenseItems={[
+            { id: "1", date: "2026/01/21", description: "Lorrem ipsum", transactionVia: "via", amount: "XXXX.00" },
+            { id: "2", date: "2026/01/21", description: "Lorrem ipsum", transactionVia: "via", amount: "XXXX.00" },
+          ]}
+          expenseTotal="-XXXX.00"
+          status={selectedRow.status}
+          balance="XXX.00"
+        />
+      )}
+    </>
   );
 }
