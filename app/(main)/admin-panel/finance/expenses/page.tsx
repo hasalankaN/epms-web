@@ -82,6 +82,7 @@ export default function ExpensesPage() {
       <AddExpensePanel
         isOpen={isAddPanelOpen}
         onClose={() => setIsAddPanelOpen(false)}
+        activeTab={activeTab}
       />
     </div>
   );

@@ -4,11 +4,10 @@ import React, { useState, useEffect } from "react";
 
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Calendar as CalendarIcon, ChevronDown } from "lucide-react";
+import { X, ChevronDown } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,12 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { DateRangeCalendar } from "@/components/common/filters/DateRangeCalendar";
 
 import { cn } from "@/lib/utils";
 import { AUTH_TYPOGRAPHY, AUTH_INPUT, BUTTON_STYLES } from "@/lib/constants/theme";
@@ -37,11 +30,13 @@ import { useGetBranches } from "@/hooks/api/branches/useGetBranches";
 // ===== SCHEMA =====
 
 const expenseSchema = z.object({
-  expense_date: z.date().optional(),
+  expense_type: z.enum(["bcp", "general"], { required_error: "Type is required." }),
   expense_description: z.string().min(1, "Description is required."),
-  transaction_via: z.string().min(1, "Transaction via is required."),
   amount: z.string().min(1, "Amount is required."),
+  transaction_via: z.string().min(1, "Transaction via is required."),
   branch_id: z.string().min(1, "Branch is required."),
+  evidence: z.string().min(1, "Evidence is required."),
+  notes: z.string().optional(),
 });
 
 type ExpenseFormValues = z.infer<typeof expenseSchema>;
@@ -51,6 +46,7 @@ type ExpenseFormValues = z.infer<typeof expenseSchema>;
 interface AddExpensePanelProps {
   isOpen: boolean;
   onClose: () => void;
+  activeTab: "bcp-expense" | "general-expense";
 }
 
 // ===== PORTAL =====
@@ -105,7 +101,7 @@ const itemVariants = {
 
 // ===== MAIN COMPONENT =====
 
-export function AddExpensePanel({ isOpen, onClose }: AddExpensePanelProps) {
+export function AddExpensePanel({ isOpen, onClose, activeTab }: AddExpensePanelProps) {
   const { data: branchesData } = useGetBranches({ size: 100 });
   const branches = branchesData?.results || [];
 
@@ -123,21 +119,32 @@ export function AddExpensePanel({ isOpen, onClose }: AddExpensePanelProps) {
     resolver: zodResolver(expenseSchema),
     mode: "onChange",
     defaultValues: {
-      amount: "",
-      branch_id: "",
-      transaction_via: "",
+      expense_type: activeTab === "bcp-expense" ? "bcp" : "general",
       expense_description: "",
+      amount: "",
+      transaction_via: "",
+      branch_id: "",
+      evidence: "",
+      notes: "",
     },
   });
 
   // Reset on open
   useEffect(() => {
     if (isOpen) {
-      reset();
+      reset({
+        expense_type: activeTab === "bcp-expense" ? "bcp" : "general",
+        expense_description: "",
+        amount: "",
+        transaction_via: "",
+        branch_id: "",
+        evidence: "",
+        notes: "",
+      });
       setShowDiscardModal(false);
       setEvidenceUrl("");
     }
-  }, [isOpen, reset]);
+  }, [isOpen, reset, activeTab]);
 
   const handleCloseAttempt = () => {
     if (isDirty || evidenceUrl) {
@@ -230,60 +237,84 @@ export function AddExpensePanel({ isOpen, onClose }: AddExpensePanelProps) {
                   >
                     <div className="flex flex-col gap-6">
 
-                      {/* Expense Date */}
+                      {/* Select Type */}
                       <div className="space-y-1">
-                        <FieldLabel>Expense Date</FieldLabel>
+                        <FieldLabel>Select Type</FieldLabel>
                         <Controller
                           control={control}
-                          name="expense_date"
+                          name="expense_type"
                           render={({ field }) => (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <div className={cn(
-                                  "flex h-10 w-full items-center rounded-md border border-gray-300 bg-white transition-all hover:bg-slate-50 cursor-pointer",
-                                  errors.expense_date && "border-red-500"
-                                )}>
-                                  <div className="flex h-full items-center justify-center border-r border-slate-200 px-3">
-                                    <CalendarIcon className="h-4 w-4 text-[#64748B]" />
-                                  </div>
-                                  <input
-                                    value={field.value ? format(field.value, "dd/MM/yyyy") : ""}
-                                    readOnly
-                                    placeholder="Pick a date"
-                                    className={cn(
-                                      "flex-1 cursor-pointer bg-transparent px-3 py-2 text-sm outline-none placeholder:text-[#90A1B9] placeholder:italic pointer-events-none"
-                                    )}
-                                  />
-                                </div>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0 z-[99999999]" align="start">
-                                <DateRangeCalendar
-                                  mode="single"
-                                  startDate={field.value || null}
-                                  endDate={null}
-                                  onDateChange={(start) => field.onChange(start)}
+                            <div className="flex items-center gap-6 h-10">
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="radio"
+                                  id="type-bcp"
+                                  value="bcp"
+                                  checked={field.value === "bcp"}
+                                  onChange={() => field.onChange("bcp")}
+                                  className="accent-[#0F172B] w-4 h-4 cursor-pointer"
                                 />
-                              </PopoverContent>
-                            </Popover>
+                                <label htmlFor="type-bcp" className="text-sm text-[#45556C] cursor-pointer">
+                                  Batch/Course/Product
+                                </label>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="radio"
+                                  id="type-general"
+                                  value="general"
+                                  checked={field.value === "general"}
+                                  onChange={() => field.onChange("general")}
+                                  className="accent-[#0F172B] w-4 h-4 cursor-pointer"
+                                />
+                                <label htmlFor="type-general" className="text-sm text-[#45556C] cursor-pointer">
+                                  General
+                                </label>
+                              </div>
+                            </div>
                           )}
                         />
-                        {errors.expense_date && <p className="text-xs text-red-500">{errors.expense_date.message}</p>}
+                        {errors.expense_type && <p className="text-xs text-red-500">{errors.expense_type.message}</p>}
                       </div>
 
-                      {/* Expense Description */}
+                      {/* Transaction Description */}
                       <div className="space-y-1">
-                        <FieldLabel required>Expense Description</FieldLabel>
-                        <Textarea
+                        <FieldLabel required>Transaction Description</FieldLabel>
+                        <Input
                           {...register("expense_description")}
                           className={cn(
-                            "min-h-[100px] resize-none text-[14px] font-medium",
                             AUTH_INPUT.base,
                             AUTH_INPUT.placeholder,
                             errors.expense_description && "border-red-500 focus-visible:ring-red-500"
                           )}
-                          placeholder="eg: Monthly rent payment or utility bills..."
+                          placeholder="lorem ipsum"
                         />
                         {errors.expense_description && <p className="text-xs text-red-500">{errors.expense_description.message}</p>}
+                      </div>
+
+                      {/* Amount */}
+                      <div className="space-y-1">
+                        <FieldLabel required>Amount</FieldLabel>
+                        <p className="mb-[6px] text-[12px] font-normal leading-[16px] text-[#90A1B9]">
+                          Only numbers, periods, commas and spaces are accepted.
+                        </p>
+                        <div className="relative">
+                          <Input
+                            {...register("amount")}
+                            className={cn(
+                              AUTH_INPUT.base,
+                              AUTH_INPUT.placeholder,
+                              "pr-14",
+                              errors.amount && "border-red-500 focus-visible:ring-red-500"
+                            )}
+                            placeholder="eg: 15,000.00"
+                          />
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                            <span className="text-sm font-semibold text-[#1D293D]">LKR</span>
+                            <ChevronDown className="h-3 w-3 text-[#0F172B]" />
+                          </div>
+                        </div>
+                        {errors.amount && <p className="text-xs text-red-500">{errors.amount.message}</p>}
                       </div>
 
                       {/* Transaction Via */}
@@ -316,31 +347,6 @@ export function AddExpensePanel({ isOpen, onClose }: AddExpensePanelProps) {
                           )}
                         />
                         {errors.transaction_via && <p className="text-xs text-red-500">{errors.transaction_via.message}</p>}
-                      </div>
-
-                      {/* Amount */}
-                      <div className="space-y-1">
-                        <FieldLabel required>Amount</FieldLabel>
-                        <p className="mb-[6px] text-[12px] font-normal leading-[16px] text-[#90A1B9]">
-                          Only numbers, periods, commas and spaces are accepted.
-                        </p>
-                        <div className="relative">
-                          <Input
-                            {...register("amount")}
-                            className={cn(
-                              AUTH_INPUT.base,
-                              AUTH_INPUT.placeholder,
-                              "pr-14",
-                              errors.amount && "border-red-500 focus-visible:ring-red-500"
-                            )}
-                            placeholder="eg: 15,000.00"
-                          />
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                            <span className="text-sm font-semibold text-[#1D293D]">LKR</span>
-                            <ChevronDown className="h-3 w-3 text-[#0F172B]" />
-                          </div>
-                        </div>
-                        {errors.amount && <p className="text-xs text-red-500">{errors.amount.message}</p>}
                       </div>
 
                       {/* Branch */}
@@ -381,16 +387,39 @@ export function AddExpensePanel({ isOpen, onClose }: AddExpensePanelProps) {
 
                       {/* Evidence */}
                       <div className="space-y-1">
-                        <FieldLabel>Evidence</FieldLabel>
-                        <div className="w-full">
-                          <ImageUpload
-                            imageUrl={evidenceUrl}
-                            setImage={setEvidenceUrl}
-                            removeImage={() => setEvidenceUrl("")}
-                            placeholder="Upload Here or drag and drop here"
-                            className="h-[140px]"
-                          />
-                        </div>
+                        <FieldLabel required>Evidence</FieldLabel>
+                        <Controller
+                          control={control}
+                          name="evidence"
+                          render={({ field }) => (
+                            <div className="w-full">
+                              <ImageUpload
+                                imageUrl={field.value}
+                                setImage={(url) => field.onChange(url)}
+                                removeImage={() => field.onChange("")}
+                                placeholder="Upload Here or drag and drop here"
+                                className={cn("h-[140px]", errors.evidence && "border-red-500")}
+                              />
+                            </div>
+                          )}
+                        />
+                        {errors.evidence && <p className="text-xs text-red-500">{errors.evidence.message}</p>}
+                      </div>
+
+                      {/* Notes */}
+                      <div className="space-y-1">
+                        <FieldLabel>Notes</FieldLabel>
+                        <Textarea
+                          {...register("notes")}
+                          className={cn(
+                            "min-h-[100px] resize-none text-[14px] font-medium",
+                            AUTH_INPUT.base,
+                            AUTH_INPUT.placeholder,
+                            errors.notes && "border-red-500 focus-visible:ring-red-500"
+                          )}
+                          placeholder="eg: Type your notes here"
+                        />
+                        {errors.notes && <p className="text-xs text-red-500">{errors.notes.message}</p>}
                       </div>
 
                     </div>
