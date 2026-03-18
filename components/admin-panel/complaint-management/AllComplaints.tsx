@@ -109,6 +109,7 @@ export function AllComplaints() {
   const handleDelete = useCallback(() => {
     if (selectedIds.length === 0) {
       toast.warning("Please select at least one complaint");
+      
       return;
     }
 
