@@ -25,6 +25,9 @@ interface DateRangeFilterProps {
 
   /** Alignment of the popover content. */
   align?: "start" | "center" | "end";
+  
+  /** Initial date range to display. */
+  initialRange?: { from?: Date; to?: Date };
 }
 
 export function DateRangeFilter({
@@ -32,14 +35,15 @@ export function DateRangeFilter({
   placeholder = "By Date",
   className,
   align = "start",
+  initialRange,
 }: DateRangeFilterProps) {
   // Applied (committed) dates — drive the button label
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [startDate, setStartDate] = useState<Date | null>(initialRange?.from || null);
+  const [endDate, setEndDate] = useState<Date | null>(initialRange?.to || null);
 
   // Draft dates — live inside the popover until Apply
-  const [draftStart, setDraftStart] = useState<Date | null>(null);
-  const [draftEnd, setDraftEnd] = useState<Date | null>(null);
+  const [draftStart, setDraftStart] = useState<Date | null>(initialRange?.from || null);
+  const [draftEnd, setDraftEnd] = useState<Date | null>(initialRange?.to || null);
 
   const hasValue = startDate !== null || endDate !== null;
 

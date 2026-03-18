@@ -13,6 +13,7 @@ import {
   type CourseGeneralDetailsValues,
 } from "@/schemas/course.schema";
 import { useCourseFormStore } from "@/store/courseFormStore";
+import { useGetStaff } from "@/hooks/api/staff/useGetStaff";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -31,26 +32,17 @@ import { DateRangeCalendar } from "@/components/common/filters/DateRangeCalendar
 import ImageUpload from "@/components/common/ImageUpload";
 import { AUTH_TYPOGRAPHY, AUTH_INPUT } from "@/lib/constants/theme";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { useGetCertificateTemplates } from "@/hooks/api/certificates/useGetCertificateTemplates";
+import { useGetCategories } from "@/hooks/api/course-categories/useGetCategories";
+import { useGetLecturers } from "@/hooks/api/lecturers/useGetLecturers";
 
-const STAFF_OPTIONS = [
-  { 
-    value: "kalpa", 
-    label: "Kalpa Perera", 
-    handle: "@kalpa",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=kalpa" 
-  },
-  { 
-    value: "saduni", 
-    label: "Saduni", 
-    handle: "@saduni",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=saduni" 
-  },
-];
-
-const CERTIFICATE_OPTIONS = [
-  { value: "UK", label: "UK" },
-  { value: "Free", label: "Free" },
+const SUBJECT_OPTIONS = [
+  { value: "subject-batch", label: "Subject - Batch Name" },
+  { value: "computer-science", label: "Computer Science" },
+  { value: "mathematics", label: "Mathematics" },
+  { value: "english", label: "English" },
 ];
 
 interface CourseGeneralDetailsStepProps {
@@ -75,6 +67,46 @@ export function CourseGeneralDetailsStep({ onNext }: CourseGeneralDetailsStepPro
   const [endDate, setEndDate] = useState<Date | undefined>(
     transformedDefaults.endDate
   );
+
+  const [staffSearch, setStaffSearch] = useState("");
+  const [catSearch, setCatSearch] = useState("");
+  const [lecturerSearch, setLecturerSearch] = useState("");
+
+  const { data: staffData, isLoading: isStaffLoading } = useGetStaff({
+    page: 1,
+    size: 10,
+    search: staffSearch,
+  });
+
+  const staffOptions = staffData?.results.map((staff) => ({
+    value: staff.userId,
+    label: `${staff.firstName || ""} ${staff.lastName || ""}`.trim(),
+    handle: staff.email,
+    avatar: null, // ApiStaffRow does not have an avatar/profile image field
+  })) || [];
+
+  const { data: certData, isLoading: isCertLoading } = useGetCertificateTemplates({ page: 1, limit: 50 });
+
+  const certOptions = certData?.results?.map((cert) => ({
+    value: cert.id,
+    label: cert.name,
+  })) || [];
+
+  const { data: catData, isLoading: isCatLoading } = useGetCategories({ page: 1, size: 50, search: catSearch });
+
+  const catOptions = catData?.results.map((cat) => ({
+    value: cat.id,
+    label: cat.name,
+  })) || [];
+
+  const { data: lecturerData, isLoading: isLecturerLoading } = useGetLecturers({ page: 1, size: 50, search: lecturerSearch });
+
+  const lecturerOptions = lecturerData?.results.map((lec) => ({
+    value: lec.user_id,
+    label: `${lec.first_name || ""} ${lec.last_name || ""}`.trim(),
+    subLabel: lec.email,
+    avatarInitials: `${lec.first_name?.[0] || ""}${lec.last_name?.[0] || ""}`,
+  })) || [];
 
   const form = useForm<CourseGeneralDetailsValues>({
     resolver: zodResolver(courseGeneralDetailsSchema),
@@ -140,11 +172,14 @@ export function CourseGeneralDetailsStep({ onNext }: CourseGeneralDetailsStepPro
                 control={control}
                 render={({ field }) => (
                   <MultiSelect
-                    options={STAFF_OPTIONS}
-                    value={field.value || []}
+                    options={staffOptions}
+                    value={field.value}
                     onChange={field.onChange}
+                    onSearchChange={setStaffSearch}
+                    searchValue={staffSearch}
                     placeholder="Select multiple staff members"
                     error={!!errors.staffMembers}
+                    isLoading={isStaffLoading}
                   />
                 )}
               />
@@ -153,22 +188,16 @@ export function CourseGeneralDetailsStep({ onNext }: CourseGeneralDetailsStepPro
 
             <div className="space-y-1">
               <FieldLabel>Assessment</FieldLabel>
-              <Controller
-                name="assessment"
-                control={control}
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic")}>
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Assignment">Assignment</SelectItem>
-                      <SelectItem value="Exam">Exam</SelectItem>
-                      <SelectItem value="Project">Project</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
+              <div className="flex items-center gap-6 h-10">
+                 <div className="flex items-center gap-2">
+                    <input type="radio" id="assessment-yes" value="Yes" {...register("assessment")} className="accent-[#0F172B] w-4 h-4 cursor-pointer" />
+                    <label htmlFor="assessment-yes" className="text-sm text-[#45556C] cursor-pointer">Yes</label>
+                 </div>
+                 <div className="flex items-center gap-2">
+                    <input type="radio" id="assessment-no" value="No" {...register("assessment")} className="accent-[#0F172B] w-4 h-4 cursor-pointer" />
+                    <label htmlFor="assessment-no" className="text-sm text-[#45556C] cursor-pointer">No</label>
+                 </div>
+              </div>
             </div>
 
             {/* Row 2 */}
@@ -183,9 +212,14 @@ export function CourseGeneralDetailsStep({ onNext }: CourseGeneralDetailsStepPro
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Diploma">Diploma</SelectItem>
+                      <SelectItem value="Workshop">Workshop</SelectItem>
                       <SelectItem value="Certificate">Certificate</SelectItem>
+                      <SelectItem value="Diploma">Diploma</SelectItem>
+                      <SelectItem value="HND">HND</SelectItem>
                       <SelectItem value="Degree">Degree</SelectItem>
+                      <SelectItem value="School">School</SelectItem>
+                      <SelectItem value="University">University</SelectItem>
+                      <SelectItem value="Exam Prep">Exam Prep</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -236,11 +270,12 @@ export function CourseGeneralDetailsStep({ onNext }: CourseGeneralDetailsStepPro
                 control={control}
                 render={({ field }) => (
                   <MultiSelect
-                    options={CERTIFICATE_OPTIONS}
+                    options={certOptions}
                     value={field.value || []}
                     onChange={field.onChange}
                     placeholder="Select all the types of certificate"
                     error={!!errors.certificates}
+                    isLoading={isCertLoading}
                   />
                 )}
               />
@@ -254,16 +289,18 @@ export function CourseGeneralDetailsStep({ onNext }: CourseGeneralDetailsStepPro
                 name="courseCategory"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic", errors.courseCategory && AUTH_INPUT.error)}>
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Online">Online</SelectItem>
-                      <SelectItem value="Physical">Physical</SelectItem>
-                      <SelectItem value="Hybrid">Hybrid</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    options={catOptions}
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    searchValue={catSearch}
+                    onSearchChange={setCatSearch}
+                    placeholder="Select category"
+                    searchPlaceholder="Search category..."
+                    emptyMessage="No category found."
+                    error={!!errors.courseCategory}
+                    isLoading={isCatLoading}
+                  />
                 )}
               />
               <FieldError message={errors.courseCategory?.message} />
@@ -319,22 +356,18 @@ export function CourseGeneralDetailsStep({ onNext }: CourseGeneralDetailsStepPro
                 name="lecturer"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic", errors.lecturer && AUTH_INPUT.error)}>
-                      <SelectValue placeholder="Select a lecturer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Ruwan Perera">
-                         <div className="flex items-center gap-2">
-                            <div className="h-6 w-6 rounded-full bg-gray-300 overflow-hidden shrink-0">
-                                 <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=ruwan`} alt="avatar" />
-                            </div>
-                            <span className="text-[#0F172B]">Ruwan Perera</span>
-                            <span className="text-[#64748B]">@ruwan</span>
-                         </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    options={lecturerOptions}
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    searchValue={lecturerSearch}
+                    onSearchChange={setLecturerSearch}
+                    placeholder="Select lecturer"
+                    searchPlaceholder="Search lecturer..."
+                    emptyMessage="No lecturer found."
+                    error={!!errors.lecturer}
+                    isLoading={isLecturerLoading}
+                  />
                 )}
               />
               <FieldError message={errors.lecturer?.message} />
@@ -355,6 +388,7 @@ export function CourseGeneralDetailsStep({ onNext }: CourseGeneralDetailsStepPro
                        <SelectItem value="Beginner">Beginner</SelectItem>
                        <SelectItem value="Intermediate">Intermediate</SelectItem>
                        <SelectItem value="Advanced">Advanced</SelectItem>
+                       <SelectItem value="General">General</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -384,11 +418,33 @@ export function CourseGeneralDetailsStep({ onNext }: CourseGeneralDetailsStepPro
             </div>
 
             <div className="space-y-1">
-              <FieldLabel>Lesson Duration</FieldLabel>
+            <FieldLabel>Subject</FieldLabel>
+                  <Controller
+                    name="subject"
+                    control={control}
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic")}>
+                          <SelectValue placeholder="Select subject" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SUBJECT_OPTIONS.map((s) => (
+                            <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <FieldError message={errors.subject?.message} />
+            </div>
+
+            <div className="space-y-1">
+              <FieldLabel>Lesson Duration (Hours)</FieldLabel>
               <Input
                 {...register("lessonDuration")}
+                type="number"
                 className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder)}
-                placeholder="eg: 2h"
+                placeholder="eg: 2"
               />
             </div>
 

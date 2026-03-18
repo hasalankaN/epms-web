@@ -51,4 +51,13 @@ export const API_ENDPOINTS = {
     UPDATE_STATUS: (id: string) => `/api/v1/admin/staff/${id}/status`,
     UPDATE_PRIVILEGES: (id: string) => `/api/v1/admin/staff/${id}/privileges`,
   },
+  complaints: {
+    GET_ALL: `/api/v1/admin/complaints`,
+    GET_PENDING_ASSIGNMENT: `/api/v1/admin/complaints/pending-assignment`,
+    GET_BY_ID: (id: string) => `/api/v1/admin/complaints/${id}`,
+    CREATE: `/api/v1/admin/complaints`,
+    ASSIGN: (id: string) => `/api/v1/admin/complaints/${id}/assign`,
+    UPDATE_STATUS: (id: string) => `/api/v1/admin/complaints/${id}/status`,
+    DELETE: () => `/api/v1/admin/complaints`,
+  },
 };
