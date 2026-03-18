@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,26 +32,27 @@ import { DateRangeCalendar } from "@/components/common/filters/DateRangeCalendar
 import ImageUpload from "@/components/common/ImageUpload";
 import { AUTH_TYPOGRAPHY, AUTH_INPUT } from "@/lib/constants/theme";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import { useGetStaff } from "@/hooks/api/staff/useGetStaff";
+import { useGetLecturers } from "@/hooks/api/lecturers/useGetLecturers";
+import { useGetBranches } from "@/hooks/api/branches/useGetBranches";
+import { useGetCertificateTemplates } from "@/hooks/api/certificates/useGetCertificateTemplates";
 
-const STAFF_OPTIONS = [
-  { 
-    value: "kalpa", 
-    label: "Kalpa Perera", 
-    handle: "@kalpa",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=kalpa" 
-  },
-  { 
-    value: "saduni", 
-    label: "Saduni", 
-    handle: "@saduni",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=saduni" 
-  },
+const BATCH_TYPES = [
+  "Workshop",
+  "Certificate",
+  "Diploma",
+  "HND",
+  "Degree",
+  "School",
+  "University",
+  "Exam Prep",
 ];
 
-const CERTIFICATE_OPTIONS = [
-  { value: "UK", label: "UK" },
-  { value: "Free", label: "Free" },
-];
+const LANGUAGES = ["Tamil", "Sinhala", "English"];
+const CATEGORIES = ["Online", "Offline"];
+const LEVELS = ["Bigginer", "intermediate", "Advanced", "Genral"];
+const STATUSES = ["Active", "Upcoming", "Completed", "Inactive"];
 
 interface GeneralDetailsStepProps {
   onNext?: () => void;
@@ -61,12 +62,12 @@ export function GeneralDetailsStep({ onNext }: GeneralDetailsStepProps) {
   // Get stored values and actions from Zustand store
   const { generalDetails, setGeneralDetails } = useBatchFormStore();
   
-  // Transform stored dates (which may be strings from localStorage) back to Date objects
-  const transformedDefaults = {
+  // Transform stored dates back to Date objects
+  const transformedDefaults = useMemo(() => ({
     ...generalDetails,
     startDate: generalDetails.startDate ? new Date(generalDetails.startDate) : undefined,
     endDate: generalDetails.endDate ? new Date(generalDetails.endDate) : undefined,
-  };
+  }), [generalDetails]);
   
   const [startDate, setStartDate] = useState<Date | undefined>(
     transformedDefaults.startDate
@@ -75,6 +76,18 @@ export function GeneralDetailsStep({ onNext }: GeneralDetailsStepProps) {
   const [endDate, setEndDate] = useState<Date | undefined>(
     transformedDefaults.endDate
   );
+
+  // Search states for dynamic dropdowns
+  const [branchSearch, setBranchSearch] = useState("");
+  const [lecturerSearch, setLecturerSearch] = useState("");
+  const [staffSearch, setStaffSearch] = useState("");
+  const [certSearch, setCertSearch] = useState("");
+
+  // Fetch data using hooks
+  const { data: branchData, isLoading: isLoadingBranches } = useGetBranches({ search: branchSearch, size: 20 });
+  const { data: lecturerData, isLoading: isLoadingLecturers } = useGetLecturers({ search: lecturerSearch, size: 20 });
+  const { data: staffData, isLoading: isLoadingStaff } = useGetStaff({ search: staffSearch, size: 20 });
+  const { data: certData, isLoading: isLoadingCerts } = useGetCertificateTemplates({ name: certSearch, limit: 20 });
 
   const form = useForm<GeneralDetailsValues>({
     resolver: zodResolver(generalDetailsSchema),
@@ -100,7 +113,6 @@ export function GeneralDetailsStep({ onNext }: GeneralDetailsStepProps) {
   }, [watch, setGeneralDetails]);
 
   const onSubmit = (data: GeneralDetailsValues) => {
-    console.log("General Details Submitted:", data);
     setGeneralDetails(data);
     onNext?.();
   };
@@ -118,6 +130,34 @@ export function GeneralDetailsStep({ onNext }: GeneralDetailsStepProps) {
     return <p className="text-xs text-red-500 mt-1">{message}</p>;
   };
 
+  // Format options for searchable selects
+  const branchOptions = useMemo(() => 
+    branchData?.results?.map((b: any) => ({
+      value: b.id,
+      label: b.name
+    })) || [], [branchData]);
+
+  const lecturerOptions = useMemo(() => 
+    lecturerData?.results?.map((l: any) => ({
+      value: l.user_id,
+      label: `${l.first_name || ""} ${l.last_name || ""}`.trim(),
+      subLabel: l.email,
+      avatarInitials: `${l.first_name?.[0] || ""}${l.last_name?.[0] || ""}`.toUpperCase(),
+    })) || [], [lecturerData]);
+
+  const staffOptions = useMemo(() => 
+    staffData?.results?.map((s: any) => ({
+      value: s.userId,
+      label: `${s.firstName || ""} ${s.lastName || ""}`.trim(),
+      handle: s.email,
+    })) || [], [staffData]);
+
+  const certOptions = useMemo(() => 
+    certData?.results?.map((c: any) => ({
+      value: c.id,
+      label: c.name
+    })) || [], [certData]);
+
   return (
     <div className="space-y-6">
       <form id="active-step-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -134,20 +174,21 @@ export function GeneralDetailsStep({ onNext }: GeneralDetailsStepProps) {
             </div>
 
             <div className="space-y-1">
-              <FieldLabel>Branch</FieldLabel>
+              <FieldLabel required>Branch</FieldLabel>
               <Controller
                 name="branch"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic", errors.branch && AUTH_INPUT.error)}>
-                      <SelectValue placeholder="Select Branch" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Main">Main</SelectItem>
-                      <SelectItem value="Kandy">Kandy</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    options={branchOptions}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onSearchChange={setBranchSearch}
+                    searchValue={branchSearch}
+                    placeholder="Select Branch"
+                    isLoading={isLoadingBranches}
+                    error={!!errors.branch}
+                  />
                 )}
               />
               <FieldError message={errors.branch?.message} />
@@ -164,8 +205,9 @@ export function GeneralDetailsStep({ onNext }: GeneralDetailsStepProps) {
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="English">English</SelectItem>
-                      <SelectItem value="Sinhala">Sinhala</SelectItem>
+                      {LANGUAGES.map(lang => (
+                        <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
@@ -185,8 +227,9 @@ export function GeneralDetailsStep({ onNext }: GeneralDetailsStepProps) {
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Diploma">Diploma</SelectItem>
-                      <SelectItem value="Certificate">Certificate</SelectItem>
+                      {BATCH_TYPES.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
@@ -201,11 +244,14 @@ export function GeneralDetailsStep({ onNext }: GeneralDetailsStepProps) {
                 control={control}
                 render={({ field }) => (
                   <MultiSelect
-                    options={STAFF_OPTIONS}
+                    options={staffOptions}
                     value={field.value || []}
                     onChange={field.onChange}
+                    onSearchChange={setStaffSearch}
+                    searchValue={staffSearch}
                     placeholder="Select multiple staff members"
                     error={!!errors.staffMembers}
+                    isLoading={isLoadingStaff}
                   />
                 )}
               />
@@ -214,21 +260,17 @@ export function GeneralDetailsStep({ onNext }: GeneralDetailsStepProps) {
 
             <div className="space-y-1">
               <FieldLabel>Assignment</FieldLabel>
-              <Controller
-                name="assignment"
-                control={control}
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic")}>
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Assignment">Assignment</SelectItem>
-                      <SelectItem value="Exam">Exam</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
+              <div className="flex items-center gap-4 h-10">
+                 <div className="flex items-center gap-2">
+                    <input type="radio" id="assignment-yes" value="Yes" {...register("assignment")} className="accent-[#0F172B] w-4 h-4 cursor-pointer" />
+                    <label htmlFor="assignment-yes" className="text-sm text-[#45556C] cursor-pointer">Yes</label>
+                 </div>
+                 <div className="flex items-center gap-2">
+                    <input type="radio" id="assignment-no" value="No" {...register("assignment")} className="accent-[#0F172B] w-4 h-4 cursor-pointer" />
+                    <label htmlFor="assignment-no" className="text-sm text-[#45556C] cursor-pointer">No</label>
+                 </div>
+              </div>
+              <FieldError message={errors.assignment?.message} />
             </div>
 
             {/* Row 3 */}
@@ -243,8 +285,9 @@ export function GeneralDetailsStep({ onNext }: GeneralDetailsStepProps) {
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Online">Online</SelectItem>
-                      <SelectItem value="Physical">Physical</SelectItem>
+                      {CATEGORIES.map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
@@ -296,11 +339,14 @@ export function GeneralDetailsStep({ onNext }: GeneralDetailsStepProps) {
                 control={control}
                 render={({ field }) => (
                   <MultiSelect
-                    options={CERTIFICATE_OPTIONS}
+                    options={certOptions}
                     value={field.value || []}
                     onChange={field.onChange}
-                    placeholder="Select all the types of certificate"
+                    onSearchChange={setCertSearch}
+                    searchValue={certSearch}
+                    placeholder="Select certificates"
                     error={!!errors.certificates}
+                    isLoading={isLoadingCerts}
                   />
                 )}
               />
@@ -309,22 +355,24 @@ export function GeneralDetailsStep({ onNext }: GeneralDetailsStepProps) {
 
             {/* Row 4 */}
             <div className="space-y-1">
-              <FieldLabel>Batch Status</FieldLabel>
+              <FieldLabel required>Batch Status</FieldLabel>
               <Controller
                 name="batchStatus"
                 control={control}
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic")}>
+                    <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic", errors.batchStatus && AUTH_INPUT.error)}>
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Ongoing">Ongoing</SelectItem>
-                      <SelectItem value="Completed">Completed</SelectItem>
+                      {STATUSES.map(stat => (
+                        <SelectItem key={stat} value={stat}>{stat}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
               />
+              <FieldError message={errors.batchStatus?.message} />
             </div>
 
             <div className="space-y-1">
@@ -372,22 +420,16 @@ export function GeneralDetailsStep({ onNext }: GeneralDetailsStepProps) {
                 name="lecturer"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic", errors.lecturer && AUTH_INPUT.error)}>
-                      <SelectValue placeholder="Select a lecturer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Ruwan Perera">
-                         <div className="flex items-center gap-2">
-                            <div className="h-6 w-6 rounded-full bg-gray-300 overflow-hidden shrink-0">
-                                 <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=ruwan`} alt="avatar" />
-                            </div>
-                            <span className="text-[#0F172B]">Ruwan Perera</span>
-                            <span className="text-[#64748B]">@ruwan</span>
-                         </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    options={lecturerOptions}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onSearchChange={setLecturerSearch}
+                    searchValue={lecturerSearch}
+                    placeholder="Select a lecturer"
+                    isLoading={isLoadingLecturers}
+                    error={!!errors.lecturer}
+                  />
                 )}
               />
               <FieldError message={errors.lecturer?.message} />
@@ -395,29 +437,29 @@ export function GeneralDetailsStep({ onNext }: GeneralDetailsStepProps) {
 
             {/* Row 5 */}
             <div className="space-y-1">
-              <FieldLabel>Batch Level</FieldLabel>
+              <FieldLabel required>Batch Level</FieldLabel>
               <Controller
                 name="batchLevel"
                 control={control}
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic")}>
+                    <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic", errors.batchLevel && AUTH_INPUT.error)}>
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
-                       <SelectItem value="Beginner">Beginner</SelectItem>
-                       <SelectItem value="Intermediate">Intermediate</SelectItem>
-                       <SelectItem value="Advanced">Advanced</SelectItem>
+                       {LEVELS.map(lvl => (
+                        <SelectItem key={lvl} value={lvl}>{lvl}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
               />
+              <FieldError message={errors.batchLevel?.message} />
             </div>
 
             <div className="space-y-1">
-              <FieldLabel>Select Hierarchy</FieldLabel>
-              <div className="flex items-center gap-4 h-10">
-                 {/* Replaced Radio Group with simple inputs for now as standard implementation */}
+              <FieldLabel required>Select Hierarchy</FieldLabel>
+              <div className="flex items-center gap-6 h-10">
                  <div className="flex items-center gap-2">
                     <input type="radio" id="3tiers" value="3 Tiers" {...register("hierarchy")} className="accent-[#0F172B] w-4 h-4 cursor-pointer" />
                     <label htmlFor="3tiers" className="text-sm text-[#45556C] cursor-pointer">3 Tiers</label>
@@ -431,14 +473,16 @@ export function GeneralDetailsStep({ onNext }: GeneralDetailsStepProps) {
                     <label htmlFor="5tiers" className="text-sm text-[#45556C] cursor-pointer">5 Tiers</label>
                  </div>
               </div>
+              <FieldError message={errors.hierarchy?.message} />
             </div>
 
             <div className="space-y-1">
-              <FieldLabel>Lesson Duration</FieldLabel>
+              <FieldLabel>Lesson Duration (Hours)</FieldLabel>
               <Input
                 {...register("lessonDuration")}
+                type="number"
                 className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder)}
-                placeholder="eg: 2h"
+                placeholder="eg: 2"
               />
             </div>
 
