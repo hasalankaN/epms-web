@@ -4,9 +4,9 @@ import { StatusPopover } from "@/components/common/StatusPopover";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const BRANCH_STATUS_OPTIONS = [
-  { bg: "#FCE7F3", text: "#E60076", value: "TYPE_1"},
-  { bg: "#FCE7F3", text: "#E60076", value: "TYPE_2"},
-  { bg: "#FCE7F3", text: "#E60076", value: "TYPE_3"},
+  { bg: "#FCE7F3", text: "#E60076", value: "MAIN"},
+  { bg: "#EEF2FF", text: "#6366F1", value: "DEVOTIONAL"},
+  { bg: "#F1F5F9", text: "#64748B", value: "CITY"},
 ];
 
 interface BranchGeneralInfoProps {
@@ -22,7 +22,7 @@ interface BranchGeneralInfoProps {
 export function BranchGeneralInfo({ 
   isLoading,
   name = "-",
-  branchType = "TYPE_1",
+  branchType = "MAIN",
   address = "-",
   email = "-",
   phone = "-",
