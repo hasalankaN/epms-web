@@ -398,7 +398,7 @@ export function CourseFeeDetailsStep({ onNext }: CourseFeeDetailsStepProps) {
                                   <Input 
                                       type="number"
                                       min={2}
-                                      max={5}
+                                      max={6}
                                       {...register("numberOfInstallments")}
                                       placeholder="eg: 2 or 3"
                                       className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "w-[150px]", errors.numberOfInstallments && "border-red-500")}

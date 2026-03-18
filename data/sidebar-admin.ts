@@ -131,4 +131,48 @@ export const adminSidebarData: SidebarNavItem[] = [
     value: "branch-management",
     url: "/admin-panel/branch-management",
   },
+
+  {
+    id: 14,
+    type: "sub",
+    title: "Finance",
+    icon: "invoice",
+    children: [
+      {
+        id: 141,
+        type: "link",
+        title: "Income",
+        url: "/admin-panel/finance/income",
+        value: "income",
+      },
+      {
+        id: 142,
+        type: "link",
+        title: "Finance",
+        url: "/admin-panel/finance/finance",
+        value: "finance-sub",
+      },
+      {
+        id: 143,
+        type: "link",
+        title: "Profit & Loss",
+        url: "/admin-panel/finance/profit-and-loss",
+        value: "profit-and-loss",
+      },
+      {
+        id: 144,
+        type: "link",
+        title: "Expenses",
+        url: "/admin-panel/finance/expenses",
+        value: "expenses",
+      },
+      {
+        id: 145,
+        type: "link",
+        title: "Source Wise Report",
+        url: "/admin-panel/finance/source-wise-report",
+        value: "source-wise-report",
+      },
+    ],
+  },
 ];

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 
 import { Search, X, Plus } from "lucide-react";
 
@@ -17,9 +17,9 @@ const branchTypeFilter: FilterCategory = {
   key: "branch_type",
   label: "Branch Type",
   items: [
-    { key: "TYPE_1", label: "Type 1" },
-    { key: "TYPE_2", label: "Type 2" },
-    { key: "TYPE_3", label: "Type 3" },
+    { key: "MAIN", label: "Main" },
+    { key: "DEVOTIONAL", label: "Devotional" },
+    { key: "CITY", label: "City" },
   ],
 };
 
@@ -37,21 +37,38 @@ interface BranchToolbarProps {
 
 export function BranchToolbar({ 
   onAddBranch, 
-  search, 
+  search: externalSearch, 
   onSearchChange, 
   branchType, 
   onBranchTypeChange 
 }: BranchToolbarProps) {
+  const [localSearch, setLocalSearch] = useState(externalSearch);
   const hasActiveFilters = branchType !== null;
+
+  // Sync internal state with external search (e.g., when clearing filters)
+  useEffect(() => {
+    setLocalSearch(externalSearch);
+  }, [externalSearch]);
+
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localSearch !== externalSearch) {
+        onSearchChange(localSearch);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [localSearch, externalSearch, onSearchChange]);
 
   const handleFilterSelect = useCallback((_categoryKey: string, _itemKey: string, itemLabel: string) => {
     // We map back from label "Type 1" to "TYPE_1" or just use itemKey if they match
     // Based on FilterDropdown usage, it passes the itemLabel as value to the hook usually
     // Let's use itemKey for the actual filter value
     const keyMap: Record<string, string> = {
-      "Type 1": "TYPE_1",
-      "Type 2": "TYPE_2",
-      "Type 3": "TYPE_3",
+      "Main": "MAIN",
+      "Devotional": "DEVOTIONAL",
+      "City": "CITY",
     };
 
     onBranchTypeChange(keyMap[itemLabel] || itemLabel);
@@ -71,15 +88,15 @@ export function BranchToolbar({
             categories={[branchTypeFilter]}
             onFilterSelect={handleFilterSelect}
             label="Branch Type"
-            value={branchType ? branchType.replace("_", " ") : null}
+            value={branchType ? (branchType.charAt(0) + branchType.slice(1).toLowerCase()).replace("_", " ") : null}
           />
           <div className="relative w-[300px]">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#90A1B9]" />
             <Input
               type="text"
               placeholder="Search by branch name"
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
               className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "w-full border border-[#E2E8F0] pl-10 pr-4")}
             />
           </div>
@@ -114,15 +131,15 @@ export function BranchToolbar({
             categories={[branchTypeFilter]}
             onFilterSelect={handleFilterSelect}
             label="Branch Type"
-            value={branchType ? branchType.replace("_", " ") : null}
+            value={branchType ? (branchType.charAt(0) + branchType.slice(1).toLowerCase()).replace("_", " ") : null}
           />
           <div className="relative w-[200px]">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#90A1B9]" />
             <Input
               type="text"
               placeholder="Search..."
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
               className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "w-full border border-[#E2E8F0] pl-10 pr-4")}
             />
           </div>
@@ -158,8 +175,8 @@ export function BranchToolbar({
           <Input
             type="text"
             placeholder="Search by branch name"
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
             className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "w-full border border-[#E2E8F0] pl-10 pr-4")}
           />
         </div>
@@ -182,7 +199,7 @@ export function BranchToolbar({
                 categories={[branchTypeFilter]}
                 onFilterSelect={handleFilterSelect}
                 label="Branch Type"
-                value={branchType ? branchType.replace("_", " ") : null}
+                value={branchType ? (branchType.charAt(0) + branchType.slice(1).toLowerCase()).replace("_", " ") : null}
               />
             </div>
           </div>

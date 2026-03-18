@@ -180,6 +180,78 @@ export function CommissionDetailsStep({ onNext }: CommissionDetailsStepProps) {
         </div>
       </div>
 
+      {/* Staff Commission per enrollment */}
+      <div>
+        <h3 className={SECTION_HEADER_STYLE}>Staff Commission per enrollment</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+             <div className="space-y-1.5">
+                <Label className={AUTH_TYPOGRAPHY.label}>Commission Type</Label>
+                <Controller
+                  name="staffType"
+                  control={control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className={getSelectTriggerClass(field.value, !!errors.staffType)}>
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Percentage">Percentage</SelectItem>
+                        <SelectItem value="Fixed">Fixed Amount</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                <FieldError message={errors.staffType?.message} />
+            </div>
+            <div className="space-y-1.5">
+                <Label className={AUTH_TYPOGRAPHY.label}>Commission Value</Label>
+                 <Input 
+                   {...register("staffValue")}
+                   placeholder="eg: xxxx.00"
+                   className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, errors.staffValue && AUTH_INPUT.error)}
+                />
+                <FieldError message={errors.staffValue?.message} />
+            </div>
+            <div className="hidden md:block"></div>
+        </div>
+      </div>
+
+      {/* Staff Commission per enrollment by Branch */}
+      <div>
+        <h3 className={SECTION_HEADER_STYLE}>Staff Commission per enrollment by Branch</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+             <div className="space-y-1.5">
+                <Label className={AUTH_TYPOGRAPHY.label}>Commission Type</Label>
+                <Controller
+                  name="branchStaffType"
+                  control={control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className={getSelectTriggerClass(field.value, !!errors.branchStaffType)}>
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Percentage">Percentage</SelectItem>
+                        <SelectItem value="Fixed">Fixed Amount</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                <FieldError message={errors.branchStaffType?.message} />
+            </div>
+            <div className="space-y-1.5">
+                <Label className={AUTH_TYPOGRAPHY.label}>Commission Value</Label>
+                 <Input 
+                   {...register("branchStaffValue")}
+                   placeholder="eg: xxxx.00"
+                   className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, errors.branchStaffValue && AUTH_INPUT.error)}
+                />
+                <FieldError message={errors.branchStaffValue?.message} />
+            </div>
+            <div className="hidden md:block"></div>
+        </div>
+      </div>
+
     </form>
   );
 }
