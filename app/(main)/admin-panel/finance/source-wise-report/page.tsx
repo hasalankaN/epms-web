@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useCallback } from "react";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
@@ -24,7 +24,15 @@ export default function SourceWiseReportPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const pageParam = searchParams.get("page");
+  const currentPage = pageParam ? parseInt(pageParam) : 1;
+
+  const handlePageChange = useCallback((page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.set("page", page.toString());
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [searchParams, pathname, router]);
 
   const search = searchParams.get("search") || "";
   const transactionSource = searchParams.get("transactionSource") || undefined;
@@ -44,8 +52,10 @@ export default function SourceWiseReportPage() {
           params.set(key, value);
         }
       });
-      router.replace(`${pathname}?${params.toString()}`);
-      setCurrentPage(1);
+     
+      // Reset page when filters change
+      params.set("page", "1");
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
     [router, pathname, searchParams]
   );
@@ -89,7 +99,7 @@ export default function SourceWiseReportPage() {
         <SourceWiseTable
           data={filteredData}
           currentPage={currentPage}
-          onPageChange={setCurrentPage}
+          onPageChange={handlePageChange}
           totalResults={filteredData.length}
         />
       </div>

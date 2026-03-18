@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
+
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 import { OtherIncomeToolbar } from "./OtherIncomeToolbar";
 import { OtherIncomeTable } from "./OtherIncomeTable";
@@ -8,8 +10,21 @@ import { OtherIncomeTable } from "./OtherIncomeTable";
 import { mockOtherIncomeData } from "../mockData";
 
 export function OtherIncomeTab() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const pageParam = searchParams.get("page");
+  const currentPage = pageParam ? parseInt(pageParam) : 1;
+
+  const handlePageChange = useCallback((page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    params.set("page", page.toString());
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [searchParams, pathname, router]);
+
   const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
-  const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   const [transactionVia, setTransactionVia] = useState("all");
@@ -56,7 +71,7 @@ export function OtherIncomeTab() {
         rowSelection={rowSelection}
         setRowSelection={setRowSelection}
         currentPage={currentPage}
-        onPageChange={setCurrentPage}
+        onPageChange={handlePageChange}
         totalResults={filteredData.length}
       />
     </div>

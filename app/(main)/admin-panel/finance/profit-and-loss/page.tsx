@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
+
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 import { ProfitLossStatsRow } from "@/components/admin-panel/finance/profit-and-loss/ProfitLossStatsRow";
 import { ProfitLossToolbar } from "@/components/admin-panel/finance/profit-and-loss/ProfitLossToolbar";
@@ -23,7 +25,20 @@ const rawMockData: ProfitLossTableDataType[] = Array.from({ length: 45 }).map((_
 });
 
 export default function ProfitAndLossPage() {
-  const [currentPage, setCurrentPage] = useState(1);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const pageParam = searchParams.get("page");
+  const currentPage = pageParam ? parseInt(pageParam) : 1;
+
+  const handlePageChange = useCallback((page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    params.set("page", page.toString());
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [searchParams, pathname, router]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
@@ -54,7 +69,7 @@ export default function ProfitAndLossPage() {
           <ProfitLossTable
             data={filteredData}
             currentPage={currentPage}
-            onPageChange={setCurrentPage}
+            onPageChange={handlePageChange}
           />
         </div>
       </div>

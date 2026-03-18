@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
+
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 import { IncomeStatsRow } from "./IncomeStatsRow";
 import { IncomeFromStudentToolbar } from "./IncomeFromStudentToolbar";
@@ -9,8 +11,21 @@ import { IncomeFromStudentTable } from "./IncomeFromStudentTable";
 import { mockIncomeFromStudentData } from "../mockData";
 
 export function IncomeFromStudentTab() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const pageParam = searchParams.get("page");
+  const currentPage = pageParam ? parseInt(pageParam) : 1;
+
+  const handlePageChange = useCallback((page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    params.set("page", page.toString());
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [searchParams, pathname, router]);
+
   const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
-  const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   const [activeFilters, setActiveFilters] = useState<Record<string, string | null>>({});
@@ -18,13 +33,13 @@ export function IncomeFromStudentTab() {
   const handleApplyFilters = (filters: Record<string, string | null>) => {
     console.log("Filters applied:", filters);
     setActiveFilters((prev) => ({ ...prev, ...filters }));
-    setCurrentPage(1);
+    handlePageChange(1);
   };
 
   const handleClearFilters = () => {
     console.log("Filters cleared");
     setActiveFilters({});
-    setCurrentPage(1);
+    handlePageChange(1);
   };
 
   const filteredData = useMemo(() => {
@@ -78,7 +93,7 @@ export function IncomeFromStudentTab() {
           rowSelection={rowSelection}
           setRowSelection={setRowSelection}
           currentPage={currentPage}
-          onPageChange={setCurrentPage}
+          onPageChange={handlePageChange}
           totalResults={filteredData.length}
         />
       </div>

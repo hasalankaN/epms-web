@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback } from "react";
+
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 import { FinanceStatsRow } from "@/components/admin-panel/finance/finance/FinanceStatsRow";
 import { FinanceFilterRow } from "@/components/admin-panel/finance/finance/FinanceFilterRow";
@@ -23,7 +25,19 @@ const rawMockData: FinanceTableDataType[] = Array.from({ length: 45 }).map((_, i
 }));
 
 export default function FinancePage() {
-  const [currentPage, setCurrentPage] = useState(1);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const pageParam = searchParams.get("page");
+  const currentPage = pageParam ? parseInt(pageParam) : 1;
+
+  const handlePageChange = useCallback((page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    params.set("page", page.toString());
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [searchParams, pathname, router]);
 
   return (
     <div className="space-y-3 p-4 md:p-6 w-full">
@@ -37,7 +51,7 @@ export default function FinancePage() {
           <FinanceTable
             data={rawMockData}
             currentPage={currentPage}
-            onPageChange={setCurrentPage}
+            onPageChange={handlePageChange}
           />
         </div>
       </div>

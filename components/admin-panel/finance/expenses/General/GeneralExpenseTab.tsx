@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
@@ -26,7 +26,15 @@ export function GeneralExpenseTab() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const pageParam = searchParams.get("page");
+  const currentPage = pageParam ? parseInt(pageParam) : 1;
+
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.set("page", page.toString());
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   const search = searchParams.get("search") || "";
   const transactionVia = searchParams.get("transactionVia") || undefined;
@@ -45,8 +53,10 @@ export function GeneralExpenseTab() {
         params.set(key, value);
       }
     });
-    router.replace(`${pathname}?${params.toString()}`);
-    setCurrentPage(1);
+    
+    // Reset page when filters change
+    params.set("page", "1");
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const handleSearchChange = (value: string) => {
@@ -80,7 +90,7 @@ export function GeneralExpenseTab() {
       <GeneralExpenseTable
         data={filteredData}
         currentPage={currentPage}
-        onPageChange={setCurrentPage}
+        onPageChange={handlePageChange}
         totalResults={filteredData.length}
       />
     </div>
