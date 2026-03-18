@@ -141,4 +141,48 @@ export const sidebarData: SidebarNavItem[] = [
     value: "branch-management",
     url: "/branch-management",
   },
+
+  {
+    id: 14,
+    type: "sub",
+    title: "Finance",
+    icon: "invoice",
+    children: [
+      {
+        id: 141,
+        type: "link",
+        title: "Income",
+        url: "/finance/income",
+        value: "income",
+      },
+      {
+        id: 142,
+        type: "link",
+        title: "Finance",
+        url: "/finance/finance",
+        value: "finance-sub",
+      },
+      {
+        id: 143,
+        type: "link",
+        title: "Profit & Loss",
+        url: "/finance/profit-and-loss",
+        value: "profit-and-loss",
+      },
+      {
+        id: 144,
+        type: "link",
+        title: "Expenses",
+        url: "/finance/expenses",
+        value: "expenses",
+      },
+      {
+        id: 145,
+        type: "link",
+        title: "Source Wise Report",
+        url: "/finance/source-wise-report",
+        value: "source-wise-report",
+      },
+    ],
+  },
 ];

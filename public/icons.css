@@ -953,3 +953,15 @@
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
 }
+
+.invoice {
+  --svg: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'32'%20height%3D'32'%20fill%3D'%23000000'%20viewBox%3D'0%200%20256%20256'%3E%3Cpath%20d%3D'M28%2C128a8%2C8%2C0%2C0%2C1%2C0-16H56a8%2C8%2C0%2C0%2C0%2C0-16H40a24%2C24%2C0%2C0%2C1%2C0-48%2C8%2C8%2C0%2C0%2C1%2C16%2C0h8a8%2C8%2C0%2C0%2C1%2C0%2C16H40a8%2C8%2C0%2C0%2C0%2C0%2C16H56a24%2C24%2C0%2C0%2C1%2C0%2C48%2C8%2C8%2C0%2C0%2C1-16%2C0ZM232%2C56V192a16%2C16%2C0%2C0%2C1-16%2C16H40a16%2C16%2C0%2C0%2C1-16-16V152a8%2C8%2C0%2C0%2C1%2C16%2C0v40H160V160H80a8%2C8%2C0%2C0%2C1%2C0-16h80V112H104a8%2C8%2C0%2C0%2C1%2C0-16H216V64H96a8%2C8%2C0%2C0%2C1%2C0-16H224A8%2C8%2C0%2C0%2C1%2C232%2C56Zm-56%2C88h40V112H176Zm40%2C48V160H176v32Z'%3E%3C%2Fpath%3E%3C%2Fsvg%3E");
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-image: var(--svg);
+  mask-image: var(--svg);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}

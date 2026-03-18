@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { Filter, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
@@ -44,6 +44,14 @@ export function DateRangeFilter({
   // Draft dates — live inside the popover until Apply
   const [draftStart, setDraftStart] = useState<Date | null>(initialRange?.from || null);
   const [draftEnd, setDraftEnd] = useState<Date | null>(initialRange?.to || null);
+
+  // Sync with initialRange if it changes externally
+  useEffect(() => {
+    setStartDate(initialRange?.from || null);
+    setEndDate(initialRange?.to || null);
+    setDraftStart(initialRange?.from || null);
+    setDraftEnd(initialRange?.to || null);
+  }, [initialRange?.from, initialRange?.to]);
 
   const hasValue = startDate !== null || endDate !== null;
 
