@@ -15,7 +15,7 @@ export const courseGeneralDetailsSchema = z.object({
   language: z.string().min(1, "Language is required"),
   lessonDuration: z.string().optional(),
   hierarchy: z.string().min(1, "Hierarchy is required"),
-  subject: z.string().optional(),
+  batchId: z.string().optional(),
   shortDescription: z.string().optional(),
   longDescription: z.string().min(1, "Course long description is required"),
   coverImage: z.string().optional(), // TODO: Make required after upload API integration
@@ -71,15 +71,15 @@ export const courseFeeDetailsSchema = z.object({
   }
 ).refine(
   (data) => {
-    // If installments are enabled, numberOfInstallments must be between 2 and 5
+    // If installments are enabled, numberOfInstallments must be between 2 and 6
     if (data.enableInstallments && data.numberOfInstallments !== undefined) {
-      return data.numberOfInstallments >= 2 && data.numberOfInstallments <= 5;
+      return data.numberOfInstallments >= 2 && data.numberOfInstallments <= 6;
     }
     
     return true;
   },
   {
-    message: "Number of installments must be between 2 and 5",
+    message: "Number of installments must be between 2 and 6",
     path: ["numberOfInstallments"],
   }
 );
@@ -125,7 +125,7 @@ export const defaultCourseGeneralDetailsValues: Partial<CourseGeneralDetailsValu
   language: "",
   lessonDuration: "",
   hierarchy: "3 Tiers",
-  subject: "",
+  batchId: "",
   shortDescription: "",
   longDescription: "",
   coverImage: "",

@@ -1,4 +1,4 @@
-export type BranchType = "TYPE_1" | "TYPE_2" | "TYPE_3";
+export type BranchType = "MAIN" | "DEVOTIONAL" | "CITY";
 
 export type BranchStatus = "ACTIVE" | "INACTIVE";
 

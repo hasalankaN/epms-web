@@ -53,7 +53,7 @@ const branchSchema = z.object({
     .regex(/^[0-9]{9}$/, "WhatsApp must be exactly 9 digits.")
     .min(1, "WhatsApp number is required."),
   address: z.string().min(1, "Address is required."),
-  branch_type: z.enum(["TYPE_1", "TYPE_2", "TYPE_3"], {
+  branch_type: z.enum(["MAIN", "DEVOTIONAL", "CITY"], {
     required_error: "Branch type is required.",
   }),
 });
@@ -84,9 +84,9 @@ const FieldLabel = ({
 );
 
 const BRANCH_TYPE_OPTIONS = [
-  { value: "TYPE_1", label: "Type 1" },
-  { value: "TYPE_2", label: "Type 2" },
-  { value: "TYPE_3", label: "Type 3" },
+  { value: "MAIN", label: "Main" },
+  { value: "DEVOTIONAL", label: "Devotional" },
+  { value: "CITY", label: "City" },
 ] as const;
 
 // ===== COMPONENT =====

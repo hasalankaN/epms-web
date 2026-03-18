@@ -1,6 +1,6 @@
 import type { BranchRow, BranchType, BranchStatus } from "@/types/branch";
 
-const branchTypes: BranchType[] = ["TYPE_1", "TYPE_2", "TYPE_3"];
+const branchTypes: BranchType[] = ["MAIN", "DEVOTIONAL", "CITY"];
 
 export const mockBranchData: BranchRow[] = Array.from({ length: 15 }, (_, i) => ({
   id: `br-${i + 1}`,

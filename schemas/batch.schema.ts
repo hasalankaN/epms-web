@@ -11,14 +11,14 @@ export const generalDetailsSchema = z.object({
   batchCategory: z.string().min(1, "Batch category is required"),
   startDate: z.date({ required_error: "Start date is required" }),
   certificates: z.array(z.string()).min(1, "Certificate is required"),
-  batchStatus: z.string().optional(),
+  batchStatus: z.string().min(1, "Batch status is required"),
   endDate: z.date({ required_error: "End date is required" }),
   lecturer: z.string().min(1, "Lecturer is required"),
-  batchLevel: z.string().optional(),
-  hierarchy: z.string().optional(),
+  batchLevel: z.string().min(1, "Batch level is required"),
+  hierarchy: z.string().min(1, "Hierarchy is required"),
   lessonDuration: z.string().optional(),
   description: z.string().optional(),
-  coverImage: z.string().optional(), // z.string().min(1, "Cover image is required"),
+  coverImage: z.string().optional(), 
 });
 
 export type GeneralDetailsValues = z.infer<typeof generalDetailsSchema>;
@@ -97,11 +97,15 @@ export type InstallmentItem = z.infer<typeof installmentItemSchema>;
 
 // ==================== Step 3: Commission Details Schema ====================
 export const commissionDetailsSchema = z.object({
-  referralType: z.string().optional(), // z.string().min(1, "Referral commission type is required"),
-  referralValue: z.string().optional(), // z.string().min(1, "Referral commission value is required"),
-  teamValue: z.string().optional(), // z.string().min(1, "Team commission value is required"),
-  lecturerType: z.string().optional(), // z.string().min(1, "Lecturer commission type is required"),
-  lecturerValue: z.string().optional(), // z.string().min(1, "Lecturer commission value is required"),
+  referralType: z.string().optional(),
+  referralValue: z.string().optional(),
+  teamValue: z.string().optional(),
+  lecturerType: z.string().optional(),
+  lecturerValue: z.string().optional(),
+  staffType: z.string().optional(),
+  staffValue: z.string().optional(),
+  branchStaffType: z.string().optional(),
+  branchStaffValue: z.string().optional(),
 });
 
 export type CommissionDetailsValues = z.infer<typeof commissionDetailsSchema>;
@@ -149,4 +153,8 @@ export const defaultCommissionDetailsValues: Partial<CommissionDetailsValues> = 
   teamValue: "",
   lecturerType: "",
   lecturerValue: "",
+  staffType: "",
+  staffValue: "",
+  branchStaffType: "",
+  branchStaffValue: "",
 };

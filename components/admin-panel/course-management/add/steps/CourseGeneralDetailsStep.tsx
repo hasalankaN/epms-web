@@ -420,7 +420,7 @@ export function CourseGeneralDetailsStep({ onNext }: CourseGeneralDetailsStepPro
             <div className="space-y-1">
             <FieldLabel>Subject</FieldLabel>
                   <Controller
-                    name="subject"
+                    name="batchId"
                     control={control}
                     render={({ field }) => (
                       <Select onValueChange={field.onChange} value={field.value}>
@@ -435,7 +435,7 @@ export function CourseGeneralDetailsStep({ onNext }: CourseGeneralDetailsStepPro
                       </Select>
                     )}
                   />
-                  <FieldError message={errors.subject?.message} />
+                  <FieldError message={errors.batchId?.message} />
             </div>
 
             <div className="space-y-1">
