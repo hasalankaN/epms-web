@@ -35,7 +35,7 @@ const ORDINALS = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seven
 
 // Reusable FeeTable Component
 interface FeeTableProps {
-  items: { id: string; label: string; amount: string | number }[];
+  items: { id: string; label: string; amount: string | number; duration?: string }[];
   totalLabel: string;
   totalAmount: number;
   emptyMessage?: string;
@@ -45,6 +45,7 @@ interface FeeTableProps {
 function FeeTable({ items, totalLabel, totalAmount, emptyMessage = "No fee items added yet.", onRemove }: FeeTableProps) {
   // Helper formats
   const formatCurrency = (val: number) => val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const hasDuration = items.some(item => !!item.duration);
 
   return (
     <div className="border border-[#E4E4E7] rounded-lg bg-white shadow-sm overflow-hidden flex flex-col w-full">
@@ -52,6 +53,7 @@ function FeeTable({ items, totalLabel, totalAmount, emptyMessage = "No fee items
         <TableHeader className="bg-pink-50">
           <TableRow className="border-none hover:bg-pink-50">
             <TableHead className="text-sm font-semibold text-[#1D293D] font-inter pl-6 py-2 h-auto w-auto">Description</TableHead>
+            {hasDuration && <TableHead className="w-[120px] text-sm font-semibold text-[#1D293D] font-inter px-4 py-2 h-auto shrink-0">Duration</TableHead>}
             <TableHead className="w-[152px] text-sm font-semibold text-[#1D293D] font-inter text-right pr-6 py-2 h-auto shrink-0">Amount</TableHead>
             {onRemove && <TableHead className="w-[50px] text-sm font-semibold text-[#1D293D] font-inter text-center py-2 h-auto shrink-0"></TableHead>}
           </TableRow>
@@ -59,7 +61,7 @@ function FeeTable({ items, totalLabel, totalAmount, emptyMessage = "No fee items
         <TableBody>
           {items.length === 0 ? (
              <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={onRemove ? 3 : 2} className="h-16 text-center text-xs text-[#90A1B9] border-t border-transparent">
+                <TableCell colSpan={onRemove ? (hasDuration ? 4 : 3) : (hasDuration ? 3 : 2)} className="h-16 text-center text-xs text-[#90A1B9] border-t border-transparent">
                   {emptyMessage}
                 </TableCell>
              </TableRow>
@@ -69,6 +71,11 @@ function FeeTable({ items, totalLabel, totalAmount, emptyMessage = "No fee items
                 <TableCell className="text-[#45556C] text-sm font-normal font-inter leading-5 break-all px-6 py-2">
                   {item.label}
                 </TableCell>
+                {hasDuration && (
+                   <TableCell className="w-[120px] shrink-0 text-[#45556C] text-sm font-normal font-inter leading-5 px-4 py-2 align-middle">
+                      {item.duration || "-"}
+                   </TableCell>
+                )}
                 <TableCell className="w-[152px] shrink-0 text-[#45556C] text-sm font-normal font-inter leading-5 text-right px-6 py-2 align-middle">
                    {typeof item.amount === 'string' ? `${item.amount}` : `${parseFloat(item.amount.toString()).toLocaleString('en-US', { minimumFractionDigits: 2 })} LKR`}
                 </TableCell>
@@ -95,6 +102,7 @@ function FeeTable({ items, totalLabel, totalAmount, emptyMessage = "No fee items
               <TableCell className="text-[#0F172B] text-sm font-semibold font-inter leading-6 px-6 py-3">
                 {totalLabel}
               </TableCell>
+              {hasDuration && <TableCell className="w-[120px] shrink-0 px-4 py-3"></TableCell>}
               <TableCell className="w-[152px] shrink-0 text-[#0F172B] text-sm font-semibold font-inter leading-6 text-right px-6 py-3">
                 {formatCurrency(totalAmount)}
               </TableCell>
@@ -125,6 +133,7 @@ export function FeeDetailsStep({ onNext }: FeeDetailsStepProps) {
   const [baseDescription, setBaseDescription] = useState("");
   const [addAmount, setAddAmount] = useState("");
   const [addDuration, setAddDuration] = useState("");
+  const [addDescription, setAddDescription] = useState("");
 
   const form = useForm<FeeDetailsValues>({
     resolver: zodResolver(feeDetailsSchema),
@@ -266,14 +275,16 @@ export function FeeDetailsStep({ onNext }: FeeDetailsStepProps) {
   };
 
   const handleAddAdditionalFee = () => {
-    if (!addAmount || !addDuration) return;
+    if (!addAmount || !addDuration || !addDescription) return;
     appendAdditional({
       id: crypto.randomUUID(),
       amount: addAmount,
       duration: addDuration,
+      description: addDescription,
     });
     setAddAmount("");
     setAddDuration("");
+    setAddDescription("");
   };
 
   return (
@@ -460,12 +471,21 @@ export function FeeDetailsStep({ onNext }: FeeDetailsStepProps) {
                     </div>
                   </div>
                </div>
-               <div className="w-full md:flex-[2] space-y-1.5">
+               <div className="w-full md:flex-1 space-y-1.5">
                   <Label className={AUTH_TYPOGRAPHY.label}>Duration in Years</Label>
                   <Input 
                       value={addDuration}
                       onChange={(e) => setAddDuration(e.target.value)}
-                      placeholder="eg: Extra 1 year course access"
+                      placeholder="eg: 1"
+                      className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder)}
+                  />
+               </div>
+               <div className="w-full md:flex-[2] space-y-1.5">
+                  <Label className={AUTH_TYPOGRAPHY.label}>Fee Description</Label>
+                  <Input 
+                      value={addDescription}
+                      onChange={(e) => setAddDescription(e.target.value)}
+                      placeholder="eg: Registration Fee"
                       className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder)}
                   />
                </div>
@@ -483,7 +503,12 @@ export function FeeDetailsStep({ onNext }: FeeDetailsStepProps) {
             <div className="space-y-2 w-full">
                 <h4 className="text-sm font-medium text-[#1D293D] font-inter">Fee Overview</h4>
                 <FeeTable 
-                  items={additionalFields.map(f => ({ id: f.id, label: f.duration, amount: f.amount }))}
+                  items={additionalFields.map(f => ({ 
+                    id: f.id, 
+                    label: f.description, 
+                    amount: f.amount,
+                    duration: f.duration 
+                  }))}
                   totalLabel="Total Additional Fee"
                   totalAmount={additionalTotal}
                   onRemove={(index) => removeAdditional(index)}

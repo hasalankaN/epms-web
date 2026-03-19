@@ -23,4 +23,7 @@ export const queryKeys = {
   
   // Complaints
   complaints: "complaints",
+
+  // Batches
+  batches: "batches",
 };

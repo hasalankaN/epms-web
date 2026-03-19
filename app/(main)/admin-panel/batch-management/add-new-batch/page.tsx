@@ -18,12 +18,14 @@ import { BatchStepper } from "@/components/admin-panel/batch-management/add/Batc
 import { GeneralDetailsStep } from "@/components/admin-panel/batch-management/add/steps/GeneralDetailsStep";
 import { FeeDetailsStep } from "@/components/admin-panel/batch-management/add/steps/FeeDetailsStep";
 import { CommissionDetailsStep } from "@/components/admin-panel/batch-management/add/steps/CommissionDetailsStep";
+import { useCreateBatch, type CreateBatchPayload } from "@/hooks/api/batches/useCreateBatch";
 
 export default function AddBatchPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { generalDetails, feeDetails, commissionDetails, resetForm } = useBatchFormStore();
+  const { mutateAsync: createBatch, isPending: isCreating } = useCreateBatch();
 
   const currentStep = Number(searchParams.get("step")) || 1;
 
@@ -64,16 +66,84 @@ export default function AddBatchPage() {
     return hasGeneralChanges || hasFeeChanges || hasCommissionChanges;
   }, [generalDetails, feeDetails, commissionDetails]);
 
-  const handleNext = () => {
+  // Build the API payload from the Zustand store
+  const buildPayload = (): CreateBatchPayload => {
+    const g = generalDetails;
+    const f = feeDetails;
+    const c = commissionDetails;
+
+    const toNum = (val?: string) => parseFloat(val?.replace(/,/g, "") || "0") || 0;
+
+    const commissionEntry = (type?: string, value?: string, teamValue?: string) => ({
+      type: (type || "Fixed") as "Percentage" | "Fixed",
+      value: toNum(value),
+      team_value: toNum(teamValue),
+    });
+
+    return {
+      general_details: {
+        name: g.batchName || "",
+        branch_id: g.branch || "",
+        language: g.language || "",
+        batch_type: g.batchType || "",
+        staff_member_ids: g.staffMembers || [],
+        has_assignment: g.assignment === "yes",
+        category: g.batchCategory || "",
+        start_date: g.startDate ? new Date(g.startDate).toISOString() : "",
+        end_date: g.endDate ? new Date(g.endDate).toISOString() : "",
+        certificate_ids: g.certificates || [],
+        status: g.batchStatus || "",
+        lecturer_id: g.lecturer || "",
+        level: g.batchLevel || "",
+        hierarchy_type: g.hierarchy || "3 Tiers",
+        lesson_duration_hours: g.lessonDuration ? Number(g.lessonDuration) : undefined,
+        description: g.description || undefined,
+        cover_image_url: g.coverImage || undefined,
+      },
+      fee_details: {
+        pricing_option: f.pricingOption || "Paid",
+        base_fees: f.baseFeeItems?.map((item) => ({
+          amount: toNum(item.amount),
+          description: item.description,
+        })),
+        installments_enabled: f.enableInstallments,
+        number_of_installments: f.numberOfInstallments,
+        installment_plans: f.installmentItems?.map((item) => ({
+          description: item.description,
+          amount: toNum(item.amount),
+        })),
+        additional_fees: f.additionalFeeItems?.map((item) => ({
+          amount: toNum(item.amount),
+          duration_years: Number(item.duration) || 1,
+          description: item.description,
+        })),
+      },
+      commission_details: {
+        referral: commissionEntry(c.referralType, c.referralValue, c.teamValue),
+        lecturer: commissionEntry(c.lecturerType, c.lecturerValue, "0"),
+        staff: commissionEntry(c.staffType, c.staffValue, "0"),
+        branch_staff: commissionEntry(c.branchStaffType, c.branchStaffValue, "0"),
+      },
+    };
+  };
+
+  const handleNext = async () => {
     if (currentStep < 3) {
       const params = new URLSearchParams(searchParams.toString());
 
       params.set("step", (currentStep + 1).toString());
       router.push(`${pathname}?${params.toString()}`);
     } else {
-      // Final step submission - reset form and redirect
-      resetForm();
-      router.push("/admin-panel/batch-management");
+      // Final step - build payload and submit
+      try {
+        const payload = buildPayload();
+
+        await createBatch(payload);
+        resetForm();
+        router.push("/admin-panel/batch-management");
+      } catch {
+        // Error already handled by the hook's onError toast
+      }
     }
   };
 
@@ -166,12 +236,14 @@ export default function AddBatchPage() {
          <button 
             type="submit"
             form="active-step-form"
+            disabled={isCreating}
             className={cn(
                 currentStep === 3 ? cn(BUTTON_STYLES.primary.md, "text-white") : cn(BUTTON_STYLES.outline.md, "text-[#0F172B]"),
-                "font-semibold text-sm leading-5"
+                "font-semibold text-sm leading-5",
+                isCreating && "opacity-70 cursor-not-allowed"
             )}
          >
-           {currentStep === 3 ? "Create Batch" : "Go to Next Step"}
+           {currentStep === 3 ? (isCreating ? "Creating Batch..." : "Create Batch") : "Go to Next Step"}
            {currentStep !== 3 && <ArrowRightCircle className="h-5 w-5" />}
          </button>
       </div>

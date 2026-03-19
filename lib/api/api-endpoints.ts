@@ -60,4 +60,11 @@ export const API_ENDPOINTS = {
     UPDATE_STATUS: (id: string) => `/api/v1/admin/complaints/${id}/status`,
     DELETE: () => `/api/v1/admin/complaints`,
   },
+  batches: {
+    GET_ALL: `/api/v1/batches`,
+    CREATE: `/api/v1/batches`,
+    GET_BY_ID: (id: string) => `/api/v1/batches/${id}`,
+    UPDATE: (id: string) => `/api/v1/batches/${id}`,
+    UPDATE_STATUS: (id: string) => `/api/v1/batches/${id}/status`,
+  },
 };
