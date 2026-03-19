@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
@@ -24,7 +24,7 @@ export default function AddBatchPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const { generalDetails, feeDetails, commissionDetails, resetForm } = useBatchFormStore();
+  const { mode, generalDetails, feeDetails, commissionDetails, resetForm } = useBatchFormStore();
   const { mutateAsync: createBatch, isPending: isCreating } = useCreateBatch();
 
   const currentStep = Number(searchParams.get("step")) || 1;
@@ -32,6 +32,15 @@ export default function AddBatchPage() {
   // Track if user has unsaved changes
   const [showDiscardModal, setShowDiscardModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+
+  // If we came directly from the "Edit" page via SPA routing, the in-memory store 
+  // still holds the edit data. We need to completely wipe it and restore the "add" 
+  // draft (if any) from localStorage directly, ignoring the current memory state.
+  useEffect(() => {
+    if (mode === "edit") {
+      useBatchFormStore.getState().clearEditAndRestoreAdd();
+    }
+  }, [mode]);
 
   // Check if form has any data filled
   const isFormDirty = useMemo(() => {
@@ -182,6 +191,15 @@ export default function AddBatchPage() {
   };
 
   const renderStepContent = () => {
+    // If we're coming from edit, wait until the effect restores the add draft
+    if (mode === "edit") {
+      return (
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E60076]" />
+        </div>
+      );
+    }
+
     switch (currentStep) {
       case 1:
         return <GeneralDetailsStep onNext={handleNext} />;

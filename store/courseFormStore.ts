@@ -45,6 +45,7 @@ interface CourseFormState {
 
   resetForm: () => void;
   resetStep: (step: 1 | 2 | 3) => void;
+  clearEditAndRestoreAdd: () => void;
 }
 
 const initialState = {
@@ -118,16 +119,54 @@ export const useCourseFormStore = create<CourseFormState>()(
               return state;
           }
         }),
+
+      clearEditAndRestoreAdd: () => {
+        if (typeof window !== "undefined") {
+          const str = localStorage.getItem("course-add-draft-storage");
+
+          if (str) {
+            try {
+              const parsed = JSON.parse(str);
+
+              if (parsed && parsed.state) {
+                set({ ...initialState, ...parsed.state, mode: "add" });
+                
+                return;
+              }
+            } catch {
+              // ignore parse errors
+            }
+          }
+        }
+
+        set({ ...initialState, mode: "add" });
+      },
     }),
     {
-      name: "course-form-storage", // localStorage key
-      partialize: (state) => ({
-        mode: state.mode,
-        editCourseId: state.editCourseId,
-        generalDetails: state.generalDetails,
-        feeDetails: state.feeDetails,
-        commissionDetails: state.commissionDetails,
-      }),
+      name: "course-add-draft-storage",
+      storage: {
+        getItem: (name) => {
+          if (typeof window === "undefined") return null;
+          
+          const str = localStorage.getItem(name);
+
+          if (!str) return null;
+          
+          return JSON.parse(str);
+        },
+        setItem: (name, value: any) => {
+          if (typeof window === "undefined") return;
+
+          if (value?.state?.mode === "edit") return;
+          
+          localStorage.setItem(name, JSON.stringify(value));
+        },
+        removeItem: (name) => {
+          if (typeof window === "undefined") return;
+          
+          localStorage.removeItem(name);
+        },
+      },
     }
   )
 );
