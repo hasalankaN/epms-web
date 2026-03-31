@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
 import { AgentProfileModal } from "../modals/AgentProfileModal";
+import { PaymentHistoryModal, type PaymentHistoryGroup } from "../modals/PaymentHistoryModal";
+import { EditReferralMemberModal } from "../modals/EditReferralMemberModal";
 
 import type { ReferralStaffDataType } from "../ReferralStaffTab";
 
@@ -42,6 +44,12 @@ export function ReferralStaffTable({
   const [isAgentProfileOpen, setIsAgentProfileOpen] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
 
+  const [isPaymentHistoryOpen, setIsPaymentHistoryOpen] = useState(false);
+  const [paymentHistoryData, setPaymentHistoryData] = useState<PaymentHistoryGroup[] | null>(null);
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedMemberToEdit, setSelectedMemberToEdit] = useState<ReferralStaffDataType | null>(null);
+
   const itemsPerPage = 10;
   const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
 
@@ -57,9 +65,68 @@ export function ReferralStaffTable({
       return;
     }
 
+    if (action === "edit") {
+      setSelectedMemberToEdit(item);
+      setIsEditModalOpen(true);
+
+      return;
+    }
+
     if (action === "deactivate") {
       setSelectedItem(item);
       setIsDeactivateModalOpen(true);
+
+      return;
+    }
+
+    if (action === "payment-history") {
+      // Mocked payment history data based on Figma design
+      const mockHistory: PaymentHistoryGroup[] = [
+        {
+          monthYear: "December, 2025",
+          transactions: [
+            {
+              id: "tx-1",
+              description: "Referral commission for something",
+              courseBatch: "Course A",
+              amount: "XXXX.00",
+              status: "Pending",
+            },
+            {
+              id: "tx-2",
+              description: "Referral commission for something",
+              courseBatch: "Course B",
+              amount: "XXXX.00",
+              status: "Paid",
+              paidDate: "2025.12.23",
+            },
+          ],
+        },
+        {
+          monthYear: "November, 2025",
+          transactions: [
+            {
+              id: "tx-3",
+              description: "Referral commission for something",
+              courseBatch: "Course B",
+              amount: "XXXX.00",
+              status: "Paid",
+              paidDate: "2025.12.23",
+            },
+            {
+              id: "tx-4",
+              description: "Referral commission for something",
+              courseBatch: "Course B",
+              amount: "XXXX.00",
+              status: "Paid",
+              paidDate: "2025.12.23",
+            },
+          ],
+        },
+      ];
+
+      setPaymentHistoryData(mockHistory);
+      setIsPaymentHistoryOpen(true);
 
       return;
     }
@@ -246,6 +313,18 @@ export function ReferralStaffTable({
         isOpen={isAgentProfileOpen}
         onClose={() => setIsAgentProfileOpen(false)}
         memberId={selectedAgentId}
+      />
+
+      <PaymentHistoryModal
+        isOpen={isPaymentHistoryOpen}
+        onClose={() => setIsPaymentHistoryOpen(false)}
+        historyGroups={paymentHistoryData}
+      />
+
+      <EditReferralMemberModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        member={selectedMemberToEdit}
       />
     </>
   );

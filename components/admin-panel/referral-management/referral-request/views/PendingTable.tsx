@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 
 import { MoreVertical } from "lucide-react";
 
@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ExpenseTrackerSheetModal } from "../modals/ExpenseTrackerSheetModal";
 
 import type { PendingRequestDataType } from "../PendingTab";
 
@@ -29,12 +30,20 @@ export function PendingTable({
   onPageChange,
   totalResults,
 }: PendingTableProps) {
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+
   const itemsPerPage = 10;
   const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
 
   const handleAction = (action: string, item: PendingRequestDataType) => {
     if (action === "whatsapp") {
       window.open(`https://wa.me/94711234567`, "_blank");
+
+      return;
+    }
+
+    if (action === "payment-now") {
+      setIsPayModalOpen(true);
 
       return;
     }
@@ -121,6 +130,7 @@ export function PendingTable({
   ];
 
   return (
+    <>
     <DataTable
       data={data}
       columns={columns}
@@ -134,5 +144,11 @@ export function PendingTable({
         onPageChange,
       }}
     />
+
+    <ExpenseTrackerSheetModal
+      isOpen={isPayModalOpen}
+      onClose={() => setIsPayModalOpen(false)}
+    />
+    </>
   );
 }
