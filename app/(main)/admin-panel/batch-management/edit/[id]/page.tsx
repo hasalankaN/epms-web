@@ -12,8 +12,9 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { BUTTON_STYLES } from "@/lib/constants/theme";
 import { useBatchFormStore } from "@/store/batchFormStore";
-import { transformApiBatchDetailToFormData } from "@/transformers/batch.transformer";
+import { transformApiBatchDetailToFormData, buildUpdateBatchPayload } from "@/transformers/batch.transformer";
 import { useGetBatchById } from "@/hooks/api/batches/useGetBatchById";
+import { useUpdateBatch } from "@/hooks/api/batches/useUpdateBatch";
 
 import { BatchStepper } from "@/components/admin-panel/batch-management/add/BatchStepper";
 import { GeneralDetailsStep } from "@/components/admin-panel/batch-management/add/steps/GeneralDetailsStep";
@@ -46,6 +47,8 @@ export default function EditBatchPage() {
     setMode,
     loadFormData,
   } = useBatchFormStore();
+
+  const { mutateAsync: updateBatch, isPending: isUpdating } = useUpdateBatch(batchId);
 
   const currentStep = Number(searchParams.get("step")) || 1;
 
@@ -123,17 +126,23 @@ export default function EditBatchPage() {
     );
   }, [hasLoadedOriginal, generalDetails, feeDetails, commissionDetails]);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < 3) {
       const urlParams = new URLSearchParams(searchParams.toString());
 
       urlParams.set("step", (currentStep + 1).toString());
       router.push(`${pathname}?${urlParams.toString()}`);
     } else {
-      // TODO: Call actual PATCH/PUT update API here
-      console.log("Updating batch:", batchId);
-      resetForm();
-      router.push("/admin-panel/batch-management");
+      // Build & submit the update payload
+      try {
+        const payload = buildUpdateBatchPayload(generalDetails, feeDetails, commissionDetails);
+
+        await updateBatch(payload);
+        resetForm();
+        router.push("/admin-panel/batch-management");
+      } catch {
+        // Error is already shown via toast inside the hook
+      }
     }
   };
 
@@ -232,7 +241,7 @@ export default function EditBatchPage() {
         <button
           type="submit"
           form="active-step-form"
-          disabled={isLoading || (currentStep === 3 && !isFormDirty)}
+          disabled={isLoading || isUpdating || (currentStep === 3 && !isFormDirty)}
           className={cn(
             currentStep === 3 ? cn(BUTTON_STYLES.primary.md, "text-white") : cn(BUTTON_STYLES.outline.md, "text-[#0F172B]"),
             "font-semibold text-sm leading-5",

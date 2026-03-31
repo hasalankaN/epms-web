@@ -66,5 +66,7 @@ export const API_ENDPOINTS = {
     GET_BY_ID: (id: string) => `/api/v1/batches/${id}`,
     UPDATE: (id: string) => `/api/v1/batches/${id}`,
     UPDATE_STATUS: (id: string) => `/api/v1/batches/${id}/status`,
+    DEACTIVATE: (id: string) => `/api/v1/batches/${id}/deactivate`,
+    GET_SUMMARY: `/api/v1/admin/batches-view/analytics/summary`,
   },
 };

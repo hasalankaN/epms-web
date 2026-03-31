@@ -198,6 +198,7 @@ const BATCH_TYPES = ["Workshop", "Certificate", "Diploma", "HND", "Degree", "Sch
 const LANGUAGES = ["Tamil", "Sinhala", "English"];
 const CATEGORIES = ["Online", "Offline", "Hybrid"];
 const STATUSES = ["Active", "Upcoming", "Completed", "Inactive"];
+const LEVELS = ["Beginner", "Intermediate", "Advanced", "General"];
 
 function mapOption(apiValue: string | null | undefined, options: string[]): string {
   if (!apiValue) return "";
@@ -214,8 +215,12 @@ function findRule(
   return rules.find((r) => r.commission_target === target && r.commission_scope === scope);
 }
 
-function calcTypeToFormType(calculationType: string): string {
-  return calculationType === "PERCENTAGE" ? "Percentage" : "Fixed";
+function calcTypeToFormType(apiType: string | null | undefined): string {
+  if (!apiType) return "";
+  if (apiType === "PERCENTAGE") return "Percentage";
+  if (apiType === "FIXED") return "Fixed";
+  
+  return "";
 }
 
 /**
@@ -234,15 +239,15 @@ export function transformApiBatchDetailToFormData(data: ApiBatchDetail): {
     branch: data.branch_id,
     language: mapOption(data.language, LANGUAGES),
     batchType: mapOption(data.type, BATCH_TYPES),
-    staffMembers: [],
-    assignment: "yes",
+    staffMembers: data.staff_ids || [],
+    assignment: data.has_assignment ? "yes" : "no",
     batchCategory: mapOption(data.category, CATEGORIES),
     startDate: new Date(data.start_date),
     endDate: new Date(data.end_date),
-    certificates: [],
+    certificates: data.certificate_ids || [],
     batchStatus: mapOption(data.status, STATUSES),
     lecturer: data.lecturer_id || "",
-    batchLevel: "", // Backend does not return level currently
+    batchLevel: mapOption(data.level, LEVELS),
     hierarchy: `${tierCount} Tiers`,
     lessonDuration: data.lesson_duration,
     description: data.description || "",
@@ -250,7 +255,7 @@ export function transformApiBatchDetailToFormData(data: ApiBatchDetail): {
   };
 
   // ── Fee Details ──────────────────────────────────────────────────────────
-  const baseFeeItems: FeeItem[] = (data.feeItems || []).map((item) => ({
+  const baseFeeItems: FeeItem[] = (data.fee_items || []).map((item) => ({
     id: item.id,
     amount: item.amount,
     description: item.label,
@@ -287,7 +292,7 @@ export function transformApiBatchDetailToFormData(data: ApiBatchDetail): {
     });
   };
 
-  const additionalFeeItems: AdditionalFeeItem[] = (data.extendedAccessOptions || []).map((opt) => ({
+  const additionalFeeItems: AdditionalFeeItem[] = (data.extended_access_options || []).map((opt) => ({
     id: opt.id,
     amount: opt.price,
     duration: String(opt.years),
@@ -295,7 +300,7 @@ export function transformApiBatchDetailToFormData(data: ApiBatchDetail): {
   }));
 
   const feeDetails: Partial<FeeDetailsValues> = {
-    pricingOption: "Paid",
+    pricingOption: baseFeeItems.length > 0 ? "Paid" : "Free",
     baseFeeItems,
     enableInstallments,
     numberOfInstallments: enableInstallments ? installmentCount : undefined,
@@ -312,16 +317,28 @@ export function transformApiBatchDetailToFormData(data: ApiBatchDetail): {
   const staffRule = findRule(rules, "STAFF", "PER_ENROLLMENT");
   const branchStaffRule = findRule(rules, "STAFF", "PER_BRANCH");
 
+  const formatCommValue = (val: string | undefined) => {
+    if (!val || parseFloat(val) === 0) return "";
+    
+    return val;
+  };
+
+  const referralValue = formatCommValue(referralDirect?.value);
+  const referralTeamValue = formatCommValue(referralTeam?.value);
+  const lecturerValue = formatCommValue(lecturerRule?.value);
+  const staffValue = formatCommValue(staffRule?.value);
+  const branchStaffValue = formatCommValue(branchStaffRule?.value);
+
   const commissionDetails: Partial<CommissionDetailsValues> = {
-    referralType: referralDirect ? calcTypeToFormType(referralDirect.calculation_type) : "",
-    referralValue: referralDirect?.value ?? "",
-    teamValue: referralTeam?.value ?? "",
-    lecturerType: lecturerRule ? calcTypeToFormType(lecturerRule.calculation_type) : "",
-    lecturerValue: lecturerRule?.value ?? "",
-    staffType: staffRule ? calcTypeToFormType(staffRule.calculation_type) : "",
-    staffValue: staffRule?.value ?? "",
-    branchStaffType: branchStaffRule ? calcTypeToFormType(branchStaffRule.calculation_type) : "",
-    branchStaffValue: branchStaffRule?.value ?? "",
+    referralType: referralValue ? calcTypeToFormType(referralDirect?.calculation_type) : "",
+    referralValue: referralValue,
+    teamValue: referralTeamValue,
+    lecturerType: lecturerValue ? calcTypeToFormType(lecturerRule?.calculation_type) : "",
+    lecturerValue: lecturerValue,
+    staffType: staffValue ? calcTypeToFormType(staffRule?.calculation_type) : "",
+    staffValue: staffValue,
+    branchStaffType: branchStaffValue ? calcTypeToFormType(branchStaffRule?.calculation_type) : "",
+    branchStaffValue: branchStaffValue,
   };
 
   return { generalDetails, feeDetails, commissionDetails };
@@ -362,6 +379,111 @@ export function transformFormToApiPayload(
     teamValue: commissionDetails.teamValue,
     lecturerType: commissionDetails.lecturerType,
     lecturerValue: commissionDetails.lecturerValue,
+  };
+}
+
+// ==================== Form → Update API Payload ====================
+
+import type { UpdateBatchPayload } from "@/hooks/api/batches/useUpdateBatch";
+
+/**
+ * Converts the 3-step form state held in Zustand into the exact shape
+ * required by the PATCH /api/v1/batches/{id} endpoint.
+ */
+export function buildUpdateBatchPayload(
+  generalDetails: Partial<GeneralDetailsValues>,
+  feeDetails: Partial<FeeDetailsValues>,
+  commissionDetails: Partial<CommissionDetailsValues>
+): UpdateBatchPayload {
+  // ── General Details ──────────────────────────────────────────────────────
+  const formatDate = (d: Date | string | undefined): string => {
+    if (!d) return "";
+    const date = d instanceof Date ? d : new Date(d);
+
+    return date.toISOString().split("T")[0]; // "YYYY-MM-DD"
+  };
+
+  // ── Fee Details ──────────────────────────────────────────────────────────
+  const pricingOption = feeDetails.pricingOption ?? "Free";
+
+  const baseFees = (feeDetails.baseFeeItems ?? []).map((item) => ({
+    amount: parseFloat(item.amount) || 0,
+    description: item.description,
+  }));
+
+  const installmentPlans = (feeDetails.installmentItems ?? []).map((item) => ({
+    description: item.description,
+    amount: parseFloat(item.amount) || 0,
+  }));
+
+  const additionalFees = (feeDetails.additionalFeeItems ?? []).map((item) => ({
+    amount: parseFloat(item.amount) || 0,
+    duration_years: parseInt(item.duration, 10) || 1,
+    description: item.description,
+  }));
+
+  // ── Commission Helpers ────────────────────────────────────────────────────
+  const toCommissionEntry = (
+    type: string | undefined,
+    value: string | undefined,
+    teamValue?: string | undefined
+  ) => ({
+    type: (type || "Fixed") as "Percentage" | "Fixed",
+    value: parseFloat(value || "0") || 0,
+    ...(teamValue !== undefined ? { team_value: parseFloat(teamValue || "0") || 0 } : {}),
+  });
+
+  return {
+    general_details: {
+      name: generalDetails.batchName ?? "",
+      category: generalDetails.batchCategory ?? "",
+      batch_type: generalDetails.batchType ?? "",
+      ...(generalDetails.batchLevel ? { level: generalDetails.batchLevel } : {}),
+      language: generalDetails.language ?? "",
+      branch_id: generalDetails.branch ?? "",
+      lecturer_id: generalDetails.lecturer ?? "",
+      start_date: formatDate(generalDetails.startDate),
+      end_date: formatDate(generalDetails.endDate),
+      has_assignment: generalDetails.assignment === "yes",
+      ...(generalDetails.lessonDuration
+        ? { lesson_duration_hours: parseFloat(generalDetails.lessonDuration) || undefined }
+        : {}),
+      description: generalDetails.description ?? "",
+      cover_image_url: generalDetails.coverImage ?? "",
+      status: generalDetails.batchStatus ?? "",
+      hierarchy_type: generalDetails.hierarchy ?? "3 Tiers",
+      staff_member_ids: generalDetails.staffMembers ?? [],
+      certificate_ids: generalDetails.certificates ?? [],
+    },
+    fee_details: {
+      pricing_option: pricingOption,
+      base_fees: pricingOption === "Paid" ? baseFees : [],
+      installments_enabled: pricingOption === "Paid" ? (feeDetails.enableInstallments ?? false) : false,
+      ...(pricingOption === "Paid" && feeDetails.enableInstallments && feeDetails.numberOfInstallments
+        ? { number_of_installments: feeDetails.numberOfInstallments }
+        : {}),
+      installment_plans: pricingOption === "Paid" && feeDetails.enableInstallments ? installmentPlans : [],
+      additional_fees: pricingOption === "Paid" ? additionalFees : [],
+    },
+    commission_details: {
+      referral: toCommissionEntry(
+        commissionDetails.referralType,
+        commissionDetails.referralValue,
+        commissionDetails.teamValue
+      ),
+      lecturer: toCommissionEntry(
+        commissionDetails.lecturerType,
+        commissionDetails.lecturerValue
+      ),
+      staff: toCommissionEntry(
+        commissionDetails.staffType,
+        commissionDetails.staffValue
+      ),
+      branch_staff: toCommissionEntry(
+        commissionDetails.branchStaffType,
+        commissionDetails.branchStaffValue
+      ),
+    },
   };
 }
 

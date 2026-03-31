@@ -85,10 +85,14 @@ export interface ApiBatchDetail {
   updated_at: string;
   lecturer_id: string | null;
   lecturer_email: string | null;
+  level: string | null;
+  staff_ids: string[];
+  certificate_ids: string[];
+  has_assignment: boolean;
   hierarchy: ApiBatchHierarchy | null;
-  feeItems: ApiBatchFeeItem[];
+  fee_items: ApiBatchFeeItem[];
   installment: ApiBatchInstallment | null;
-  extendedAccessOptions: ApiBatchExtendedAccessOption[];
+  extended_access_options: ApiBatchExtendedAccessOption[];
   commission: ApiBatchCommission | null;
 }
 
