@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
+import { AgentProfileModal } from "../modals/AgentProfileModal";
 
 import type { ReferralStaffDataType } from "../ReferralStaffTab";
 
@@ -38,11 +39,24 @@ export function ReferralStaffTable({
 }: ReferralStaffTableProps) {
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ReferralStaffDataType | null>(null);
+  const [isAgentProfileOpen, setIsAgentProfileOpen] = useState(false);
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
 
   const itemsPerPage = 10;
   const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
 
   const handleAction = (action: string, item: ReferralStaffDataType) => {
+    if (action === "view") {
+      setSelectedAgentId(item.id);
+
+      // Determine if mocked as team leader in mock data to pass "leader" ID if needed, 
+      // but in real app ID handles it. Let's pass the real ID but add 'leader' if isTeamLeader is true
+      setSelectedAgentId(item.isTeamLeader ? `${item.id}-leader` : item.id);
+      setIsAgentProfileOpen(true);
+
+      return;
+    }
+
     if (action === "deactivate") {
       setSelectedItem(item);
       setIsDeactivateModalOpen(true);
@@ -226,6 +240,12 @@ export function ReferralStaffTable({
         confirmText={selectedItem?.status === "Active" ? "Confirm Deactivation" : "Confirm Activation"}
         confirmVariant={selectedItem?.status === "Active" ? "destructive" : "primary"}
         isDeleting={false}
+      />
+
+      <AgentProfileModal
+        isOpen={isAgentProfileOpen}
+        onClose={() => setIsAgentProfileOpen(false)}
+        memberId={selectedAgentId}
       />
     </>
   );
