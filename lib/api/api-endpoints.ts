@@ -71,6 +71,7 @@ export const API_ENDPOINTS = {
   },
   courses: {
     GET_ALL: `/api/v1/courses`,
+    CREATE: `/api/v1/courses`,
     GET_BY_ID: (id: string) => `/api/v1/courses/${id}`,
     UPDATE: (id: string) => `/api/v1/courses/${id}`,
     UPDATE_STATUS: (id: string) => `/api/v1/courses/${id}/status`,

@@ -18,8 +18,8 @@ export const courseGeneralDetailsSchema = z.object({
   batchId: z.string().optional(),
   shortDescription: z.string().optional(),
   longDescription: z.string().min(1, "Course long description is required"),
-  coverImage: z.string().optional(), // TODO: Make required after upload API integration
-  introductionVideo: z.string().optional(), // TODO: Make required after upload API integration
+  coverImage: z.string().min(1, "Course cover image is required"),
+  introductionVideo: z.string().min(1, "Course introduction video is required"),
 });
 
 export type CourseGeneralDetailsValues = z.infer<typeof courseGeneralDetailsSchema>;
