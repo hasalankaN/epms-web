@@ -26,4 +26,7 @@ export const queryKeys = {
 
   // Batches
   batches: "batches",
+
+  // Courses
+  courses: "courses",
 };

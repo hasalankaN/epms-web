@@ -69,4 +69,11 @@ export const API_ENDPOINTS = {
     DEACTIVATE: (id: string) => `/api/v1/batches/${id}/deactivate`,
     GET_SUMMARY: `/api/v1/admin/batches-view/analytics/summary`,
   },
+  courses: {
+    GET_ALL: `/api/v1/courses`,
+    GET_BY_ID: (id: string) => `/api/v1/courses/${id}`,
+    UPDATE: (id: string) => `/api/v1/courses/${id}`,
+    UPDATE_STATUS: (id: string) => `/api/v1/courses/${id}/status`,
+    DEACTIVATE: (id: string) => `/api/v1/courses/${id}/deactivate`,
+  },
 };

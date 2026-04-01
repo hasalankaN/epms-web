@@ -1,8 +1,7 @@
 import React from "react";
 
 import { cn } from "@/lib/utils";
-import type { CourseStatus } from "@/types/course";
-import { COURSE_STATUS_CONFIG } from "@/types/course";
+import { type CourseStatus, COURSE_STATUS_CONFIG } from "@/types/course";
 
 export function CourseCoverHeader({ courseId }: { courseId?: string }) {
   // Use courseId to avoid lint error (placeholder for data fetching later)

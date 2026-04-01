@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 
 import { Search, X } from "lucide-react";
 
@@ -11,83 +11,165 @@ import { Input } from "@/components/ui/input";
 import type { FilterCategory, FilterSelections } from "@/components/common/filters/FilterModal";
 import { FilterModal, FilterModalTrigger } from "@/components/common/filters/FilterModal";
 
+import { useGetCategories } from "@/hooks/api/course-categories/useGetCategories";
+import { useGetLecturers } from "@/hooks/api/lecturers/useGetLecturers";
+import { useGetStaff } from "@/hooks/api/staff/useGetStaff";
+
 // ===== COURSE-SPECIFIC FILTER DATA (for FilterModal) =====
 
 const courseFilterCategories: FilterCategory[] = [
   { 
-    key: "category", 
+    key: "category_id", 
     label: "By Course Category", 
     type: "chips",
-    items: [
-      { key: "category1", label: "Category 1" },
-      { key: "businessStudies", label: "Business Studies" },
-      { key: "category2", label: "Category 2" },
-    ],
+    multiSelect: false,
+    items: [], // Populated dynamically
   },
   { 
     key: "language", 
     label: "By Language", 
     type: "chips",
+    multiSelect: false,
     items: [
-      { key: "english", label: "English" },
-      { key: "sinhala", label: "Sinhala" },
-      { key: "tamil", label: "Tamil" },
+      { key: "ENGLISH", label: "English" },
+      { key: "SINHALA", label: "Sinhala" },
+      { key: "TAMIL", label: "Tamil" },
     ],
   },
   { 
-    key: "lecturer", 
+    key: "lecturer_id", 
     label: "By Lecturer", 
     type: "chips",
-    items: [
-      { key: "mrRuwan", label: "Mr. Ruwan" },
-      { key: "missAkarshani", label: "Miss. Akarshani" },
-      { key: "mrsTheja", label: "Mrs. Theja" },
-      { key: "mrSaadh", label: "Mr. Saadh" },
-    ],
+    multiSelect: false,
+    items: [], // Populated dynamically
   },
   { 
-    key: "staff", 
+    key: "staff_id", 
     label: "By Staff", 
     type: "chips",
-    items: [
-      { key: "kalpa", label: "Kalpa" },
-      { key: "supun", label: "Supun" },
-      { key: "ruwini", label: "Ruwini" },
-      { key: "maneesha", label: "Maneesha" },
-    ],
+    multiSelect: false,
+    items: [], // Populated dynamically
   },
   { 
     key: "status", 
     label: "By Course Status", 
     type: "chips",
+    multiSelect: false,
     items: [
-      { key: "active", label: "Active" },
-      { key: "inactive", label: "Inactive" },
+      { key: "ACTIVE", label: "Active" },
+      { key: "DRAFT", label: "Draft" },
+      { key: "INACTIVE", label: "Inactive" },
     ],
   },
 ];
 
 // ===== COMPONENT =====
 
-export function CourseTableToolbar() {
+interface CourseTableToolbarProps {
+  search: string;
+  onSearchChange: (value: string) => void;
+  onApplyFilters: (filters: Record<string, string | null>) => void;
+  onClearFilters: () => void;
+  activeUrlFilters: {
+    status?: string;
+    category_id?: string;
+    lecturer_id?: string;
+    staff_id?: string;
+    language?: string;
+  };
+}
+
+export function CourseTableToolbar({
+  search,
+  onSearchChange,
+  onApplyFilters,
+  onClearFilters,
+  activeUrlFilters,
+}: CourseTableToolbarProps) {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<FilterSelections>({});
+
+  // Fetch data dynamically for the filter modal
+  const { data: categoriesData } = useGetCategories({ size: 100 });
+  const { data: lecturersData } = useGetLecturers({ size: 100 });
+  const { data: staffData } = useGetStaff({ size: 100 });
+
+  const categories = useMemo(() => {
+    const updatedCategories = [...courseFilterCategories];
+    
+    // Update Course Categories
+    const catCategoryIndex = updatedCategories.findIndex(c => c.key === "category_id");
+
+    if (catCategoryIndex !== -1 && categoriesData?.results) {
+      updatedCategories[catCategoryIndex] = {
+        ...updatedCategories[catCategoryIndex],
+        items: categoriesData.results.map(c => ({
+          key: c.id,
+          label: c.name,
+        })),
+      };
+    }
+
+    // Update lecturers
+    const lecturerCategoryIndex = updatedCategories.findIndex(c => c.key === "lecturer_id");
+
+    if (lecturerCategoryIndex !== -1 && lecturersData?.results) {
+      updatedCategories[lecturerCategoryIndex] = {
+        ...updatedCategories[lecturerCategoryIndex],
+        items: lecturersData.results.map(l => ({
+          key: l.user_id,
+          label: `${l.first_name} ${l.last_name}`,
+        })),
+      };
+    }
+
+    // Update staff
+    const staffCategoryIndex = updatedCategories.findIndex(c => c.key === "staff_id");
+
+    if (staffCategoryIndex !== -1 && staffData?.results) {
+      updatedCategories[staffCategoryIndex] = {
+        ...updatedCategories[staffCategoryIndex],
+        items: staffData.results.map(s => ({
+          key: s.userId,
+          label: `${s.firstName || ''} ${s.lastName || ''}`.trim() || 'Unknown Staff',
+        })),
+      };
+    }
+    
+    return updatedCategories;
+  }, [categoriesData, lecturersData, staffData]);
+
+  const initialSelections = useMemo(() => {
+    const selections: FilterSelections = {};
+
+    if (activeUrlFilters.category_id) selections.category_id = activeUrlFilters.category_id.split(",");
+    if (activeUrlFilters.status) selections.status = activeUrlFilters.status.split(",");
+    if (activeUrlFilters.language) selections.language = activeUrlFilters.language.split(",");
+    if (activeUrlFilters.lecturer_id) selections.lecturer_id = activeUrlFilters.lecturer_id.split(",");
+    if (activeUrlFilters.staff_id) selections.staff_id = activeUrlFilters.staff_id.split(",");
+
+    return selections;
+  }, [activeUrlFilters]);
 
   // Check if there are any active filters
-  const hasActiveFilters = Object.keys(activeFilters).length > 0;
+  const hasActiveFilters = Object.values(activeUrlFilters).some(v => v !== undefined && v !== "");
 
   const handleApplyFilters = useCallback((selections: FilterSelections) => {
-    console.log("Applied filters:", selections);
-    setActiveFilters(selections);
+    const updates: Record<string, string | null> = {
+      category_id: null,
+      status: null,
+      language: null,
+      lecturer_id: null,
+      staff_id: null,
+    };
 
-    // TODO: Implement actual filtering logic
-  }, []);
+    if (selections.category_id && Array.isArray(selections.category_id) && selections.category_id.length > 0) updates.category_id = selections.category_id.join(",");
+    if (selections.status && Array.isArray(selections.status) && selections.status.length > 0) updates.status = selections.status.join(",");
+    if (selections.language && Array.isArray(selections.language) && selections.language.length > 0) updates.language = selections.language.join(",");
+    if (selections.lecturer_id && Array.isArray(selections.lecturer_id) && selections.lecturer_id.length > 0) updates.lecturer_id = selections.lecturer_id.join(",");
+    if (selections.staff_id && Array.isArray(selections.staff_id) && selections.staff_id.length > 0) updates.staff_id = selections.staff_id.join(",");
 
-  const handleClearFilters = useCallback(() => {
-    setActiveFilters({});
-
-    // TODO: Clear actual filters
-  }, []);
+    onApplyFilters(updates);
+  }, [onApplyFilters]);
 
   return (
     <>
@@ -100,7 +182,9 @@ export function CourseTableToolbar() {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#90A1B9]" />
               <Input
                 type="text"
-                placeholder="Search By Course Name, Lecturer or Course Category"
+                placeholder="Search By Course Name"
+                value={search}
+                onChange={(e) => onSearchChange(e.target.value)}
                 className={cn(
                   AUTH_INPUT.base,
                   AUTH_INPUT.placeholder,
@@ -115,7 +199,7 @@ export function CourseTableToolbar() {
             {hasActiveFilters && (
               <button
                 type="button"
-                onClick={handleClearFilters}
+                onClick={onClearFilters}
                 className={cn(BUTTON_STYLES.outline.md, "border-dashed text-[#64748B] hover:text-[#0F172B]")}
               >
                 <X className="h-4 w-4" />
@@ -139,6 +223,8 @@ export function CourseTableToolbar() {
               <Input
                 type="text"
                 placeholder="Search By Course Name..."
+                value={search}
+                onChange={(e) => onSearchChange(e.target.value)}
                 className={cn(
                   AUTH_INPUT.base,
                   AUTH_INPUT.placeholder,
@@ -153,7 +239,7 @@ export function CourseTableToolbar() {
              {hasActiveFilters && (
               <button
                 type="button"
-                onClick={handleClearFilters}
+                onClick={onClearFilters}
                 className={cn(BUTTON_STYLES.outline.md, "border-dashed text-[#64748B] hover:text-[#0F172B]")}
               >
                 <X className="h-4 w-4" />
@@ -175,7 +261,9 @@ export function CourseTableToolbar() {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#90A1B9]" />
             <Input
               type="text"
-              placeholder="Search By Course Name, Lecturer or Course Category"
+              placeholder="Search By Course Name"
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
               className={cn(
                 AUTH_INPUT.base,
                 AUTH_INPUT.placeholder,
@@ -190,7 +278,7 @@ export function CourseTableToolbar() {
             {hasActiveFilters && (
               <button
                 type="button"
-                onClick={handleClearFilters}
+                onClick={onClearFilters}
                 className={cn(BUTTON_STYLES.outline.md, "px-3 border-dashed text-[#64748B] hover:text-[#0F172B]")}
                 aria-label="Clear filters"
                 title="Clear filters"
@@ -212,9 +300,9 @@ export function CourseTableToolbar() {
       <FilterModal
         open={filterModalOpen}
         onOpenChange={setFilterModalOpen}
-        categories={courseFilterCategories}
+        categories={categories}
         onApply={handleApplyFilters}
-        initialSelections={activeFilters}
+        initialSelections={initialSelections}
       />
     </>
   );

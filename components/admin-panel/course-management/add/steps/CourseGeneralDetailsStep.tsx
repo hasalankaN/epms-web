@@ -37,13 +37,7 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { useGetCertificateTemplates } from "@/hooks/api/certificates/useGetCertificateTemplates";
 import { useGetCategories } from "@/hooks/api/course-categories/useGetCategories";
 import { useGetLecturers } from "@/hooks/api/lecturers/useGetLecturers";
-
-const SUBJECT_OPTIONS = [
-  { value: "subject-batch", label: "Subject - Batch Name" },
-  { value: "computer-science", label: "Computer Science" },
-  { value: "mathematics", label: "Mathematics" },
-  { value: "english", label: "English" },
-];
+import { useGetBatches } from "@/hooks/api/batches/useGetBatches";
 
 interface CourseGeneralDetailsStepProps {
   onNext?: () => void;
@@ -71,6 +65,7 @@ export function CourseGeneralDetailsStep({ onNext }: CourseGeneralDetailsStepPro
   const [staffSearch, setStaffSearch] = useState("");
   const [catSearch, setCatSearch] = useState("");
   const [lecturerSearch, setLecturerSearch] = useState("");
+  const [subjectSearch, setSubjectSearch] = useState("");
 
   const { data: staffData, isLoading: isStaffLoading } = useGetStaff({
     page: 1,
@@ -106,6 +101,13 @@ export function CourseGeneralDetailsStep({ onNext }: CourseGeneralDetailsStepPro
     label: `${lec.first_name || ""} ${lec.last_name || ""}`.trim(),
     subLabel: lec.email,
     avatarInitials: `${lec.first_name?.[0] || ""}${lec.last_name?.[0] || ""}`,
+  })) || [];
+
+  const { data: subjectData, isLoading: isSubjectLoading } = useGetBatches({ page: 1, size: 50, search: subjectSearch });
+
+  const subjectOptions = subjectData?.results.map((batch) => ({
+    value: batch.id,
+    label: `${batch.name} (${batch.custom_id})`,
   })) || [];
 
   const form = useForm<CourseGeneralDetailsValues>({
@@ -418,24 +420,26 @@ export function CourseGeneralDetailsStep({ onNext }: CourseGeneralDetailsStepPro
             </div>
 
             <div className="space-y-1">
-            <FieldLabel>Subject</FieldLabel>
-                  <Controller
-                    name="batchId"
-                    control={control}
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic")}>
-                          <SelectValue placeholder="Select subject" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {SUBJECT_OPTIONS.map((s) => (
-                            <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
+              <FieldLabel>Subject</FieldLabel>
+              <Controller
+                name="batchId"
+                control={control}
+                render={({ field }) => (
+                  <SearchableSelect
+                    options={subjectOptions}
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    searchValue={subjectSearch}
+                    onSearchChange={setSubjectSearch}
+                    placeholder="Select subject"
+                    searchPlaceholder="Search subject..."
+                    emptyMessage="No subject found."
+                    error={!!errors.batchId}
+                    isLoading={isSubjectLoading}
                   />
-                  <FieldError message={errors.batchId?.message} />
+                )}
+              />
+              <FieldError message={errors.batchId?.message} />
             </div>
 
             <div className="space-y-1">
