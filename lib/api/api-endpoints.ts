@@ -77,4 +77,11 @@ export const API_ENDPOINTS = {
     UPDATE_STATUS: (id: string) => `/api/v1/courses/${id}/status`,
     DEACTIVATE: (id: string) => `/api/v1/courses/${id}/deactivate`,
   },
+  referrals: {
+    GET_AGENTS: `/api/v1/admin/referrals/agents`,
+    CREATE: `/api/v1/admin/referrals/agents`,
+    GET_SUMMARY: (id: string) => `/api/v1/admin/referrals/agents/${id}/summary`,
+    UPDATE: (id: string) => `/api/v1/admin/referrals/agents/${id}`,
+    UPDATE_STATUS: (id: string) => `/api/v1/admin/referrals/agents/${id}/status`,
+  },
 };

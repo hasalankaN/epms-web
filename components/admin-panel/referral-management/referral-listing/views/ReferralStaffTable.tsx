@@ -18,16 +18,15 @@ import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationM
 import { AgentProfileModal } from "../modals/AgentProfileModal";
 import { PaymentHistoryModal, type PaymentHistoryGroup } from "../modals/PaymentHistoryModal";
 import { EditReferralMemberModal } from "../modals/EditReferralMemberModal";
+import { useUpdateReferralAgentStatus } from "@/hooks/api/referrals/useUpdateReferralAgentStatus";
 
-import type { ReferralStaffDataType } from "../ReferralStaffTab";
-
-const STATUS_CONFIG = {
-  Active: { bg: "#D9E9FF", text: "#2563EB" },
-  Inactive: { bg: "#F1F5F9", text: "#000000" },
-};
+import type { ReferralAgentDataType } from "@/types/referral";
+import { MEMBER_STATUS_CONFIG } from "@/types/user-management";
 
 interface ReferralStaffTableProps {
-  data: ReferralStaffDataType[];
+  data: ReferralAgentDataType[];
+  isLoading?: boolean;
+  isError?: boolean;
   currentPage: number;
   onPageChange: (page: number) => void;
   totalResults: number;
@@ -35,12 +34,14 @@ interface ReferralStaffTableProps {
 
 export function ReferralStaffTable({
   data,
+  isLoading,
+  isError,
   currentPage,
   onPageChange,
   totalResults,
 }: ReferralStaffTableProps) {
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<ReferralStaffDataType | null>(null);
+  const [selectedItem, setSelectedItem] = useState<ReferralAgentDataType | null>(null);
   const [isAgentProfileOpen, setIsAgentProfileOpen] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
 
@@ -48,17 +49,17 @@ export function ReferralStaffTable({
   const [paymentHistoryData, setPaymentHistoryData] = useState<PaymentHistoryGroup[] | null>(null);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedMemberToEdit, setSelectedMemberToEdit] = useState<ReferralStaffDataType | null>(null);
+  const [selectedMemberToEdit, setSelectedMemberToEdit] = useState<ReferralAgentDataType | null>(null);
+
+  const { mutate: updateStatus, isPending: isUpdatingStatus } = useUpdateReferralAgentStatus(
+    selectedItem?.id || ""
+  );
 
   const itemsPerPage = 10;
   const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
 
-  const handleAction = (action: string, item: ReferralStaffDataType) => {
+  const handleAction = (action: string, item: ReferralAgentDataType) => {
     if (action === "view") {
-      setSelectedAgentId(item.id);
-
-      // Determine if mocked as team leader in mock data to pass "leader" ID if needed, 
-      // but in real app ID handles it. Let's pass the real ID but add 'leader' if isTeamLeader is true
       setSelectedAgentId(item.isTeamLeader ? `${item.id}-leader` : item.id);
       setIsAgentProfileOpen(true);
 
@@ -102,27 +103,6 @@ export function ReferralStaffTable({
             },
           ],
         },
-        {
-          monthYear: "November, 2025",
-          transactions: [
-            {
-              id: "tx-3",
-              description: "Referral commission for something",
-              courseBatch: "Course B",
-              amount: "XXXX.00",
-              status: "Paid",
-              paidDate: "2025.12.23",
-            },
-            {
-              id: "tx-4",
-              description: "Referral commission for something",
-              courseBatch: "Course B",
-              amount: "XXXX.00",
-              status: "Paid",
-              paidDate: "2025.12.23",
-            },
-          ],
-        },
       ];
 
       setPaymentHistoryData(mockHistory);
@@ -140,31 +120,31 @@ export function ReferralStaffTable({
     console.log(`Action: ${action}`, item);
   };
 
-  const columns: Column<ReferralStaffDataType>[] = [
+  const columns: Column<ReferralAgentDataType>[] = [
     {
       header: "Added Date",
-      accessorKey: "addedDate",
+      accessorKey: "regDate",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[100px]",
       cell: (item) => (
-        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{item.addedDate}</div>
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{item.regDate}</div>
       ),
     },
     {
       header: "Member ID",
-      accessorKey: "memberId",
+      accessorKey: "idNo",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[100px]",
       cell: (item) => (
-        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{item.memberId}</div>
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{item.idNo}</div>
       ),
     },
     {
       header: "Member Name",
-      accessorKey: "memberName",
+      accessorKey: "name",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[150px]",
       cell: (item) => (
         <div className="relative inline-flex items-center">
           <div className="text-[11px] font-medium text-[#0F172B] whitespace-nowrap">
-            {item.memberName}
+            {item.name}
           </div>
           {item.isTeamLeader && (
             <div className="absolute -top-[15px] -right-[14px] flex items-center justify-center gap-1 rounded-[32px] bg-black px-2 py-[2px] shadow-[0_1px_2px_-1px_rgba(0,0,0,0.10)] text-center font-inter text-[8px] font-medium leading-[11px] text-white">
@@ -200,31 +180,27 @@ export function ReferralStaffTable({
     },
     {
       header: "Com. Total",
-      accessorKey: "comTotal",
+      accessorKey: "commissions",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[110px]",
       cell: (item) => (
-        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{item.comTotal}</div>
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{item.commissions}</div>
       ),
     },
     {
       header: "Status",
       accessorKey: "status",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[100px]",
-      cell: (item) => {
-        const options = Object.entries(STATUS_CONFIG).map(([status, config]) => ({
-          value: status,
-          bg: config.bg,
-          text: config.text,
-        }));
-
-        return (
-          <StatusPopover
-            value={item.status}
-            options={options}
-            readOnly
-          />
-        );
-      },
+      cell: (item) => (
+        <StatusPopover
+          value={item.status}
+          options={Object.entries(MEMBER_STATUS_CONFIG).map(([value, config]) => ({
+            value,
+            bg: config.bg,
+            text: config.text,
+          }))}
+          readOnly
+        />
+      ),
     },
     {
       header: "Action",
@@ -266,7 +242,7 @@ export function ReferralStaffTable({
                 onClick={() => handleAction("deactivate", item)}
                 className="cursor-pointer focus:bg-[#FDF2F8]"
               >
-                {item.status === "Active" ? "Deactivate" : "Activate"}
+                {item.status === "ACTIVE" ? "Deactivate" : "Activate"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -282,6 +258,8 @@ export function ReferralStaffTable({
       <DataTable
         data={filteredData}
         columns={columns}
+        isLoading={isLoading}
+        isError={isError}
         keyExtractor={(item) => item.id}
         pagination={{
           variant: "simple",
@@ -296,17 +274,24 @@ export function ReferralStaffTable({
         isOpen={isDeactivateModalOpen}
         onClose={() => setIsDeactivateModalOpen(false)}
         onConfirm={() => {
-          setIsDeactivateModalOpen(false);
+          if (selectedItem) {
+            updateStatus(
+              { status: selectedItem.status === "ACTIVE" ? "INACTIVE" : "ACTIVE" },
+              {
+                onSuccess: () => setIsDeactivateModalOpen(false),
+              }
+            );
+          }
         }}
-        title={selectedItem?.status === "Active" ? "Confirm Deactivation" : "Confirm Activation"}
+        title={selectedItem?.status === "ACTIVE" ? "Confirm Deactivation" : "Confirm Activation"}
         description={
-          selectedItem?.status === "Active"
-            ? `Are you sure you want to deactivate [${selectedItem?.memberName}]?`
-            : `Are you sure you want to activate [${selectedItem?.memberName}]?`
+          selectedItem?.status === "ACTIVE"
+            ? `Are you sure you want to deactivate [${selectedItem?.name}]?`
+            : `Are you sure you want to activate [${selectedItem?.name}]?`
         }
-        confirmText={selectedItem?.status === "Active" ? "Confirm Deactivation" : "Confirm Activation"}
-        confirmVariant={selectedItem?.status === "Active" ? "destructive" : "primary"}
-        isDeleting={false}
+        confirmText={selectedItem?.status === "ACTIVE" ? "Confirm Deactivation" : "Confirm Activation"}
+        confirmVariant={selectedItem?.status === "ACTIVE" ? "destructive" : "primary"}
+        isDeleting={isUpdatingStatus}
       />
 
       <AgentProfileModal

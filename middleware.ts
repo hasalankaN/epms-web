@@ -9,12 +9,13 @@ const SESSION_COOKIE_NAME = "binzo-admin-session";
 
 const PANEL_PREFIXES = ["/admin-panel", "/lecturer-panel", "/referral-panel"];
 
-type Role = "ADMIN" | "LECTURER" | "REFERRAL";
+type Role = "ADMIN" | "LECTURER" | "REFERRAL" | "REFERRAL_AGENT";
 
-const ROLE_PANEL_MAP: Record<Role, string> = {
+const ROLE_PANEL_MAP: Record<string, string> = {
   ADMIN: "/admin-panel",
   LECTURER: "/lecturer-panel",
   REFERRAL: "/referral-panel",
+  REFERRAL_AGENT: "/referral-panel",
 };
 
 async function getSessionFromCookie(request: NextRequest) {

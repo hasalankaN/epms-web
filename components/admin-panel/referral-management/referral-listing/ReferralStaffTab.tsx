@@ -6,36 +6,8 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 import { ReferralStaffToolbar } from "./views/ReferralStaffToolbar";
 import { ReferralStaffTable } from "./views/ReferralStaffTable";
-
-// ===== MOCK DATA =====
-
-const DISTRICTS = ["Colombo", "Kandy", "Gampaha", "Anuradhapura", "Matara", "Galle"];
-
-export interface ReferralStaffDataType {
-  id: string;
-  addedDate: string;
-  memberId: string;
-  memberName: string;
-  isTeamLeader: boolean;
-  district: string;
-  noOfStudents: string;
-  noOfProducts: string;
-  comTotal: string;
-  status: "Active" | "Inactive";
-}
-
-const mockReferralStaff: ReferralStaffDataType[] = Array.from({ length: 45 }, (_, i) => ({
-  id: `RS-${i + 1}`,
-  addedDate: "2026/01/21",
-  memberId: "#12345",
-  memberName: i % 5 === 1 ? "Amali Perera" : "name",
-  isTeamLeader: i % 5 === 1 || i % 5 === 4,
-  district: DISTRICTS[i % DISTRICTS.length],
-  noOfStudents: "XXX",
-  noOfProducts: "XXX",
-  comTotal: "XXXX.00",
-  status: i % 4 === 3 ? "Inactive" : "Active",
-}));
+import { useGetReferralAgents } from "@/hooks/api/referrals/useGetReferralAgents";
+import type { ReferralAgentDataType } from "@/types/referral";
 
 export function ReferralStaffTab() {
   const router = useRouter();
@@ -48,6 +20,34 @@ export function ReferralStaffTab() {
   const search = searchParams.get("search") || "";
   const status = searchParams.get("status") || undefined;
   const district = searchParams.get("district") || undefined;
+
+  const { data: apiData, isLoading, isError } = useGetReferralAgents({
+    page: currentPage,
+    size: 10,
+    search: search || undefined,
+    status: status,
+    district: district,
+  });
+
+  const data = useMemo(() => {
+    if (!apiData?.results) return [];
+    
+    return apiData.results.map(item => ({
+      id: item.id,
+      regDate: item.created_at ? new Date(item.created_at).toLocaleDateString("en-GB").replace(/\//g, ".") : "-",
+      idNo: item.member_code,
+      name: `${item.first_name} ${item.last_name}`,
+      phone: "-", 
+      whatsApp: "-",
+      email: "-", 
+      commissions: item.commission_total || "0",
+      district: item.district || "-",
+      status: item.status,
+      isTeamLeader: item.role === "LEADER",
+      noOfStudents: item.students_count || 0,
+      noOfProducts: item.products_count || 0,
+    })) as ReferralAgentDataType[];
+  }, [apiData]);
 
   const [localSearch, setLocalSearch] = useState(search);
 
@@ -108,30 +108,6 @@ export function ReferralStaffTab() {
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, pathname, router]);
 
-  // ===== FILTERING =====
-  const filteredData = useMemo(() => {
-    return mockReferralStaff.filter((item) => {
-      const matchesSearch =
-        !search ||
-        item.memberName.toLowerCase().includes(search.toLowerCase()) ||
-        item.memberId.toLowerCase().includes(search.toLowerCase());
-
-      const matchesStatus = !status || item.status === status;
-      const matchesDistrict = !district || item.district === district;
-
-      return matchesSearch && matchesStatus && matchesDistrict;
-    });
-  }, [search, status, district]);
-
-  const itemsPerPage = 10;
-  const totalResults = filteredData.length;
-
-  const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-
-    return filteredData.slice(start, start + itemsPerPage);
-  }, [filteredData, currentPage]);
-
   return (
     <div className="flex flex-col gap-4">
       <ReferralStaffToolbar
@@ -142,10 +118,12 @@ export function ReferralStaffTab() {
         activeUrlFilters={{ status, district }}
       />
       <ReferralStaffTable
-        data={paginatedData}
+        data={data}
+        isLoading={isLoading}
+        isError={isError}
         currentPage={currentPage}
         onPageChange={handlePageChange}
-        totalResults={totalResults}
+        totalResults={apiData?.totalResults || 0}
       />
     </div>
   );

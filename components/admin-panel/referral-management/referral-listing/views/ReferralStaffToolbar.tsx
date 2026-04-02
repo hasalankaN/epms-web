@@ -10,8 +10,7 @@ import { BUTTON_STYLES, AUTH_INPUT } from "@/lib/constants/theme";
 import { Input } from "@/components/ui/input";
 import type { FilterCategory, FilterSelections } from "@/components/common/filters/FilterModal";
 import { FilterModal, FilterModalTrigger } from "@/components/common/filters/FilterModal";
-
-const DISTRICTS = ["Colombo", "Kandy", "Gampaha", "Anuradhapura", "Matara", "Galle"];
+import { DISTRICTS } from "@/lib/constants/districts";
 
 const referralFilterCategories: FilterCategory[] = [
   {
@@ -27,8 +26,8 @@ const referralFilterCategories: FilterCategory[] = [
     type: "chips",
     multiSelect: false,
     items: [
-      { key: "Active", label: "Active" },
-      { key: "Inactive", label: "Inactive" },
+      { key: "ACTIVE", label: "Active" },
+      { key: "INACTIVE", label: "Inactive" },
     ],
   },
 ];

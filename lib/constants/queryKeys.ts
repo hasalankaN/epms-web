@@ -29,4 +29,7 @@ export const queryKeys = {
 
   // Courses
   courses: "courses",
+  
+  // Referrals
+  referrals: "referrals",
 };

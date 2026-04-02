@@ -29,7 +29,9 @@ import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationM
 import { cn } from "@/lib/utils";
 import { AUTH_TYPOGRAPHY, AUTH_INPUT, BUTTON_STYLES } from "@/lib/constants/theme";
 import { DISTRICTS } from "@/lib/constants/districts";
-import type { ReferralStaffDataType } from "../ReferralStaffTab";
+import { useGetReferralAgentSummary } from "@/hooks/api/referrals/useGetReferralAgentSummary";
+import { useUpdateReferralAgent } from "@/hooks/api/referrals/useUpdateReferralAgent";
+import type { ReferralAgentDataType } from "@/types/referral";
 
 // ===== SCHEMA =====
 
@@ -59,7 +61,7 @@ type EditMemberFormValues = z.infer<typeof editMemberSchema>;
 interface EditReferralMemberModalProps {
   isOpen: boolean;
   onClose: () => void;
-  member: ReferralStaffDataType | null;
+  member: ReferralAgentDataType | null;
 }
 
 // ===== FIELD LABEL =====
@@ -83,7 +85,14 @@ const FieldLabel = ({
 
 export function EditReferralMemberModal({ isOpen, onClose, member }: EditReferralMemberModalProps) {
   const [showDiscardModal, setShowDiscardModal] = useState(false);
-  const [isPending, setIsPending] = useState(false);
+
+  const { data: summaryData, isLoading: isLoadingSummary } = useGetReferralAgentSummary(
+    isOpen ? (member?.id || null) : null
+  );
+
+  const { mutateAsync: updateAgent, isPending: isUpdating } = useUpdateReferralAgent(
+    member?.id || ""
+  );
 
   const {
     register,
@@ -113,27 +122,31 @@ export function EditReferralMemberModal({ isOpen, onClose, member }: EditReferra
   const role = watch("role");
   const gender = watch("gender");
 
-  // Initializing the form when a member is selected
+  // Initializing the form when summary data is loaded
   useEffect(() => {
-    if (isOpen && member) {
-      const names = member.memberName.split(" ");
+    if (isOpen && summaryData?.profile) {
+      const profile = summaryData.profile;
+
+      // Extract raw phone numbers (assuming they come with +94)
+      const cleanPhone = profile.phone?.startsWith("+94") ? profile.phone.slice(3) : profile.phone || "";
+      const cleanWhatsapp = profile.whatsapp?.startsWith("+94") ? profile.whatsapp.slice(3) : profile.whatsapp || "";
 
       reset({
-        first_name: names[0] || "",
-        last_name: names.slice(1).join(" ") || "",
-        email: "user@gmail.com", // Mocked as it's not in the Table data
+        first_name: profile.first_name || profile.name?.split(" ")[0] || "",
+        last_name: profile.last_name || profile.name?.split(" ").slice(1).join(" ") || "",
+        email: profile.email || "",
         mobileCountryCode: "+94",
-        mobile_number: "701234567", // Mocked
+        mobile_number: cleanPhone,
         whatsappCountryCode: "+94",
-        whatsapp_number: "701234567", // Mocked
-        district: member.district || "",
-        role: member.isTeamLeader ? "TEAM_LEADER" : "TEAM_MEMBER",
-        gender: "MALE", // Mocked
+        whatsapp_number: cleanWhatsapp,
+        district: profile.district || member?.district || "",
+        role: profile.role === "LEADER" ? "TEAM_LEADER" : "TEAM_MEMBER",
+        gender: (profile.gender as "MALE" | "FEMALE") || "MALE",
       });
 
       setShowDiscardModal(false);
     }
-  }, [isOpen, member, reset]);
+  }, [isOpen, summaryData, reset, member?.district]);
 
   const handleCloseAttempt = () => {
     if (isDirty) {
@@ -145,15 +158,19 @@ export function EditReferralMemberModal({ isOpen, onClose, member }: EditReferra
 
   const onSubmit = async (values: EditMemberFormValues) => {
     try {
-      setIsPending(true);
-
-      // TODO: API integration
-      console.log("Update member:", values);
+      await updateAgent({
+        first_name: values.first_name,
+        last_name: values.last_name,
+        email: values.email,
+        gender: values.gender,
+        phone: `${values.mobileCountryCode}${values.mobile_number}`,
+        whatsapp: `${values.whatsappCountryCode}${values.whatsapp_number}`,
+        district: values.district,
+        role: values.role === "TEAM_LEADER" ? "LEADER" : "MEMBER",
+      });
       onClose();
     } catch (error) {
       console.error(error);
-    } finally {
-      setIsPending(false);
     }
   };
 
@@ -161,15 +178,21 @@ export function EditReferralMemberModal({ isOpen, onClose, member }: EditReferra
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && handleCloseAttempt()}>
         <DialogContent
+          isLoading={isLoadingSummary}
           animateChildren={true}
           className="flex max-h-[90vh] w-[95%] max-w-[720px] flex-col gap-0 overflow-hidden rounded-lg sm:rounded-xl border border-[#E2E8F0] bg-white p-0 shadow-[0_4px_6px_-4px_rgba(16,24,40,0.10),0_10px_15px_-3px_rgba(0,0,0,0.10)] [&>button]:hidden"
         >
           {/* Header */}
           <motion.div variants={itemVariants} className="flex flex-col gap-4 p-6 pb-0 shrink-0">
             <div className="flex items-center justify-between">
-              <DialogTitle className="flex-1 font-inter text-lg font-semibold leading-[30px] text-[#0F172B]">
-                Edit Member Details
-              </DialogTitle>
+              <div className="flex flex-col">
+                <DialogTitle className="font-inter text-lg font-semibold leading-[30px] text-[#0F172B]">
+                  Edit Details
+                </DialogTitle>
+                <p className="text-sm font-medium text-[#64748B]">
+                  Member ID: <span className="text-[#0F172B]">{summaryData?.profile?.member_code || "-"}</span>
+                </p>
+              </div>
               <button
                 onClick={handleCloseAttempt}
                 className="flex h-8 w-8 items-center justify-center rounded-md border border-[#E2E8F0] bg-white transition-colors hover:bg-slate-50"
@@ -198,7 +221,7 @@ export function EditReferralMemberModal({ isOpen, onClose, member }: EditReferra
                     AUTH_INPUT.placeholder,
                     errors.first_name && "border-red-500 focus-visible:ring-red-500"
                   )}
-                  placeholder="lorem ipsum"
+                  placeholder="eg: John"
                 />
                 {errors.first_name && (
                   <p className="mt-1 text-xs text-red-500">{errors.first_name.message}</p>
@@ -215,7 +238,7 @@ export function EditReferralMemberModal({ isOpen, onClose, member }: EditReferra
                     AUTH_INPUT.placeholder,
                     errors.last_name && "border-red-500 focus-visible:ring-red-500"
                   )}
-                  placeholder="lorem ipsum"
+                  placeholder="eg: Doe"
                 />
                 {errors.last_name && (
                   <p className="mt-1 text-xs text-red-500">{errors.last_name.message}</p>
@@ -228,21 +251,51 @@ export function EditReferralMemberModal({ isOpen, onClose, member }: EditReferra
                 <Input
                   type="email"
                   {...register("email")}
+                  disabled
                   className={cn(
                     AUTH_INPUT.base,
                     AUTH_INPUT.placeholder,
+                    "bg-gray-50 cursor-not-allowed",
                     errors.email && "border-red-500 focus-visible:ring-red-500"
                   )}
-                  placeholder="user@gmail.com"
+                  placeholder="eg: user@example.com"
                 />
                 {errors.email && (
                   <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>
                 )}
               </div>
 
+              {/* District */}
+              <div className="space-y-1">
+                <FieldLabel required>District</FieldLabel>
+                <Select
+                  value={watch("district")}
+                  onValueChange={(val) => setValue("district", val, { shouldDirty: true, shouldValidate: true })}
+                >
+                  <SelectTrigger className={cn(
+                    AUTH_INPUT.base, 
+                    "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic",
+                    errors.district && "border-red-500 focus:ring-red-500"
+                  )}>
+                    <SelectValue placeholder="Select district" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[99999999]">
+                    {DISTRICTS.map((d) => (
+                      <SelectItem key={d} value={d}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.district && (
+                  <p className="mt-1 text-xs text-red-500">{errors.district.message}</p>
+                )}
+              </div>
+
               {/* Phone Number */}
               <div className="flex flex-col">
                 <FieldLabel required className="mb-1">Phone number</FieldLabel>
+                <p className="mb-[6px] h-[20px] text-[12px] font-normal leading-[16px] text-[#90A1B9]">
+                  Only use numbers; do not include any spaces.
+                </p>
                 <div
                   className={cn(
                     "flex h-10 w-full items-center rounded-md border bg-white transition-all focus-within:ring-2 focus-within:ring-[#E60076]",
@@ -264,7 +317,7 @@ export function EditReferralMemberModal({ isOpen, onClose, member }: EditReferra
                   <input
                     {...register("mobile_number")}
                     className={cn("flex-1 bg-transparent px-3 py-2 text-sm outline-none", AUTH_INPUT.placeholder)}
-                    placeholder="70 xxx xxxx"
+                    placeholder="eg: 711234567"
                   />
                 </div>
                 {errors.mobile_number && (
@@ -275,6 +328,9 @@ export function EditReferralMemberModal({ isOpen, onClose, member }: EditReferra
               {/* Whatsapp Number */}
               <div className="flex flex-col">
                 <FieldLabel required className="mb-1">Whatsapp number</FieldLabel>
+                <p className="mb-[6px] h-[20px] text-[12px] font-normal leading-[16px] text-[#90A1B9]">
+                  Only use numbers; do not include any spaces.
+                </p>
                 <div
                   className={cn(
                     "flex h-10 w-full items-center rounded-md border bg-white transition-all focus-within:ring-2 focus-within:ring-[#E60076]",
@@ -296,32 +352,11 @@ export function EditReferralMemberModal({ isOpen, onClose, member }: EditReferra
                   <input
                     {...register("whatsapp_number")}
                     className={cn("flex-1 bg-transparent px-3 py-2 text-sm outline-none", AUTH_INPUT.placeholder)}
-                    placeholder="70 xxx xxxx"
+                    placeholder="eg: 771234567"
                   />
                 </div>
                 {errors.whatsapp_number && (
                   <p className="text-xs text-red-500 mt-1">{errors.whatsapp_number.message}</p>
-                )}
-              </div>
-
-              {/* District */}
-              <div className="space-y-1">
-                <FieldLabel required>District</FieldLabel>
-                <Select
-                  value={watch("district")}
-                  onValueChange={(val) => setValue("district", val, { shouldDirty: true, shouldValidate: true })}
-                >
-                  <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic")}>
-                    <SelectValue placeholder="Colombo" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[99999999]">
-                    {DISTRICTS.map((d) => (
-                      <SelectItem key={d} value={d}>{d}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.district && (
-                  <p className="mt-1 text-xs text-red-500">{errors.district.message}</p>
                 )}
               </div>
 
@@ -390,19 +425,19 @@ export function EditReferralMemberModal({ isOpen, onClose, member }: EditReferra
             <Button
               type="submit"
               form="edit-member-form"
-              disabled={isPending || !isDirty}
+              disabled={isUpdating || !isDirty}
               className={cn(
-                BUTTON_STYLES.primary.md,
-                "font-inter text-[14px] font-semibold text-white leading-5 px-6"
+                BUTTON_STYLES.primary.full,
+                "w-auto px-6 font-inter text-[14px] font-semibold text-white leading-5"
               )}
             >
-              {isPending ? (
+              {isUpdating ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Updating...
+                  Saving...
                 </>
               ) : (
-                "Update"
+                "Update Details"
               )}
             </Button>
           </motion.div>
