@@ -51,7 +51,7 @@ const BATCH_TYPES = [
 
 const LANGUAGES = ["Tamil", "Sinhala", "English"];
 const CATEGORIES = ["Online", "Offline"];
-const LEVELS = ["Bigginer", "intermediate", "Advanced", "Genral"];
+const LEVELS = ["Beginner", "Intermediate", "Advanced", "General"];
 const STATUSES = ["Active", "Upcoming", "Completed", "Inactive"];
 
 interface GeneralDetailsStepProps {
@@ -127,7 +127,7 @@ export function GeneralDetailsStep({ onNext }: GeneralDetailsStepProps) {
   const FieldError = ({ message }: { message?: string }) => {
     if (!message) return null;
     
-    return <p className="text-xs text-red-500 mt-1">{message}</p>;
+    return <p className="text-xs text-red-500">{message}</p>;
   };
 
   // Format options for searchable selects
@@ -261,12 +261,12 @@ export function GeneralDetailsStep({ onNext }: GeneralDetailsStepProps) {
             <div className="space-y-1">
               <FieldLabel>Assignment</FieldLabel>
               <div className="flex items-center gap-4 h-10">
-                 <div className="flex items-center gap-2">
-                    <input type="radio" id="assignment-yes" value="Yes" {...register("assignment")} className="accent-[#0F172B] w-4 h-4 cursor-pointer" />
+                  <div className="flex items-center gap-2">
+                    <input type="radio" id="assignment-yes" value="yes" {...register("assignment")} className="accent-[#0F172B] w-4 h-4 cursor-pointer" />
                     <label htmlFor="assignment-yes" className="text-sm text-[#45556C] cursor-pointer">Yes</label>
                  </div>
                  <div className="flex items-center gap-2">
-                    <input type="radio" id="assignment-no" value="No" {...register("assignment")} className="accent-[#0F172B] w-4 h-4 cursor-pointer" />
+                    <input type="radio" id="assignment-no" value="no" {...register("assignment")} className="accent-[#0F172B] w-4 h-4 cursor-pointer" />
                     <label htmlFor="assignment-no" className="text-sm text-[#45556C] cursor-pointer">No</label>
                  </div>
               </div>

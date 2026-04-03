@@ -39,6 +39,7 @@ interface DataTableProps<T> {
   showCheckboxes?: boolean;
   tableContainerClassName?: string;
   emptyState?: React.ReactNode;
+  footerRow?: React.ReactNode;
 }
 
 export function DataTable<T>({
@@ -52,6 +53,7 @@ export function DataTable<T>({
   showCheckboxes = true,
   tableContainerClassName,
   emptyState,
+  footerRow,
 }: DataTableProps<T>) {
   const [animationData, setAnimationData] = useState<any>(cachedLoadingAnimationData);
 
@@ -179,6 +181,11 @@ export function DataTable<T>({
               </tr>
             )}
           </motion.tbody>
+          {footerRow && (
+            <tfoot className="border-t border-[#E2E8F0] bg-[#F1F5F9]">
+              {footerRow}
+            </tfoot>
+          )}
         </table>
       </div>
 

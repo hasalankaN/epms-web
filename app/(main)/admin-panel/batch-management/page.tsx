@@ -1,8 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 
 import Link from "next/link";
+
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+
+import { toast } from "sonner";
 
 import { Plus } from "lucide-react";
 
@@ -12,96 +16,178 @@ import { BatchStatsRow } from "@/components/admin-panel/batch-management/BatchSt
 import { BatchTableToolbar } from "@/components/admin-panel/batch-management/BatchTableToolbar";
 import { BatchTable } from "@/components/admin-panel/batch-management/BatchTable";
 import type { BatchDataType } from "@/types/batch";
-
-// ===== DUMMY DATA =====
-const DUMMY_BATCH_DATA: BatchDataType[] = [
-  {
-    id: "1",
-    batchName: "Web Development 2024 - A",
-    batchId: "WD-24-A",
-    type: "Diploma",
-    level: "Beginner",
-    status: "Active",
-    category: "Online",
-    payment: "Paid",
-    branch: "Main",
-    lecturer: "Mr. Ruwan",
-    studentsCount: 45,
-    startDate: "2024-01-15",
-    endDate: "2024-06-15",
-  },
-  {
-    id: "2",
-    batchName: "Graphic Design 2024 - B",
-    batchId: "GD-24-B",
-    type: "HND",
-    level: "Advanced",
-    status: "Ongoing",
-    category: "On-Site",
-    payment: "Paid",
-    branch: "Negombo",
-    lecturer: "Miss. Akarshani",
-    studentsCount: 28,
-    startDate: "2024-02-01",
-    endDate: "2024-08-01",
-  },
-  {
-    id: "3",
-    batchName: "Digital Marketing 2024",
-    batchId: "DM-24-01",
-    type: "Certificate",
-    level: "Beginner",
-    status: "Upcoming",
-    category: "Hybrid",
-    payment: "Paid",
-    branch: "Galle",
-    lecturer: "Mrs. Theja",
-    studentsCount: 0,
-    startDate: "2024-04-10",
-    endDate: "2024-07-10",
-  },
-  {
-    id: "4",
-    batchName: "Software Engineering 2023",
-    batchId: "SE-23-C",
-    type: "Degree",
-    level: "Advanced",
-    status: "Completed",
-    category: "On-Site",
-    payment: "Paid",
-    branch: "Main",
-    lecturer: "Mr. Saadh",
-    studentsCount: 120,
-    startDate: "2023-01-10",
-    endDate: "2024-01-10",
-  },
-  {
-    id: "5",
-    batchName: "Free Workshop on UI/UX",
-    batchId: "WS-UIUX-01",
-    type: "Workshop",
-    level: "Beginner",
-    status: "Inactive",
-    category: "Online",
-    payment: "Free",
-    branch: "Main",
-    lecturer: "Mr. Ruwan",
-    studentsCount: 250,
-    startDate: "2023-12-05",
-    endDate: "2023-12-05",
-  },
-];
+import { useGetBatches } from "@/hooks/api/batches/useGetBatches";
 
 export default function BatchManagementPage() {
-  const [rowSelection, setRowSelection] = useState({});
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedCount, setSelectedCount] = useState(0);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
 
-  // Update selected count when rowSelection changes
+  // ===== URL STATE =====
+  const pageParam = searchParams.get("page");
+  const currentPage = pageParam ? parseInt(pageParam) : 1;
+  const search = searchParams.get("search") || "";
+  const category = searchParams.get("category") || undefined;
+  const type = searchParams.get("type") || undefined;
+  const status = searchParams.get("status") || undefined;
+  const branch_id = searchParams.get("branch_id") || undefined;
+  const payment_type = searchParams.get("payment_type") || undefined;
+  const level = searchParams.get("level") || undefined;
+  const lecturer_id = searchParams.get("lecturer_id") || undefined;
+  const start_date_from = searchParams.get("start_date_from") || undefined;
+  const start_date_to = searchParams.get("start_date_to") || undefined;
+
+  // ===== API HOOK =====
+  const { data: apiData, isLoading, isError } = useGetBatches({
+    page: currentPage,
+    size: 10,
+    search: search || undefined,
+    category,
+    type,
+    status,
+    branch_id,
+    payment_type,
+    level,
+    lecturer_id,
+    start_date_from,
+    start_date_to,
+  });
+
+  const data = useMemo(() => {
+    if (!apiData?.results) return [];
+
+    return apiData.results.map((item) => ({
+      id: item.id,
+      batchName: item.name,
+      batchId: item.custom_id,
+      type: item.type,
+      status: item.status,
+      category: item.category,
+      payment: item.is_paid ? "Paid" : "Free",
+      branch: item.branch_name || "-",
+      lecturer: item.lecturer_name || item.lecturer_email || "-",
+      startDate: item.start_date,
+      endDate: item.end_date,
+      studentsCount: item.student_count,
+    })) as BatchDataType[];
+  }, [apiData]);
+
+  // ===== SHARED STATE =====
+  const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
+  const [localSearch, setLocalSearch] = useState(search);
+
+  // Sync local search when URL search changes
   useEffect(() => {
-    setSelectedCount(Object.keys(rowSelection).length);
-  }, [rowSelection]);
+    setLocalSearch(search);
+  }, [search]);
 
+  // Debounce search update to URL
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localSearch.trim() !== search.trim()) {
+        const params = new URLSearchParams(searchParams.toString());
+
+        if (localSearch.trim()) {
+          params.set("search", localSearch.trim());
+        } else {
+          params.delete("search");
+        }
+
+        params.set("page", "1");
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [localSearch, search, searchParams, pathname, router]);
+
+  // ===== DERIVED VALUES =====
+  const selectedIds = useMemo(
+    () => Object.entries(rowSelection).filter(([, selected]) => selected).map(([id]) => id),
+    [rowSelection]
+  );
+
+  // ===== HANDLERS =====
+  const handlePageChange = useCallback((page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.set("page", page.toString());
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [searchParams, pathname, router]);
+
+  const handleSelectAll = useCallback(() => {
+    const newSelection = Object.fromEntries(data.map((item) => [item.id, true]));
+
+    setRowSelection(newSelection);
+    toast.success(`Selected all ${data.length} batches on this page`);
+  }, [data]);
+
+  const handleClearSelection = useCallback(() => {
+    setRowSelection({});
+    toast.info("Selection cleared");
+  }, []);
+
+  const handleSendSMS = useCallback(() => {
+    if (selectedIds.length === 0) {
+      toast.warning("Please select at least one batch");
+
+      return;
+    }
+
+    toast.success(`Sending SMS to ${selectedIds.length} selected batches`);
+  }, [selectedIds]);
+
+  const handleSendEmail = useCallback(() => {
+    if (selectedIds.length === 0) {
+      toast.warning("Please select at least one batch");
+
+      return;
+    }
+
+    toast.success(`Sending Email to ${selectedIds.length} selected batches`);
+  }, [selectedIds]);
+
+  const handleMultiFilterChange = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [searchParams, pathname, router]);
+
+  const handleClearFilters = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.delete("category");
+    params.delete("type");
+    params.delete("status");
+    params.delete("branch_id");
+    params.delete("payment_type");
+    params.delete("level");
+    params.delete("lecturer_id");
+    params.delete("start_date_from");
+    params.delete("start_date_to");
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [searchParams, pathname, router]);
+
+  // ===== BULK ACTIONS CONFIG =====
+  const bulkActions = useMemo(
+    () => ({
+      onSelectAll: handleSelectAll,
+      onClear: handleClearSelection,
+      onSendSMS: handleSendSMS,
+      onSendEmail: handleSendEmail,
+    }),
+    [handleSelectAll, handleClearSelection, handleSendSMS, handleSendEmail]
+  );
 
   return (
     <div className="space-y-4 p-4 md:p-6">
@@ -110,7 +196,7 @@ export default function BatchManagementPage() {
           href="/admin-panel/batch-management/add-new-batch"
           className={cn(
             BUTTON_STYLES.primary.md,
-            "text-sm font-semibold text-white px-3 md:px-4"
+            "px-3 text-sm font-semibold text-white md:px-4"
           )}
         >
           <Plus className="h-5 w-5 md:hidden" />
@@ -129,19 +215,38 @@ export default function BatchManagementPage() {
         {/* Table Toolbar (24px below separator) */}
         <div className="mt-4">
           <BatchTableToolbar
-            selectedCount={selectedCount}
-            totalCount={DUMMY_BATCH_DATA.length}
+            bulkActions={bulkActions}
+            selectedCount={selectedIds.length}
+            totalCount={data.length}
+            search={localSearch}
+            onSearchChange={setLocalSearch}
+            onApplyFilters={handleMultiFilterChange}
+            onClearFilters={handleClearFilters}
+            activeUrlFilters={{
+              category,
+              type,
+              status,
+              branch_id,
+              payment_type,
+              level,
+              lecturer_id,
+              start_date_from,
+              start_date_to,
+            }}
           />
         </div>
 
         {/* Batch Table (16px below toolbar) */}
         <div className="mt-4">
           <BatchTable
-              data={DUMMY_BATCH_DATA}
-              rowSelection={rowSelection}
-              setRowSelection={setRowSelection}
-              currentPage={currentPage}
-              onPageChange={setCurrentPage}
+            data={data}
+            isLoading={isLoading}
+            isError={isError}
+            currentPage={currentPage}
+            onPageChange={handlePageChange}
+            rowSelection={rowSelection}
+            setRowSelection={setRowSelection}
+            totalResults={apiData?.totalResults || 0}
           />
         </div>
       </div>

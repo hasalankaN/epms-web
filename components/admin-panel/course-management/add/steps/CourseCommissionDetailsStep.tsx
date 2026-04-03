@@ -114,10 +114,10 @@ export function CourseCommissionDetailsStep({ onNext }: CourseCommissionDetailsS
 
             {/* Commission Value */}
             <div className="space-y-1.5">
-                <Label className={AUTH_TYPOGRAPHY.label}>Commission Value</Label>
+                <Label className={AUTH_TYPOGRAPHY.label}>{watch("referralType") === "Percentage" ? "Commission Percentage" : "Commission Value"}</Label>
                 <Input 
                    {...register("referralValue")}
-                   placeholder="eg: xxxx.00"
+                   placeholder={watch("referralType") === "Percentage" ? "eg: 10%" : "eg: xxxx.00"}
                    className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, errors.referralValue && AUTH_INPUT.error)}
                 />
                 <FieldError message={errors.referralValue?.message} />
@@ -125,10 +125,10 @@ export function CourseCommissionDetailsStep({ onNext }: CourseCommissionDetailsS
 
             {/* Team Commission Value */}
             <div className="space-y-1.5">
-                <Label className={AUTH_TYPOGRAPHY.label}>Team Commission Value</Label>
+                <Label className={AUTH_TYPOGRAPHY.label}>{watch("referralType") === "Percentage" ? "Team Commission Percentage" : "Team Commission Value"}</Label>
                 <Input 
                    {...register("teamValue")}
-                   placeholder="eg: xxxx.00"
+                   placeholder={watch("referralType") === "Percentage" ? "eg: 5%" : "eg: xxxx.00"}
                    className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, errors.teamValue && AUTH_INPUT.error)}
                 />
                 <FieldError message={errors.teamValue?.message} />
@@ -166,10 +166,10 @@ export function CourseCommissionDetailsStep({ onNext }: CourseCommissionDetailsS
 
             {/* Commission Value */}
             <div className="space-y-1.5">
-                <Label className={AUTH_TYPOGRAPHY.label}>Commission Value</Label>
+                <Label className={AUTH_TYPOGRAPHY.label}>{watch("lecturerType") === "Percentage" ? "Commission Percentage" : "Commission Value"}</Label>
                  <Input 
                    {...register("lecturerValue")}
-                   placeholder="eg: xxxx.00"
+                   placeholder={watch("lecturerType") === "Percentage" ? "eg: 10%" : "eg: xxxx.00"}
                    className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, errors.lecturerValue && AUTH_INPUT.error)}
                 />
                 <FieldError message={errors.lecturerValue?.message} />
@@ -204,10 +204,10 @@ export function CourseCommissionDetailsStep({ onNext }: CourseCommissionDetailsS
                 <FieldError message={errors.staffType?.message} />
             </div>
             <div className="space-y-1.5">
-                <Label className={AUTH_TYPOGRAPHY.label}>Commission Value</Label>
+                <Label className={AUTH_TYPOGRAPHY.label}>{watch("staffType") === "Percentage" ? "Commission Percentage" : "Commission Value"}</Label>
                  <Input 
                    {...register("staffValue")}
-                   placeholder="eg: xxxx.00"
+                   placeholder={watch("staffType") === "Percentage" ? "eg: 10%" : "eg: xxxx.00"}
                    className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, errors.staffValue && AUTH_INPUT.error)}
                 />
                 <FieldError message={errors.staffValue?.message} />
@@ -240,10 +240,10 @@ export function CourseCommissionDetailsStep({ onNext }: CourseCommissionDetailsS
                 <FieldError message={errors.branchStaffType?.message} />
             </div>
             <div className="space-y-1.5">
-                <Label className={AUTH_TYPOGRAPHY.label}>Commission Value</Label>
+                <Label className={AUTH_TYPOGRAPHY.label}>{watch("branchStaffType") === "Percentage" ? "Commission Percentage" : "Commission Value"}</Label>
                  <Input 
                    {...register("branchStaffValue")}
-                   placeholder="eg: xxxx.00"
+                   placeholder={watch("branchStaffType") === "Percentage" ? "eg: 10%" : "eg: xxxx.00"}
                    className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, errors.branchStaffValue && AUTH_INPUT.error)}
                 />
                 <FieldError message={errors.branchStaffValue?.message} />

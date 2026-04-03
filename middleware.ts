@@ -9,12 +9,13 @@ const SESSION_COOKIE_NAME = "binzo-admin-session";
 
 const PANEL_PREFIXES = ["/admin-panel", "/lecturer-panel", "/referral-panel"];
 
-type Role = "ADMIN" | "LECTURER" | "REFERRAL";
+type Role = "ADMIN" | "LECTURER" | "REFERRAL" | "REFERRAL_AGENT";
 
-const ROLE_PANEL_MAP: Record<Role, string> = {
+const ROLE_PANEL_MAP: Record<string, string> = {
   ADMIN: "/admin-panel",
   LECTURER: "/lecturer-panel",
   REFERRAL: "/referral-panel",
+  REFERRAL_AGENT: "/referral-panel",
 };
 
 async function getSessionFromCookie(request: NextRequest) {
@@ -48,6 +49,22 @@ function getPanelFromPath(pathname: string): string | null {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Handle /dashboard shortcut - redirect to role-specific dashboard
+  if (pathname === "/dashboard") {
+    const session = await getSessionFromCookie(request);
+
+    if (!session || new Date() > new Date(session.expires)) {
+      const signInUrl = new URL("/sign-in", request.url);
+
+      return NextResponse.redirect(signInUrl);
+    }
+
+    const role = session.user.role as Role;
+    const allowedPanel = ROLE_PANEL_MAP[role] || "/admin-panel";
+
+    return NextResponse.redirect(new URL(`${allowedPanel}/dashboard`, request.url));
+  }
 
   // Only intercept protected panel routes
   if (!isProtectedRoute(pathname)) {
@@ -89,5 +106,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin-panel/:path*", "/lecturer-panel/:path*", "/referral-panel/:path*"],
+  matcher: ["/dashboard", "/admin-panel/:path*", "/lecturer-panel/:path*", "/referral-panel/:path*"],
 };

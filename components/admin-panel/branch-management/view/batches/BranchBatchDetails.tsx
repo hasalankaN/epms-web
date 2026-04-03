@@ -21,8 +21,7 @@ const mockBatches: BatchDataType[] = [
     payment: "Paid",
     startDate: "2026/01/11",
     endDate: "2026/03/11",
-    status: "Ongoing",
-    level: "HND",
+    status: "Active",
   },
   {
     id: "batch-2",
@@ -37,7 +36,6 @@ const mockBatches: BatchDataType[] = [
     startDate: "2025/11/03",
     endDate: "2026/01/03",
     status: "Completed",
-    level: "Diploma",
   },
   {
     id: "batch-3",
@@ -52,7 +50,6 @@ const mockBatches: BatchDataType[] = [
     startDate: "2025/11/03",
     endDate: "2026/01/03",
     status: "Completed",
-    level: "Diploma",
   },
   {
     id: "batch-4",
@@ -67,7 +64,6 @@ const mockBatches: BatchDataType[] = [
     startDate: "2026/01/03",
     endDate: "2026/02/03",
     status: "Inactive",
-    level: "Diploma",
   },
   {
     id: "batch-5",
@@ -82,7 +78,6 @@ const mockBatches: BatchDataType[] = [
     startDate: "2026/02/03",
     endDate: "2026/03/03",
     status: "Upcoming",
-    level: "Diploma",
   },
 ];
 

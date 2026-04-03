@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { MoreVertical } from "lucide-react";
 
-import type { BatchDataType } from "@/types/batch";
+import type { BatchDataType, BatchStatus } from "@/types/batch";
 import { BATCH_STATUS_CONFIG } from "@/types/batch";
 
 import { DataTable } from "@/components/common/table/DataTable";
@@ -15,12 +15,34 @@ import type { Column } from "@/components/common/table/DataTable";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
+import { useUpdateBatchStatus } from "@/hooks/api/batches/useUpdateBatchStatus";
+import { useDeactivateBatch } from "@/hooks/api/batches/useDeactivateBatch";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+function BatchStatusCell({ batch }: { batch: BatchDataType }) {
+  const { mutate, isPending } = useUpdateBatchStatus(batch.id);
+
+  const options = Object.entries(BATCH_STATUS_CONFIG).map(([status, config]) => ({
+    value: status,
+    bg: config.bg,
+    text: config.text,
+  }));
+
+  return (
+    <StatusPopover
+      value={batch.status}
+      options={options}
+      onValueChange={(newStatus) => mutate({ status: newStatus as BatchStatus })}
+      isLoading={isPending}
+      readOnly={false}
+    />
+  );
+}
 
 interface BatchTableProps {
   data: BatchDataType[];
@@ -30,6 +52,7 @@ interface BatchTableProps {
   isError?: boolean;
   currentPage: number;
   onPageChange: (page: number) => void;
+  totalResults: number;
 }
 
 export function BatchTable({
@@ -40,20 +63,15 @@ export function BatchTable({
   isError = false,
   currentPage,
   onPageChange,
+  totalResults,
 }: BatchTableProps) {
   const router = useRouter();
+  const { mutateAsync: deactivateBatch, isPending: isDeactivating } = useDeactivateBatch();
   const itemsPerPage = 10;
 
   const filteredData = useMemo(() => data || [], [data]);
-  const totalCount = filteredData.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-
-    return filteredData.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, currentPage, itemsPerPage]);
 
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
@@ -99,10 +117,16 @@ export function BatchTable({
     setIsDeleteModalOpen(false);
   };
 
-  const handleDeactivateConfirm = () => {
-    // Implement actual deactivate logic
-    console.log("Deactivating batch:", selectedBatch?.id);
-    setIsDeactivateModalOpen(false);
+  const handleDeactivateConfirm = async () => {
+    if (!selectedBatch) return;
+
+    try {
+      await deactivateBatch(selectedBatch.id);
+      setIsDeactivateModalOpen(false);
+    } catch (error) {
+      // Error is handled by the hook's toast
+      console.error("Deactivation failed:", error);
+    }
   };
 
 
@@ -149,19 +173,19 @@ export function BatchTable({
       header: "Category",
       accessorKey: "category",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[100px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap capitalize overflow-hidden text-ellipsis">{item.category}</div>,
+      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.category}</div>,
     },
     {
         header: "Branch",
         accessorKey: "branch",
         className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[120px]",
-        cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap capitalize overflow-hidden text-ellipsis">{item.branch}</div>,
+        cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.branch}</div>,
     },
     {
       header: "Batch Type",
       accessorKey: "type",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[120px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap capitalize overflow-hidden text-ellipsis">{item.type}</div>,
+      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.type}</div>,
     },
     {
         header: "Lecturer",
@@ -179,7 +203,7 @@ export function BatchTable({
         header: "Payment Type",
         accessorKey: "payment",
         className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[100px]",
-        cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap capitalize overflow-hidden text-ellipsis">{item.payment}</div>,
+        cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.payment}</div>,
     },
     {
         header: "Start Date",
@@ -197,23 +221,7 @@ export function BatchTable({
       header: "Status",
       accessorKey: "status",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[120px]",
-      cell: (batch) => {
-        const options = Object.entries(BATCH_STATUS_CONFIG).map(([status, config]) => ({
-          value: status,
-          bg: config.bg,
-          text: config.text,
-        }));
-
-        return (
-          <StatusPopover
-            value={batch.status}
-            options={options}
-
-            // Add onSelect logic if needed for updating status directly
-            readOnly={false} // Allow changing status
-          />
-        );
-      },
+      cell: (batch) => <BatchStatusCell batch={batch} />,
     },
     {
       header: "Action",
@@ -239,7 +247,7 @@ export function BatchTable({
               <DropdownMenuItem onClick={() => handleAction("send-email", batch)} className="cursor-pointer focus:bg-[#FDF2F8]">
                 Send Email
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAction("deactivate", batch)} className="cursor-pointer text-red-600 focus:bg-[#FDF2F8] focus:text-red-600">
+              <DropdownMenuItem onClick={() => handleAction("deactivate", batch)} className="cursor-pointer focus:bg-[#FDF2F8]">
                 Deactivate
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -252,14 +260,14 @@ export function BatchTable({
   return (
     <>
       <DataTable
-        data={paginatedData}
+        data={filteredData}
         columns={columns}
         keyExtractor={(item) => item.id}
         isLoading={isLoading}
         isError={isError}
         pagination={{
           variant: "simple",
-          totalCount,
+          totalCount: totalResults,
           selectedRowCount,
           currentPage,
           totalPages,
@@ -280,6 +288,7 @@ export function BatchTable({
         onConfirm={handleDeactivateConfirm}
         title="Confirm Deactivation"
         description={`Are you sure you want to deactivate ${selectedBatch?.batchName}?`}
+        isDeleting={isDeactivating}
         confirmText="Confirm Deactivation"
         cancelText="Go Back"
         confirmVariant="destructive"

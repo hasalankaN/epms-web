@@ -60,4 +60,28 @@ export const API_ENDPOINTS = {
     UPDATE_STATUS: (id: string) => `/api/v1/admin/complaints/${id}/status`,
     DELETE: () => `/api/v1/admin/complaints`,
   },
+  batches: {
+    GET_ALL: `/api/v1/batches`,
+    CREATE: `/api/v1/batches`,
+    GET_BY_ID: (id: string) => `/api/v1/batches/${id}`,
+    UPDATE: (id: string) => `/api/v1/batches/${id}`,
+    UPDATE_STATUS: (id: string) => `/api/v1/batches/${id}/status`,
+    DEACTIVATE: (id: string) => `/api/v1/batches/${id}/deactivate`,
+    GET_SUMMARY: `/api/v1/admin/batches-view/analytics/summary`,
+  },
+  courses: {
+    GET_ALL: `/api/v1/courses`,
+    CREATE: `/api/v1/courses`,
+    GET_BY_ID: (id: string) => `/api/v1/courses/${id}`,
+    UPDATE: (id: string) => `/api/v1/courses/${id}`,
+    UPDATE_STATUS: (id: string) => `/api/v1/courses/${id}/status`,
+    DEACTIVATE: (id: string) => `/api/v1/courses/${id}/deactivate`,
+  },
+  referrals: {
+    GET_AGENTS: `/api/v1/admin/referrals/agents`,
+    CREATE: `/api/v1/admin/referrals/agents`,
+    GET_SUMMARY: (id: string) => `/api/v1/admin/referrals/agents/${id}/summary`,
+    UPDATE: (id: string) => `/api/v1/admin/referrals/agents/${id}`,
+    UPDATE_STATUS: (id: string) => `/api/v1/admin/referrals/agents/${id}/status`,
+  },
 };

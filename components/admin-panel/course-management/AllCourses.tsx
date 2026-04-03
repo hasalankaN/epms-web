@@ -1,30 +1,15 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-
-import type { CourseDataType, CourseStatus } from "@/types/course";
 
 import { CourseStatsRow } from "./views/Courses/CourseStatsRow";
 import { CourseTableToolbar } from "./views/Courses/CourseTableToolbar";
 import { CourseTable } from "./views/Courses/CourseTable";
+import { useGetCourses, mapApiCourseToCourseDataType } from "@/hooks/api/courses/useGetCourses";
 
-// ===== MOCK DATA =====
-const mockCourses: CourseDataType[] = Array.from({ length: 100 }, (_, i) => ({
-  id: `course-${i + 1}`,
-  courseId: `#${String(i + 1).padStart(6, "0")}`,
-  courseName: "Marketing",
-  courseCategory: i % 4 === 0 ? "Category 1" : i % 4 === 1 ? "Category 2" : i % 4 === 2 ? "Category 3" : "Business St...",
-  totalEnroll: 100,
-  courseLevel: i % 3 === 0 ? "Beginner" : i % 3 === 1 ? "Intermediate" : "Advanced",
-  courseType: "Type",
-  language: i % 3 === 0 ? "English" : i % 3 === 1 ? "Sinhala" : "Tamil",
-  staff: "Ruwan, Kasun",
-  lecturer: "Guhanathan",
-  status: (["Active", "Inactive"] as CourseStatus[])[i % 2],
-  lastUpdate: "20/04/2026",
-}));
+const ITEMS_PER_PAGE = 10;
 
 export function AllCourses() {
   const router = useRouter();
@@ -34,42 +19,123 @@ export function AllCourses() {
   // ===== URL STATE =====
   const pageParam = searchParams.get("page");
   const currentPage = pageParam ? parseInt(pageParam) : 1;
+  const searchParam = searchParams.get("search") || "";
+
+  const activeUrlFilters = {
+    status: searchParams.get("status") || undefined,
+    category_id: searchParams.get("category_id") || undefined,
+    lecturer_id: searchParams.get("lecturer_id") || undefined,
+    staff_id: searchParams.get("staff_id") || undefined,
+    language: searchParams.get("language") || undefined,
+  };
+
+  // ===== SEARCH DEBOUNCE STATE =====
+  const [searchInput, setSearchInput] = useState(searchParam);
+
+  useEffect(() => {
+    setSearchInput(searchParam);
+  }, [searchParam]);
 
   // ===== SHARED STATE =====
-  const [data] = useState<CourseDataType[]>(mockCourses);
   const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
 
-  // ===== DERIVED VALUES =====
+  // ===== FETCH COURSES =====
+  const { data, isLoading, isError } = useGetCourses({
+    page: currentPage,
+    size: ITEMS_PER_PAGE,
+    search: searchParam || undefined,
+    ...activeUrlFilters,
+  });
+
+  const courses = (data?.results ?? []).map(mapApiCourseToCourseDataType);
+  const totalResults = data?.totalResults ?? 0;
 
   // ===== HANDLERS =====
   const handlePageChange = useCallback((page: number) => {
     const params = new URLSearchParams(searchParams.toString());
 
     params.set("page", page.toString());
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, pathname, router]);
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchInput(value);
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (value) {
+      params.set("search", value);
+    } else {
+      params.delete("search");
+    }
+
+    params.set("page", "1"); // Reset page on search
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [searchParams, pathname, router]);
+
+  const handleApplyFilters = useCallback((filters: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+
+    params.set("page", "1"); // Reset page on filter
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [searchParams, pathname, router]);
+
+  const handleClearFilters = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    // Keep only search and tab params, reset everything else
+    const searchVal = params.get("search");
+    const tabVal = params.get("tab");
+    
+    // Clear all existing params
+    Array.from(params.keys()).forEach(key => params.delete(key));
+    
+    // Re-apply preserved params
+    if (searchVal) params.set("search", searchVal);
+    if (tabVal) params.set("tab", tabVal);
+    params.set("page", "1");
+
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [searchParams, pathname, router]);
+
 
   return (
     <div className="flex flex-col gap-4">
       {/* Stats Row */}
       <CourseStatsRow />
 
-      {/* Separator Line (24px below) */}
+      {/* Separator Line */}
       <div className="mt-4 h-[1px] w-full bg-[#E2E8F0]" />
 
-      {/* Table Toolbar (24px below separator) */}
+      {/* Table Toolbar */}
       <div className="mt-4">
-        <CourseTableToolbar />
+        <CourseTableToolbar 
+           search={searchInput}
+           onSearchChange={handleSearchChange}
+           onApplyFilters={handleApplyFilters}
+           onClearFilters={handleClearFilters}
+           activeUrlFilters={activeUrlFilters}
+        />
       </div>
 
-      {/* Course Table (16px below toolbar) */}
+      {/* Course Table */}
       <div className="mt-4">
         <CourseTable
-          data={data}
+          data={courses}
           currentPage={currentPage}
+          totalResults={totalResults}
           onPageChange={handlePageChange}
           rowSelection={rowSelection}
           setRowSelection={setRowSelection}
+          isLoading={isLoading}
+          isError={isError}
         />
       </div>
     </div>

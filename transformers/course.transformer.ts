@@ -3,256 +3,181 @@ import {
   type CourseFeeDetailsValues,
   type CourseCommissionDetailsValues,
   type CourseFeeItem,
+  type CourseInstallmentItem,
 } from "@/schemas/course.schema";
+import type { ApiCourseDetail } from "@/hooks/api/courses/useGetCourseById";
+import type { UpdateCoursePayload } from "@/hooks/api/courses/useUpdateCourse";
 
-// ==================== API Response Types (what comes from backend) ====================
-export interface ApiCourseResponse {
-  id: string;
-  courseName: string;
-  staffMembers: string[];
-  assessment?: string;
-  courseType?: string;
-  startDate?: string; // ISO date string from API
-  endDate?: string; // ISO date string from API
-  certificates: string[];
-  courseCategory: string;
-  lecturer: string;
-  courseLevel: string;
-  language: string;
-  lessonDuration?: string;
-  hierarchy: string;
-  shortDescription?: string;
-  longDescription: string;
-  coverImage: string;
-  introductionVideo: string;
+const COURSE_TYPES = ["Workshop", "Certificate", "Diploma", "HND", "Degree", "School", "University", "Exam Prep"];
+const LANGUAGES = ["Tamil", "Sinhala", "English"];
+const LEVELS = ["Beginner", "Intermediate", "Advanced", "General"];
 
-  // Fee Details
-  pricingOption: "Paid" | "Free";
-  courseFeeItems: Array<{
-    id: string;
-    amount: string;
-    duration: string;
-  }>;
-  enableInstallments: boolean;
-  numberOfInstallments?: number;
+function mapOption(apiValue: string | null | undefined, options: string[]): string {
+  if (!apiValue) return "";
+  const normalized = apiValue.toLowerCase().replace(/_/g, " ");
 
-  // Commission Details
-  referralType?: string;
-  referralValue?: string;
-  teamValue?: string;
-  lecturerType?: string;
-  lecturerValue?: string;
+  return options.find(o => o.toLowerCase() === normalized) || apiValue;
 }
 
-// ==================== Dummy Data for Testing ====================
-export const dummyCourseData: ApiCourseResponse = {
-  id: "course-001",
-  courseName: "Digital Marketing Masterclass",
-  staffMembers: ["kalpa", "saduni"],
-  assessment: "Exam",
-  courseType: "Diploma",
-  startDate: "2026-02-01T00:00:00.000Z",
-  endDate: "2026-06-30T00:00:00.000Z",
-  certificates: ["UK", "Free"],
-  courseCategory: "Online",
-  lecturer: "Ruwan Perera",
-  courseLevel: "Beginner",
-  language: "English",
-  lessonDuration: "2 Hours",
-  hierarchy: "3 Tiers",
-  shortDescription: "Learn digital marketing from scratch",
-  longDescription: "This is a comprehensive digital marketing course covering SEO, SEM, and social media marketing.",
-  coverImage: "",
-  introductionVideo: "",
+function calcTypeToFormType(apiType: string | null | undefined): string {
+  if (!apiType) return "";
+  if (apiType === "Percentage" || apiType === "PERCENTAGE") return "Percentage";
+  if (apiType === "Fixed" || apiType === "FIXED") return "Fixed";
 
-  // Fee Details
-  pricingOption: "Paid",
-  courseFeeItems: [
-    { id: "fee-1", amount: "25000.00", duration: "1 Year" },
-    { id: "fee-2", amount: "45000.00", duration: "2 Years" },
-  ],
-  enableInstallments: true,
-  numberOfInstallments: 3,
-
-  // Commission Details
-  referralType: "Percentage",
-  referralValue: "10",
-  teamValue: "5",
-  lecturerType: "Fixed",
-  lecturerValue: "15000",
-};
-
-// ==================== Transform Functions ====================
+  return "";
+}
 
 /**
- * Transform API course response to General Details form values
+ * Transform the real API course detail response into the 3-step form data structure.
  */
-export function transformToCourseGeneralDetails(data: ApiCourseResponse): CourseGeneralDetailsValues {
-  return {
-    courseName: data.courseName,
-    staffMembers: data.staffMembers,
-    assessment: data.assessment || "",
-    courseType: data.courseType || "",
-    startDate: data.startDate ? new Date(data.startDate) : undefined,
-    endDate: data.endDate ? new Date(data.endDate) : undefined,
-    certificates: data.certificates,
-    courseCategory: data.courseCategory,
-    lecturer: data.lecturer,
-    courseLevel: data.courseLevel,
-    language: data.language,
-    lessonDuration: data.lessonDuration || "",
-    hierarchy: data.hierarchy,
-    shortDescription: data.shortDescription || "",
-    longDescription: data.longDescription,
-    coverImage: data.coverImage,
-    introductionVideo: data.introductionVideo,
+export function transformApiCourseDetailToFormData(data: ApiCourseDetail): {
+  generalDetails: Partial<CourseGeneralDetailsValues>;
+  feeDetails: Partial<CourseFeeDetailsValues>;
+  commissionDetails: Partial<CourseCommissionDetailsValues>;
+} {
+  // ── General Details ──────────────────────────────────────────────────────
+  const generalDetails: Partial<CourseGeneralDetailsValues> = {
+    courseName: data.general_details.name,
+    staffMembers: data.general_details.staff_members || [],
+    assessment: data.general_details.has_assessment ? "Yes" : "No", // Frontend expects "Yes" or "No" often, check schema: actually optional string, but schema says it maps to strings. Schema does not have specific enum.
+    courseType: mapOption(data.general_details.course_type, COURSE_TYPES),
+    startDate: data.general_details.start_date ? new Date(data.general_details.start_date) : undefined,
+    endDate: data.general_details.end_date ? new Date(data.general_details.end_date) : undefined,
+    certificates: data.general_details.certificates || [],
+    courseCategory: data.general_details.category_id, // assuming it expects the ID
+    lecturer: data.general_details.lecturer_id || "",
+    courseLevel: mapOption(data.general_details.level, LEVELS),
+    language: mapOption(data.general_details.language, LANGUAGES),
+    lessonDuration: data.general_details.lesson_duration_hours ? String(data.general_details.lesson_duration_hours) : "",
+    hierarchy: data.general_details.hierarchy_type || "3 Tiers",
+    batchId: data.general_details.batch_id || "",
+    shortDescription: data.general_details.short_description || "",
+    longDescription: data.general_details.long_description || "",
+    coverImage: data.general_details.cover_image_url || "",
+    introductionVideo: data.general_details.intro_video_url || "",
   };
-}
 
-/**
- * Transform API course response to Fee Details form values
- */
-export function transformToCourseFeeDetails(data: ApiCourseResponse): CourseFeeDetailsValues {
-  const courseFeeItems: CourseFeeItem[] = data.courseFeeItems.map((item) => ({
-    id: item.id,
-    amount: item.amount,
-    duration: item.duration,
+  // ── Fee Details ──────────────────────────────────────────────────────────
+  const courseFeeItems: CourseFeeItem[] = (data.fee_details.fees || []).map((item, idx) => ({
+    id: `fee-${idx}`,
+    amount: String(item.amount),
+    duration: String(item.duration_years),
   }));
 
-  const calculateInstallments = () => {
-    if (!data.enableInstallments || !data.numberOfInstallments || data.numberOfInstallments < 2) {
-      return [];
-    }
+  const enableInstallments = data.fee_details.installments_enabled ?? false;
+  const numberOfInstallments = data.fee_details.number_of_installments ?? 0;
 
-    const feeTotal = courseFeeItems.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+  const installmentItems: CourseInstallmentItem[] = (data.fee_details.installment_plans || []).map((item, idx) => ({
+    id: `inst-${idx}`,
+    description: item.description,
+    amount: String(item.amount),
+  }));
 
-    if (feeTotal === 0) return [];
-
-    const count = data.numberOfInstallments;
-    const perInstallment = (feeTotal / count).toFixed(2);
-    const ORDINALS = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Tenth"];
-
-    return Array.from({ length: count }).map((_, idx) => {
-      const isLast = idx === count - 1;
-      let amount = perInstallment;
-
-      if (isLast) {
-        const currentSum = parseFloat(perInstallment) * (count - 1);
-        const remainder = feeTotal - currentSum;
-        
-        amount = remainder.toFixed(2);
-      }
-
-      const ordinal = ORDINALS[idx] || `${idx + 1}th`;
-
-      return {
-        id: `inst-${idx + 1}`, // Deterministic ID for transformer
-        description: `${ordinal} Installment`,
-        amount: amount,
-      };
-    });
-  };
-
-  return {
-    pricingOption: data.pricingOption,
+  const feeDetails: Partial<CourseFeeDetailsValues> = {
+    pricingOption: data.fee_details.pricing_option || "Paid",
     courseFeeItems,
-    enableInstallments: data.enableInstallments,
-    numberOfInstallments: data.numberOfInstallments,
-    installmentItems: calculateInstallments(),
+    enableInstallments,
+    numberOfInstallments: enableInstallments && numberOfInstallments > 0 ? numberOfInstallments : undefined,
+    installmentItems,
   };
+
+  // ── Commission Details ────────────────────────────────────────────────────
+  const comm = data.commission_details;
+
+  const formatCommValue = (val: number | undefined | null) => {
+    if (val === undefined || val === null || val === 0) return "";
+
+    return String(val);
+  };
+
+  const commissionDetails: Partial<CourseCommissionDetailsValues> = {
+    referralType: calcTypeToFormType(comm?.referral?.type),
+    referralValue: formatCommValue(comm?.referral?.value),
+    teamValue: formatCommValue(comm?.referral?.team_value),
+    
+    lecturerType: calcTypeToFormType(comm?.lecturer?.type),
+    lecturerValue: formatCommValue(comm?.lecturer?.value),
+    
+    staffType: calcTypeToFormType(comm?.staff?.type),
+    staffValue: formatCommValue(comm?.staff?.value),
+    
+    branchStaffType: calcTypeToFormType(comm?.branch_staff?.type),
+    branchStaffValue: formatCommValue(comm?.branch_staff?.value),
+  };
+
+  return { generalDetails, feeDetails, commissionDetails };
 }
 
+// ==================== Form → Update API Payload ====================
+
 /**
- * Transform API course response to Commission Details form values
+ * Converts the 3-step form state held in Zustand into the exact shape
+ * required by the PUT /api/v1/courses/{id} endpoint.
  */
-export function transformToCourseCommissionDetails(data: ApiCourseResponse): CourseCommissionDetailsValues {
+export function buildUpdateCoursePayload(
+  generalDetails: Partial<CourseGeneralDetailsValues>,
+  feeDetails: Partial<CourseFeeDetailsValues>,
+  commissionDetails: Partial<CourseCommissionDetailsValues>
+): UpdateCoursePayload {
+  // ── Helpers ──────────────────────────────────────────────────────
+  const formatDate = (d: Date | string | undefined): string | undefined => {
+    if (!d) return undefined;
+    const date = d instanceof Date ? d : new Date(d);
+
+    return date.toISOString().split("T")[0]; // "YYYY-MM-DD"
+  };
+
+  const toNum = (val?: string) => parseFloat(val?.replace(/,/g, "") || "0") || 0;
+
+  const commissionEntry = (type?: string, value?: string, teamValue?: string) => ({
+    type: (type || "Fixed") as "Percentage" | "Fixed",
+    value: toNum(value),
+    team_value: toNum(teamValue),
+  });
+
+  // ── Mapping ──────────────────────────────────────────────────────
   return {
-    referralType: data.referralType || "",
-    referralValue: data.referralValue || "",
-    teamValue: data.teamValue || "",
-    lecturerType: data.lecturerType || "",
-    lecturerValue: data.lecturerValue || "",
+    general_details: {
+      name: generalDetails.courseName || "",
+      staff_member_ids: generalDetails.staffMembers || [],
+      has_assessment: generalDetails.assessment === "Yes" || generalDetails.assessment === "yes",
+      course_type: generalDetails.courseType || undefined,
+      start_date: formatDate(generalDetails.startDate),
+      end_date: formatDate(generalDetails.endDate),
+      certificate_ids: generalDetails.certificates || [],
+      category_id: generalDetails.courseCategory || "",
+      lecturer_id: generalDetails.lecturer || "",
+      level: generalDetails.courseLevel || "",
+      language: generalDetails.language || "",
+      lesson_duration_hours: generalDetails.lessonDuration ? Number(generalDetails.lessonDuration) : undefined,
+
+      // hierarchy_type: generalDetails.hierarchy || "3 Tiers",
+      // batch_id: generalDetails.batchId || undefined,
+      short_description: generalDetails.shortDescription || undefined,
+      long_description: generalDetails.longDescription || "",
+      cover_image_url: generalDetails.coverImage || undefined,
+      intro_video_url: generalDetails.introductionVideo || undefined,
+    },
+    fee_details: {
+      pricing_option: (feeDetails.pricingOption || "Paid") as "Paid" | "Free",
+      fees: feeDetails.pricingOption === "Paid"
+        ? (feeDetails.courseFeeItems || []).map((item) => ({
+            amount: toNum(item.amount),
+            duration_years: Number(item.duration) || 1,
+          }))
+        : undefined,
+      installments_enabled: feeDetails.enableInstallments ?? false,
+      number_of_installments: feeDetails.numberOfInstallments,
+      installment_plans: (feeDetails.installmentItems || []).map((item) => ({
+        description: item.description,
+        amount: toNum(item.amount),
+      })),
+    },
+    commission_details: {
+      referral: commissionEntry(commissionDetails.referralType, commissionDetails.referralValue, commissionDetails.teamValue),
+      lecturer: commissionEntry(commissionDetails.lecturerType, commissionDetails.lecturerValue, "0"),
+      staff: commissionEntry(commissionDetails.staffType, commissionDetails.staffValue, "0"),
+      branch_staff: commissionEntry(commissionDetails.branchStaffType, commissionDetails.branchStaffValue, "0"),
+    },
   };
-}
-
-/**
- * Transform full API course response to all form sections
- */
-export function transformCourseToFormData(data: ApiCourseResponse) {
-  return {
-    generalDetails: transformToCourseGeneralDetails(data),
-    feeDetails: transformToCourseFeeDetails(data),
-    commissionDetails: transformToCourseCommissionDetails(data),
-  };
-}
-
-// ==================== Reverse Transform (Form to API) ====================
-
-/**
- * Transform form values back to API format for submission
- */
-export function transformCourseFormToApiPayload(
-  generalDetails: CourseGeneralDetailsValues,
-  feeDetails: CourseFeeDetailsValues,
-  commissionDetails: CourseCommissionDetailsValues
-): Omit<ApiCourseResponse, "id"> {
-  return {
-    // General Details
-    courseName: generalDetails.courseName,
-    staffMembers: generalDetails.staffMembers,
-    assessment: generalDetails.assessment,
-    courseType: generalDetails.courseType,
-    startDate: generalDetails.startDate?.toISOString(),
-    endDate: generalDetails.endDate?.toISOString(),
-    certificates: generalDetails.certificates,
-    courseCategory: generalDetails.courseCategory,
-    lecturer: generalDetails.lecturer,
-    courseLevel: generalDetails.courseLevel,
-    language: generalDetails.language,
-    lessonDuration: generalDetails.lessonDuration,
-    hierarchy: generalDetails.hierarchy,
-    shortDescription: generalDetails.shortDescription,
-    longDescription: generalDetails.longDescription,
-    coverImage: generalDetails.coverImage || "",
-    introductionVideo: generalDetails.introductionVideo || "",
-
-    // Fee Details
-    pricingOption: feeDetails.pricingOption,
-    courseFeeItems: feeDetails.courseFeeItems,
-    enableInstallments: feeDetails.enableInstallments,
-    numberOfInstallments: feeDetails.numberOfInstallments,
-
-    // Commission Details
-    referralType: commissionDetails.referralType,
-    referralValue: commissionDetails.referralValue,
-    teamValue: commissionDetails.teamValue,
-    lecturerType: commissionDetails.lecturerType,
-    lecturerValue: commissionDetails.lecturerValue,
-  };
-}
-
-// ==================== Mock API Functions ====================
-
-/**
- * Mock function to fetch course by ID (simulates API call)
- * Replace with actual API call when endpoints are ready
- */
-export async function fetchCourseById(courseId: string): Promise<ApiCourseResponse> {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  // Return dummy data (in real implementation, fetch from API)
-  return {
-    ...dummyCourseData,
-    id: courseId,
-  };
-}
-
-/**
- * Get course data for edit form
- */
-export async function getCourseForEdit(courseId: string) {
-  const apiData = await fetchCourseById(courseId);
-  
-  return transformCourseToFormData(apiData);
 }

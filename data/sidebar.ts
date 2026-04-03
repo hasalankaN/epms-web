@@ -185,4 +185,27 @@ export const sidebarData: SidebarNavItem[] = [
       },
     ],
   },
+
+  {
+    id: 15,
+    type: "sub",
+    title: "Referral Management",
+    icon: "handshake",
+    children: [
+      {
+        id: 151,
+        type: "link",
+        title: "Referral Listing",
+        url: "/referral-management/referral-listing",
+        value: "referral-listing",
+      },
+      {
+        id: 152,
+        type: "link",
+        title: "Referral Request",
+        url: "/referral-management/referral-request",
+        value: "referral-request",
+      },
+    ],
+  },
 ];

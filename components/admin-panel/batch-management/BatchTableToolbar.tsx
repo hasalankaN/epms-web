@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 
 import { Search, MoreHorizontal, CheckSquare2, X } from "lucide-react";
 
@@ -20,14 +20,17 @@ import type { ExportItem } from "@/components/common/dropdowns/ExportDropdown";
 import { ExportDropdown } from "@/components/common/dropdowns/ExportDropdown";
 import type { FilterCategory, FilterSelections } from "@/components/common/filters/FilterModal";
 import { FilterModal, FilterModalTrigger } from "@/components/common/filters/FilterModal";
-import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
+import { useGetBranches } from "@/hooks/api/branches/useGetBranches";
+import { useGetLecturers } from "@/hooks/api/lecturers/useGetLecturers";
 
 const buttonTextStyles = "text-[14px] font-semibold leading-[20px] text-[#0F172B]";
 
-// ===== BATCH-SPECIFIC FILTER DATA =====
-
 const batchExportItems: ExportItem[] = [
   { key: "csv", label: "Export CSV", icon: (() => <i className="file-csv h-4 w-4" />) as any, onClick: () => console.log("Export CSV") },
+];
+
+const BATCH_TYPES = [
+  "Workshop", "Certificate", "Diploma", "HND", "Degree", "School", "University", "Exam Prep"
 ];
 
 const batchFilterCategories: FilterCategory[] = [
@@ -40,111 +43,167 @@ const batchFilterCategories: FilterCategory[] = [
     key: "type", 
     label: "Batch Type", 
     type: "chips",
-    items: [
-      { key: "diploma", label: "Diploma" },
-      { key: "hnd", label: "HND" },
-      { key: "degree", label: "Degree" },
-    ],
+    multiSelect: false,
+    items: BATCH_TYPES.map(t => ({ key: t, label: t })),
   },
   { 
     key: "level", 
     label: "Batch Level", 
     type: "chips",
+    multiSelect: false,
     items: [
-      { key: "beginner", label: "Beginner" },
-      { key: "advanced", label: "Advanced" },
+      { key: "BEGINNER", label: "Beginner" },
+      { key: "INTERMEDIATE", label: "Intermediate" },
+      { key: "ADVANCED", label: "Advanced" },
+      { key: "GENERAL", label: "General" },
     ],
   },
   { 
     key: "status", 
     label: "Batch Status", 
     type: "chips",
+    multiSelect: false,
     items: [
-      { key: "active", label: "Active" },
-      { key: "upcoming", label: "Upcoming" },
-      { key: "completed", label: "Completed" },
-      { key: "inactive", label: "Inactive" },
+      { key: "Active", label: "Active" },
+      { key: "Upcoming", label: "Upcoming" },
+      { key: "Completed", label: "Completed" },
+      { key: "Inactive", label: "Inactive" },
     ],
   },
   { 
     key: "category", 
     label: "Batch Category", 
     type: "chips",
+    multiSelect: false,
     items: [
-      { key: "online", label: "Online" },
-      { key: "onSite", label: "On-Site" },
-      { key: "hybrid", label: "Hybrid" },
+      { key: "Online", label: "Online" },
+      { key: "Offline", label: "Offline" },
     ],
   },
   { 
-    key: "payment", 
+    key: "payment_type", 
     label: "Batch Payment", 
     type: "chips",
+    multiSelect: false,
     items: [
-      { key: "paid", label: "Paid" },
-      { key: "free", label: "Free" },
+      { key: "Paid", label: "Paid" },
+      { key: "Free", label: "Free" },
     ],
   },
   { 
-    key: "branches", 
+    key: "branch_id", 
     label: "By Branches", 
     type: "chips",
-    items: [
-      { key: "main", label: "Main" },
-      { key: "negombo", label: "Negombo" },
-      { key: "anuradhapura", label: "Anuradhapura" },
-      { key: "galle", label: "Galle" },
-    ],
+    multiSelect: false,
+    items: [], // Populated dynamically
   },
   { 
-    key: "lecturer", 
+    key: "lecturer_id", 
     label: "Lecturer", 
     type: "chips",
-    items: [
-      { key: "mrRuwan", label: "Mr. Ruwan" },
-      { key: "missAkarshani", label: "Miss. Akarshani" },
-      { key: "mrsTheja", label: "Mrs. Theja" },
-      { key: "mrSaadh", label: "Mr. Saadh" },
-    ],
+    multiSelect: false,
+    items: [], // Populated dynamically
   },
 ];
-
-// batchExportItems removed as unused
-
-// ===== TYPES =====
 
 interface BulkActionsHandlers {
   onSelectAll: () => void;
   onClear: () => void;
   onSendSMS: () => void;
   onSendEmail: () => void;
-  onDelete: () => void;
 }
 
 interface BatchTableToolbarProps {
-  bulkActions?: BulkActionsHandlers; // Optional for now until fully integrated
-  selectedCount?: number;
-  totalCount?: number;
+  bulkActions: BulkActionsHandlers;
+  selectedCount: number;
+  totalCount: number;
+  search: string;
+  onSearchChange: (value: string) => void;
+  onApplyFilters: (filters: Record<string, string | null>) => void;
+  onClearFilters: () => void;
+  activeUrlFilters: {
+    category?: string;
+    type?: string;
+    status?: string;
+    branch_id?: string;
+    payment_type?: string;
+    level?: string;
+    lecturer_id?: string;
+    start_date_from?: string;
+    start_date_to?: string;
+  };
 }
 
-// ===== COMPONENT =====
-
 export function BatchTableToolbar({ 
-  bulkActions = {
-    onSelectAll: () => console.log("Select All"),
-    onClear: () => console.log("Clear"),
-    onSendSMS: () => console.log("SMS"),
-    onSendEmail: () => console.log("Email"),
-    onDelete: () => console.log("Delete"),
-  }, 
-  selectedCount = 0, 
-  totalCount = 0 
+  bulkActions, 
+  selectedCount, 
+  totalCount,
+  search,
+  onSearchChange,
+  onApplyFilters,
+  onClearFilters,
+  activeUrlFilters,
 }: BatchTableToolbarProps) {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<FilterSelections>({});
 
-  const hasActiveFilters = Object.keys(activeFilters).length > 0;
+  // Fetch branches and lecturers dynamically for the filter modal
+  const { data: branchesData } = useGetBranches({ size: 100 });
+  const { data: lecturersData } = useGetLecturers({ size: 100 });
+
+  const categories = useMemo(() => {
+    const updatedCategories = [...batchFilterCategories];
+    
+    // Update branches
+    const branchCategoryIndex = updatedCategories.findIndex(c => c.key === "branch_id");
+
+    if (branchCategoryIndex !== -1 && branchesData?.results) {
+      updatedCategories[branchCategoryIndex] = {
+        ...updatedCategories[branchCategoryIndex],
+        items: branchesData.results.map(b => ({
+          key: b.id,
+          label: b.name,
+        })),
+      };
+    }
+
+    // Update lecturers
+    const lecturerCategoryIndex = updatedCategories.findIndex(c => c.key === "lecturer_id");
+
+    if (lecturerCategoryIndex !== -1 && lecturersData?.results) {
+      updatedCategories[lecturerCategoryIndex] = {
+        ...updatedCategories[lecturerCategoryIndex],
+        items: lecturersData.results.map(l => ({
+          key: l.user_id,
+          label: `${l.first_name} ${l.last_name}`,
+        })),
+      };
+    }
+    
+    return updatedCategories;
+  }, [branchesData, lecturersData]);
+
+  const initialSelections = useMemo(() => {
+    const selections: FilterSelections = {};
+
+    if (activeUrlFilters.category) selections.category = activeUrlFilters.category.split(",");
+    if (activeUrlFilters.type) selections.type = activeUrlFilters.type.split(",");
+    if (activeUrlFilters.status) selections.status = activeUrlFilters.status.split(",");
+    if (activeUrlFilters.branch_id) selections.branch_id = activeUrlFilters.branch_id.split(",");
+    if (activeUrlFilters.payment_type) selections.payment_type = activeUrlFilters.payment_type.split(",");
+    if (activeUrlFilters.level) selections.level = activeUrlFilters.level.split(",");
+    if (activeUrlFilters.lecturer_id) selections.lecturer_id = activeUrlFilters.lecturer_id.split(",");
+
+    if (activeUrlFilters.start_date_from || activeUrlFilters.start_date_to) {
+      selections.date = {
+        start: activeUrlFilters.start_date_from ? new Date(activeUrlFilters.start_date_from) : null,
+        end: activeUrlFilters.start_date_to ? new Date(activeUrlFilters.start_date_to) : null,
+      };
+    }
+
+    return selections;
+  }, [activeUrlFilters]);
+
+  const hasActiveFilters = Object.values(activeUrlFilters).some(v => v !== undefined && v !== "");
   const isAllSelected = totalCount > 0 && selectedCount === totalCount;
   const hasSelection = selectedCount > 0;
 
@@ -166,22 +225,45 @@ export function BatchTableToolbar({
       onClick: bulkActions.onSendEmail,
       disabled: !hasSelection 
     },
-    { 
-      key: "delete", 
-      label: "Delete", 
-      variant: "danger", 
-      onClick: () => setDeleteModalOpen(true),
-      disabled: !hasSelection 
-    },
   ];
 
   const handleApplyFilters = useCallback((selections: FilterSelections) => {
-    setActiveFilters(selections);
-  }, []);
+    const updates: Record<string, string | null> = {
+      category: null,
+      type: null,
+      status: null,
+      branch_id: null,
+      payment_type: null,
+      level: null,
+      lecturer_id: null,
+      start_date_from: null,
+      start_date_to: null,
+    };
 
-  const handleClearFilters = useCallback(() => {
-    setActiveFilters({});
-  }, []);
+    if (selections.category && Array.isArray(selections.category) && selections.category.length > 0) updates.category = selections.category.join(",");
+    if (selections.type && Array.isArray(selections.type) && selections.type.length > 0) updates.type = selections.type.join(",");
+    if (selections.status && Array.isArray(selections.status) && selections.status.length > 0) updates.status = selections.status.join(",");
+    if (selections.branch_id && Array.isArray(selections.branch_id) && selections.branch_id.length > 0) updates.branch_id = selections.branch_id.join(",");
+    if (selections.payment_type && Array.isArray(selections.payment_type) && selections.payment_type.length > 0) updates.payment_type = selections.payment_type.join(",");
+    if (selections.level && Array.isArray(selections.level) && selections.level.length > 0) updates.level = selections.level.join(",");
+    if (selections.lecturer_id && Array.isArray(selections.lecturer_id) && selections.lecturer_id.length > 0) updates.lecturer_id = selections.lecturer_id.join(",");
+
+    if (selections.date && !Array.isArray(selections.date)) {
+      if (selections.date.start) {
+        const d = selections.date.start;
+
+        updates.start_date_from = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      }
+
+      if (selections.date.end) {
+        const d = selections.date.end;
+
+        updates.start_date_to = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      }
+    }
+
+    onApplyFilters(updates);
+  }, [onApplyFilters]);
 
   return (
     <>
@@ -197,6 +279,8 @@ export function BatchTableToolbar({
               <Input
                 type="text"
                 placeholder="Search by Batch Name, ID, Category, Lecturer Name"
+                value={search}
+                onChange={(e) => onSearchChange(e.target.value)}
                 className={cn(
                   AUTH_INPUT.base,
                   AUTH_INPUT.placeholder,
@@ -206,12 +290,12 @@ export function BatchTableToolbar({
             </div>
           </div>
 
-          {/* Right: Filter + PDF + CSV (separate buttons) */}
+          {/* Right: Filter + Export CSV */}
           <div className="flex items-center gap-3">
             {hasActiveFilters && (
               <button
                 type="button"
-                onClick={handleClearFilters}
+                onClick={onClearFilters}
                 className={cn(BUTTON_STYLES.outline.md, "border-dashed text-[#64748B] hover:text-[#0F172B]")}
               >
                 <X className="h-4 w-4" />
@@ -241,6 +325,8 @@ export function BatchTableToolbar({
               <Input
                 type="text"
                 placeholder="Search..."
+                value={search}
+                onChange={(e) => onSearchChange(e.target.value)}
                 className={cn(
                   AUTH_INPUT.base,
                   AUTH_INPUT.placeholder,
@@ -255,7 +341,7 @@ export function BatchTableToolbar({
              {hasActiveFilters && (
               <button
                 type="button"
-                onClick={handleClearFilters}
+                onClick={onClearFilters}
                 className={cn(BUTTON_STYLES.outline.md, "border-dashed text-[#64748B] hover:text-[#0F172B]")}
               >
                 <X className="h-4 w-4" />
@@ -279,6 +365,8 @@ export function BatchTableToolbar({
             <Input
               type="text"
               placeholder="Search by Batch Name, ID, Category, Lecturer Name"
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
               className={cn(
                 AUTH_INPUT.base,
                 AUTH_INPUT.placeholder,
@@ -294,7 +382,7 @@ export function BatchTableToolbar({
               <button
                 title="Clear Filters"
                 type="button"
-                onClick={handleClearFilters}
+                onClick={onClearFilters}
                 className={cn(BUTTON_STYLES.outline.md, "px-3 border-dashed text-[#64748B] hover:text-[#0F172B]")}
               >
                 <X className="h-4 w-4" />
@@ -306,7 +394,7 @@ export function BatchTableToolbar({
               className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
             />
 
-            {/* More Actions Dropdown (PDF/CSV) */}
+            {/* More Actions Dropdown (Export) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button title="More Actions" className={cn(BUTTON_STYLES.outline.md, "px-3")}>
@@ -331,20 +419,9 @@ export function BatchTableToolbar({
       <FilterModal
         open={filterModalOpen}
         onOpenChange={setFilterModalOpen}
-        categories={batchFilterCategories}
+        categories={categories}
         onApply={handleApplyFilters}
-        initialSelections={activeFilters}
-      />
-
-      <DeleteConfirmationModal
-        isOpen={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        onConfirm={() => {
-            bulkActions.onDelete();
-            setDeleteModalOpen(false);
-        }}
-        title="Confirm Bulk Deletion"
-        description={`Are you sure you want to delete ${selectedCount} selected batches? This action cannot be undone.`}
+        initialSelections={initialSelections}
       />
     </>
   );
