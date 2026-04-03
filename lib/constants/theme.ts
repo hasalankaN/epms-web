@@ -112,6 +112,11 @@ export const BUTTON_STYLES = {
     /** Ghost button (sm) - Pink text, transparent bg, light pink hover */
     sm: "inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-transparent px-3 text-sm font-semibold text-[#E60076] shadow-none transition-colors hover:bg-[#FDF2F8] hover:text-[#E60076]",
   },
+  
+  dark: {
+    /** Dark button (sm) - Black text, often used for specific request actions */
+    sm: "inline-flex h-[36px] items-center justify-center gap-[8px] rounded-[6px] bg-[#18181B] px-[16px] py-[8px] text-white shadow-[0_1px_2px_-1px_rgba(0,0,0,0.10),0_1px_3px_0_rgba(16,24,40,0.10)] font-sans text-[14px] font-medium leading-[20px] transition-colors hover:bg-[#18181B]/90 focus:ring-2 focus:ring-[#18181B] focus:ring-offset-2",
+  },
 } as const;
 
 // =============================================

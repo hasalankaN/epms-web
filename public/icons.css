@@ -977,3 +977,27 @@
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
 }
+
+.telegram-logo {
+  --svg: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'32'%20height%3D'32'%20fill%3D'%23000000'%20viewBox%3D'0%200%20256%20256'%3E%3Cpath%20d%3D'M228.88%2C26.19a9%2C9%2C0%2C0%2C0-9.16-1.57L17.06%2C103.93a14.22%2C14.22%2C0%2C0%2C0%2C2.43%2C27.21L72%2C141.45V200a15.92%2C15.92%2C0%2C0%2C0%2C10%2C14.83%2C15.91%2C15.91%2C0%2C0%2C0%2C17.51-3.73l25.32-26.26L165%2C220a15.88%2C15.88%2C0%2C0%2C0%2C10.51%2C4%2C16.3%2C16.3%2C0%2C0%2C0%2C5-.79%2C15.85%2C15.85%2C0%2C0%2C0%2C10.67-11.63L231.77%2C35A9%2C9%2C0%2C0%2C0%2C228.88%2C26.19Zm-61.14%2C36L78.15%2C126.35l-49.6-9.73ZM88%2C200V152.52l24.79%2C21.74Zm87.53%2C8L92.85%2C135.5l119-85.29Z'%3E%3C%2Fpath%3E%3C%2Fsvg%3E");
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-image: var(--svg);
+  mask-image: var(--svg);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+
+.messenger-logo {
+  --svg: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'32'%20height%3D'32'%20fill%3D'%23000000'%20viewBox%3D'0%200%20256%20256'%3E%3Cpath%20d%3D'M181.66%2C106.34a8%2C8%2C0%2C0%2C1%2C0%2C11.32l-32%2C32a8%2C8%2C0%2C0%2C1-11.32%2C0L112%2C123.31%2C85.66%2C149.66a8%2C8%2C0%2C0%2C1-11.32-11.32l32-32a8%2C8%2C0%2C0%2C1%2C11.32%2C0L144%2C132.69l26.34-26.35A8%2C8%2C0%2C0%2C1%2C181.66%2C106.34ZM232%2C128A104%2C104%2C0%2C0%2C1%2C79.12%2C219.82L45.07%2C231.17a16%2C16%2C0%2C0%2C1-20.24-20.24l11.35-34.05A104%2C104%2C0%2C1%2C1%2C232%2C128Zm-16%2C0A88%2C88%2C0%2C1%2C0%2C51.81%2C172.06a8%2C8%2C0%2C0%2C1%2C.66%2C6.54L40%2C216%2C77.4%2C203.52a8%2C8%2C0%2C0%2C1%2C6.54.67A88%2C88%2C0%2C0%2C0%2C216%2C128Z'%3E%3C%2Fpath%3E%3C%2Fsvg%3E");
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-image: var(--svg);
+  mask-image: var(--svg);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
