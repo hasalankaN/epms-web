@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-
+import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 
 import { CommissionsCard } from "@/components/referral-panel/dashboard/CommissionsCard";
@@ -12,14 +11,30 @@ import { ReferralStats } from "@/components/referral-panel/dashboard/ReferralSta
 import { TopBatchesChart } from "@/components/referral-panel/dashboard/analytics/TopBatchesChart";
 import { TopCoursesChart } from "@/components/referral-panel/dashboard/analytics/TopCoursesChart";
 import { TopProductsChart } from "@/components/referral-panel/dashboard/analytics/TopProductsChart";
+import { itemVariants } from "@/components/ui/dialog";
 import { BUTTON_STYLES } from "@/lib/constants/theme";
 import { cn } from "@/lib/utils";
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+};
+
 export default function ReferralDashboardPage() {
   return (
-    <div className="pt-3 pl-4 pr-6 pb-6">
+    <motion.div 
+      initial="hidden" 
+      animate="show" 
+      variants={containerVariants}
+      className="pt-3 pl-4 pr-6 pb-6"
+    >
       {/* Header Section */}
-      <div className="mb-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <motion.div variants={itemVariants} className="mb-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="group cursor-default text-left font-sans text-2xl font-semibold leading-[38px] text-[#0F172B]">
           Welcome Back!{" "}
           <span className="wave-on-hover wave-once">
@@ -38,14 +53,25 @@ export default function ReferralDashboardPage() {
             <span>Add Student</span>
           </button>
         </div>
-      </div>
+      </motion.div>
 
-      <ReferralIdCard />
-      <ReferralStats />
-      <CommissionsCard />
+      <motion.div variants={itemVariants}>
+        <ReferralIdCard />
+      </motion.div>
+      
+      <motion.div variants={itemVariants}>
+        <ReferralStats />
+      </motion.div>
+      
+      <motion.div variants={itemVariants}>
+        <CommissionsCard />
+      </motion.div>
       
       {/* 2-Column Grid for Enrollment Stats, My Agents and Charts - 2/3 vs 1/3 split */}
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3 items-start">
+      <motion.div 
+        variants={itemVariants}
+        className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3 items-start"
+      >
         {/* Left Column (2/3 width) */}
         <div className="flex flex-col gap-6 lg:col-span-2">
           <EnrollmentStats />
@@ -58,8 +84,8 @@ export default function ReferralDashboardPage() {
           <TopCoursesChart />
           <TopProductsChart />
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
