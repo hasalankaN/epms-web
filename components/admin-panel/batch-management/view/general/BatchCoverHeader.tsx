@@ -12,8 +12,8 @@ export function BatchCoverHeader({ batchId }: { batchId?: string }) {
 
   // Placeholder image path - user can replace this later
   const COVER_IMAGE_URL = "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=2070&auto=format&fit=crop";
-  
-  const status: BatchStatus = "Ongoing"; // Hardcoded for now, will be prop later
+
+  const status: BatchStatus = "Active"; // Hardcoded for now, will be prop later
   const statusColors = BATCH_STATUS_CONFIG[status];
 
   return (

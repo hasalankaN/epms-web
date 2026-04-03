@@ -64,7 +64,7 @@ export const dummyBatchData: ApiBatchResponse = {
   startDate: "2026-02-01T00:00:00.000Z",
   endDate: "2026-06-30T00:00:00.000Z",
   certificates: ["UK", "Free"],
-  batchStatus: "Ongoing",
+  batchStatus: "Active",
   lecturer: "Ruwan Perera",
   batchLevel: "Beginner",
   hierarchy: "4 Tiers",

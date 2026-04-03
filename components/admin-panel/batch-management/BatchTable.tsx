@@ -247,7 +247,7 @@ export function BatchTable({
               <DropdownMenuItem onClick={() => handleAction("send-email", batch)} className="cursor-pointer focus:bg-[#FDF2F8]">
                 Send Email
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAction("deactivate", batch)} className="cursor-pointer text-red-600 focus:bg-[#FDF2F8] focus:text-red-600">
+              <DropdownMenuItem onClick={() => handleAction("deactivate", batch)} className="cursor-pointer focus:bg-[#FDF2F8]">
                 Deactivate
               </DropdownMenuItem>
             </DropdownMenuContent>

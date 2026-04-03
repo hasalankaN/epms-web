@@ -25,6 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useUpdateCourseStatus } from "@/hooks/api/courses/useUpdateCourseStatus";
 
 // ===== STAFF CELL =====
 function StaffCell({ staffMembers }: { staffMembers: ApiCourseStaffMember[] }) {
@@ -104,8 +105,11 @@ export function CourseTable({
   const filteredData = useMemo(() => data || [], [data]);
   const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
 
-  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<CourseDataType | null>(null);
+  const [targetStatus, setTargetStatus] = useState<"ACTIVE" | "INACTIVE">("INACTIVE");
+
+  const { mutateAsync: updateStatus, isPending: isUpdatingStatus } = useUpdateCourseStatus(selectedCourse?.id || "");
 
   const handleAction = (action: string, course: CourseDataType) => {
     if (action === "view") {
@@ -116,14 +120,25 @@ export function CourseTable({
       router.push(`/admin-panel/course-management/preview-and-manage/${course.id}`);
     } else if (action === "deactivate") {
       setSelectedCourse(course);
-      setIsDeactivateModalOpen(true);
+      setTargetStatus("INACTIVE");
+      setIsStatusModalOpen(true);
+    } else if (action === "activate") {
+      setSelectedCourse(course);
+      setTargetStatus("ACTIVE");
+      setIsStatusModalOpen(true);
     }
   };
 
-  const handleDeactivateConfirm = () => {
-    // TODO: wire up useDeactivateCourse hook
-    console.log("Deactivating course:", selectedCourse?.id);
-    setIsDeactivateModalOpen(false);
+  const handleStatusUpdateConfirm = async () => {
+    if (!selectedCourse) return;
+
+    try {
+      await updateStatus({ status: targetStatus });
+      setIsStatusModalOpen(false);
+      setSelectedCourse(null);
+    } catch {
+      // Error handled by hook's toast
+    }
   };
 
   const columns: Column<CourseDataType>[] = [
@@ -279,12 +294,21 @@ export function CourseTable({
               >
                 Preview & Manage
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => handleAction("deactivate", course)}
-                className="cursor-pointer text-red-600 focus:bg-[#FDF2F8] focus:text-red-600"
-              >
-                Deactivate
-              </DropdownMenuItem>
+              {course.status === "Active" ? (
+                <DropdownMenuItem
+                  onClick={() => handleAction("deactivate", course)}
+                  className="cursor-pointerfocus:bg-[#FDF2F8]"
+                >
+                  Deactivate
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onClick={() => handleAction("activate", course)}
+                  className="cursor-pointer focus:bg-[#FDF2F8]"
+                >
+                  Activate
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -311,14 +335,19 @@ export function CourseTable({
         rowClassName={(item) => (rowSelection[item.id] ? "selected" : "")}
       />
       <DeleteConfirmationModal
-        isOpen={isDeactivateModalOpen}
-        onClose={() => setIsDeactivateModalOpen(false)}
-        onConfirm={handleDeactivateConfirm}
-        title="Confirm Deactivation"
-        description={`Are you sure you want to deactivate "${selectedCourse?.courseName}"?`}
-        confirmText="Confirm Deactivation"
+        isOpen={isStatusModalOpen}
+        onClose={() => setIsStatusModalOpen(false)}
+        onConfirm={handleStatusUpdateConfirm}
+        title={targetStatus === "ACTIVE" ? "Confirm Activation" : "Confirm Deactivation"}
+        description={
+          targetStatus === "ACTIVE"
+            ? `Are you sure you want to activate "${selectedCourse?.courseName}"?`
+            : `Are you sure you want to deactivate "${selectedCourse?.courseName}"?`
+        }
+        confirmText={targetStatus === "ACTIVE" ? "Confirm Activation" : "Confirm Deactivation"}
         cancelText="Go Back"
-        confirmVariant="destructive"
+        isDeleting={isUpdatingStatus}
+        confirmVariant={targetStatus === "ACTIVE" ? "primary" : "destructive"}
       />
     </>
   );

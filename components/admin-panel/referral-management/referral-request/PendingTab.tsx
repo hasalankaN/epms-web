@@ -111,7 +111,7 @@ export function PendingTab() {
       
       return matchesSearch;
     });
-  }, [search, dateFrom, dateTo]);
+  }, [search]);
 
   const itemsPerPage = 10;
   const totalResults = filteredData.length;
