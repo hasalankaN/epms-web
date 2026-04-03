@@ -1,17 +1,27 @@
 "use client";
 
-import React from "react";
-
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
+import { motion } from "framer-motion";
 import { FileText } from "lucide-react";
 
 import { OverviewSection } from "@/components/admin-panel/dashboard/OverviewSection";
 import { ReferralSection } from "@/components/admin-panel/dashboard/ReferralSection";
 import { AnalyticsSection } from "@/components/admin-panel/dashboard/AnalyticsSection";
 
-import { cn } from "@/lib/utils";
+import { itemVariants } from "@/components/ui/dialog";
 import { TAB_STYLES, BUTTON_STYLES } from "@/lib/constants/theme";
+import { cn } from "@/lib/utils";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+};
 
 export type DashboardTabType = "overview" | "referral" | "analytics";
 
@@ -40,9 +50,14 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="space-y-3 pt-3 pl-4 pr-6 pb-6">
+    <motion.div 
+      initial="hidden" 
+      animate="show" 
+      variants={containerVariants}
+      className="space-y-3 pt-3 pl-4 pr-6 pb-6"
+    >
       {/* Header Section */}
-      <div className="flex items-center justify-between gap-4">
+      <motion.div variants={itemVariants} className="flex items-center justify-between gap-4">
         <h1 className="group cursor-default text-left font-sans text-2xl font-semibold leading-[38px] text-[#0F172B]">
           Welcome Back!{" "}
           <span className="wave-on-hover wave-once">
@@ -53,10 +68,10 @@ export default function DashboardPage() {
           <FileText className="h-5 w-5 sm:hidden" />
           <span className="hidden sm:inline">Generate Report</span>
         </button>
-      </div>
+      </motion.div>
 
       {/* Tabs Section */}
-      <div className="overflow-x-auto pb-2 sm:pb-0">
+      <motion.div variants={itemVariants} className="overflow-x-auto pb-2 sm:pb-0">
         <div className={TAB_STYLES.container}>
           {tabs.map((tab) => {
             return (
@@ -76,13 +91,19 @@ export default function DashboardPage() {
             );
           })}
         </div>
-      </div>
+      </motion.div>
 
-      <div className="mt-6">
+      <motion.div 
+        key={activeTab}
+        initial="hidden"
+        animate="show"
+        variants={containerVariants}
+        className="mt-6"
+      >
         {activeTab === "overview" && <OverviewSection />}
         {activeTab === "referral" && <ReferralSection />}
         {activeTab === "analytics" && <AnalyticsSection />}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

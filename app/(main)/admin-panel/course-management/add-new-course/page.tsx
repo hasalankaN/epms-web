@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
@@ -18,6 +18,7 @@ import { defaultCourseGeneralDetailsValues, defaultCourseCommissionDetailsValues
 import { CourseGeneralDetailsStep } from "@/components/admin-panel/course-management/add/steps/CourseGeneralDetailsStep";
 import { CourseFeeDetailsStep } from "@/components/admin-panel/course-management/add/steps/CourseFeeDetailsStep";
 import { CourseCommissionDetailsStep } from "@/components/admin-panel/course-management/add/steps/CourseCommissionDetailsStep";
+import { useCreateCourse, type CreateCoursePayload } from "@/hooks/api/courses/useCreateCourse";
 
 const COURSE_STEPS = [
   { id: 1, label: "General Details" },
@@ -29,7 +30,8 @@ export default function AddCoursePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const { generalDetails, feeDetails, commissionDetails, resetForm } = useCourseFormStore();
+  const { mode, generalDetails, feeDetails, commissionDetails, resetForm } = useCourseFormStore();
+  const { mutateAsync: createCourse, isPending: isCreating } = useCreateCourse();
 
   const currentStep = Number(searchParams.get("step")) || 1;
 
@@ -37,10 +39,18 @@ export default function AddCoursePage() {
   const [showDiscardModal, setShowDiscardModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
 
+  // If we came directly from the "Edit" page via SPA routing, the in-memory store
+  // still holds the edit data. We need to completely wipe it and restore the "add"
+  // draft (if any) from localStorage directly, ignoring the current memory state.
+  useEffect(() => {
+    if (mode === "edit") {
+      useCourseFormStore.getState().clearEditAndRestoreAdd();
+    }
+  }, [mode]);
+
   // Check if form has any data filled
   const isFormDirty = useMemo(() => {
-    // Check general details
-    const hasGeneralChanges = 
+    const hasGeneralChanges =
       generalDetails.courseName !== defaultCourseGeneralDetailsValues.courseName ||
       (generalDetails.staffMembers && generalDetails.staffMembers.length > 0) ||
       generalDetails.assessment !== defaultCourseGeneralDetailsValues.assessment ||
@@ -59,12 +69,10 @@ export default function AddCoursePage() {
       generalDetails.coverImage !== defaultCourseGeneralDetailsValues.coverImage ||
       generalDetails.introductionVideo !== defaultCourseGeneralDetailsValues.introductionVideo;
 
-    // Check fee details
-    const hasFeeChanges = 
+    const hasFeeChanges =
       (feeDetails.courseFeeItems && feeDetails.courseFeeItems.length > 0) ||
       feeDetails.enableInstallments === true;
 
-    // Check commission details
     const hasCommissionChanges =
       commissionDetails.referralType !== defaultCourseCommissionDetailsValues.referralType ||
       commissionDetails.referralValue !== defaultCourseCommissionDetailsValues.referralValue ||
@@ -74,16 +82,82 @@ export default function AddCoursePage() {
     return hasGeneralChanges || hasFeeChanges || hasCommissionChanges;
   }, [generalDetails, feeDetails, commissionDetails]);
 
-  const handleNext = () => {
+  // Build the API payload from the Zustand store
+  const buildPayload = (): CreateCoursePayload => {
+    const g = generalDetails;
+    const f = feeDetails;
+    const c = commissionDetails;
+
+    const toNum = (val?: string) => parseFloat(val?.replace(/,/g, "") || "0") || 0;
+
+    const commissionEntry = (type?: string, value?: string, teamValue?: string) => ({
+      type: (type || "Fixed") as "Percentage" | "Fixed",
+      value: toNum(value),
+      team_value: toNum(teamValue),
+    });
+
+    return {
+      general_details: {
+        name: g.courseName || "",
+        staff_members: g.staffMembers || [],
+        has_assessment: g.assessment === "Yes",
+        course_type: g.courseType || undefined,
+        start_date: g.startDate ? new Date(g.startDate).toISOString().split("T")[0] : undefined,
+        end_date: g.endDate ? new Date(g.endDate).toISOString().split("T")[0] : undefined,
+        certificates: g.certificates || [],
+        category_id: g.courseCategory || "",
+        lecturer_id: g.lecturer || "",
+        level: g.courseLevel || "",
+        language: g.language || "",
+        lesson_duration_hours: g.lessonDuration ? Number(g.lessonDuration) : undefined,
+        hierarchy_type: g.hierarchy || "3 Tiers",
+        batch_id: g.batchId || undefined,
+        short_description: g.shortDescription || undefined,
+        long_description: g.longDescription || "",
+        cover_image_url: g.coverImage || undefined,
+        intro_video_url: g.introductionVideo || undefined,
+      },
+      fee_details: {
+        pricing_option: (f.pricingOption || "Paid") as "Paid" | "Free",
+        fees: f.pricingOption === "Paid"
+          ? f.courseFeeItems?.map((item) => ({
+              amount: toNum(item.amount),
+              duration_years: Number(item.duration) || 1,
+            }))
+          : undefined,
+        installments_enabled: f.enableInstallments,
+        number_of_installments: f.numberOfInstallments,
+        installment_plans: f.installmentItems?.map((item) => ({
+          description: item.description,
+          amount: toNum(item.amount),
+        })),
+      },
+      commission_details: {
+        referral: commissionEntry(c.referralType, c.referralValue, c.teamValue),
+        lecturer: commissionEntry(c.lecturerType, c.lecturerValue, "0"),
+        staff: commissionEntry(c.staffType, c.staffValue, "0"),
+        branch_staff: commissionEntry(c.branchStaffType, c.branchStaffValue, "0"),
+      },
+    };
+  };
+
+  const handleNext = async () => {
     if (currentStep < 3) {
       const params = new URLSearchParams(searchParams.toString());
 
       params.set("step", (currentStep + 1).toString());
       router.push(`${pathname}?${params.toString()}`);
     } else {
-      // Final step submission - reset form and redirect
-      resetForm();
-      router.push("/admin-panel/course-management");
+      // Final step - build payload and submit
+      try {
+        const payload = buildPayload();
+
+        await createCourse(payload);
+        resetForm();
+        router.push("/admin-panel/course-management");
+      } catch {
+        // Error already handled by the hook's onError toast
+      }
     }
   };
 
@@ -98,7 +172,6 @@ export default function AddCoursePage() {
   };
 
   const handleBackClick = (href: string) => {
-    // Only show warning when going back to course management (leaving the form entirely)
     if (href === "/admin-panel/course-management" && isFormDirty) {
       setPendingNavigation(href);
       setShowDiscardModal(true);
@@ -122,6 +195,14 @@ export default function AddCoursePage() {
   };
 
   const renderStepContent = () => {
+    if (mode === "edit") {
+      return (
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E60076]" />
+        </div>
+      );
+    }
+
     switch (currentStep) {
       case 1:
         return <CourseGeneralDetailsStep onNext={handleNext} />;
@@ -144,16 +225,16 @@ export default function AddCoursePage() {
       <div className="sticky top-0 z-40 bg-white shadow-sm">
         {/* Header */}
         <div className="px-4 pt-6 pb-4 md:px-6">
-          <BackButton 
-            href={backHref} 
-            label={backLabel} 
+          <BackButton
+            href={backHref}
+            label={backLabel}
             onClick={() => handleBackClick(backHref)}
           />
         </div>
 
         {/* Stepper */}
-        <FormStepper 
-          currentStep={currentStep} 
+        <FormStepper
+          currentStep={currentStep}
           steps={COURSE_STEPS}
           scrollContainerId="course-form-container"
         />
@@ -164,30 +245,32 @@ export default function AddCoursePage() {
       </div>
 
       <div className="sticky bottom-0 z-50 flex items-center justify-end gap-x-4 bg-white px-4 py-4 border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.025)] md:px-6">
-         <Button type="button" variant="ghost" size="md" className="text-[#0F172B] font-semibold" onClick={handleDiscard}>
-           Discard
-         </Button>
+        <Button type="button" variant="ghost" size="md" className="text-[#0F172B] font-semibold" onClick={handleDiscard}>
+          Discard
+        </Button>
 
-         {currentStep === 3 && (
-            <button 
-              type="button" 
-              className={cn(BUTTON_STYLES.secondary.md, "text-sm font-semibold")}
-            >
-                Save as Draft
-            </button>
-         )}
+        {currentStep === 3 && (
+          <button
+            type="button"
+            className={cn(BUTTON_STYLES.secondary.md, "text-sm font-semibold")}
+          >
+            Save as Draft
+          </button>
+        )}
 
-         <button 
-            type="submit"
-            form="active-step-form"
-            className={cn(
-                currentStep === 3 ? cn(BUTTON_STYLES.primary.md, "text-white") : cn(BUTTON_STYLES.outline.md, "text-[#0F172B]"),
-                "font-semibold text-sm leading-5"
-            )}
-         >
-           {currentStep === 3 ? "Create Course" : "Go to Next Step"}
-           {currentStep !== 3 && <ArrowRightCircle className="h-5 w-5" />}
-         </button>
+        <button
+          type="submit"
+          form="active-step-form"
+          disabled={isCreating}
+          className={cn(
+            currentStep === 3 ? cn(BUTTON_STYLES.primary.md, "text-white") : cn(BUTTON_STYLES.outline.md, "text-[#0F172B]"),
+            "font-semibold text-sm leading-5",
+            isCreating && "opacity-70 cursor-not-allowed"
+          )}
+        >
+          {currentStep === 3 ? (isCreating ? "Creating Course..." : "Create Course") : "Go to Next Step"}
+          {currentStep !== 3 && <ArrowRightCircle className="h-5 w-5" />}
+        </button>
       </div>
 
       {/* Discard Confirmation Modal */}

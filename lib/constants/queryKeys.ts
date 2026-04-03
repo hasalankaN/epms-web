@@ -23,4 +23,13 @@ export const queryKeys = {
   
   // Complaints
   complaints: "complaints",
+
+  // Batches
+  batches: "batches",
+
+  // Courses
+  courses: "courses",
+  
+  // Referrals
+  referrals: "referrals",
 };

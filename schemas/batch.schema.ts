@@ -18,12 +18,12 @@ export const generalDetailsSchema = z.object({
   hierarchy: z.string().min(1, "Hierarchy is required"),
   lessonDuration: z.string().optional(),
   description: z.string().optional(),
-  coverImage: z.string().optional(), 
+  coverImage: z.string().min(1, "Cover image is required"), 
 });
 
 export type GeneralDetailsValues = z.infer<typeof generalDetailsSchema>;
 
-// ==================== Step 2: Fee Details Schema ====================
+// ... (fee items stay same)
 export const feeItemSchema = z.object({
   id: z.string(),
   amount: z.string().min(1, "Amount is required"),
@@ -34,6 +34,7 @@ export const additionalFeeItemSchema = z.object({
   id: z.string(),
   amount: z.string().min(1, "Amount is required"),
   duration: z.string().min(1, "Duration is required"),
+  description: z.string().min(1, "Description is required"),
 });
 
 export const installmentItemSchema = z.object({
@@ -96,6 +97,20 @@ export type AdditionalFeeItem = z.infer<typeof additionalFeeItemSchema>;
 export type InstallmentItem = z.infer<typeof installmentItemSchema>;
 
 // ==================== Step 3: Commission Details Schema ====================
+const validatePercentage = (type: unknown, value: unknown, ctx: z.RefinementCtx, path: string[]) => {
+  if (type === "Percentage" && typeof value === "string") {
+    const num = Number(value.replace(/,/g, ""));
+
+    if (!isNaN(num) && num > 100) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Percentage cannot exceed 100",
+        path,
+      });
+    }
+  }
+};
+
 export const commissionDetailsSchema = z.object({
   referralType: z.string().optional(),
   referralValue: z.string().optional(),
@@ -106,6 +121,12 @@ export const commissionDetailsSchema = z.object({
   staffValue: z.string().optional(),
   branchStaffType: z.string().optional(),
   branchStaffValue: z.string().optional(),
+}).superRefine((data, ctx) => {
+  validatePercentage(data.referralType, data.referralValue, ctx, ["referralValue"]);
+  validatePercentage(data.referralType, data.teamValue, ctx, ["teamValue"]);
+  validatePercentage(data.lecturerType, data.lecturerValue, ctx, ["lecturerValue"]);
+  validatePercentage(data.staffType, data.staffValue, ctx, ["staffValue"]);
+  validatePercentage(data.branchStaffType, data.branchStaffValue, ctx, ["branchStaffValue"]);
 });
 
 export type CommissionDetailsValues = z.infer<typeof commissionDetailsSchema>;
@@ -126,7 +147,7 @@ export const defaultGeneralDetailsValues: Partial<GeneralDetailsValues> = {
   language: "",
   batchType: "",
   staffMembers: [],
-  assignment: "",
+  assignment: "yes",
   batchCategory: "",
   batchStatus: "",
   lecturer: "",

@@ -159,7 +159,7 @@ export default function ImageUpload({
   };
 
   return (
-    <div className="w-full h-full mx-auto">
+    <div className={cn("w-full h-fit mx-auto", className)}>
       <div
         className={cn("relative h-full w-full", isUploading && "pointer-events-none")}
         onDragEnter={handleDragEnter}

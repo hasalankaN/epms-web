@@ -1,7 +1,7 @@
 /**
  * Student status options
  */
-export type StudentStatus = "active" | "inactive";
+export type StudentStatus = "active" | "inactive" | "dropped" | "completed";
 
 /**
  * Payment status options
@@ -127,6 +127,8 @@ export interface StaffDataType {
 export const STUDENT_STATUS_CONFIG: Record<StudentStatus, { bg: string; text: string }> = {
   "active": { bg: "#D9E9FF", text: "#2563EB" },
   "inactive": { bg: "#F1F5F9", text: "#000000" },
+  "dropped": { bg: "#FEE2E2", text: "#EF4444" },
+  "completed": { bg: "#DCFCE7", text: "#16A34A" },
 };
 
 export const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { bg: string; text: string }> = {

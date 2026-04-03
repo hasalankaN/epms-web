@@ -12,7 +12,9 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { BUTTON_STYLES } from "@/lib/constants/theme";
 import { useBatchFormStore } from "@/store/batchFormStore";
-import { getBatchForEdit } from "@/transformers/batch.transformer";
+import { transformApiBatchDetailToFormData, buildUpdateBatchPayload } from "@/transformers/batch.transformer";
+import { useGetBatchById } from "@/hooks/api/batches/useGetBatchById";
+import { useUpdateBatch } from "@/hooks/api/batches/useUpdateBatch";
 
 import { BatchStepper } from "@/components/admin-panel/batch-management/add/BatchStepper";
 import { GeneralDetailsStep } from "@/components/admin-panel/batch-management/add/steps/GeneralDetailsStep";
@@ -22,7 +24,6 @@ import { CommissionDetailsStep } from "@/components/admin-panel/batch-management
 // Helper to serialize data consistently for comparison
 const serializeForComparison = (data: unknown): string => {
   return JSON.stringify(data, (key, value) => {
-    // Convert Date objects to ISO strings for consistent comparison
     if (value instanceof Date) {
       return value.toISOString();
     }
@@ -38,19 +39,23 @@ export default function EditBatchPage() {
   const params = useParams();
   const batchId = params.id as string;
 
-  const { 
-    generalDetails, 
-    feeDetails, 
-    commissionDetails, 
+  const {
+    generalDetails,
+    feeDetails,
+    commissionDetails,
     resetForm,
     setMode,
     loadFormData,
   } = useBatchFormStore();
 
-  const currentStep = Number(searchParams.get("step")) || 1;
-  const [isLoading, setIsLoading] = useState(true);
+  const { mutateAsync: updateBatch, isPending: isUpdating } = useUpdateBatch(batchId);
 
-  // Store original data as serialized strings for comparison
+  const currentStep = Number(searchParams.get("step")) || 1;
+
+  // Fetch batch details from real API
+  const { data: batchDetail, isLoading, isError } = useGetBatchById(batchId);
+
+  // Store original data as serialized strings for comparison (for dirty check)
   const originalDataRef = useRef<{
     generalDetails: string;
     feeDetails: string;
@@ -64,58 +69,52 @@ export default function EditBatchPage() {
   const [showDiscardModal, setShowDiscardModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
 
-  // Load batch data on mount - always fetch fresh from API
+  // Load batch data into store when API data arrives
   useEffect(() => {
-    const loadBatchData = async () => {
-      setIsLoading(true);
-      setHasLoadedOriginal(false);
-      originalDataRef.current = null;
+    if (!batchDetail) return;
 
-      try {
-        const formData = await getBatchForEdit(batchId);
+    console.log("EditBatchPage: batchDetail arrived", batchDetail);
 
-        setMode("edit", batchId);
-        loadFormData(formData);
+    setMode("edit", batchId);
 
-        // Store serialized original data for comparison
-        originalDataRef.current = {
-          generalDetails: serializeForComparison(formData.generalDetails),
-          feeDetails: serializeForComparison(formData.feeDetails),
-          commissionDetails: serializeForComparison(formData.commissionDetails),
-        };
-      } catch (error) {
-        console.error("Failed to load batch data:", error);
-      } finally {
-        setIsLoading(false);
-      }
+    const formData = transformApiBatchDetailToFormData(batchDetail);
+
+    console.log("EditBatchPage: Transformed formData", formData);
+
+    loadFormData(formData);
+
+    // Store serialized original data for dirty-check comparison
+    originalDataRef.current = {
+      generalDetails: serializeForComparison(formData.generalDetails),
+      feeDetails: serializeForComparison(formData.feeDetails),
+      commissionDetails: serializeForComparison(formData.commissionDetails),
     };
 
-    loadBatchData();
-  }, [batchId, setMode, loadFormData]);
+    setHasLoadedOriginal(false); // will validate in the next effect
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [batchDetail]);
 
   // Set hasLoadedOriginal after store has synced with loaded data
   useEffect(() => {
-    if (!isLoading && originalDataRef.current && !hasLoadedOriginal) {
-      // Verify the store data matches what we loaded before enabling dirty check
-      const currentGeneral = serializeForComparison(generalDetails);
-      const currentFee = serializeForComparison(feeDetails);
-      const currentCommission = serializeForComparison(commissionDetails);
-      
-      if (
-        currentGeneral === originalDataRef.current.generalDetails &&
-        currentFee === originalDataRef.current.feeDetails &&
-        currentCommission === originalDataRef.current.commissionDetails
-      ) {
-        setHasLoadedOriginal(true);
-      }
+    if (!batchDetail || !originalDataRef.current || hasLoadedOriginal) return;
+
+    const currentGeneral = serializeForComparison(generalDetails);
+    const currentFee = serializeForComparison(feeDetails);
+    const currentCommission = serializeForComparison(commissionDetails);
+
+    if (
+      currentGeneral === originalDataRef.current.generalDetails &&
+      currentFee === originalDataRef.current.feeDetails &&
+      currentCommission === originalDataRef.current.commissionDetails
+    ) {
+      setHasLoadedOriginal(true);
     }
-  }, [isLoading, hasLoadedOriginal, generalDetails, feeDetails, commissionDetails]);
+  }, [batchDetail, hasLoadedOriginal, generalDetails, feeDetails, commissionDetails]);
 
   // Check if form has been modified from original data
   const isFormDirty = useMemo(() => {
     if (!hasLoadedOriginal || !originalDataRef.current) return false;
 
-    // Serialize current data for comparison (handles Date objects consistently)
     const currentGeneral = serializeForComparison(generalDetails);
     const currentFee = serializeForComparison(feeDetails);
     const currentCommission = serializeForComparison(commissionDetails);
@@ -127,18 +126,23 @@ export default function EditBatchPage() {
     );
   }, [hasLoadedOriginal, generalDetails, feeDetails, commissionDetails]);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < 3) {
-      const params = new URLSearchParams(searchParams.toString());
+      const urlParams = new URLSearchParams(searchParams.toString());
 
-      params.set("step", (currentStep + 1).toString());
-      router.push(`${pathname}?${params.toString()}`);
+      urlParams.set("step", (currentStep + 1).toString());
+      router.push(`${pathname}?${urlParams.toString()}`);
     } else {
-      // Final step submission - reset form and redirect
-      // TODO: Call update API here
-      console.log("Updating batch:", batchId);
-      resetForm();
-      router.push("/admin-panel/batch-management");
+      // Build & submit the update payload
+      try {
+        const payload = buildUpdateBatchPayload(generalDetails, feeDetails, commissionDetails);
+
+        await updateBatch(payload);
+        resetForm();
+        router.push("/admin-panel/batch-management");
+      } catch {
+        // Error is already shown via toast inside the hook
+      }
     }
   };
 
@@ -153,7 +157,6 @@ export default function EditBatchPage() {
   };
 
   const handleBackClick = (href: string) => {
-    // Only show warning when going back to batch management (leaving the form entirely)
     if (href === "/admin-panel/batch-management" && isFormDirty) {
       setPendingNavigation(href);
       setShowDiscardModal(true);
@@ -177,10 +180,18 @@ export default function EditBatchPage() {
   };
 
   const renderStepContent = () => {
-    if (isLoading) {
+    if (isLoading || (batchDetail && !hasLoadedOriginal)) {
       return (
         <div className="flex items-center justify-center py-20">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E60076]" />
+        </div>
+      );
+    }
+
+    if (isError) {
+      return (
+        <div className="flex items-center justify-center py-20 text-red-500">
+          Failed to load batch details. Please try again.
         </div>
       );
     }
@@ -202,14 +213,14 @@ export default function EditBatchPage() {
   const backLabel = isFirstStep ? "Go to Batch Management" : "Back";
 
   return (
-    <div className="flex flex-col h-full overflow-auto" id="batch-form-container">
+    <div className="flex flex-col h-full overflow-auto" id="batch-edit-form-container">
       {/* Sticky Header Section */}
       <div className="sticky top-0 z-40 bg-white shadow-sm">
         {/* Header */}
         <div className="px-4 pt-6 pb-4 md:px-6">
-          <BackButton 
-            href={backHref} 
-            label={backLabel} 
+          <BackButton
+            href={backHref}
+            label={backLabel}
             onClick={() => handleBackClick(backHref)}
           />
         </div>
@@ -223,23 +234,23 @@ export default function EditBatchPage() {
       </div>
 
       <div className="sticky bottom-0 z-50 flex items-center justify-end gap-x-4 bg-white px-4 py-4 border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.025)] md:px-6">
-         <Button type="button" variant="ghost" size="md" className="text-[#0F172B] font-semibold" onClick={handleDiscard}>
-           Discard
-         </Button>
+        <Button type="button" variant="ghost" size="md" className="text-[#0F172B] font-semibold" onClick={handleDiscard}>
+          Discard
+        </Button>
 
-         <button 
-            type="submit"
-            form="active-step-form"
-            disabled={isLoading || (currentStep === 3 && !isFormDirty)}
-            className={cn(
-                currentStep === 3 ? cn(BUTTON_STYLES.primary.md, "text-white") : cn(BUTTON_STYLES.outline.md, "text-[#0F172B]"),
-                "font-semibold text-sm leading-5",
-                (currentStep === 3 && !isFormDirty) && "opacity-50 cursor-not-allowed"
-            )}
-         >
-           {currentStep === 3 ? "Update Batch" : "Go to Next Step"}
-           {currentStep !== 3 && <ArrowRightCircle className="h-5 w-5" />}
-         </button>
+        <button
+          type="submit"
+          form="active-step-form"
+          disabled={isLoading || isUpdating || (currentStep === 3 && !isFormDirty)}
+          className={cn(
+            currentStep === 3 ? cn(BUTTON_STYLES.primary.md, "text-white") : cn(BUTTON_STYLES.outline.md, "text-[#0F172B]"),
+            "font-semibold text-sm leading-5",
+            (currentStep === 3 && !isFormDirty) && "opacity-50 cursor-not-allowed"
+          )}
+        >
+          {currentStep === 3 ? "Update Batch" : "Go to Next Step"}
+          {currentStep !== 3 && <ArrowRightCircle className="h-5 w-5" />}
+        </button>
       </div>
 
       {/* Discard Confirmation Modal */}

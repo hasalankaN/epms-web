@@ -3,18 +3,36 @@
 import { useMemo } from "react";
 
 import Navbar from "@/components/common/navbar/Navbar";
+import LecturerNavbar from "@/components/common/navbar/LecturerNavbar";
+import ReferralNavbar from "@/components/common/navbar/ReferralNavbar";
 import Sidebar from "@/components/common/sidebar/Sidebar";
 import type { SidebarNavItem } from "@/data/sidebar";
 
 
-// import { useGetCounts } from "@/hooks/api/counts/useGetCounts";
+// import { useGetCounts } from "@/hooks/api/counts/useGetCounts"
 
 interface MainLayoutClientProps {
   children: React.ReactNode;
   initialSidebarData: SidebarNavItem[];
+  role: string;
 }
 
-export function MainLayoutClient({ children, initialSidebarData }: MainLayoutClientProps) {
+function getNavbarForRole(
+  role: string,
+  filteredSidebarData: SidebarNavItem[]
+) {
+  switch (role) {
+    case "LECTURER":
+      return <LecturerNavbar filteredSidebarData={filteredSidebarData} />;
+    case "REFERRAL":
+    case "REFERRAL_AGENT":
+      return <ReferralNavbar filteredSidebarData={filteredSidebarData} />;
+    default:
+      return <Navbar filteredSidebarData={filteredSidebarData} />;
+  }
+}
+
+export function MainLayoutClient({ children, initialSidebarData, role }: MainLayoutClientProps) {
   // const { data: counts } = useGetCounts();
   const counts = undefined;
 
@@ -41,7 +59,7 @@ export function MainLayoutClient({ children, initialSidebarData }: MainLayoutCli
           }),
         };
       }
-      
+
       return item;
     });
   }, [initialSidebarData, counts]);
@@ -49,10 +67,10 @@ export function MainLayoutClient({ children, initialSidebarData }: MainLayoutCli
   return (
     <div className="fixed inset-0 flex w-full overflow-hidden bg-background">
       <Sidebar filteredSidebarData={updatedSidebarData} />
-      
+
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Navbar filteredSidebarData={updatedSidebarData} />
-        
+        {getNavbarForRole(role, updatedSidebarData)}
+
         <main className="flex-1 overflow-hidden">
           <div className="h-full overflow-auto">
             {children}

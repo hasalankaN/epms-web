@@ -69,9 +69,13 @@ return result;
       }
 
       // Redirect to the user's panel dashboard based on role
-      const role = result.data?.user?.role?.toLowerCase() ?? "admin";
+      let rolePrefix = result.data?.user?.role?.toLowerCase() ?? "admin";
       
-      router.push(`/${role}-panel/dashboard`);
+      if (rolePrefix === "referral_agent") {
+        rolePrefix = "referral";
+      }
+      
+      router.push(`/${rolePrefix}-panel/dashboard`);
     },
     onError: (error) => {
       // Convert error message to user-friendly version

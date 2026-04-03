@@ -18,8 +18,8 @@ export const courseGeneralDetailsSchema = z.object({
   batchId: z.string().optional(),
   shortDescription: z.string().optional(),
   longDescription: z.string().min(1, "Course long description is required"),
-  coverImage: z.string().optional(), // TODO: Make required after upload API integration
-  introductionVideo: z.string().optional(), // TODO: Make required after upload API integration
+  coverImage: z.string().min(1, "Course cover image is required"),
+  introductionVideo: z.string().min(1, "Course introduction video is required"),
 });
 
 export type CourseGeneralDetailsValues = z.infer<typeof courseGeneralDetailsSchema>;
@@ -89,6 +89,20 @@ export type CourseFeeItem = z.infer<typeof courseFeeItemSchema>;
 export type CourseInstallmentItem = z.infer<typeof courseInstallmentItemSchema>;
 
 // ==================== Step 3: Commission Details Schema ====================
+const validatePercentage = (type: unknown, value: unknown, ctx: z.RefinementCtx, path: string[]) => {
+  if (type === "Percentage" && typeof value === "string") {
+    const num = Number(value.replace(/,/g, ""));
+
+    if (!isNaN(num) && num > 100) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Percentage cannot exceed 100",
+        path,
+      });
+    }
+  }
+};
+
 export const courseCommissionDetailsSchema = z.object({
   referralType: z.string().optional(),
   referralValue: z.string().optional(),
@@ -99,6 +113,12 @@ export const courseCommissionDetailsSchema = z.object({
   staffValue: z.string().optional(),
   branchStaffType: z.string().optional(),
   branchStaffValue: z.string().optional(),
+}).superRefine((data, ctx) => {
+  validatePercentage(data.referralType, data.referralValue, ctx, ["referralValue"]);
+  validatePercentage(data.referralType, data.teamValue, ctx, ["teamValue"]);
+  validatePercentage(data.lecturerType, data.lecturerValue, ctx, ["lecturerValue"]);
+  validatePercentage(data.staffType, data.staffValue, ctx, ["staffValue"]);
+  validatePercentage(data.branchStaffType, data.branchStaffValue, ctx, ["branchStaffValue"]);
 });
 
 export type CourseCommissionDetailsValues = z.infer<typeof courseCommissionDetailsSchema>;

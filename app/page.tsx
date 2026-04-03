@@ -9,7 +9,11 @@ export default async function Page() {
     return redirect("/sign-in");
   }
 
-  const role = session.user.role.toLowerCase();
+  let rolePrefix = session.user.role.toLowerCase();
+  
+  if (rolePrefix === "referral_agent") {
+    rolePrefix = "referral";
+  }
 
-  return redirect(`/${role}-panel/dashboard`);
+  return redirect(`/${rolePrefix}-panel/dashboard`);
 }

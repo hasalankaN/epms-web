@@ -13,6 +13,7 @@ function getSidebarDataForRole(role: string): SidebarNavItem[] {
     case "LECTURER":
       return lecturerSidebarData;
     case "REFERRAL":
+    case "REFERRAL_AGENT":
       return referralSidebarData;
     default:
       return adminSidebarData;
@@ -37,18 +38,21 @@ export default async function RootLayout({
 
   // Filter sidebar by user privileges
   const filteredSidebarData = sidebarData.filter((item) => {
+    // Non-admin roles don't use granular privilege filtering on their custom sidebars
+    if (session.user.role !== "ADMIN") return true;
+
     if (!item.value) return true;
 
     return (
-      session.user.privileges.includes("all") ||
-      session.user.privileges.includes(item.value) ||
+      session.user.privileges?.includes("all") ||
+      session.user.privileges?.includes(item.value) ||
       item.value === "administrators"
     );
   });
 
   return (
     <SessionProvider session={session} notifications={[]}>
-      <MainLayoutClient initialSidebarData={filteredSidebarData}>
+      <MainLayoutClient initialSidebarData={filteredSidebarData} role={session.user.role}>
         {children}
       </MainLayoutClient>
     </SessionProvider>
