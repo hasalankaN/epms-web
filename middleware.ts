@@ -50,6 +50,22 @@ function getPanelFromPath(pathname: string): string | null {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Handle /dashboard shortcut - redirect to role-specific dashboard
+  if (pathname === "/dashboard") {
+    const session = await getSessionFromCookie(request);
+
+    if (!session || new Date() > new Date(session.expires)) {
+      const signInUrl = new URL("/sign-in", request.url);
+
+      return NextResponse.redirect(signInUrl);
+    }
+
+    const role = session.user.role as Role;
+    const allowedPanel = ROLE_PANEL_MAP[role] || "/admin-panel";
+
+    return NextResponse.redirect(new URL(`${allowedPanel}/dashboard`, request.url));
+  }
+
   // Only intercept protected panel routes
   if (!isProtectedRoute(pathname)) {
     return NextResponse.next();
@@ -90,5 +106,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin-panel/:path*", "/lecturer-panel/:path*", "/referral-panel/:path*"],
+  matcher: ["/dashboard", "/admin-panel/:path*", "/lecturer-panel/:path*", "/referral-panel/:path*"],
 };

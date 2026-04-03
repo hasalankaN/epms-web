@@ -3,14 +3,14 @@
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 
-import { CommissionsCard } from "@/components/referral-panel/dashboard/CommissionsCard";
-import { EnrollmentStats } from "@/components/referral-panel/dashboard/EnrollmentStats";
-import { MyAgentsCard } from "@/components/referral-panel/dashboard/MyAgentsCard";
-import { ReferralIdCard } from "@/components/referral-panel/dashboard/ReferralIdCard";
-import { ReferralStats } from "@/components/referral-panel/dashboard/ReferralStats";
-import { TopBatchesChart } from "@/components/referral-panel/dashboard/analytics/TopBatchesChart";
-import { TopCoursesChart } from "@/components/referral-panel/dashboard/analytics/TopCoursesChart";
-import { TopProductsChart } from "@/components/referral-panel/dashboard/analytics/TopProductsChart";
+import { CommissionsCard } from "@/components/referral-panel/dashboard/commissions/CommissionsCard";
+import { EnrollmentStats } from "@/components/referral-panel/dashboard/enrollment/EnrollmentStats";
+import { MyAgentsCard } from "@/components/referral-panel/dashboard/agents/MyAgentsCard";
+import { ReferralIdCard } from "@/components/referral-panel/dashboard/referral-info/ReferralIdCard";
+import { ReferralStats } from "@/components/referral-panel/dashboard/referral-info/ReferralStats";
+import { TopBatchesChart } from "@/components/referral-panel/dashboard/pcharts/TopBatchesChart";
+import { TopCoursesChart } from "@/components/referral-panel/dashboard/pcharts/TopCoursesChart";
+import { TopProductsChart } from "@/components/referral-panel/dashboard/pcharts/TopProductsChart";
 import { itemVariants } from "@/components/ui/dialog";
 import { BUTTON_STYLES } from "@/lib/constants/theme";
 import { cn } from "@/lib/utils";
