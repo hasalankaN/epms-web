@@ -52,7 +52,7 @@ export default async function RootLayout({
 
   return (
     <SessionProvider session={session} notifications={[]}>
-      <MainLayoutClient initialSidebarData={filteredSidebarData}>
+      <MainLayoutClient initialSidebarData={filteredSidebarData} role={session.user.role}>
         {children}
       </MainLayoutClient>
     </SessionProvider>
