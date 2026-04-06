@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { InquiryDetailsModal } from "../../modals/InquiryDetailsModal";
 import { FollowUpModal } from "../../modals/FollowUpModal";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
+import { useDeleteEnquiry } from "@/hooks/api/enquiries/useDeleteEnquiry";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +32,7 @@ interface AllInquiryTableProps {
   isError?: boolean;
   currentPage: number;
   onPageChange: (page: number) => void;
+  totalCount?: number;
 }
 
 export function AllInquiryTable({
@@ -41,19 +43,19 @@ export function AllInquiryTable({
   isError = false,
   currentPage,
   onPageChange,
+  totalCount: externalTotalCount,
 }: AllInquiryTableProps) {
   const itemsPerPage = 10;
 
   const filteredData = useMemo(() => data || [], [data]);
-  const totalCount = filteredData.length;
+  const totalCount = externalTotalCount ?? filteredData.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
 
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
 
-    return filteredData.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, currentPage, itemsPerPage]);
+  const paginatedData = useMemo(() => {
+    return filteredData;
+  }, [filteredData]);
 
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
@@ -74,6 +76,8 @@ export function AllInquiryTable({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedInquiry, setSelectedInquiry] = useState<InquiryDataType | null>(null);
 
+  const { mutateAsync: deleteEnquiry, isPending: isDeleting } = useDeleteEnquiry();
+
   const handleAction = (action: string, inquiry: InquiryDataType) => {
     console.log(`Action: ${action}`, inquiry);
     
@@ -89,12 +93,15 @@ export function AllInquiryTable({
     }
   };
 
-  const handleDeleteConfirm = () => {
-    // Implement actual delete logic (e.g., API call)
-    console.log("Deleting inquiry:", selectedInquiry?.id);
-    setIsDeleteModalOpen(false);
-
-    // Optionally: clear selection or refresh data
+  const handleDeleteConfirm = async () => {
+    if (!selectedInquiry) return;
+    
+    try {
+      await deleteEnquiry(selectedInquiry.id);
+      setIsDeleteModalOpen(false);
+    } catch {
+      // errors handled by hook
+    }
   };
 
 
@@ -151,7 +158,18 @@ export function AllInquiryTable({
       ),
       accessorKey: "phone",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.phone}</div>,
+      cell: (item) => (
+        item.phone && item.phone !== "-" ? (
+          <a
+            href={`tel:${item.phone}`}
+            className="text-[11px] font-medium text-[#45556C] transition-colors hover:text-[#E60076]"
+          >
+            {item.phone}
+          </a>
+        ) : (
+          <span className="text-[11px] font-medium text-[#45556C]">{item.phone || "-"}</span>
+        )
+      ),
     },
     {
       header: () => (
@@ -161,7 +179,20 @@ export function AllInquiryTable({
       ),
       accessorKey: "whatsApp",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.whatsApp}</div>,
+      cell: (item) => (
+        item.whatsApp && item.whatsApp !== "-" ? (
+          <a
+            href={`https://wa.me/${item.whatsApp.replace(/\s+/g, "")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] font-medium text-[#45556C] transition-colors hover:text-[#E60076]"
+          >
+            {item.whatsApp}
+          </a>
+        ) : (
+          <span className="text-[11px] font-medium text-[#45556C]">{item.whatsApp || "-"}</span>
+        )
+      ),
     },
     {
       header: "Source",
@@ -209,8 +240,7 @@ export function AllInquiryTable({
           <StatusPopover
             value={inquiry.status}
             options={options}
-
-            // readOnly - removed to enable dropdown
+            readOnly
           />
         );
       },
@@ -290,6 +320,7 @@ export function AllInquiryTable({
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDeleteConfirm}
+        isDeleting={isDeleting}
         title="Confirm Deletion"
         description="Are you sure you want to delete this enquiry? This action cannot be undone."
       />

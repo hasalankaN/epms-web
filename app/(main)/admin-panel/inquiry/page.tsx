@@ -4,7 +4,7 @@ import React, { useState } from "react";
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
-import { Circle, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { TAB_STYLES, BUTTON_STYLES } from "@/lib/constants/theme";
@@ -59,7 +59,6 @@ export default function InquiryManagementPage() {
                   : TAB_STYLES.inactive
               )}
             >
-              <Circle className="h-4 w-4" />
               <span className="hidden md:inline">{tab.label}</span>
               <span className="md:hidden">{tab.mobileLabel}</span>
             </button>
