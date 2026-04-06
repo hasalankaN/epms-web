@@ -85,3 +85,13 @@ export interface AssignStaffDto {
   next_follow_up_at?: string;
 }
 
+export interface EnquiryDashboardData {
+  total: number;
+  today: number;
+  today_follow_ups: number;
+  pending: number;
+  in_progress: number;
+  completed: number;
+  no_response: number;
+}
+

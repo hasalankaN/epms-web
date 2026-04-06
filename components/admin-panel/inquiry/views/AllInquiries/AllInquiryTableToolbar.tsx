@@ -45,7 +45,7 @@ interface BulkActionsHandlers {
   onSendSMS: () => void;
   onSendWhatsapp: () => void;
   onSendEmail: () => void;
-  onDelete: () => void;
+  onDelete: () => Promise<void>;
 }
 
 interface AllInquiryTableToolbarProps {
@@ -56,11 +56,12 @@ interface AllInquiryTableToolbarProps {
   isExportingCSV?: boolean;
   onExportPDF: () => Promise<void>;
   isExportingPDF?: boolean;
+  isDeleting?: boolean;
 }
 
 // ===== COMPONENT =====
 
-export function AllInquiryTableToolbar({ bulkActions, selectedCount, totalCount, onExportCSV, isExportingCSV = false, onExportPDF, isExportingPDF = false }: AllInquiryTableToolbarProps) {
+export function AllInquiryTableToolbar({ bulkActions, selectedCount, totalCount, onExportCSV, isExportingCSV = false, onExportPDF, isExportingPDF = false, isDeleting = false }: AllInquiryTableToolbarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -486,10 +487,11 @@ export function AllInquiryTableToolbar({ bulkActions, selectedCount, totalCount,
       <DeleteConfirmationModal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        onConfirm={() => {
-            bulkActions.onDelete();
+        onConfirm={async () => {
+             await bulkActions.onDelete();
             setDeleteModalOpen(false);
         }}
+        isDeleting={isDeleting}
         title="Confirm Bulk Deletion"
         description={`Are you sure you want to delete ${selectedCount} selected enquiries? This action cannot be undone.`}
       />

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { InquiryDetailsModal } from "../../modals/InquiryDetailsModal";
 import { AssignStaffModal } from "../../modals/AssignStaffModal"; 
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
+import { useDeleteEnquiry } from "@/hooks/api/enquiries/useDeleteEnquiry";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,6 +73,8 @@ export function PendingInquiryTable({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedInquiry, setSelectedInquiry] = useState<InquiryDataType | null>(null);
 
+  const { mutateAsync: deleteEnquiry, isPending: isDeleting } = useDeleteEnquiry();
+
   const handleAction = (action: string, inquiry: InquiryDataType) => {
     console.log(`Action: ${action}`, inquiry);
     
@@ -87,12 +90,15 @@ export function PendingInquiryTable({
     }
   };
 
-  const handleDeleteConfirm = () => {
-    // Implement actual delete logic (e.g., API call)
-    console.log("Deleting inquiry:", selectedInquiry?.id);
-    setIsDeleteModalOpen(false);
-
-    // Optionally: clear selection or refresh data
+  const handleDeleteConfirm = async () => {
+    if (!selectedInquiry) return;
+    
+    try {
+      await deleteEnquiry(selectedInquiry.id);
+      setIsDeleteModalOpen(false);
+    } catch {
+      // errors handled by hook
+    }
   };
 
 
@@ -149,7 +155,18 @@ export function PendingInquiryTable({
       ),
       accessorKey: "phone",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.phone}</div>,
+      cell: (item) => (
+        item.phone && item.phone !== "-" ? (
+          <a
+            href={`tel:${item.phone}`}
+            className="text-[11px] font-medium text-[#45556C] transition-colors hover:text-[#E60076]"
+          >
+            {item.phone}
+          </a>
+        ) : (
+          <span className="text-[11px] font-medium text-[#45556C]">{item.phone || "-"}</span>
+        )
+      ),
     },
     {
       header: () => (
@@ -159,7 +176,20 @@ export function PendingInquiryTable({
       ),
       accessorKey: "whatsApp",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.whatsApp}</div>,
+      cell: (item) => (
+        item.whatsApp && item.whatsApp !== "-" ? (
+          <a
+            href={`https://wa.me/${item.whatsApp.replace(/\s+/g, "")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] font-medium text-[#45556C] transition-colors hover:text-[#E60076]"
+          >
+            {item.whatsApp}
+          </a>
+        ) : (
+          <span className="text-[11px] font-medium text-[#45556C]">{item.whatsApp || "-"}</span>
+        )
+      ),
     },
     {
       header: "District",
@@ -251,6 +281,7 @@ export function PendingInquiryTable({
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDeleteConfirm}
+        isDeleting={isDeleting}
         title="Confirm Deletion"
         description="Are you sure you want to delete this enquiry? This action cannot be undone."
       />

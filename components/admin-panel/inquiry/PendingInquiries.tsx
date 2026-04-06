@@ -15,6 +15,7 @@ import { PendingInquiryTableToolbar } from "./views/PendingInquiries/PendingInqu
 import { PendingInquiryTable } from "./views/PendingInquiries/PendingInquiryTable";
 
 import { useGetEnquiries } from "@/hooks/api/enquiries/useGetEnquiries";
+import { useBulkDeleteEnquiries } from "@/hooks/api/enquiries/useBulkDeleteEnquiries";
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "-";
@@ -112,6 +113,8 @@ export function PendingInquiries() {
     () => Object.entries(rowSelection).filter(([, selected]) => selected).map(([id]) => id),
     [rowSelection]
   );
+  
+  const { mutateAsync: bulkDeleteEnquiries, isPending: isBulkDeleting } = useBulkDeleteEnquiries();
 
   // ===== BULK ACTION HANDLERS =====
   const handlePageChange = useCallback((page: number) => {
@@ -163,16 +166,20 @@ export function PendingInquiries() {
     toast.success(`Sending Email to ${selectedIds.length} selected inquiries`);
   }, [selectedIds]);
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async () => {
     if (selectedIds.length === 0) {
       toast.warning("Please select at least one inquiry");
 
       return;
     }
 
-    toast.error(`Deleting ${selectedIds.length} selected inquiries`);
-    setRowSelection({});
-  }, [selectedIds]);
+    try {
+      await bulkDeleteEnquiries({ ids: selectedIds });
+      setRowSelection({});
+    } catch {
+      // errors handled by hook
+    }
+  }, [selectedIds, bulkDeleteEnquiries]);
 
   const handleExportCSV = useCallback(async () => {
     setIsExportingCSV(true);
@@ -251,6 +258,7 @@ export function PendingInquiries() {
           isExportingCSV={isExportingCSV}
           onExportPDF={handleExportPDF}
           isExportingPDF={isExportingPDF}
+          isDeleting={isBulkDeleting}
         />
       </div>
 

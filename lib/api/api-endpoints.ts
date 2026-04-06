@@ -91,5 +91,8 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/api/v1/admin/enquiries/${id}`,
     ADD_FOLLOWUP: (id: string) => `/api/v1/admin/enquiries/${id}/followups`,
     ASSIGN_STAFF: (id: string) => `/api/v1/admin/enquiries/${id}/assign`,
+    DELETE: (id: string) => `/api/v1/admin/enquiries/${id}`,
+    DELETE_BULK: `/api/v1/admin/enquiries`,
+    GET_DASHBOARD: `/api/v1/admin/enquiries/dashboard`,
   },
 };
