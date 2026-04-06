@@ -44,6 +44,7 @@ interface FilterModalProps {
   onApply: (selections: FilterSelections) => void;
   className?: string;
   initialSelections?: FilterSelections;
+  multiSelect?: boolean;
 }
 
 // ===== COMPONENT =====
@@ -57,6 +58,7 @@ export function FilterModal({
   onApply,
   className,
   initialSelections = {},
+  multiSelect: globalMultiSelect,
 }: FilterModalProps) {
   const [selections, setSelections] = useState<FilterSelections>(initialSelections);
   const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({});
@@ -144,7 +146,9 @@ export function FilterModal({
   const handleChipToggle = useCallback((categoryKey: string, itemKey: string) => {
     setSelections((prev) => {
       const category = categories.find((c) => c.key === categoryKey);
-      const isMultiSelect = category?.multiSelect !== false; // Default to true
+
+      // Priority: Category level -> Global level -> Default (true)
+      const isMultiSelect = category?.multiSelect ?? globalMultiSelect ?? true;
 
       const current = (prev[categoryKey] as string[]) || [];
       const isSelected = current.includes(itemKey);
@@ -163,7 +167,7 @@ export function FilterModal({
           : [...current, itemKey],
       };
     });
-  }, [categories]);
+  }, [categories, globalMultiSelect]);
 
   const handleShowMore = useCallback((categoryKey: string) => {
     setLoadingCategories(prev => ({ ...prev, [categoryKey]: true }));

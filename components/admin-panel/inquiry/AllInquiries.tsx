@@ -4,8 +4,10 @@ import React, { useState, useMemo, useCallback } from "react";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
-
 import { toast } from "sonner";
+
+import { generateInquiryCSV } from "@/utils/export/CSV/generate-inquiry-csv";
+import { generateInquiryPDF } from "@/utils/export/PDF/generate-inquiry-pdf";
 
 import type { InquiryDataType, InquiryStatus } from "@/types/inquiry";
 
@@ -105,6 +107,8 @@ export function AllInquiries() {
 
   // ===== SHARED STATE =====
   const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
+  const [isExportingCSV, setIsExportingCSV] = useState(false);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
 
   // ===== DERIVED VALUES =====
   const selectedIds = useMemo(
@@ -173,6 +177,56 @@ export function AllInquiries() {
     setRowSelection({});
   }, [selectedIds]);
 
+  const handleExportCSV = useCallback(async () => {
+    setIsExportingCSV(true);
+
+    try {
+      await generateInquiryCSV({
+        search,
+        district,
+        branch_id,
+        assignee_user_id,
+        interest_id,
+        source,
+        date_from,
+        date_to,
+        follow_up_from,
+        follow_up_to,
+        tab: "all",
+      });
+      toast.success("CSV exported successfully");
+    } catch {
+      toast.error("Failed to export CSV. Please try again.");
+    } finally {
+      setIsExportingCSV(false);
+    }
+  }, [search, district, branch_id, assignee_user_id, interest_id, source, date_from, date_to, follow_up_from, follow_up_to]);
+
+  const handleExportPDF = useCallback(async () => {
+    setIsExportingPDF(true);
+
+    try {
+      await generateInquiryPDF({
+        search,
+        district,
+        branch_id,
+        assignee_user_id,
+        interest_id,
+        source,
+        date_from,
+        date_to,
+        follow_up_from,
+        follow_up_to,
+        tab: "all",
+      });
+      toast.success("PDF exported successfully");
+    } catch {
+      toast.error("Failed to export PDF. Please try again.");
+    } finally {
+      setIsExportingPDF(false);
+    }
+  }, [search, district, branch_id, assignee_user_id, interest_id, source, date_from, date_to, follow_up_from, follow_up_to]);
+
   // ===== BULK ACTIONS CONFIG =====
   const bulkActions = useMemo(
     () => ({
@@ -199,7 +253,11 @@ export function AllInquiries() {
         <AllInquiryTableToolbar 
           bulkActions={bulkActions} 
           selectedCount={selectedIds.length} 
-          totalCount={totalCount} 
+          totalCount={totalCount}
+          onExportCSV={handleExportCSV}
+          isExportingCSV={isExportingCSV}
+          onExportPDF={handleExportPDF}
+          isExportingPDF={isExportingPDF}
         />
       </div>
 

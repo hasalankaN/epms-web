@@ -18,7 +18,6 @@ import {
 import { Input } from "@/components/ui/input";
 import type { BulkActionItem } from "@/components/common/dropdowns/BulkActionDropdown";
 import { BulkActionDropdown } from "@/components/common/dropdowns/BulkActionDropdown";
-import type { ExportItem } from "@/components/common/dropdowns/ExportDropdown";
 import { ExportDropdown } from "@/components/common/dropdowns/ExportDropdown";
 import type { FilterCategory, FilterSelections } from "@/components/common/filters/FilterModal";
 import { FilterModal, FilterModalTrigger } from "@/components/common/filters/FilterModal";
@@ -29,6 +28,7 @@ import { useGetBranches } from "@/hooks/api/branches/useGetBranches";
 import { useGetStaff } from "@/hooks/api/staff/useGetStaff";
 import { useGetCourses } from "@/hooks/api/courses/useGetCourses";
 import { useGetBatches } from "@/hooks/api/batches/useGetBatches";
+import { DISTRICTS } from "@/lib/constants/districts";
 
 const buttonTextStyles = "text-[14px] font-semibold leading-[20px] text-[#0F172B]";
 
@@ -36,10 +36,6 @@ const buttonTextStyles = "text-[14px] font-semibold leading-[20px] text-[#0F172B
 
 // We will generate the categories dynamically inside the component
 
-const inquiryExportItems: ExportItem[] = [
-  { key: "pdf", label: "Print PDF", icon: (() => <i className="file-pdf h-4 w-4" />) as any, onClick: () => console.log("Print PDF") },
-  { key: "csv", label: "Export CSV", icon: (() => <i className="file-csv h-4 w-4" />) as any, onClick: () => console.log("Export CSV") },
-];
 
 // ===== TYPES =====
 
@@ -56,11 +52,15 @@ interface AllInquiryTableToolbarProps {
   bulkActions: BulkActionsHandlers;
   selectedCount: number;
   totalCount: number;
+  onExportCSV: () => Promise<void>;
+  isExportingCSV?: boolean;
+  onExportPDF: () => Promise<void>;
+  isExportingPDF?: boolean;
 }
 
 // ===== COMPONENT =====
 
-export function AllInquiryTableToolbar({ bulkActions, selectedCount, totalCount }: AllInquiryTableToolbarProps) {
+export function AllInquiryTableToolbar({ bulkActions, selectedCount, totalCount, onExportCSV, isExportingCSV = false, onExportPDF, isExportingPDF = false }: AllInquiryTableToolbarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -136,35 +136,28 @@ export function AllInquiryTableToolbar({ bulkActions, selectedCount, totalCount 
         key: "assignee",
         label: "By Assignee",
         type: "chips",
+        multiSelect: false,
         items: staffData?.results.map(s => ({ key: s.userId, label: `${s.firstName} ${s.lastName}` })) || [],
       },
       {
         key: "branches",
         label: "By Branches",
         type: "chips",
+        multiSelect: false,
         items: branchesData?.results.map(b => ({ key: b.id, label: b.name })) || [],
       },
       {
         key: "district",
         label: "By District",
         type: "chips",
-        items: [
-          { key: "colombo", label: "Colombo" },
-          { key: "gampaha", label: "Gampaha" },
-          { key: "kalutara", label: "Kalutara" },
-          { key: "kandy", label: "Kandy" },
-          { key: "kurunegala", label: "Kurunegala" },
-          { key: "anuradhapura", label: "Anuradhapura" },
-          { key: "galle", label: "Galle" },
-          { key: "matara", label: "Matara" },
-          { key: "jaffna", label: "Jaffna" },
-          { key: "negombo", label: "Negombo" }, // keeping Negombo if needed
-        ],
+        multiSelect: false,
+        items: DISTRICTS.map(d => ({ key: d.toLowerCase(), label: d })),
       },
       {
         key: "interest",
         label: "By Interest",
         type: "chips",
+        multiSelect: false,
         items: [
           ...(coursesData?.results.map(c => ({ key: c.id, label: c.name })) || []),
           ...(batchesData?.results.map(b => ({ key: b.id, label: b.name })) || []),
@@ -174,6 +167,7 @@ export function AllInquiryTableToolbar({ bulkActions, selectedCount, totalCount 
         key: "status",
         label: "By Status",
         type: "chips",
+        multiSelect: false,
         items: [
           { key: "NO_RESPONSE", label: "No Response" },
           { key: "COMPLETED", label: "Completed" },
@@ -185,6 +179,7 @@ export function AllInquiryTableToolbar({ bulkActions, selectedCount, totalCount 
         key: "sources",
         label: "By Sources",
         type: "chips",
+        multiSelect: false,
         items: [
           { key: "WEB", label: "Web" },
           { key: "ADMIN", label: "By Admin" },
@@ -343,13 +338,21 @@ export function AllInquiryTableToolbar({ bulkActions, selectedCount, totalCount 
               label="Filter Option"
               className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
             />
-            <button className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}>
+            <button
+              className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}
+              onClick={onExportPDF}
+              disabled={isExportingPDF}
+            >
               <i className="file-pdf h-4 w-4" />
-              Print PDF
+              {isExportingPDF ? "Printing..." : "Print PDF"}
             </button>
-            <button className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}>
+            <button
+              className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}
+              onClick={onExportCSV}
+              disabled={isExportingCSV}
+            >
               <i className="file-csv h-4 w-4" />
-              Export CSV
+              {isExportingCSV ? "Exporting..." : "Export CSV"}
             </button>
           </div>
         </div>
@@ -393,7 +396,12 @@ export function AllInquiryTableToolbar({ bulkActions, selectedCount, totalCount 
               label="Filter"
               className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
             />
-            <ExportDropdown items={inquiryExportItems} />
+            <ExportDropdown
+              items={[
+                { key: "pdf", label: isExportingPDF ? "Printing..." : "Print PDF", icon: (() => <i className="file-pdf h-4 w-4" />) as any, onClick: onExportPDF },
+                { key: "csv", label: isExportingCSV ? "Exporting..." : "Export CSV", icon: (() => <i className="file-csv h-4 w-4" />) as any, onClick: onExportCSV },
+              ]}
+            />
           </div>
         </div>
 
@@ -448,13 +456,13 @@ export function AllInquiryTableToolbar({ bulkActions, selectedCount, totalCount 
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[160px]">
-                <DropdownMenuItem onClick={() => console.log("Print PDF")} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
+                <DropdownMenuItem onClick={onExportPDF} disabled={isExportingPDF} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
                   <i className="file-pdf mr-2 h-4 w-4" />
-                  Print PDF
+                  {isExportingPDF ? "Printing..." : "Print PDF"}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => console.log("Export CSV")} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
+                <DropdownMenuItem onClick={onExportCSV} disabled={isExportingCSV} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
                   <i className="file-csv mr-2 h-4 w-4" />
-                  Export CSV
+                  {isExportingCSV ? "Exporting..." : "Export CSV"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -472,6 +480,7 @@ export function AllInquiryTableToolbar({ bulkActions, selectedCount, totalCount 
         categories={dynamicCategories}
         onApply={handleApplyFilters}
         initialSelections={activeFilters}
+        multiSelect={false}
       />
 
       <DeleteConfirmationModal

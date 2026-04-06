@@ -1,113 +1,37 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
+
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 import { Search, MoreHorizontal, CheckSquare2, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { BUTTON_STYLES, AUTH_INPUT } from "@/lib/constants/theme";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
 import { Input } from "@/components/ui/input";
 import type { BulkActionItem } from "@/components/common/dropdowns/BulkActionDropdown";
 import { BulkActionDropdown } from "@/components/common/dropdowns/BulkActionDropdown";
-import type { ExportItem } from "@/components/common/dropdowns/ExportDropdown";
 import { ExportDropdown } from "@/components/common/dropdowns/ExportDropdown";
 import type { FilterCategory, FilterSelections } from "@/components/common/filters/FilterModal";
 import { FilterModal, FilterModalTrigger } from "@/components/common/filters/FilterModal";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
 
+import { useDebounce } from "@/hooks/useDebounce";
+import { useGetBranches } from "@/hooks/api/branches/useGetBranches";
+import { useGetStaff } from "@/hooks/api/staff/useGetStaff";
+import { useGetCourses } from "@/hooks/api/courses/useGetCourses";
+import { useGetBatches } from "@/hooks/api/batches/useGetBatches";
+import { DISTRICTS } from "@/lib/constants/districts";
+
 const buttonTextStyles = "text-[14px] font-semibold leading-[20px] text-[#0F172B]";
 
-// ===== INQUIRY-SPECIFIC FILTER DATA (for FilterModal) =====
-
-const inquiryFilterCategories: FilterCategory[] = [
-  { 
-    key: "date", 
-    label: "By Date", 
-    type: "dateRange",
-  },
-  { 
-    key: "assignee", 
-    label: "By Assignee", 
-    type: "chips",
-    items: [
-      { key: "kalpa", label: "Kalpa" },
-      { key: "supun", label: "Supun" },
-      { key: "ruwini", label: "Ruwini" },
-      { key: "maneesha", label: "Maneesha" },
-    ],
-  },
-  { 
-    key: "branches", 
-    label: "By Branches", 
-    type: "chips",
-    items: [
-      { key: "main", label: "Main" },
-      { key: "negombo", label: "Negombo" },
-      { key: "anuradhapura", label: "Anuradhapura" },
-      { key: "galle", label: "Galle" },
-    ],
-  },
-  { 
-    key: "district", 
-    label: "By District", 
-    type: "chips",
-    items: [
-      { key: "colombo", label: "Colombo" },
-      { key: "negombo", label: "Negombo" },
-      { key: "anuradhapura", label: "Anuradhapura" },
-      { key: "galle", label: "Galle" },
-    ],
-  },
-  { 
-    key: "interest", 
-    label: "By Interest", 
-    type: "chips",
-    items: [
-      { key: "digitalMarketing", label: "Digital Marketing" },
-      { key: "uiux", label: "UI UX" },
-      { key: "korean", label: "Korean" },
-      { key: "englishLang", label: "English Lang." },
-      { key: "mathematics", label: "Mathematics" },
-    ],
-  },
-  { 
-    key: "status", 
-    label: "By Status", 
-    type: "chips",
-    items: [
-      { key: "noResponse", label: "No Response" },
-      { key: "completed", label: "Completed" },
-      { key: "pending", label: "Pending" },
-      { key: "inProgress", label: "In Progress" },
-    ],
-  },
-  { 
-    key: "sources", 
-    label: "By Sources", 
-    type: "chips",
-    items: [
-      { key: "web", label: "Web" },
-      { key: "byAdmin", label: "By Admin" },
-    ],
-  },
-  { 
-    key: "followUp", 
-    label: "By Follow Up Date", 
-    type: "dateRange",
-  },
-];
-
-const inquiryExportItems: ExportItem[] = [
-  { key: "pdf", label: "Print PDF", icon: (() => <i className="file-pdf h-4 w-4" />) as any, onClick: () => console.log("Print PDF") },
-  { key: "csv", label: "Export CSV", icon: (() => <i className="file-csv h-4 w-4" />) as any, onClick: () => console.log("Export CSV") },
-];
 
 // ===== TYPES =====
 
@@ -124,14 +48,128 @@ interface PendingInquiryTableToolbarProps {
   bulkActions: BulkActionsHandlers;
   selectedCount: number;
   totalCount: number;
+  onExportCSV: () => Promise<void>;
+  isExportingCSV?: boolean;
+  onExportPDF: () => Promise<void>;
+  isExportingPDF?: boolean;
 }
 
 // ===== COMPONENT =====
 
-export function PendingInquiryTableToolbar({ bulkActions, selectedCount, totalCount }: PendingInquiryTableToolbarProps) {
+export function PendingInquiryTableToolbar({ bulkActions, selectedCount, totalCount, onExportCSV, isExportingCSV = false, onExportPDF, isExportingPDF = false }: PendingInquiryTableToolbarProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const currentSearch = searchParams.get("search") || "";
+  const [searchTerm, setSearchTerm] = useState(currentSearch);
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<FilterSelections>({});
+
+  // Initialize active filters from URL
+  const [activeFilters, setActiveFilters] = useState<FilterSelections>(() => {
+    const filters: FilterSelections = {};
+
+    const getParam = (key: string, targetKey: string) => {
+      const val = searchParams.get(key);
+
+      if (val) filters[targetKey] = val.split(",");
+    };
+
+    getParam("assignee_user_id", "assignee");
+    getParam("branch_id", "branches");
+    getParam("district", "district");
+    getParam("interest_id", "interest");
+    getParam("source", "sources");
+
+    const dateFrom = searchParams.get("date_from");
+    const dateTo = searchParams.get("date_to");
+
+    if (dateFrom && dateTo) {
+      filters["date"] = { start: new Date(dateFrom), end: new Date(dateTo) };
+    }
+
+    const followFrom = searchParams.get("follow_up_from");
+    const followTo = searchParams.get("follow_up_to");
+
+    if (followFrom && followTo) {
+      filters["followUp"] = { start: new Date(followFrom), end: new Date(followTo) };
+    }
+
+    return filters;
+  });
+
+  // Sync search input with URL
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (debouncedSearchTerm) {
+      params.set("search", debouncedSearchTerm);
+    } else {
+      params.delete("search");
+    }
+
+    if (searchParams.get("search") !== (debouncedSearchTerm || null)) {
+      params.set("page", "1");
+      router.push(`${pathname}?${params.toString()}`);
+    }
+  }, [debouncedSearchTerm, router, pathname, searchParams]);
+
+  // Fetch options for filters
+  const { data: branchesData } = useGetBranches({ size: 100 });
+  const { data: staffData } = useGetStaff({ size: 100 });
+  const { data: coursesData } = useGetCourses({ size: 100 });
+  const { data: batchesData } = useGetBatches({ size: 100 });
+
+  const dynamicCategories = useMemo<FilterCategory[]>(() => {
+    return [
+      { key: "date", label: "By Date", type: "dateRange" },
+      {
+        key: "assignee",
+        label: "By Assignee",
+        type: "chips",
+        multiSelect: false,
+        items: staffData?.results.map(s => ({ key: s.userId, label: `${s.firstName} ${s.lastName}` })) || [],
+      },
+      {
+        key: "branches",
+        label: "By Branches",
+        type: "chips",
+        multiSelect: false,
+        items: branchesData?.results.map(b => ({ key: b.id, label: b.name })) || [],
+      },
+      {
+        key: "district",
+        label: "By District",
+        type: "chips",
+        multiSelect: false,
+        items: DISTRICTS.map(d => ({ key: d.toLowerCase(), label: d })),
+      },
+      {
+        key: "interest",
+        label: "By Interest",
+        type: "chips",
+        multiSelect: false,
+        items: [
+          ...(coursesData?.results.map(c => ({ key: c.id, label: c.name })) || []),
+          ...(batchesData?.results.map(b => ({ key: b.id, label: b.name })) || []),
+        ],
+      },
+      {
+        key: "sources",
+        label: "By Sources",
+        type: "chips",
+        multiSelect: false,
+        items: [
+          { key: "WEB", label: "Web" },
+          { key: "ADMIN", label: "By Admin" },
+        ],
+      },
+      { key: "followUp", label: "By Follow Up Date", type: "dateRange" },
+    ];
+  }, [staffData, branchesData, coursesData, batchesData]);
 
   // Check if there are any active filters
   const hasActiveFilters = Object.keys(activeFilters).length > 0;
@@ -141,50 +179,101 @@ export function PendingInquiryTableToolbar({ bulkActions, selectedCount, totalCo
 
   // Build bulk action items with handlers from props
   const inquiryBulkActionsWithHandlers: BulkActionItem[] = [
-    { 
-      key: isAllSelected ? "clear" : "selectAll", 
-      label: isAllSelected ? "Clear Selection" : "Select All", 
-      onClick: isAllSelected ? bulkActions.onClear : bulkActions.onSelectAll 
+    {
+      key: isAllSelected ? "clear" : "selectAll",
+      label: isAllSelected ? "Clear Selection" : "Select All",
+      onClick: isAllSelected ? bulkActions.onClear : bulkActions.onSelectAll,
     },
-    { 
-      key: "sendSMS", 
-      label: "Send SMS", 
+    {
+      key: "sendSMS",
+      label: "Send SMS",
       onClick: bulkActions.onSendSMS,
-      disabled: !hasSelection 
+      disabled: !hasSelection,
     },
-    { 
-      key: "sendWhatsapp", 
-      label: "Send Whatsapp", 
+    {
+      key: "sendWhatsapp",
+      label: "Send Whatsapp",
       onClick: bulkActions.onSendWhatsapp,
-      disabled: !hasSelection 
+      disabled: !hasSelection,
     },
-    { 
-      key: "sendEmail", 
-      label: "Send Email", 
+    {
+      key: "sendEmail",
+      label: "Send Email",
       onClick: bulkActions.onSendEmail,
-      disabled: !hasSelection 
+      disabled: !hasSelection,
     },
-    { 
-      key: "delete", 
-      label: "Delete", 
-      variant: "danger", 
-      onClick: () => setDeleteModalOpen(true), // Intercept provided onDelete logic
-      disabled: !hasSelection 
+    {
+      key: "delete",
+      label: "Delete",
+      variant: "danger",
+      onClick: () => setDeleteModalOpen(true),
+      disabled: !hasSelection,
     },
   ];
 
   const handleApplyFilters = useCallback((selections: FilterSelections) => {
-    console.log("Applied filters:", selections);
     setActiveFilters(selections);
 
-    // TODO: Implement actual filtering logic
-  }, []);
+    const params = new URLSearchParams(searchParams.toString());
+
+    const setOrDelete = (selKey: string, paramKey: string) => {
+      const val = selections[selKey];
+
+      if (Array.isArray(val) && val.length > 0) {
+        params.set(paramKey, val.join(","));
+      } else {
+        params.delete(paramKey);
+      }
+    };
+
+    setOrDelete("assignee", "assignee_user_id");
+    setOrDelete("branches", "branch_id");
+    setOrDelete("district", "district");
+    setOrDelete("interest", "interest_id");
+    setOrDelete("sources", "source");
+
+    const dateVal = selections["date"] as { start: Date | null; end: Date | null };
+
+    if (dateVal && dateVal.start && dateVal.end) {
+      params.set("date_from", dateVal.start.toISOString());
+      params.set("date_to", dateVal.end.toISOString());
+    } else {
+      params.delete("date_from");
+      params.delete("date_to");
+    }
+
+    const followVal = selections["followUp"] as { start: Date | null; end: Date | null };
+
+    if (followVal && followVal.start && followVal.end) {
+      params.set("follow_up_from", followVal.start.toISOString());
+      params.set("follow_up_to", followVal.end.toISOString());
+    } else {
+      params.delete("follow_up_from");
+      params.delete("follow_up_to");
+    }
+
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
+  }, [router, pathname, searchParams]);
 
   const handleClearFilters = useCallback(() => {
     setActiveFilters({});
 
-    // TODO: Clear actual filters
-  }, []);
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.delete("assignee_user_id");
+    params.delete("branch_id");
+    params.delete("district");
+    params.delete("interest_id");
+    params.delete("source");
+    params.delete("date_from");
+    params.delete("date_to");
+    params.delete("follow_up_from");
+    params.delete("follow_up_to");
+
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
+  }, [router, pathname, searchParams]);
 
   return (
     <>
@@ -200,6 +289,8 @@ export function PendingInquiryTableToolbar({ bulkActions, selectedCount, totalCo
               <Input
                 type="text"
                 placeholder="Search by Name, NIC, Phone Number"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className={cn(
                   AUTH_INPUT.base,
                   AUTH_INPUT.placeholder,
@@ -226,13 +317,21 @@ export function PendingInquiryTableToolbar({ bulkActions, selectedCount, totalCo
               label="Filter Option"
               className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
             />
-            <button className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}>
+            <button
+              className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}
+              onClick={onExportPDF}
+              disabled={isExportingPDF}
+            >
               <i className="file-pdf h-4 w-4" />
-              Print PDF
+              {isExportingPDF ? "Printing..." : "Print PDF"}
             </button>
-            <button className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}>
+            <button
+              className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}
+              onClick={onExportCSV}
+              disabled={isExportingCSV}
+            >
               <i className="file-csv h-4 w-4" />
-              Export CSV
+              {isExportingCSV ? "Exporting..." : "Export CSV"}
             </button>
           </div>
         </div>
@@ -248,6 +347,8 @@ export function PendingInquiryTableToolbar({ bulkActions, selectedCount, totalCo
               <Input
                 type="text"
                 placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className={cn(
                   AUTH_INPUT.base,
                   AUTH_INPUT.placeholder,
@@ -259,7 +360,7 @@ export function PendingInquiryTableToolbar({ bulkActions, selectedCount, totalCo
 
           {/* Right: Filter + Export Dropdown */}
           <div className="flex items-center gap-3">
-             {hasActiveFilters && (
+            {hasActiveFilters && (
               <button
                 type="button"
                 onClick={handleClearFilters}
@@ -274,7 +375,12 @@ export function PendingInquiryTableToolbar({ bulkActions, selectedCount, totalCo
               label="Filter"
               className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
             />
-            <ExportDropdown items={inquiryExportItems} />
+            <ExportDropdown
+              items={[
+                { key: "pdf", label: isExportingPDF ? "Printing..." : "Print PDF", icon: (() => <i className="file-pdf h-4 w-4" />) as any, onClick: onExportPDF },
+                { key: "csv", label: isExportingCSV ? "Exporting..." : "Export CSV", icon: (() => <i className="file-csv h-4 w-4" />) as any, onClick: onExportCSV },
+              ]}
+            />
           </div>
         </div>
 
@@ -286,6 +392,8 @@ export function PendingInquiryTableToolbar({ bulkActions, selectedCount, totalCo
             <Input
               type="text"
               placeholder="Search by Name, NIC, Phone Number"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className={cn(
                 AUTH_INPUT.base,
                 AUTH_INPUT.placeholder,
@@ -296,13 +404,13 @@ export function PendingInquiryTableToolbar({ bulkActions, selectedCount, totalCo
 
           {/* Action buttons row: Filter + More + Bulk */}
           <div className="flex items-center gap-3">
-            {/* Filter (icon only) */}
             {hasActiveFilters && (
               <button
-                title="Clear Filters"
                 type="button"
                 onClick={handleClearFilters}
                 className={cn(BUTTON_STYLES.outline.md, "px-3 border-dashed text-[#64748B] hover:text-[#0F172B]")}
+                aria-label="Clear filters"
+                title="Clear filters"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -311,23 +419,28 @@ export function PendingInquiryTableToolbar({ bulkActions, selectedCount, totalCo
               onClick={() => setFilterModalOpen(true)}
               iconOnly
               className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
+              aria-label="Filter inquiries"
             />
 
             {/* More Actions Dropdown (PDF/CSV) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button title="More Options" className={cn(BUTTON_STYLES.outline.md, "px-3")}>
+                <button
+                  className={cn(BUTTON_STYLES.outline.md, "px-3")}
+                  aria-label="More actions"
+                  title="More actions"
+                >
                   <MoreHorizontal className="h-4 w-4 text-[#0F172B]" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[160px]">
-                <DropdownMenuItem onClick={() => console.log("Print PDF")} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
+                <DropdownMenuItem onClick={onExportPDF} disabled={isExportingPDF} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
                   <i className="file-pdf mr-2 h-4 w-4" />
-                  Print PDF
+                  {isExportingPDF ? "Printing..." : "Print PDF"}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => console.log("Export CSV")} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
+                <DropdownMenuItem onClick={onExportCSV} disabled={isExportingCSV} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
                   <i className="file-csv mr-2 h-4 w-4" />
-                  Export CSV
+                  {isExportingCSV ? "Exporting..." : "Export CSV"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -342,17 +455,18 @@ export function PendingInquiryTableToolbar({ bulkActions, selectedCount, totalCo
       <FilterModal
         open={filterModalOpen}
         onOpenChange={setFilterModalOpen}
-        categories={inquiryFilterCategories}
+        categories={dynamicCategories}
         onApply={handleApplyFilters}
         initialSelections={activeFilters}
+        multiSelect={false}
       />
 
       <DeleteConfirmationModal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={() => {
-            bulkActions.onDelete();
-            setDeleteModalOpen(false);
+          bulkActions.onDelete();
+          setDeleteModalOpen(false);
         }}
         title="Confirm Bulk Deletion"
         description={`Are you sure you want to delete ${selectedCount} selected enquiries? This action cannot be undone.`}
