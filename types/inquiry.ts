@@ -74,3 +74,14 @@ export interface EnquiryDetail extends ApiEnquiryRow {
   followups: EnquiryFollowUp[];
 }
 
+export interface AddFollowUpDto {
+  note: string;
+  next_follow_up_at?: string;
+  status_override?: "COMPLETED" | "NO_RESPONSE";
+}
+
+export interface AssignStaffDto {
+  assignee_user_id: string;
+  next_follow_up_at?: string;
+}
+
