@@ -13,22 +13,20 @@ import { AllInquiryStatsRow } from "./views/AllInquiries/AllInquiryStatsRow";
 import { AllInquiryTableToolbar } from "./views/AllInquiries/AllInquiryTableToolbar";
 import { AllInquiryTable } from "./views/AllInquiries/AllInquiryTable";
 
-// ===== MOCK DATA =====
-const mockInquiries: InquiryDataType[] = Array.from({ length: 15 }, (_, i) => ({
-  id: `inquiry-${i + 1}`,
-  date: "01/21",
-  idNo: `#${String(i + 1).padStart(6, "0")}`,
-  name: "Amali Perera",
-  phone: "+9470 492 2345",
-  whatsApp: "+9470 492 2345",
-  source: i % 3 === 0 ? "Web" : "Added (Name)",
-  assignee: "Name",
-  district: "Colombo",
-  interest: "Course",
-  branch: "Main",
-  status: (["Pending", "In Progress", "Completed", "No Response"] as InquiryStatus[])[i % 4],
-  followUp: "01/21",
-}));
+import { useGetEnquiries } from "@/hooks/api/enquiries/useGetEnquiries";
+
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return "-";
+
+  try {
+    return new Date(dateStr).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+    });
+  } catch {
+    return dateStr;
+  }
+}
 
 export function AllInquiries() {
   const router = useRouter();
@@ -38,20 +36,80 @@ export function AllInquiries() {
   // ===== URL STATE =====
   const pageParam = searchParams.get("page");
   const currentPage = pageParam ? parseInt(pageParam) : 1;
+  const search = searchParams.get("search") || undefined;
+  const status = searchParams.get("status") || undefined;
+  const district = searchParams.get("district") || undefined;
+  const branch_id = searchParams.get("branch_id") || undefined;
+  const assignee_user_id = searchParams.get("assignee_user_id") || undefined;
+  const interest_id = searchParams.get("interest_id") || undefined;
+  const source = searchParams.get("source") || undefined;
+  const follow_up_from = searchParams.get("follow_up_from") || undefined;
+  const follow_up_to = searchParams.get("follow_up_to") || undefined;
+  const date_from = searchParams.get("date_from") || undefined;
+  const date_to = searchParams.get("date_to") || undefined;
+  const orderBy = searchParams.get("orderBy") || undefined;
+  const order = (searchParams.get("order") as "asc" | "desc") || undefined;
+
+  // ===== API CALL =====
+  const { data: responseData, isLoading, isError } = useGetEnquiries({
+    page: currentPage,
+    size: 10,
+    tab: "all",
+    search,
+    status,
+    district,
+    branch_id,
+    assignee_user_id,
+    interest_id,
+    source,
+    follow_up_from,
+    follow_up_to,
+    date_from,
+    date_to,
+    orderBy,
+    order,
+  });
+
+  // Map APi data to UI format
+  const data: InquiryDataType[] = useMemo(() => {
+    const rawData = responseData?.data || [];
+    
+    return rawData.map((apiRow) => {
+      // Basic normalization of status to match UI keys
+      let normalizedStatus: InquiryStatus = "Pending";
+      const apiStatus = apiRow.status?.toUpperCase() || "";
+      
+      if (apiStatus === "IN_PROGRESS" || apiStatus === "IN PROGRESS") normalizedStatus = "In Progress";
+      else if (apiStatus === "COMPLETED") normalizedStatus = "Completed";
+      else if (apiStatus === "NO_RESPONSE" || apiStatus === "NO RESPONSE") normalizedStatus = "No Response";
+
+      return {
+        id: apiRow.id,
+        date: formatDate(apiRow.created_at),
+        idNo: apiRow.enquiry_code,
+        name: apiRow.name,
+        phone: apiRow.phone,
+        whatsApp: apiRow.whatsapp_number,
+        source: apiRow.source || "-",
+        assignee: apiRow.assignee_name || "-",
+        district: apiRow.district || "-",
+        interest: apiRow.batch_name || apiRow.course_name || "-",
+        branch: apiRow.branch_name || "-",
+        status: normalizedStatus,
+        followUp: formatDate(apiRow.next_follow_up_at),
+      };
+    });
+  }, [responseData]);
+
+  const totalCount = responseData?.meta?.total || 0;
 
   // ===== SHARED STATE =====
-  const [data] = useState<InquiryDataType[]>(mockInquiries);
   const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
 
   // ===== DERIVED VALUES =====
   const selectedIds = useMemo(
     () => Object.entries(rowSelection).filter(([, selected]) => selected).map(([id]) => id),
     [rowSelection]
-  );
-
-  const selectedInquiries = useMemo(
-    () => data.filter((item) => selectedIds.includes(item.id)),
-    [data, selectedIds]
   );
 
   // ===== BULK ACTION HANDLERS =====
@@ -77,49 +135,43 @@ export function AllInquiries() {
   const handleSendSMS = useCallback(() => {
     if (selectedIds.length === 0) {
       toast.warning("Please select at least one inquiry");
-
+      
       return;
     }
 
     toast.success(`Sending SMS to ${selectedIds.length} selected inquiries`);
-    console.log("Send SMS to:", selectedInquiries);
-  }, [selectedIds, selectedInquiries]);
+  }, [selectedIds]);
 
   const handleSendWhatsapp = useCallback(() => {
     if (selectedIds.length === 0) {
       toast.warning("Please select at least one inquiry");
-
+      
       return;
     }
 
     toast.success(`Sending WhatsApp to ${selectedIds.length} selected inquiries`);
-    console.log("Send WhatsApp to:", selectedInquiries);
-  }, [selectedIds, selectedInquiries]);
+  }, [selectedIds]);
 
   const handleSendEmail = useCallback(() => {
     if (selectedIds.length === 0) {
       toast.warning("Please select at least one inquiry");
-
+      
       return;
     }
 
     toast.success(`Sending Email to ${selectedIds.length} selected inquiries`);
-    console.log("Send Email to:", selectedInquiries);
-  }, [selectedIds, selectedInquiries]);
+  }, [selectedIds]);
 
   const handleDelete = useCallback(() => {
     if (selectedIds.length === 0) {
       toast.warning("Please select at least one inquiry");
-
+      
       return;
     }
 
     toast.error(`Deleting ${selectedIds.length} selected inquiries`);
-    console.log("Delete:", selectedInquiries);
-
-    // Clear selection after delete
     setRowSelection({});
-  }, [selectedIds, selectedInquiries]);
+  }, [selectedIds]);
 
   // ===== BULK ACTIONS CONFIG =====
   const bulkActions = useMemo(
@@ -147,7 +199,7 @@ export function AllInquiries() {
         <AllInquiryTableToolbar 
           bulkActions={bulkActions} 
           selectedCount={selectedIds.length} 
-          totalCount={data.length} 
+          totalCount={totalCount} 
         />
       </div>
 
@@ -159,6 +211,9 @@ export function AllInquiries() {
           onPageChange={handlePageChange}
           rowSelection={rowSelection}
           setRowSelection={setRowSelection}
+          isLoading={isLoading}
+          isError={isError}
+          totalCount={totalCount}
         />
       </div>
     </div>

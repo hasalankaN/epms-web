@@ -31,6 +31,7 @@ interface AllInquiryTableProps {
   isError?: boolean;
   currentPage: number;
   onPageChange: (page: number) => void;
+  totalCount?: number;
 }
 
 export function AllInquiryTable({
@@ -41,19 +42,19 @@ export function AllInquiryTable({
   isError = false,
   currentPage,
   onPageChange,
+  totalCount: externalTotalCount,
 }: AllInquiryTableProps) {
   const itemsPerPage = 10;
 
   const filteredData = useMemo(() => data || [], [data]);
-  const totalCount = filteredData.length;
+  const totalCount = externalTotalCount ?? filteredData.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
 
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
 
-    return filteredData.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, currentPage, itemsPerPage]);
+  const paginatedData = useMemo(() => {
+    return filteredData;
+  }, [filteredData]);
 
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {

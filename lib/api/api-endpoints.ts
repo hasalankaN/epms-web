@@ -84,4 +84,10 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/api/v1/admin/referrals/agents/${id}`,
     UPDATE_STATUS: (id: string) => `/api/v1/admin/referrals/agents/${id}/status`,
   },
+  enquiries: {
+    GET_ALL: `/api/v1/admin/enquiries`,
+    CREATE: `/api/v1/admin/enquiries`,
+    GET_BY_ID: (id: string) => `/api/v1/admin/enquiries/${id}`,
+    UPDATE: (id: string) => `/api/v1/admin/enquiries/${id}`,
+  },
 };
