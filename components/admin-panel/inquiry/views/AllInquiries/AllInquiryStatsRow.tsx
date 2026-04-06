@@ -3,14 +3,17 @@
 import React from "react";
 
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useGetEnquiryDashboard } from "@/hooks/api/enquiries/useGetEnquiryDashboard";
 
 interface InquiryStatCardProps {
   title: string;
   value: string | number;
   className?: string;
+  isLoading?: boolean;
 }
 
-function InquiryStatCard({ title, value, className }: InquiryStatCardProps) {
+function InquiryStatCard({ title, value, className, isLoading }: InquiryStatCardProps) {
   return (
     <div className={cn("flex flex-col items-center justify-center gap-1 px-4", className)}>
       {/* Title */}
@@ -18,25 +21,30 @@ function InquiryStatCard({ title, value, className }: InquiryStatCardProps) {
         {title}
       </span>
       {/* Value */}
-      <span className="text-center font-sans text-[18px] font-semibold leading-[30px] text-[#020618]">
-        {value}
-      </span>
+      {isLoading ? (
+        <Skeleton className="h-[28px] w-10 rounded-md" />
+      ) : (
+        <span className="text-center font-sans text-[18px] font-semibold leading-[30px] text-[#020618]">
+          {typeof value === "number" ? value.toString().padStart(2, "0") : value}
+        </span>
+      )}
     </div>
   );
 }
 
-// Dummy data for stats
-const statsData = [
-  { title: "All Inquiries", value: "300" },
-  { title: "Today Inquiry", value: "40" },
-  { title: "Today Follow Ups", value: "05" },
-  { title: "Pending", value: "05" },
-  { title: "In Progress", value: "15" },
-  { title: "Completed", value: "25" },
-  { title: "No Response", value: "00" },
-];
-
 export function AllInquiryStatsRow() {
+  const { data, isLoading } = useGetEnquiryDashboard();
+
+  const statsData = [
+    { title: "All Inquiries", value: data?.total ?? 0 },
+    { title: "Today Inquiry", value: data?.today ?? 0 },
+    { title: "Today Follow Ups", value: data?.today_follow_ups ?? 0 },
+    { title: "Pending", value: data?.pending ?? 0 },
+    { title: "In Progress", value: data?.in_progress ?? 0 },
+    { title: "Completed", value: data?.completed ?? 0 },
+    { title: "No Response", value: data?.no_response ?? 0 },
+  ];
+
   return (
     <div className="w-full rounded-[8px] border border-[#E2E8F0] bg-transparent">
       {/* Desktop: Flex layout - 7 columns */}
@@ -47,6 +55,7 @@ export function AllInquiryStatsRow() {
               title={stat.title}
               value={stat.value}
               className="flex-1"
+              isLoading={isLoading}
             />
             {/* Divider - not after last item */}
             {index < statsData.length - 1 && (
@@ -65,7 +74,7 @@ export function AllInquiryStatsRow() {
               key={stat.title}
               className={`py-3 ${index !== 0 ? "border-l border-[#E2E8F0]" : ""}`}
             >
-              <InquiryStatCard title={stat.title} value={stat.value} />
+              <InquiryStatCard title={stat.title} value={stat.value} isLoading={isLoading} />
             </div>
           ))}
         </div>
@@ -76,7 +85,7 @@ export function AllInquiryStatsRow() {
               key={stat.title}
               className={`py-3 ${index !== 0 ? "border-l border-[#E2E8F0]" : ""}`}
             >
-              <InquiryStatCard title={stat.title} value={stat.value} />
+              <InquiryStatCard title={stat.title} value={stat.value} isLoading={isLoading} />
             </div>
           ))}
         </div>
@@ -95,7 +104,7 @@ export function AllInquiryStatsRow() {
                 ${index >= 2 ? "border-t border-[#E2E8F0]" : ""}
               `}
             >
-              <InquiryStatCard title={stat.title} value={stat.value} />
+              <InquiryStatCard title={stat.title} value={stat.value} isLoading={isLoading} />
             </div>
           ))}
         </div>
@@ -104,6 +113,7 @@ export function AllInquiryStatsRow() {
           <InquiryStatCard
             title={statsData[6].title}
             value={statsData[6].value}
+            isLoading={isLoading}
           />
         </div>
       </div>

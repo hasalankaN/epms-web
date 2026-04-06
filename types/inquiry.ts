@@ -31,3 +31,67 @@ export const INQUIRY_STATUS_CONFIG: Record<InquiryStatus, { bg: string; text: st
   "Completed": { bg: "#DFFFF0", text: "#16A34A" },
   "No Response": { bg: "#F1F5F9", text: "#000000" },
 };
+
+export interface ApiEnquiryRow {
+  id: string;
+  enquiry_code: string;
+  name: string;
+  phone: string;
+  whatsapp_number: string;
+  nic: string;
+  district: string;
+  source: string;
+  status: string;
+  next_follow_up_at: string | null;
+  created_at: string;
+  is_overdue: boolean;
+  assignee_id: string | null;
+  assignee_name: string | null;
+  batch_name: string | null;
+  course_name: string | null;
+  added_by_id: string | null;
+  added_by_name: string | null;
+  branch_name: string | null;
+}
+
+export interface EnquiryFollowUp {
+  id: string;
+  note: string;
+  next_follow_up_at: string;
+  status_at_time: string;
+  created_at: string;
+  created_by: string;
+}
+
+export interface EnquiryDetail extends ApiEnquiryRow {
+  email: string | null;
+  notes: string | null;
+  batch_id: string | null;
+  course_id: string | null;
+  branch_id: string | null;
+  assignee_user_id: string | null;
+  updated_at: string;
+  followups: EnquiryFollowUp[];
+}
+
+export interface AddFollowUpDto {
+  note: string;
+  next_follow_up_at?: string;
+  status_override?: "COMPLETED" | "NO_RESPONSE";
+}
+
+export interface AssignStaffDto {
+  assignee_user_id: string;
+  next_follow_up_at?: string;
+}
+
+export interface EnquiryDashboardData {
+  total: number;
+  today: number;
+  today_follow_ups: number;
+  pending: number;
+  in_progress: number;
+  completed: number;
+  no_response: number;
+}
+

@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
 import dynamic from "next/dynamic";
 
-import { motion } from "framer-motion";
-import { Inbox } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Inbox, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { CustomPaginationProps } from "@/components/common/CustomPagination";
@@ -17,7 +17,6 @@ const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 const LOADING_ANIMATION_URL = "/animations/loading-animation.json";
 
 let cachedLoadingAnimationData: any = null;
-
 
 export interface Column<T> {
   id?: string;
@@ -56,9 +55,14 @@ export function DataTable<T>({
   footerRow,
 }: DataTableProps<T>) {
   const [animationData, setAnimationData] = useState<any>(cachedLoadingAnimationData);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [isTableHovered, setIsTableHovered] = useState(false);
+  const tableRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isLoading || cachedLoadingAnimationData) return;
+
     fetch(LOADING_ANIMATION_URL)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -71,6 +75,46 @@ export function DataTable<T>({
       })
       .catch((err) => console.error("Failed to load animation", err));
   }, [isLoading]);
+
+  const checkScroll = useCallback(() => {
+
+    const el = tableRef.current;
+
+    if (el) {
+      const { scrollLeft, scrollWidth, clientWidth } = el;
+
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = tableRef.current;
+
+    if (el) {
+      checkScroll();
+      el.addEventListener("scroll", checkScroll);
+      window.addEventListener("resize", checkScroll);
+
+      return () => {
+        el.removeEventListener("scroll", checkScroll);
+        window.removeEventListener("resize", checkScroll);
+      };
+    }
+  }, [data, checkScroll, isLoading]);
+
+  const scrollTable = (direction: "left" | "right") => {
+    const el = tableRef.current;
+
+    if (el) {
+      const scrollAmount = el.clientWidth * 0.6;
+
+      el.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -99,9 +143,75 @@ export function DataTable<T>({
   }
 
   return (
-    <div className="flex flex-col rounded-lg border border-[#E4E4E7] bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]">
-      {/* Table Scoll Container */}
-      <div className={cn("overflow-auto relative w-full", tableContainerClassName !== undefined ? tableContainerClassName : "h-[550px]")}>
+    <div
+      onMouseEnter={() => setIsTableHovered(true)}
+      onMouseLeave={() => setIsTableHovered(false)}
+      className="flex flex-col rounded-lg border border-[#E4E4E7] bg-white shadow-[0_1px_2_px_0_rgba(0,0,0,0.05)] relative group/table"
+    >
+      {/* Edge Gradients - Visual cue for horizontal overflow */}
+      <AnimatePresence>
+        {canScrollLeft && (
+          <motion.div
+            key="left-gradient"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white via-white/40 to-transparent pointer-events-none z-10 transition-opacity"
+          />
+        )}
+        {canScrollRight && (
+          <motion.div
+            key="right-gradient"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white via-white/40 to-transparent pointer-events-none z-10 transition-opacity"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Horizontal Scroll Buttons - Placed outside scroll container to remain vertically fixed */}
+      <AnimatePresence>
+        {canScrollLeft && isTableHovered && (
+          <motion.button
+            key="left-scroll-btn"
+            initial={{ opacity: 0, x: -10, y: "-50%", scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, y: "-50%", scale: 1 }}
+            exit={{ opacity: 0, x: -10, y: "-50%", scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 255, 255, 1)" }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => scrollTable("left")}
+            className="absolute left-2 top-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-[#E2E8F0] bg-white/90 text-[#64748B] shadow-[0_4px_12px_rgba(0,0,0,0.12)] backdrop-blur-md transition-all hover:text-[#E60076]"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </motion.button>
+        )}
+        {canScrollRight && isTableHovered && (
+          <motion.button
+            key="right-scroll-btn"
+            initial={{ opacity: 0, x: 10, y: "-50%", scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, y: "-50%", scale: 1 }}
+            exit={{ opacity: 0, x: 10, y: "-50%", scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 255, 255, 1)" }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => scrollTable("right")}
+            className="absolute right-2 top-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-[#E2E8F0] bg-white/90 text-[#64748B] shadow-[0_4px_12px_rgba(0,0,0,0.12)] backdrop-blur-md transition-all hover:text-[#E60076]"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Table Scroll Container */}
+      <div
+        ref={tableRef}
+        className={cn(
+          "overflow-auto relative w-full",
+          tableContainerClassName !== undefined ? tableContainerClassName : "h-[550px]"
+        )}
+      >
         <table className="w-full caption-bottom text-xs">
           <thead className="[&_tr]:border-b">
             <tr className="h-[36px] border-b border-[#E7E7EB] bg-[#FDF2F8] hover:bg-[#FDF2F8]">
@@ -119,7 +229,7 @@ export function DataTable<T>({
             </tr>
           </thead>
           <motion.tbody
-            key={data.map((d) => keyExtractor(d)).join(",")}
+            key={data?.length > 0 ? `table-body-${data.length}-${keyExtractor(data[0])}` : "empty-table-body"}
             initial="hidden"
             animate="show"
             variants={{
