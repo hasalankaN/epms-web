@@ -120,18 +120,18 @@ export function MediaPlayer({ url, className, accentColor = "#E60076" }: MediaPl
       const current = videoRef.current.currentTime;
       const total = videoRef.current.duration;
 
-      if (total && total !== duration) {
+      if (Number.isFinite(total) && total !== duration) {
         setDuration(total);
       }
 
-      if (total > 0) {
+      if (Number.isFinite(total) && total > 0 && Number.isFinite(current)) {
         setProgress((current / total) * 100);
       }
     }
   };
 
   const handleLoadedMetadata = () => {
-    if (videoRef.current) {
+    if (videoRef.current && Number.isFinite(videoRef.current.duration)) {
       setDuration(videoRef.current.duration);
     }
   };
@@ -181,10 +181,14 @@ export function MediaPlayer({ url, className, accentColor = "#E60076" }: MediaPl
   };
 
   const formatTime = (seconds: number) => {
+    if (!Number.isFinite(seconds) || seconds < 0) {
+      return "0:00";
+    }
+
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
 
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
   };
 
   return (
@@ -198,7 +202,7 @@ export function MediaPlayer({ url, className, accentColor = "#E60076" }: MediaPl
     >
       <video
         ref={videoRef}
-        src={url}
+        src={url || undefined}
         className="w-full h-full object-contain cursor-pointer"
         onClick={togglePlay}
         onTimeUpdate={handleTimeUpdate}

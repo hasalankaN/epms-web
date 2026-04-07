@@ -49,3 +49,58 @@ export interface CourseDataType {
   status: CourseStatus;
   lastUpdate: string;
 }
+
+export interface CourseStatsData {
+  total_courses: number;
+  total_enrollments: number;
+  direct_enrollments: number;
+  referral_enrollments: number;
+}
+
+// ===== ANALYTICS TYPES =====
+
+export interface CourseFinancialSummary {
+  total_payments: string;
+  total_discounts: string;
+  total_referral_commissions: string;
+  total_expenses: string;
+  net_profit: string;
+}
+
+export interface StudentEnrollmentStats {
+  total_enrollments: number;
+  active: number;
+  non_responsive: number;
+  dropped: number;
+  completed: number;
+  male: number;
+  female: number;
+}
+
+export interface EnrollmentByDistrict {
+  district_name: string;
+  enrollment_count: number;
+}
+
+export interface CourseBreakdown {
+  by_language: Array<{
+    language: string;
+    student_count: number;
+  }>;
+  by_category: Array<{
+    category_name: string;
+    student_count: number;
+  }>;
+}
+
+export interface ComprehensiveCourseAnalytics {
+  course_summary: CourseFinancialSummary;
+  student_summary: StudentEnrollmentStats;
+  enrollment_by_district: EnrollmentByDistrict[];
+  course_wise_breakdown: CourseBreakdown;
+  report_generated_at: string;
+  filters: {
+    date_from: string;
+    date_to: string;
+  };
+}
