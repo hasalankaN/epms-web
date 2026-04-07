@@ -15,6 +15,9 @@ export const queryKeys = {
   // Certificate Templates
   certificateTemplates: "certificateTemplates",
 
+  // Document Templates
+  documentTemplates: "documentTemplates",
+
   // Course Categories
   courseCategories: "courseCategories",
 

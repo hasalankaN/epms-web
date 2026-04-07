@@ -25,11 +25,12 @@ const docTemplateFilterCategories: FilterCategory[] = [
     label: "By Document Type",
     type: "chips",
     items: [
-      { key: "Transcript", label: "Transcript" },
-      { key: "Envelop Letter", label: "Envelop Letter" },
+      { key: "TRANSCRIPT", label: "Transcript" },
+      { key: "ENVELOPE_LETTER", label: "Envelope Letter" },
       { key: "ID", label: "ID" },
-      { key: "Enrollment Letter", label: "Enrollment Letter" },
-      { key: "Application Form", label: "Application Form" },
+      { key: "ENROLLMENT_LETTER", label: "Enrollment Letter" },
+      { key: "APPLICATION_FORM", label: "Application Form" },
+      { key: "OTHER", label: "Other" },
     ],
   },
   {
@@ -37,8 +38,8 @@ const docTemplateFilterCategories: FilterCategory[] = [
     label: "By Status",
     type: "chips",
     items: [
-      { key: "Active", label: "Active" },
-      { key: "Inactive", label: "Inactive" },
+      { key: "active", label: "Active" },
+      { key: "inactive", label: "Inactive" },
     ],
   },
 ];
@@ -49,13 +50,29 @@ interface BulkActionsHandlers {
   onIssue: () => void;
 }
 
+interface FilterChangeParams {
+  search?: string;
+  documentType?: string;
+  isActive?: boolean;
+}
+
 interface AllTemplateToolbarProps {
   bulkActions: BulkActionsHandlers;
   selectedCount: number;
   totalCount: number;
+  search: string;
+  onSearchChange: (val: string) => void;
+  onFilterChange: (params: FilterChangeParams) => void;
 }
 
-export function AllTemplateToolbar({ bulkActions, selectedCount, totalCount }: AllTemplateToolbarProps) {
+export function AllTemplateToolbar({
+  bulkActions,
+  selectedCount,
+  totalCount,
+  search,
+  onSearchChange,
+  onFilterChange,
+}: AllTemplateToolbarProps) {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<FilterSelections>({});
 
@@ -79,11 +96,31 @@ export function AllTemplateToolbar({ bulkActions, selectedCount, totalCount }: A
 
   const handleApplyFilters = useCallback((selections: FilterSelections) => {
     setActiveFilters(selections);
-  }, []);
+
+    const docType = (selections.documentType as unknown) as string | undefined;
+    const statusKey = (selections.status as unknown) as string | undefined;
+    const isActive = statusKey === "active" ? true : statusKey === "inactive" ? false : undefined;
+
+    onFilterChange({ documentType: docType, isActive });
+  }, [onFilterChange]);
 
   const handleClearFilters = useCallback(() => {
     setActiveFilters({});
-  }, []);
+    onFilterChange({});
+  }, [onFilterChange]);
+
+  const searchInput = (placeholder: string, className?: string) => (
+    <div className={cn("relative", className)}>
+      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#90A1B9]" />
+      <Input
+        type="text"
+        value={search}
+        onChange={(e) => onSearchChange(e.target.value)}
+        placeholder={placeholder}
+        className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "w-full border border-[#E2E8F0] pl-10 pr-4")}
+      />
+    </div>
+  );
 
   return (
     <>
@@ -92,14 +129,7 @@ export function AllTemplateToolbar({ bulkActions, selectedCount, totalCount }: A
         <div className="hidden w-full items-center justify-between gap-4 lg:flex">
           <div className="flex items-center gap-4">
             <BulkActionDropdown items={bulkItems} />
-            <div className="relative w-[320px]">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#90A1B9]" />
-              <Input
-                type="text"
-                placeholder="Search by document name"
-                className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "w-full border border-[#E2E8F0] pl-10 pr-4")}
-              />
-            </div>
+            {searchInput("Search by document name", "w-[320px]")}
           </div>
           <div className="flex items-center gap-3">
             {hasActiveFilters && (
@@ -116,14 +146,7 @@ export function AllTemplateToolbar({ bulkActions, selectedCount, totalCount }: A
         <div className="hidden w-full items-center justify-between gap-4 md:flex lg:hidden">
           <div className="flex items-center gap-3 flex-1">
             <BulkActionDropdown items={bulkItems} className="min-w-[110px]" />
-            <div className="relative w-full max-w-[260px]">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#90A1B9]" />
-              <Input
-                type="text"
-                placeholder="Search..."
-                className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "w-full border border-[#E2E8F0] pl-10 pr-4")}
-              />
-            </div>
+            {searchInput("Search...", "w-full max-w-[260px]")}
           </div>
           <div className="flex items-center gap-3">
             {hasActiveFilters && (
@@ -138,14 +161,7 @@ export function AllTemplateToolbar({ bulkActions, selectedCount, totalCount }: A
 
         {/* ===== MOBILE (<md) ===== */}
         <div className="flex w-full flex-col gap-3 md:hidden">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#90A1B9]" />
-            <Input
-              type="text"
-              placeholder="Search by document name"
-              className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "w-full border border-[#E2E8F0] pl-10 pr-4")}
-            />
-          </div>
+          {searchInput("Search by document name", "w-full")}
           <div className="flex items-center gap-2">
             {hasActiveFilters && (
               <button title="Clear Filters" type="button" onClick={handleClearFilters} className={cn(BUTTON_STYLES.outline.md, "px-3 border-dashed text-[#64748B] hover:text-[#0F172B]")}>

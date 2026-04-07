@@ -37,6 +37,12 @@ export const API_ENDPOINTS = {
     DELETE_TEMPLATE: (id: string) => `/api/v1/admin/certificate-templates/${id}`,
     DELETE_BULK: `/api/v1/admin/certificate-templates/bulk`,
   },
+  documentTemplates: {
+    GET_ALL: `/api/v1/admin/documents/templates`,
+    GET_BY_ID: (id: string) => `/api/v1/admin/documents/templates/${id}`,
+    CREATE: `/api/v1/admin/documents/templates`,
+  },
+
   courseCategories: {
     GET_ALL: `/api/v1/categories`,
     CREATE: `/api/v1/categories`,
