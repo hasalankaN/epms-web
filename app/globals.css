@@ -479,3 +479,31 @@ textarea:-webkit-autofill:active {
   text-decoration: underline;
   cursor: pointer;
 }
+
+.tiptap pre {
+  background: #F1F5F9;
+  color: #0F172A;
+  font-family: 'JetBrainsMono', 'Fira Code', monospace;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+}
+
+.tiptap pre code {
+  color: inherit;
+  padding: 0;
+  background: none;
+  font-size: 0.875rem;
+}
+
+.tiptap p {
+  margin: 0.5rem 0;
+}
+
+.tiptap p:first-child {
+  margin-top: 0;
+}
+
+.tiptap p:last-child {
+  margin-bottom: 0;
+}

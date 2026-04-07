@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 
 import {
@@ -10,35 +8,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { ApiCourseFee } from "@/hooks/api/courses/useGetCourseById";
 
-const PAYMENT_ITEMS = [
-  {
-    id: "reg",
-    description: "Registration Fee",
-    amount: "1000.00",
-    isAdditional: false,
-  },
-  {
-    id: "course",
-    description: "Course Fee",
-    amount: "5000.00",
-    isAdditional: false,
-  },
-  {
-    id: "uk",
-    description: "UK Certificate Fee",
-    amount: "500.00",
-    isAdditional: true,
-  },
-  {
-    id: "exam",
-    description: "Exam Fee",
-    amount: "2000.00",
-    isAdditional: true,
-  },
-];
+interface CourseFeeTypesTableProps {
+  fees?: ApiCourseFee[];
+  isLoading?: boolean;
+}
 
-export function CourseFeeTypesTable() {
+export function CourseFeeTypesTable({ fees, isLoading }: CourseFeeTypesTableProps) {
+  const displayFees = fees && fees.length > 0 ? fees : [];
+
   return (
     <div className="border border-[#E4E4E7] rounded-lg bg-white shadow-sm overflow-hidden flex flex-col w-full">
       <Table className="min-w-[500px]">
@@ -53,20 +33,44 @@ export function CourseFeeTypesTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {PAYMENT_ITEMS.map((item) => (
-            <TableRow key={item.id} className="border-b border-[#F1F5F9] last:border-none hover:bg-transparent">
-              <TableCell 
-                className="text-[14px] font-normal font-inter leading-[20px] text-[#90A1B9] overflow-hidden text-ellipsis whitespace-nowrap px-6 py-4"
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <TableRow key={i} className="border-b border-[#F1F5F9] last:border-none">
+                <TableCell className="px-6 py-4">
+                  <Skeleton className="h-5 w-40 rounded" />
+                </TableCell>
+                <TableCell className="px-6 py-4 text-right">
+                  <Skeleton className="h-5 w-20 rounded ml-auto" />
+                </TableCell>
+              </TableRow>
+            ))
+          ) : displayFees.length > 0 ? (
+            displayFees.map((fee, idx) => (
+              <TableRow
+                key={idx}
+                className="border-b border-[#F1F5F9] last:border-none hover:bg-transparent"
               >
-                {item.description}
-              </TableCell>
-              <TableCell 
-                className="w-[152px] shrink-0 text-[14px] font-normal font-inter leading-[20px] text-[#90A1B9] text-right align-middle px-6 py-4"
+                <TableCell className="text-[14px] font-inter leading-[20px] text-[#90A1B9] overflow-hidden text-ellipsis whitespace-nowrap px-6 py-4">
+                  Course Fee {idx + 1} ({fee.duration_years} Years)
+                </TableCell>
+                <TableCell className="w-[152px] shrink-0 text-[14px] font-inter leading-[20px] text-[#314158] font-medium text-right align-middle px-6 py-4">
+                  {fee.amount.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell
+                colSpan={2}
+                className="h-24 text-center text-[#90A1B9] font-inter"
               >
-                {item.amount}
+                No fee details available.
               </TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </Table>
     </div>

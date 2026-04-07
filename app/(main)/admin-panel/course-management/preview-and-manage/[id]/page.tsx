@@ -10,7 +10,7 @@ import { BackButton } from "@/components/common/BackButton";
 
 import { BUTTON_STYLES } from "@/lib/constants/theme";
 
-import { CourseDetailsView } from "@/components/admin-panel/course-management/preview-and-manage/CourseDetailsPreview";
+import { CourseDetailsPreview } from "@/components/admin-panel/course-management/preview-and-manage/CourseDetailsPreview";
 
 export default function ViewCoursePage() {
   const params = useParams();
@@ -32,7 +32,7 @@ export default function ViewCoursePage() {
       </div>
 
       <div className="pb-10">
-        <CourseDetailsView courseId={id} />
+        <CourseDetailsPreview courseId={id} />
       </div>
     </div>
   );

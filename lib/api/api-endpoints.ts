@@ -76,6 +76,14 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/api/v1/courses/${id}`,
     UPDATE_STATUS: (id: string) => `/api/v1/courses/${id}/status`,
     DEACTIVATE: (id: string) => `/api/v1/courses/${id}/deactivate`,
+    GET_STATS: `/api/v1/courses/stats`,
+
+    // Analytics
+    GET_ANALYTICS_ALL: `/api/v1/admin/courses-analytics/all-courses`,
+    GET_ANALYTICS_SUMMARY: `/api/v1/admin/courses-analytics/all-courses/course-summary`,
+    GET_ANALYTICS_STUDENTS: `/api/v1/admin/courses-analytics/all-courses/student-summary`,
+    GET_ANALYTICS_DISTRICTS: `/api/v1/admin/courses-analytics/all-courses/enrollment-by-district`,
+    GET_ANALYTICS_BREAKDOWN: `/api/v1/admin/courses-analytics/all-courses/breakdown`,
   },
   referrals: {
     GET_AGENTS: `/api/v1/admin/referrals/agents`,
