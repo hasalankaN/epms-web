@@ -30,6 +30,7 @@ import { AUTH_TYPOGRAPHY, AUTH_INPUT, BUTTON_STYLES } from "@/lib/constants/them
 import { DOCUMENT_TYPE_LABELS, type ApiDocumentType, type TemplateAssignmentDto } from "@/types/document";
 
 import { useGetDocumentTemplateById } from "@/hooks/api/documents/useGetDocumentTemplateById";
+import { useUpdateDocumentTemplate } from "@/hooks/api/documents/useUpdateDocumentTemplate";
 import { useUploadFile } from "@/hooks/api/files/useUploadFile";
 import { useGetCourses } from "@/hooks/api/courses/useGetCourses";
 import { useGetBatches } from "@/hooks/api/batches/useGetBatches";
@@ -111,6 +112,7 @@ export function EditDocumentModal({ isOpen, onClose, templateId }: EditDocumentM
     isOpen && templateId ? templateId : null
   );
 
+  const { mutateAsync: updateDocumentTemplate } = useUpdateDocumentTemplate(templateId ?? "");
   const { mutateAsync: uploadFile } = useUploadFile();
 
   const { data: coursesData, isLoading: coursesLoading } = useGetCourses({
@@ -370,17 +372,17 @@ export function EditDocumentModal({ isOpen, onClose, templateId }: EditDocumentM
         font_size: state.fontSize,
       }));
 
-      // TODO: wire to actual update mutation when backend PATCH endpoint is confirmed
-      console.log("Update payload:", {
+      const payload = {
         name: documentName.trim(),
-        document_type: documentType,
+        document_type: (documentType as any) || undefined,
         price: price ? parseFloat(price) : undefined,
         template_image_url: finalTemplateUrl,
         fields,
-        assignments: assignments.length > 0 ? assignments : undefined,
-      });
+        assignments: assignments.length > 0 ? assignments : [],
+      };
 
-      toast.success("Document template updated successfully");
+      await updateDocumentTemplate(payload);
+
       onClose();
     } catch (error) {
       console.error(error);
@@ -444,7 +446,7 @@ export function EditDocumentModal({ isOpen, onClose, templateId }: EditDocumentM
                     <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic")}>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
-                    <SelectContent className="z-[99999]">
+                    <SelectContent className="z-[99999999]">
                       {(Object.entries(DOCUMENT_TYPE_LABELS) as [ApiDocumentType, string][]).map(([val, label]) => (
                         <SelectItem key={val} value={val}>{label}</SelectItem>
                       ))}

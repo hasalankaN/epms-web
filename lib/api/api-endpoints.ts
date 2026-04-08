@@ -41,6 +41,7 @@ export const API_ENDPOINTS = {
     GET_ALL: `/api/v1/admin/documents/templates`,
     GET_BY_ID: (id: string) => `/api/v1/admin/documents/templates/${id}`,
     CREATE: `/api/v1/admin/documents/templates`,
+    UPDATE: (id: string) => `/api/v1/admin/documents/templates/${id}`,
   },
 
   courseCategories: {

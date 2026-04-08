@@ -66,6 +66,15 @@ export interface CreateDocumentTemplatePayload {
   assignments?: TemplateAssignmentDto[];
 }
 
+export interface UpdateDocumentTemplatePayload {
+  name?: string;
+  document_type?: ApiDocumentType;
+  template_image_url?: string;
+  price?: number;
+  fields?: TemplateFieldPositionDto[];
+  assignments?: TemplateAssignmentDto[];
+}
+
 // ===== TABLE ROW TYPES (for existing tables) =====
 
 export interface DocumentTemplateRow {

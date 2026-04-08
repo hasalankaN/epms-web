@@ -245,7 +245,6 @@ export function AllTemplateTable({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[120px]">
-              <DropdownMenuItem onClick={() => handleAction("view", item)} className="cursor-pointer focus:bg-[#FDF2F8]">View</DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleAction("edit", item)} className="cursor-pointer focus:bg-[#FDF2F8]">Edit</DropdownMenuItem>
               {item.is_active ? (
                 <>
