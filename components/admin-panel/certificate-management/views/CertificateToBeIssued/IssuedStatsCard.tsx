@@ -1,12 +1,14 @@
 import React from "react";
 
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface IssuedStatsCardProps {
   totalIssued: number;
+  isLoading?: boolean;
 }
 
-export function IssuedStatsCard({ totalIssued }: IssuedStatsCardProps) {
+export function IssuedStatsCard({ totalIssued, isLoading }: IssuedStatsCardProps) {
   return (
     <div
       className={cn(
@@ -16,9 +18,13 @@ export function IssuedStatsCard({ totalIssued }: IssuedStatsCardProps) {
       <p className="text-[#475467] text-center font-inter text-[14px] font-normal leading-[20px] m-0">
         Total Number of Issued Certificates
       </p>
-      <p className="text-[#101828] text-center font-inter text-[24px] font-bold leading-[32px] m-0">
-        {totalIssued === 0 || isNaN(totalIssued) ? "####" : totalIssued.toLocaleString()}
-      </p>
+      {isLoading ? (
+        <Skeleton className="h-[32px] w-[60px]" />
+      ) : (
+        <p className="text-[#101828] text-center font-inter text-[24px] font-bold leading-[32px] m-0">
+          {isNaN(totalIssued) ? "####" : totalIssued.toLocaleString()}
+        </p>
+      )}
     </div>
   );
 }

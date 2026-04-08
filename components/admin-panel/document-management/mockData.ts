@@ -1,7 +1,7 @@
-import type { DocumentTemplateRow, IssuedDocumentRow, IssuedDocumentStatus, DocumentType } from "@/types/document";
+import type { DocumentTemplateRow, IssuedDocumentRow, IssuedDocumentStatus } from "@/types/document";
 
 // ===== ALL TEMPLATE MOCK DATA =====
-const docTypes: DocumentType[] = ["Transcript", "Envelop Letter", "ID", "Enrollment Letter", "Application Form"];
+const docTypes: string[] = ["Transcript", "Envelope Letter", "ID", "Enrollment Letter", "Application Form"];
 
 export const mockDocumentTemplatesData: DocumentTemplateRow[] = Array.from({ length: 15 }, (_, i) => ({
   id: `dt-${i + 1}`,

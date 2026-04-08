@@ -65,7 +65,7 @@ export function SearchableSelect({
             className
           )}
         >
-          <span className="truncate">
+          <span className="truncate min-w-0">
             {selectedOption ? selectedOption.label : placeholder}
           </span>
           {isLoading ? (

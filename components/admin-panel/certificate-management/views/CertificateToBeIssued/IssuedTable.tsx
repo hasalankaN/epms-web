@@ -1,13 +1,11 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 
 import { MoreVertical } from "lucide-react";
 
-import type { IssuedCertificateRow } from "@/types/certificate";
-
-import { DataTable } from "@/components/common/table/DataTable";
-import type { Column } from "@/components/common/table/DataTable";
+import type { CertificateRequestItem } from "@/types/certificate";
+import { DataTable, type Column } from "@/components/common/table/DataTable";
 import { StatusPopover } from "@/components/common/StatusPopover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -18,22 +16,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useUpdateCertificateStatus } from "@/hooks/api/certificates/useUpdateCertificateStatus";
+import { useDeleteCertificateRequest } from "@/hooks/api/certificates/useDeleteCertificateRequest";
 
 const ISSUED_STATUS_OPTIONS = [
-  { value: "Pending", bg: "#FFF7D7", text: "#F59E0B" },
-  { value: "Printing in progress", bg: "#D9E9FF", text: "#2563EB" },
-  { value: "Issued", bg: "#FCE7F3", text: "#E60076" },
-  { value: "Downloaded", bg: "#DFFFF0", text: "#16A34A" },
-  { value: "Delivered", bg: "#DFFFF0", text: "#16A34A" },
+  { value: "PENDING", label: "Pending", bg: "#FFF7D7", text: "#F59E0B" },
+  { value: "IN_PROGRESS", label: "Printing in progress", bg: "#D9E9FF", text: "#2563EB" },
+  { value: "DELIVERED", label: "Delivered", bg: "#DFFFF0", text: "#16A34A" },
+  { value: "DOWNLOADED", label: "Downloaded", bg: "#DFFFF0", text: "#16A34A" },
 ];
 
 interface IssuedTableProps {
-  data: IssuedCertificateRow[];
+  data: CertificateRequestItem[];
   rowSelection: { [key: string]: boolean };
   setRowSelection: React.Dispatch<React.SetStateAction<{ [key: string]: boolean }>>;
   isLoading?: boolean;
   isError?: boolean;
   currentPage: number;
+  totalCount: number;
+  totalPages: number;
   onPageChange: (page: number) => void;
 }
 
@@ -44,19 +45,11 @@ export function IssuedTable({
   isLoading = false,
   isError = false,
   currentPage,
+  totalCount,
+  totalPages,
   onPageChange,
 }: IssuedTableProps) {
-  const itemsPerPage = 10;
-
-  const totalCount = data.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-
-    return data.slice(startIndex, startIndex + itemsPerPage);
-  }, [data, currentPage]);
 
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
@@ -73,10 +66,17 @@ export function IssuedTable({
   };
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<IssuedCertificateRow | null>(null);
+  const [selectedItem, setSelectedItem] = useState<CertificateRequestItem | null>(null);
 
-  const handleAction = (action: string, item: IssuedCertificateRow) => {
+  const { mutate: updateStatus } = useUpdateCertificateStatus();
+  const { mutate: deleteRequest, isPending: isDeleting } = useDeleteCertificateRequest();
+
+  const handleAction = (action: string, item: CertificateRequestItem) => {
     console.log(`Action: ${action}`, item);
+    
+    if (action === "mark-delivered") {
+      updateStatus({ id: item.id, status: "DELIVERED" });
+    }
 
     if (action === "delete") {
       setSelectedItem(item);
@@ -84,7 +84,7 @@ export function IssuedTable({
     }
   };
 
-  const columns: Column<IssuedCertificateRow>[] = [
+  const columns: Column<CertificateRequestItem>[] = [
     {
       id: "select",
       header: () => (
@@ -105,7 +105,7 @@ export function IssuedTable({
         <Checkbox
           checked={!!rowSelection[item.id]}
           onCheckedChange={(checked) => handleSelectRow(item.id, !!checked)}
-          aria-label={`Select ${item.studentName}`}
+          aria-label={`Select row`}
           className="data-[state=checked]:bg-[#E60076] data-[state=checked]:border-[#E60076]"
         />
       ),
@@ -113,27 +113,27 @@ export function IssuedTable({
     },
     {
       header: "Student Name",
-      accessorKey: "studentName",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[130px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#0F172B] whitespace-nowrap overflow-hidden text-ellipsis">{item.studentName}</div>,
+      cell: (item) => <div className="text-[11px] font-medium text-[#0F172B] whitespace-nowrap overflow-hidden text-ellipsis">{item.student?.full_name || "-"}</div>,
     },
     {
       header: "Certificate Name",
-      accessorKey: "certificateName",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.certificateName}</div>,
+      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.template?.name || "-"}</div>,
     },
     {
       header: "Courses/Batches Name",
-      accessorKey: "coursesBatchesName",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[170px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.coursesBatchesName}</div>,
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
+          {item.course?.name || "-"} {item.batch?.name ? `/ ${item.batch.name}` : ""}
+        </div>
+      ),
     },
     {
       header: "Certificate Type",
-      accessorKey: "certificateType",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[130px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.certificateType}</div>,
+      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.certificate_type || "-"}</div>,
     },
     {
       header: "Status",
@@ -141,7 +141,7 @@ export function IssuedTable({
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[160px]",
       cell: (item) => (
         <StatusPopover
-          value={item.status}
+          value={item.status || "PENDING"}
           options={ISSUED_STATUS_OPTIONS}
           readOnly={true}
         />
@@ -149,15 +149,17 @@ export function IssuedTable({
     },
     {
       header: "Issued Date",
-      accessorKey: "issuedDate",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[110px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.issuedDate}</div>,
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
+          {item.created_at ? new Date(item.created_at).toLocaleDateString() : "-"}
+        </div>
+      ),
     },
     {
       header: "Verification No",
-      accessorKey: "verificationNo",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[130px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.verificationNo}</div>,
+      cell: () => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">-</div>,
     },
     {
       header: "Action",
@@ -186,7 +188,7 @@ export function IssuedTable({
   return (
     <>
       <DataTable
-        data={paginatedData}
+        data={data}
         columns={columns}
         keyExtractor={(item) => item.id}
         isLoading={isLoading}
@@ -205,9 +207,16 @@ export function IssuedTable({
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={() => {
-          console.log("Deleting:", selectedItem?.id);
-          setDeleteModalOpen(false);
+          if (selectedItem) {
+            deleteRequest(selectedItem.id, {
+              onSuccess: () => {
+                setDeleteModalOpen(false);
+                setRowSelection({});
+              },
+            });
+          }
         }}
+        isDeleting={isDeleting}
         title="Confirm Deletion"
         description="Are you sure you want to delete this issued certificate record? This action cannot be undone."
       />

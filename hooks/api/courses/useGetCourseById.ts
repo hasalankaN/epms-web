@@ -6,21 +6,43 @@ import { queryKeys } from "@/lib/constants/queryKeys";
 
 // ==================== API Response Types ====================
 
+export interface ApiStaffMember {
+  id: string;
+  full_name: string | null;
+  email: string;
+}
+
+export interface ApiLecturer {
+  id: string;
+  full_name: string | null;
+  email: string;
+}
+
+export interface ApiCertificateTemplate {
+  id: string;
+  name: string;
+  price: string;
+  template_file_url: string;
+  status: string;
+}
+
 export interface ApiCourseGeneralDetails {
   name: string;
-  staff_members: string[];
+  staff_members: ApiStaffMember[];
   has_assessment: boolean;
   course_type: string | null;
   start_date: string | null;
   end_date: string | null;
-  certificates: string[];
+  certificates: ApiCertificateTemplate[];
   category_id: string;
   lecturer_id: string;
+  lecturer: ApiLecturer | null;
   level: string;
   language: string;
   lesson_duration_hours: number | null;
   hierarchy_type: string;
   batch_id: string | null;
+  batch_name: string | null;
   short_description: string | null;
   long_description: string;
   cover_image_url: string | null;
@@ -77,6 +99,7 @@ interface ApiCourseDetailResponse {
     data: ApiCourseDetail;
   };
 }
+
 
 // ==================== Hook ====================
 

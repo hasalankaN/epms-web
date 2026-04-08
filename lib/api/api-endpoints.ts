@@ -37,6 +37,16 @@ export const API_ENDPOINTS = {
     DELETE_TEMPLATE: (id: string) => `/api/v1/admin/certificate-templates/${id}`,
     DELETE_BULK: `/api/v1/admin/certificate-templates/bulk`,
   },
+  documentTemplates: {
+    GET_ALL: `/api/v1/admin/documents/templates`,
+    GET_BY_ID: (id: string) => `/api/v1/admin/documents/templates/${id}`,
+    CREATE: `/api/v1/admin/documents/templates`,
+    UPDATE: (id: string) => `/api/v1/admin/documents/templates/${id}`,
+    TOGGLE_STATUS: (id: string) => `/api/v1/admin/documents/templates/${id}/toggle-active`,
+    DELETE: (id: string) => `/api/v1/admin/documents/templates/${id}`,
+    DELETE_BULK: "/api/v1/admin/documents/templates/bulk",
+  },
+
   courseCategories: {
     GET_ALL: `/api/v1/categories`,
     CREATE: `/api/v1/categories`,
@@ -76,6 +86,14 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/api/v1/courses/${id}`,
     UPDATE_STATUS: (id: string) => `/api/v1/courses/${id}/status`,
     DEACTIVATE: (id: string) => `/api/v1/courses/${id}/deactivate`,
+    GET_STATS: `/api/v1/courses/stats`,
+
+    // Analytics
+    GET_ANALYTICS_ALL: `/api/v1/admin/courses-analytics/all-courses`,
+    GET_ANALYTICS_SUMMARY: `/api/v1/admin/courses-analytics/all-courses/course-summary`,
+    GET_ANALYTICS_STUDENTS: `/api/v1/admin/courses-analytics/all-courses/student-summary`,
+    GET_ANALYTICS_DISTRICTS: `/api/v1/admin/courses-analytics/all-courses/enrollment-by-district`,
+    GET_ANALYTICS_BREAKDOWN: `/api/v1/admin/courses-analytics/all-courses/breakdown`,
   },
   referrals: {
     GET_AGENTS: `/api/v1/admin/referrals/agents`,
@@ -94,5 +112,10 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/api/v1/admin/enquiries/${id}`,
     DELETE_BULK: `/api/v1/admin/enquiries`,
     GET_DASHBOARD: `/api/v1/admin/enquiries/dashboard`,
+  },
+  certificateRequests: {
+    GET_ALL: `/api/v1/admin/certificate-requests`,
+    DELETE: (id: string) => `/api/v1/admin/certificate-requests/${id}`,
+    DELETE_BULK: `/api/v1/admin/certificate-requests/bulk`,
   },
 };
