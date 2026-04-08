@@ -113,4 +113,9 @@ export const API_ENDPOINTS = {
     DELETE_BULK: `/api/v1/admin/enquiries`,
     GET_DASHBOARD: `/api/v1/admin/enquiries/dashboard`,
   },
+  certificateRequests: {
+    GET_ALL: `/api/v1/admin/certificate-requests`,
+    DELETE: (id: string) => `/api/v1/admin/certificate-requests/${id}`,
+    DELETE_BULK: `/api/v1/admin/certificate-requests/bulk`,
+  },
 };

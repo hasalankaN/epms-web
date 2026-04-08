@@ -38,12 +38,12 @@ export function transformApiCourseDetailToFormData(data: ApiCourseDetail): {
   // ── General Details ──────────────────────────────────────────────────────
   const generalDetails: Partial<CourseGeneralDetailsValues> = {
     courseName: data.general_details.name,
-    staffMembers: data.general_details.staff_members || [],
+    staffMembers: (data.general_details.staff_members || []).map(m => m.id),
     assessment: data.general_details.has_assessment ? "Yes" : "No", // Frontend expects "Yes" or "No" often, check schema: actually optional string, but schema says it maps to strings. Schema does not have specific enum.
     courseType: mapOption(data.general_details.course_type, COURSE_TYPES),
     startDate: data.general_details.start_date ? new Date(data.general_details.start_date) : undefined,
     endDate: data.general_details.end_date ? new Date(data.general_details.end_date) : undefined,
-    certificates: data.general_details.certificates || [],
+    certificates: (data.general_details.certificates || []).map(c => c.id),
     courseCategory: data.general_details.category_id, // assuming it expects the ID
     lecturer: data.general_details.lecturer_id || "",
     courseLevel: mapOption(data.general_details.level, LEVELS),

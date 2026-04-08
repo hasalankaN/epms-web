@@ -1,0 +1,12 @@
+# Backend Issues & Missing Values Tracker
+
+This document tracks bugs, missing fields, and inconsistencies found in the backend APIs during frontend integration.
+
+| Date | Endpoint | Issue / Missing Values | Status |
+| :--- | :--- | :--- | :--- |
+| 2026-04-08 | `GET /api/v1/admin/certificate-requests` | **Missing Field**: `verification_no` is required by the design but missing from the API response. | Pending |
+| 2026-04-08 | `GET /api/v1/admin/certificate-requests` | **Missing Field**: `issued_at` date is missing. Currently falling back to `created_at`. | Pending |
+| 2026-04-08 | `GET /api/v1/admin/certificate-requests` | **Data Inconsistency**: API provides `IN_PROGRESS` but the design requires "Printing in progress". | Pending |
+| 2026-04-08 | `GET /api/v1/admin/certificate-requests` | **Missing Status**: "Issued" status is shown in the design but not listed in the API's available values. | Pending |
+| 2026-04-08 | `PATCH /api/v1/admin/certificate-requests/:id/status` | **Missing Endpoint**: Required to update certificate status (e.g., "Mark as Delivered"). Mocked on frontend. | Pending |
+| 2026-04-08 | `DELETE /api/v1/admin/certificate-requests/bulk` | **Missing Endpoint**: Required for bulk deleting certificate requests. Mocked on frontend. | Pending |

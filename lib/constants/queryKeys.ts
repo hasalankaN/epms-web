@@ -38,4 +38,7 @@ export const queryKeys = {
 
   // Enquiries
   enquiries: "enquiries",
+
+  // Certificate Requests
+  certificateRequests: "certificateRequests",
 };

@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { ApiCourseGeneralDetails } from "@/hooks/api/courses/useGetCourseById";
+import type { ApiCourseGeneralDetails, ApiStaffMember } from "@/hooks/api/courses/useGetCourseById";
 
 interface CourseGeneralInfoProps {
   data?: ApiCourseGeneralDetails;
@@ -33,14 +33,16 @@ const InfoItem = ({
   </div>
 );
 
-// Helper to render staff item using ID for now
-const StaffIdItem = ({ id }: { id: string }) => (
+// Helper to render a staff member using full_name or email
+const StaffIdItem = ({ member }: { member: ApiStaffMember }) => (
   <div className="flex items-center gap-2">
     <div className="h-6 w-6 rounded-full bg-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
-      <span className="text-[10px] text-slate-500 font-bold">ID</span>
+      <span className="text-[10px] text-slate-500 font-bold">
+        {(member.full_name || member.email)?.[0]?.toUpperCase() ?? "?"}
+      </span>
     </div>
-    <span className="whitespace-nowrap text-xs text-[#314158] truncate max-w-[100px]">
-      {id}
+    <span className="whitespace-nowrap text-sm text-[#314158] truncate max-w-[120px]">
+      {member.full_name || member.email}
     </span>
   </div>
 );
@@ -64,10 +66,12 @@ export function CourseGeneralInfo({ data, isLoading }: CourseGeneralInfoProps) {
         <InfoItem label="Lecturer" isLoading={isLoading}>
           <div className="flex items-center gap-2">
             <div className="h-6 w-6 rounded-full bg-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
-              <span className="text-[10px] text-slate-500 font-bold">ID</span>
+              <span className="text-[10px] text-slate-500 font-bold">
+                {(data?.lecturer?.full_name || data?.lecturer?.email)?.[0]?.toUpperCase() ?? "L"}
+              </span>
             </div>
             <span className="text-sm truncate">
-              {data?.lecturer_id || "Not assigned"}
+              {data?.lecturer?.full_name || data?.lecturer?.email || data?.lecturer_id || "Not assigned"}
             </span>
           </div>
         </InfoItem>
@@ -80,7 +84,7 @@ export function CourseGeneralInfo({ data, isLoading }: CourseGeneralInfoProps) {
           <div className="flex items-center gap-2 flex-wrap">
             {/* Show first item */}
             {certificates.length > 0 && (
-              <span className="truncate text-sm">{certificates[0]}</span>
+              <span className="truncate text-sm">{certificates[0].name}</span>
             )}
 
             {/* Overflow Popover */}
@@ -98,10 +102,10 @@ export function CourseGeneralInfo({ data, isLoading }: CourseGeneralInfoProps) {
                     </span>
                     {certificates.map((cert, idx) => (
                       <div
-                        key={idx}
+                        key={cert.id || idx}
                         className="text-sm text-slate-700 py-1 border-b border-slate-100 last:border-0"
                       >
-                        {cert}
+                        {cert.name}
                       </div>
                     ))}
                   </div>
@@ -136,7 +140,7 @@ export function CourseGeneralInfo({ data, isLoading }: CourseGeneralInfoProps) {
         <InfoItem label="Staff Members" isLoading={isLoading}>
           <div className="flex items-center gap-2 flex-wrap">
             {/* Show first item */}
-            {staffMembers.length > 0 && <StaffIdItem id={staffMembers[0]} />}
+            {staffMembers.length > 0 && <StaffIdItem member={staffMembers[0]} />}
 
             {/* Overflow Popover */}
             {staffMembers.length > 1 && (
@@ -151,8 +155,8 @@ export function CourseGeneralInfo({ data, isLoading }: CourseGeneralInfoProps) {
                     <span className="text-xs font-semibold text-slate-500">
                       All Staff IDs
                     </span>
-                    {staffMembers.map((id, idx) => (
-                      <StaffIdItem key={idx} id={id} />
+                    {staffMembers.map((member, idx) => (
+                      <StaffIdItem key={member.id || idx} member={member} />
                     ))}
                   </div>
                 </PopoverContent>
