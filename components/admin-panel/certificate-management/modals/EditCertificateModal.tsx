@@ -445,7 +445,7 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
           </motion.div>
 
           {/* ===== BODY (scrollable) ===== */}
-          <motion.div variants={itemVariants} className="flex-1 overflow-y-auto px-1 py-1 sm:px-2 sm:py-2 scrollbar-hide">
+          <motion.div variants={itemVariants} className="flex-1 overflow-y-auto px-1 pt-4 pb-1 sm:px-2 sm:pt-4 sm:pb-2 scrollbar-hide">
             <div className="flex flex-col gap-6">
 
               {/* TOP ROW: Form Fields (2 columns) */}

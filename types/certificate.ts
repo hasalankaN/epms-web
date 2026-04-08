@@ -78,3 +78,59 @@ export interface GetCertificateTemplatesResponse {
   isFirstPage: boolean;
   isLastPage: boolean;
 }
+
+// ─── Certificate Request Types ────────────────────────────────────────────────
+
+export type CertificateRequestStatus = "PENDING" | "IN_PROGRESS" | "DELIVERED" | "DOWNLOADED";
+export type CertificateRequestType = "FREE" | "PAID";
+
+export interface CertificateRequestItem {
+  id: string;
+  certificate_type: CertificateRequestType;
+  payment_required: boolean;
+  status: CertificateRequestStatus;
+  student: {
+    id: string;
+    full_name: string;
+    email: string;
+  };
+  lecturer?: {
+    id: string;
+    full_name: string;
+  };
+  template: {
+    id: string;
+    name: string;
+  };
+  course: {
+    id: string;
+    name: string;
+  };
+  batch?: {
+    id: string;
+    name: string;
+  };
+  created_at: string;
+}
+
+export interface GetCertificateRequestsParams {
+  search?: string;
+  batch_id?: string;
+  course_id?: string;
+  certificate_type?: CertificateRequestType;
+  status?: CertificateRequestStatus;
+  date_from?: string;
+  date_to?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface CertificateRequestsListResponse {
+  data: CertificateRequestItem[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}

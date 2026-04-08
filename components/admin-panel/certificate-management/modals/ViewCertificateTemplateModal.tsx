@@ -120,6 +120,7 @@ export function ViewCertificateTemplateModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         animateChildren={true}
+        isLoading={!imgLoaded}
         className={cn(
           "flex w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[80vw] lg:max-w-[900px]",
           "h-[92vh] max-h-[92vh] flex-col gap-0",
@@ -146,11 +147,11 @@ export function ViewCertificateTemplateModal({
         </motion.div>
 
         {/* ===== BODY (Certificate Preview) ===== */}
-        <motion.div variants={itemVariants} className="flex flex-1 flex-col overflow-auto bg-[#F8FAFC] custom-scrollbar">
-          <div className="flex flex-1 items-center justify-center p-4 sm:p-6 min-h-0">
+        <motion.div variants={itemVariants} className="flex-1 overflow-auto bg-[#F8FAFC] custom-scrollbar">
+          <div className="p-4 sm:p-6">
             <div
               ref={containerRef}
-              className="relative shadow-xl rounded-sm overflow-hidden select-none"
+              className="relative mx-auto shadow-xl rounded-sm overflow-hidden select-none"
               style={{
                 width: "100%",
                 maxWidth: "900px",
@@ -173,7 +174,7 @@ export function ViewCertificateTemplateModal({
                     if (containerRef.current) {
                       setContainerWidth(containerRef.current.clientWidth);
                     }
-                    
+
                     setImgLoaded(true);
                   }}
                   onError={() => setImgError(true)}

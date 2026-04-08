@@ -37,6 +37,16 @@ export const API_ENDPOINTS = {
     DELETE_TEMPLATE: (id: string) => `/api/v1/admin/certificate-templates/${id}`,
     DELETE_BULK: `/api/v1/admin/certificate-templates/bulk`,
   },
+  documentTemplates: {
+    GET_ALL: `/api/v1/admin/documents/templates`,
+    GET_BY_ID: (id: string) => `/api/v1/admin/documents/templates/${id}`,
+    CREATE: `/api/v1/admin/documents/templates`,
+    UPDATE: (id: string) => `/api/v1/admin/documents/templates/${id}`,
+    TOGGLE_STATUS: (id: string) => `/api/v1/admin/documents/templates/${id}/toggle-active`,
+    DELETE: (id: string) => `/api/v1/admin/documents/templates/${id}`,
+    DELETE_BULK: "/api/v1/admin/documents/templates/bulk",
+  },
+
   courseCategories: {
     GET_ALL: `/api/v1/categories`,
     CREATE: `/api/v1/categories`,
@@ -102,5 +112,10 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/api/v1/admin/enquiries/${id}`,
     DELETE_BULK: `/api/v1/admin/enquiries`,
     GET_DASHBOARD: `/api/v1/admin/enquiries/dashboard`,
+  },
+  certificateRequests: {
+    GET_ALL: `/api/v1/admin/certificate-requests`,
+    DELETE: (id: string) => `/api/v1/admin/certificate-requests/${id}`,
+    DELETE_BULK: `/api/v1/admin/certificate-requests/bulk`,
   },
 };

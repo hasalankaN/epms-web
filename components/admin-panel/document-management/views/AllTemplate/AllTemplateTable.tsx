@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 
 import { MoreVertical } from "lucide-react";
 
-import type { DocumentTemplateRow } from "@/types/document";
+import type { DocumentTemplateListItem } from "@/types/document";
+import { DOCUMENT_TYPE_LABELS } from "@/types/document";
 
 import { DataTable } from "@/components/common/table/DataTable";
 import type { Column } from "@/components/common/table/DataTable";
@@ -14,6 +15,10 @@ import { Button } from "@/components/ui/button";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
 import { IssueDocumentModal } from "@/components/admin-panel/document-management/modals/IssueDocumentModal";
 import { EditDocumentModal } from "@/components/admin-panel/document-management/modals/EditDocumentModal";
+import { ViewDocumentTemplateModal } from "@/components/admin-panel/document-management/modals/ViewDocumentTemplateModal";
+import { ViewAssignmentsModal } from "@/components/admin-panel/document-management/modals/ViewAssignmentsModal";
+import { useToggleDocumentTemplateStatus } from "@/hooks/api/documents/useToggleDocumentTemplateStatus";
+import { useDeleteDocumentTemplate } from "@/hooks/api/documents/useDeleteDocumentTemplate";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,13 +31,28 @@ const DOC_TEMPLATE_STATUS_OPTIONS = [
   { value: "Inactive", bg: "#F1F5F9", text: "#000000" },
 ];
 
+// ── Helper: format API item as display object ───────────────────────────────
+
+function formatDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return iso;
+  }
+}
+
 interface AllTemplateTableProps {
-  data: DocumentTemplateRow[];
+  data: DocumentTemplateListItem[];
   rowSelection: { [key: string]: boolean };
   setRowSelection: React.Dispatch<React.SetStateAction<{ [key: string]: boolean }>>;
   isLoading?: boolean;
   isError?: boolean;
   currentPage: number;
+  totalCount: number;
   onPageChange: (page: number) => void;
 }
 
@@ -43,19 +63,12 @@ export function AllTemplateTable({
   isLoading = false,
   isError = false,
   currentPage,
+  totalCount,
   onPageChange,
 }: AllTemplateTableProps) {
   const itemsPerPage = 10;
-
-  const totalCount = data.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-
-    return data.slice(startIndex, startIndex + itemsPerPage);
-  }, [data, currentPage]);
 
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
@@ -72,23 +85,27 @@ export function AllTemplateTable({
   };
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<DocumentTemplateRow | null>(null);
+  const [selectedItem, setSelectedItem] = useState<DocumentTemplateListItem | null>(null);
 
   const [issueModalOpen, setIssueModalOpen] = useState(false);
-  const [issueItem, setIssueItem] = useState<DocumentTemplateRow | null>(null);
+  const [issueItem, setIssueItem] = useState<DocumentTemplateListItem | null>(null);
 
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editItem, setEditItem] = useState<DocumentTemplateRow | null>(null);
+  const [editItem, setEditItem] = useState<DocumentTemplateListItem | null>(null);
+
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [viewItem, setViewItem] = useState<DocumentTemplateListItem | null>(null);
 
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
-  const [deactivateItem, setDeactivateItem] = useState<DocumentTemplateRow | null>(null);
+  const [deactivateItem, setDeactivateItem] = useState<DocumentTemplateListItem | null>(null);
 
   const [activateModalOpen, setActivateModalOpen] = useState(false);
-  const [activateItem, setActivateItem] = useState<DocumentTemplateRow | null>(null);
+  const [activateItem, setActivateItem] = useState<DocumentTemplateListItem | null>(null);
 
-  const handleAction = (action: string, item: DocumentTemplateRow) => {
-    console.log(`Action: ${action}`, item);
+  const [assignmentsModalOpen, setAssignmentsModalOpen] = useState(false);
+  const [assignmentsItem, setAssignmentsItem] = useState<DocumentTemplateListItem | null>(null);
 
+  const handleAction = (action: string, item: DocumentTemplateListItem) => {
     if (action === "delete") {
       setSelectedItem(item);
       setDeleteModalOpen(true);
@@ -98,6 +115,12 @@ export function AllTemplateTable({
     } else if (action === "edit") {
       setEditItem(item);
       setEditModalOpen(true);
+    } else if (action === "view") {
+      setViewItem(item);
+      setViewModalOpen(true);
+    } else if (action === "view-assignments") {
+      setAssignmentsItem(item);
+      setAssignmentsModalOpen(true);
     } else if (action === "deactivate") {
       setDeactivateItem(item);
       setDeactivateModalOpen(true);
@@ -106,8 +129,44 @@ export function AllTemplateTable({
       setActivateModalOpen(true);
     }
   };
+  
+  // -- Toggling status hooks --
+  const { mutateAsync: toggleDeactivate, isPending: isDeactivating } = useToggleDocumentTemplateStatus(deactivateItem?.id || "");
+  const { mutateAsync: toggleActivate, isPending: isActivating } = useToggleDocumentTemplateStatus(activateItem?.id || "");
+  const { mutateAsync: deleteTemplate, isPending: isDeleting } = useDeleteDocumentTemplate();
 
-  const columns: Column<DocumentTemplateRow>[] = [
+  const handleDeleteConfirm = async () => {
+    if (!selectedItem) return;
+
+    try {
+      await deleteTemplate(selectedItem.id);
+
+      setDeleteModalOpen(false);
+      setSelectedItem(null);
+    } catch {
+      // toast handled in hook
+    }
+  };
+
+  const handleDeactivateConfirm = async () => {
+    try {
+      await toggleDeactivate();
+      setDeactivateModalOpen(false);
+    } catch {
+      // toast handled in hook
+    }
+  };
+
+  const handleActivateConfirm = async () => {
+    try {
+      await toggleActivate();
+      setActivateModalOpen(false);
+    } catch {
+      // toast handled in hook
+    }
+  };
+
+  const columns: Column<DocumentTemplateListItem>[] = [
     {
       id: "select",
       header: () => (
@@ -128,7 +187,7 @@ export function AllTemplateTable({
         <Checkbox
           checked={!!rowSelection[item.id]}
           onCheckedChange={(checked) => handleSelectRow(item.id, !!checked)}
-          aria-label={`Select ${item.documentName}`}
+          aria-label={`Select ${item.name}`}
           className="data-[state=checked]:bg-[#E60076] data-[state=checked]:border-[#E60076]"
         />
       ),
@@ -136,51 +195,77 @@ export function AllTemplateTable({
     },
     {
       header: "Added Date",
-      accessorKey: "addedDate",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[110px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.addedDate}</div>,
+      accessorKey: "created_at",
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[110px]",
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">
+          {formatDate(item.created_at)}
+        </div>
+      ),
     },
     {
       header: "Document Name",
-      accessorKey: "documentName",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#0F172B] whitespace-nowrap overflow-hidden text-ellipsis">{item.documentName}</div>,
+      accessorKey: "name",
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[180px]",
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#0F172B] whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px]">
+          {item.name}
+        </div>
+      ),
     },
     {
       header: "Document Type",
-      accessorKey: "documentType",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.documentType}</div>,
+      accessorKey: "document_type",
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[150px]",
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">
+          {DOCUMENT_TYPE_LABELS[item.document_type] ?? item.document_type}
+        </div>
+      ),
     },
     {
       header: "Template",
-      accessorKey: "template",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[100px]",
-      cell: () => (
-        <button className="text-[11px] font-medium text-[#E60076] hover:underline whitespace-nowrap">View</button>
+      accessorKey: "id",
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[100px]",
+      cell: (item) => (
+        <button
+          className="text-[11px] font-medium text-[#E60076] hover:underline whitespace-nowrap"
+          onClick={() => handleAction("view", item)}
+        >
+          View
+        </button>
       ),
     },
     {
       header: "Assigned Courses/Batches",
-      accessorKey: "assignedCoursesBatches",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[190px]",
-      cell: () => (
-        <button className="text-[11px] font-medium text-[#E60076] hover:underline whitespace-nowrap">View</button>
+      accessorKey: "id",
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[180px]",
+      cell: (item) => (
+        <button
+          className="text-[11px] font-medium text-[#E60076] hover:underline whitespace-nowrap"
+          onClick={() => handleAction("view-assignments", item)}
+        >
+          View
+        </button>
       ),
     },
     {
-      header: "Issued Number",
-      accessorKey: "issuedNumber",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[120px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.issuedNumber}</div>,
+      header: "Issued Count",
+      accessorKey: "issued_count",
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[120px]",
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.issued_count}
+        </div>
+      ),
     },
     {
       header: "Status",
-      accessorKey: "status",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[100px]",
+      accessorKey: "is_active",
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[100px]",
       cell: (item) => (
         <StatusPopover
-          value={item.status}
+          value={item.is_active ? "Active" : "Inactive"}
           options={DOC_TEMPLATE_STATUS_OPTIONS}
           readOnly
         />
@@ -199,7 +284,7 @@ export function AllTemplateTable({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[120px]">
               <DropdownMenuItem onClick={() => handleAction("edit", item)} className="cursor-pointer focus:bg-[#FDF2F8]">Edit</DropdownMenuItem>
-              {item.status === "Active" ? (
+              {item.is_active ? (
                 <>
                   <DropdownMenuItem onClick={() => handleAction("issue", item)} className="cursor-pointer focus:bg-[#FDF2F8]">Issue</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleAction("deactivate", item)} className="cursor-pointer focus:bg-[#FDF2F8]">Deactivate</DropdownMenuItem>
@@ -218,7 +303,7 @@ export function AllTemplateTable({
   return (
     <>
       <DataTable
-        data={paginatedData}
+        data={data}
         columns={columns}
         keyExtractor={(item) => item.id}
         isLoading={isLoading}
@@ -233,58 +318,67 @@ export function AllTemplateTable({
         }}
         rowClassName={(item) => (rowSelection[item.id] ? "selected" : "")}
       />
+
       <DeleteConfirmationModal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        onConfirm={() => {
-          console.log("Deleting:", selectedItem?.id);
-          setDeleteModalOpen(false);
-        }}
+        onConfirm={handleDeleteConfirm}
         title="Confirm Deletion"
         description="Are you sure you want to delete this document template? This action cannot be undone."
+        isDeleting={isDeleting}
       />
 
       <DeleteConfirmationModal
         isOpen={deactivateModalOpen}
         onClose={() => setDeactivateModalOpen(false)}
-        onConfirm={() => {
-          console.log("Deactivating:", deactivateItem?.id);
-          setDeactivateModalOpen(false);
-        }}
+        onConfirm={handleDeactivateConfirm}
         title="Confirm Deactivation"
-        description={`Are you sure you want to deactivate ${deactivateItem?.documentName}?`}
+        description={`Are you sure you want to deactivate ${deactivateItem?.name}?`}
         confirmText="Confirm Deactivation"
         cancelText="Go Back"
         confirmVariant="destructive"
+        isDeleting={isDeactivating}
       />
 
       <DeleteConfirmationModal
         isOpen={activateModalOpen}
         onClose={() => setActivateModalOpen(false)}
-        onConfirm={() => {
-          console.log("Activating:", activateItem?.id);
-          setActivateModalOpen(false);
-        }}
+        onConfirm={handleActivateConfirm}
         title="Confirm Activation"
-        description={`Are you sure you want to activate ${activateItem?.documentName}?`}
-        confirmText="Confirm Re - Activation"
+        description={`Are you sure you want to activate ${activateItem?.name}?`}
+        confirmText="Confirm Re-Activation"
         cancelText="Go Back"
         confirmVariant="primary"
+        isDeleting={isActivating}
       />
 
       <IssueDocumentModal
         isOpen={issueModalOpen}
         onClose={() => setIssueModalOpen(false)}
-        documentName={issueItem?.documentName}
-        onIssue={(data) => {
-          console.log("Issuing document:", data);
+        documentName={issueItem?.name}
+        onIssue={(issueData) => {
+          console.log("Issuing document:", issueData);
         }}
       />
 
       <EditDocumentModal
         isOpen={editModalOpen}
         onClose={() => setEditModalOpen(false)}
-        document={editItem}
+        templateId={editItem?.id ?? null}
+      />
+
+      <ViewDocumentTemplateModal
+        isOpen={viewModalOpen}
+        onClose={() => setViewModalOpen(false)}
+        templateId={viewItem?.id ?? null}
+        templateName={viewItem?.name ?? ""}
+      />
+
+      <ViewAssignmentsModal
+        isOpen={assignmentsModalOpen}
+        onClose={() => setAssignmentsModalOpen(false)}
+        templateId={assignmentsItem?.id ?? null}
+        templateName={assignmentsItem?.name ?? ""}
       />
     </>
   );

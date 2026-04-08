@@ -17,7 +17,7 @@ export function IssuedStatsCard({ totalIssued }: IssuedStatsCardProps) {
         Total Number of Issued Documents
       </p>
       <p className="text-[#101828] text-center font-inter text-[24px] font-bold leading-[32px] m-0">
-        {totalIssued === 0 || isNaN(totalIssued) ? "####" : totalIssued.toLocaleString()}
+        {isNaN(totalIssued) ? "####" : totalIssued.toLocaleString()}
       </p>
     </div>
   );
