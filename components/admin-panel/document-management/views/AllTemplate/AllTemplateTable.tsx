@@ -17,6 +17,8 @@ import { IssueDocumentModal } from "@/components/admin-panel/document-management
 import { EditDocumentModal } from "@/components/admin-panel/document-management/modals/EditDocumentModal";
 import { ViewDocumentTemplateModal } from "@/components/admin-panel/document-management/modals/ViewDocumentTemplateModal";
 import { ViewAssignmentsModal } from "@/components/admin-panel/document-management/modals/ViewAssignmentsModal";
+import { useToggleDocumentTemplateStatus } from "@/hooks/api/documents/useToggleDocumentTemplateStatus";
+import { useDeleteDocumentTemplate } from "@/hooks/api/documents/useDeleteDocumentTemplate";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -125,6 +127,42 @@ export function AllTemplateTable({
     } else if (action === "activate") {
       setActivateItem(item);
       setActivateModalOpen(true);
+    }
+  };
+  
+  // -- Toggling status hooks --
+  const { mutateAsync: toggleDeactivate, isPending: isDeactivating } = useToggleDocumentTemplateStatus(deactivateItem?.id || "");
+  const { mutateAsync: toggleActivate, isPending: isActivating } = useToggleDocumentTemplateStatus(activateItem?.id || "");
+  const { mutateAsync: deleteTemplate, isPending: isDeleting } = useDeleteDocumentTemplate();
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedItem) return;
+
+    try {
+      await deleteTemplate(selectedItem.id);
+
+      setDeleteModalOpen(false);
+      setSelectedItem(null);
+    } catch {
+      // toast handled in hook
+    }
+  };
+
+  const handleDeactivateConfirm = async () => {
+    try {
+      await toggleDeactivate();
+      setDeactivateModalOpen(false);
+    } catch {
+      // toast handled in hook
+    }
+  };
+
+  const handleActivateConfirm = async () => {
+    try {
+      await toggleActivate();
+      setActivateModalOpen(false);
+    } catch {
+      // toast handled in hook
     }
   };
 
@@ -284,40 +322,34 @@ export function AllTemplateTable({
       <DeleteConfirmationModal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        onConfirm={() => {
-          console.log("Deleting:", selectedItem?.id);
-          setDeleteModalOpen(false);
-        }}
+        onConfirm={handleDeleteConfirm}
         title="Confirm Deletion"
         description="Are you sure you want to delete this document template? This action cannot be undone."
+        isDeleting={isDeleting}
       />
 
       <DeleteConfirmationModal
         isOpen={deactivateModalOpen}
         onClose={() => setDeactivateModalOpen(false)}
-        onConfirm={() => {
-          console.log("Deactivating:", deactivateItem?.id);
-          setDeactivateModalOpen(false);
-        }}
+        onConfirm={handleDeactivateConfirm}
         title="Confirm Deactivation"
         description={`Are you sure you want to deactivate ${deactivateItem?.name}?`}
         confirmText="Confirm Deactivation"
         cancelText="Go Back"
         confirmVariant="destructive"
+        isDeleting={isDeactivating}
       />
 
       <DeleteConfirmationModal
         isOpen={activateModalOpen}
         onClose={() => setActivateModalOpen(false)}
-        onConfirm={() => {
-          console.log("Activating:", activateItem?.id);
-          setActivateModalOpen(false);
-        }}
+        onConfirm={handleActivateConfirm}
         title="Confirm Activation"
         description={`Are you sure you want to activate ${activateItem?.name}?`}
         confirmText="Confirm Re-Activation"
         cancelText="Go Back"
         confirmVariant="primary"
+        isDeleting={isActivating}
       />
 
       <IssueDocumentModal

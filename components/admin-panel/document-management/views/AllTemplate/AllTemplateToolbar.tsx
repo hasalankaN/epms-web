@@ -176,10 +176,12 @@ export function AllTemplateToolbar({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[160px]">
-                <DropdownMenuItem onClick={bulkActions.onSelectAll} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">Select All</DropdownMenuItem>
-                {hasSelection && (
-                  <DropdownMenuItem onClick={bulkActions.onClear} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">Clear Selection</DropdownMenuItem>
-                )}
+                <DropdownMenuItem
+                  onClick={isAllSelected ? bulkActions.onClear : bulkActions.onSelectAll}
+                  className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]"
+                >
+                  {isAllSelected ? "Clear Selection" : "Select All"}
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={bulkActions.onIssue}
                   className={cn("cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]", !hasSelection && "text-[#90A1B9] pointer-events-none")}
