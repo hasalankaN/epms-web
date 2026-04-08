@@ -271,6 +271,7 @@ export const DraggableDocField = ({
 
   // Determine display text
   const displayLabel = fieldState.label || label;
+
   const displayText = showSampleValue && fieldState.sampleValue
     ? fieldState.sampleValue
     : `{{${displayLabel}}}`;
