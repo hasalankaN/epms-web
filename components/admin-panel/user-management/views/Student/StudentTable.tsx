@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -33,6 +33,7 @@ interface StudentTableProps {
   isError?: boolean;
   currentPage: number;
   onPageChange: (page: number) => void;
+  totalResults: number;
 }
 
 export function StudentTable({
@@ -43,24 +44,17 @@ export function StudentTable({
   isError = false,
   currentPage,
   onPageChange,
+  totalResults,
 }: StudentTableProps) {
   const router = useRouter();
   const itemsPerPage = 10;
 
-  const filteredData = useMemo(() => data || [], [data]);
-  const totalCount = filteredData.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-
-    return filteredData.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, currentPage, itemsPerPage]);
 
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
-      const newSelection = Object.fromEntries(filteredData.map((item) => [item.id, true]));
+      const newSelection = Object.fromEntries(data.map((item) => [item.id, true]));
 
       setRowSelection(newSelection);
     } else {
@@ -106,7 +100,7 @@ export function StudentTable({
       header: () => (
         <Checkbox
           checked={
-            selectedRowCount === filteredData.length && filteredData.length > 0
+            selectedRowCount === data.length && data.length > 0
               ? true
               : selectedRowCount > 0
                 ? "indeterminate"
@@ -180,7 +174,7 @@ export function StudentTable({
 
         return (
           <div className={`text-[12px] font-medium text-center whitespace-nowrap overflow-hidden text-ellipsis ${isCompleted ? "text-[#16A34A]" : "text-[#FB2C36]"}`}>
-            {isCompleted ? "Completed" : "Pending - XXXX.00"}
+             {isCompleted ? "Completed" : `Pending - ${student.paymentPendingAmount}`}
           </div>
         );
       },
@@ -194,7 +188,7 @@ export function StudentTable({
 
         return (
           <div className={`text-[12px] font-medium text-center whitespace-nowrap overflow-hidden text-ellipsis ${isCompleted ? "text-[#16A34A]" : "text-[#FB2C36]"}`}>
-            {isCompleted ? "Completed" : "Pending - 1"}
+             {isCompleted ? "Completed" : `Pending - ${student.pendingCertificates}`}
           </div>
         );
       },
@@ -212,7 +206,7 @@ export function StudentTable({
       cell: (student) => {
         const options = Object.entries(STUDENT_STATUS_CONFIG).map(([status, config]) => ({
           value: status,
-          label: status.charAt(0).toUpperCase() + status.slice(1),
+          label: status.charAt(0) + status.slice(1).toLowerCase(), // E.g. ACTIVE -> Active
           bg: config.bg,
           text: config.text,
         }));
@@ -272,14 +266,14 @@ export function StudentTable({
   return (
     <>
       <DataTable
-        data={paginatedData}
+        data={data}
         columns={columns}
         keyExtractor={(item) => item.id}
         isLoading={isLoading}
         isError={isError}
         pagination={{
           variant: "simple",
-          totalCount,
+          totalCount: totalResults,
           selectedRowCount,
           currentPage,
           totalPages,
