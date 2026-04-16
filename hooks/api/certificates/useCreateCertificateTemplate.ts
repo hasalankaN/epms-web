@@ -35,6 +35,8 @@ export interface ApiSignatureEntry {
 export interface CreateCertificateTemplatePayload {
   name: string;
 
+  pricing_type: "FREE" | "PAID";
+
   price: number;
 
   /** URL of the uploaded template image (e.g. from the file upload endpoint) */

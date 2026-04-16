@@ -49,7 +49,7 @@ export interface SignatureState {
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 export const DRAGGABLE_TAGS = [
-  { key: "certificateId", label: "Certificate ID" },
+  { key: "certificateId", label: "Verification Number" },
   { key: "courseName", label: "Course Name" },
   { key: "studentName", label: "Student Name" },
   { key: "issuedDate", label: "Issued Date" },

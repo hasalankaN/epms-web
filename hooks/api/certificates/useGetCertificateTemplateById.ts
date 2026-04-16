@@ -7,6 +7,7 @@ import { queryKeys } from "@/lib/constants/queryKeys";
 export interface CertificateTemplateDetailData {
   id: string;
   name: string;
+  pricing_type: "FREE" | "PAID";
   price: string;
   template_file_url: string;
   file_type: string;

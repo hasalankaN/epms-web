@@ -41,7 +41,7 @@ interface ApiTagEntry {
 
 function getLabelFromKey(key: string): string {
   const map: Record<string, string> = {
-    certificateId: "Certificate ID",
+    certificateId: "Verification Number",
     courseName: "Course Name",
     studentName: "Student Name",
     issuedDate: "Issued Date",

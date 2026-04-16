@@ -46,6 +46,7 @@ export type CertificateTemplateStatus = "ACTIVE" | "INACTIVE";
 export interface CertificateTemplateItem {
   id: string;
   name: string;
+  pricing_type: "FREE" | "PAID";
   price: string;
   template_file_url: string;
   file_type: string;

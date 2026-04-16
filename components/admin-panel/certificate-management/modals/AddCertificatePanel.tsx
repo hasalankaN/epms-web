@@ -94,6 +94,7 @@ const itemVariants = {
 export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProps) {
   // ── Form state ──────────────────────────────────────────────────────────────
   const [certificateName, setCertificateName] = useState("");
+  const [pricingType, setPricingType] = useState<"FREE" | "PAID">("FREE");
   const [price, setPrice] = useState("");
 
   // ── Editor state ─────────────────────────────────────────────────────────────
@@ -145,6 +146,7 @@ export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProp
   useEffect(() => {
     if (isOpen) {
       setCertificateName("");
+      setPricingType("FREE");
       setPrice("");
       setIsDirty(false);
       setShowDiscardModal(false);
@@ -216,12 +218,16 @@ export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProp
       return;
     }
 
-    const parsedPrice = parseFloat(price);
+    let parsedPrice = 0;
 
-    if (!price || isNaN(parsedPrice) || parsedPrice < 0) {
-      toast.error("Please enter a valid price");
+    if (pricingType === "PAID") {
+      parsedPrice = parseFloat(price);
 
-      return;
+      if (!price || isNaN(parsedPrice) || parsedPrice < 0) {
+        toast.error("Please enter a valid price for a paid certificate");
+
+        return;
+      }
     }
 
     if (!templateFile) {
@@ -287,6 +293,7 @@ export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProp
       setLoadingStep("creating");
       await createTemplateAsync({
         name: certificateName.trim(),
+        pricing_type: pricingType,
         price: parsedPrice,
         template_file_url: templateFileUrl,
         file_type: templateFile.type,
@@ -465,24 +472,80 @@ export function AddCertificatePanel({ isOpen, onClose }: AddCertificatePanelProp
                       />
                     </div>
 
-                    {/* Assign Price */}
-                    <div className="space-y-1">
-                      <FieldLabel required>Assign Price</FieldLabel>
-                      <div className="relative">
-                        <Input
-                          className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "pr-16")}
-                          placeholder="e.g. 5000"
-                          type="number"
-                          min={0}
-                          value={price}
-                          onChange={(e) => { setPrice(e.target.value); markDirty(); }}
-                        />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                          <span className={`text-sm font-semibold text-[${COLORS.slate800}]`}>LKR</span>
-                          <ChevronDown className={`h-3 w-3 text-[${COLORS.slate900}]`} />
+                    {/* Pricing Type */}
+                    <div className="space-y-3">
+                      <FieldLabel required>Pricing Type</FieldLabel>
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            id="price-free"
+                            name="pricing-type"
+                            value="FREE"
+                            checked={pricingType === "FREE"}
+                            onChange={() => {
+                              setPricingType("FREE");
+                              markDirty();
+                            }}
+                            className={`accent-[${COLORS.slate900}] h-4 w-4 cursor-pointer`}
+                          />
+                          <label
+                            htmlFor="price-free"
+                            className={`text-sm font-medium text-[${COLORS.slate700}] cursor-pointer`}
+                          >
+                            Free
+                          </label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            id="price-paid"
+                            name="pricing-type"
+                            value="PAID"
+                            checked={pricingType === "PAID"}
+                            onChange={() => {
+                              setPricingType("PAID");
+                              markDirty();
+                            }}
+                            className={`accent-[${COLORS.slate900}] h-4 w-4 cursor-pointer`}
+                          />
+                          <label
+                            htmlFor="price-paid"
+                            className={`text-sm font-medium text-[${COLORS.slate700}] cursor-pointer`}
+                          >
+                            Paid
+                          </label>
                         </div>
                       </div>
                     </div>
+
+                    {/* Assign Price */}
+                    <AnimatePresence>
+                      {pricingType === "PAID" && (
+                        <motion.div 
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="space-y-1 overflow-hidden"
+                        >
+                          <FieldLabel required>Assign Price</FieldLabel>
+                          <div className="relative">
+                            <Input
+                              className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "pr-16")}
+                              placeholder="e.g. 5000"
+                              type="number"
+                              min={0}
+                              value={price}
+                              onChange={(e) => { setPrice(e.target.value); markDirty(); }}
+                            />
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                              <span className={`text-sm font-semibold text-[${COLORS.slate800}]`}>LKR</span>
+                              <ChevronDown className={`h-3 w-3 text-[${COLORS.slate900}]`} />
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
                     {/* Upload the template */}
                     <div className="space-y-1">
