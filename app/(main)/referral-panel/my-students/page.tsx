@@ -21,9 +21,11 @@ const mockStudents: StudentDataType[] = Array.from({ length: 15 }, (_, i) => ({
   phone: "+9470 492 2345",
   whatsApp: "+9470 492 2345",
   paymentStatus: (["Pending", "Completed"] as PaymentStatus[])[i % 2],
+  paymentPendingAmount: i % 2 === 0 ? "5,000.00" : "0.00",
   certificateStatus: (["Pending", "Completed"] as CertificateStatus[])[i % 2],
+  pendingCertificates: i % 2 === 0 ? 1 : 0,
   commissions: "XXXX.00",
-  studentStatus: (["active", "inactive", "dropped", "completed"] as StudentStatus[])[i % 4],
+  studentStatus: (["ACTIVE", "INACTIVE", "DROPPED", "COMPLETED"] as StudentStatus[])[i % 4],
 }));
 
 export default function MyStudentsPage() {

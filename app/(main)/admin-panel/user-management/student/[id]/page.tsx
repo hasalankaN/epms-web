@@ -52,6 +52,8 @@ export default function ViewStudentPage() {
           <StudentEnrolledCourses 
             data={data?.enrolledCourses.data} 
             total={data?.enrolledCourses.total}
+            paymentHistory={data?.paymentHistory.data}
+            installments={data?.installments.data}
             isLoading={isLoading}
           />
         </div>
@@ -60,6 +62,8 @@ export default function ViewStudentPage() {
           <StudentEnrolledBatches 
             data={data?.enrolledBatches.data}
             total={data?.enrolledBatches.total}
+            paymentHistory={data?.paymentHistory.data}
+            installments={data?.installments.data}
             isLoading={isLoading}
           />
         </div>

@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 
+import { format } from "date-fns";
+
 import { MoreVertical } from "lucide-react";
 
 import { DataTable } from "@/components/common/table/DataTable";
@@ -19,15 +21,23 @@ import type { PaymentDetails } from "@/components/admin-panel/user-management/vi
 import { AddDiscountModal } from "@/components/admin-panel/user-management/view/student/AddDiscountModal";
 import type { DiscountDetails } from "@/components/admin-panel/user-management/view/student/AddDiscountModal";
 
-import type { EnrolledCourseItem } from "@/types/user-management";
+import type { EnrolledCourseItem, PaymentHistoryItem, InstallmentItem } from "@/types/user-management";
 
 interface StudentEnrolledCoursesProps {
   data?: EnrolledCourseItem[];
   total?: number;
+  paymentHistory?: PaymentHistoryItem[];
+  installments?: InstallmentItem[];
   isLoading?: boolean;
 }
 
-export function StudentEnrolledCourses({ data = [], total = 0, isLoading }: StudentEnrolledCoursesProps) {
+export function StudentEnrolledCourses({ 
+  data = [], 
+  total = 0, 
+  paymentHistory = [],
+  installments = [],
+  isLoading 
+}: StudentEnrolledCoursesProps) {
   const [currentPage, setCurrentPage] = useState(1);
 
   const [paymentModal, setPaymentModal] = useState<{
@@ -45,16 +55,89 @@ export function StudentEnrolledCourses({ data = [], total = 0, isLoading }: Stud
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
 
   const handleAction = (action: string, course: EnrolledCourseItem) => {
-    // Note: MOCK_PAYMENT_DETAILS and MOCK_DISCOUNT_DETAILS are still using hardcoded keys.
-    // In a real scenario, these would also fetch from an API based on enrollment_id.
     if (action === "view-payment") {
-      const details = MOCK_PAYMENT_DETAILS[course.enrollment_id] ?? null;
+      let details: PaymentDetails | null = null;
+      
+      if (course.payment_type === "FULL") {
+        const history = paymentHistory.filter(h => h.enrollment_id === course.enrollment_id);
+
+        details = {
+          mode: "one-time",
+          title: course.course_name,
+          transactions: history.map(h => ({
+            transactionNote: "Course Fee",
+            paymentType: "One-Time",
+            paymentMethod: h.method || "-",
+            bank: "-", // Bank info not directly in PaymentHistoryItem
+            viewSlip: !!h.receipt_url,
+            status: h.status === "PAID" ? "Paid" : h.status === "PENDING" ? "Pending" : "Unpaid",
+            paidAmount: h.amount,
+          }))
+        };
+      } else {
+        const courseInstallments = installments.filter(i => i.enrollment_id === course.enrollment_id);
+
+        details = {
+          mode: "installment",
+          title: course.course_name,
+          summary: {
+            paymentType: "Installment",
+            transactionNote: "Course Fee",
+            totalPayment: course.total_amount,
+            discountedAmount: courseInstallments.reduce((acc, curr) => acc + parseFloat(curr.total_discounts || "0"), 0).toFixed(2),
+            totalPaid: courseInstallments.reduce((acc, curr) => acc + parseFloat(curr.paid_amount || "0"), 0).toFixed(2),
+            dueAmount: courseInstallments.reduce((acc, curr) => acc + parseFloat(curr.due_amount || "0"), 0).toFixed(2),
+            installments: courseInstallments.map(i => ({
+              transactionNote: i.title || `Installment ${i.installment_number}`,
+              paymentType: "Installment",
+              paymentMethod: "-", // Specific method per installment not in InstallmentItem
+              bank: "-",
+              status: i.status === "PAID" ? "Paid" : i.status === "PAYMENT_PENDING" ? "Pending" : "Unpaid",
+              paidAmount: i.paid_amount,
+            }))
+          }
+        };
+      }
 
       setPaymentModal({ isOpen: true, details });
     }
 
     if (action === "add-discount") {
-      const details = MOCK_DISCOUNT_DETAILS[course.enrollment_id] ?? null;
+      const courseInstallments = installments.filter(i => i.enrollment_id === course.enrollment_id);
+      let details: DiscountDetails;
+
+      if (course.payment_type === "FULL") {
+        details = {
+          mode: "one-time",
+          title: course.course_name,
+          actualAmount: course.total_amount,
+          discountRecords: [], // Simplified for one-time
+        };
+      } else {
+        details = {
+          mode: "installment",
+          title: course.course_name,
+          summary: {
+            transactionNote: "Course Fee",
+            paymentType: "Installment",
+            totalPayment: course.total_amount,
+            discountedAmount: courseInstallments.reduce((acc, curr) => acc + parseFloat(curr.total_discounts || "0"), 0).toFixed(2),
+            totalPaid: courseInstallments.reduce((acc, curr) => acc + parseFloat(curr.paid_amount || "0"), 0).toFixed(2),
+            dueAmount: courseInstallments.reduce((acc, curr) => acc + parseFloat(curr.due_amount || "0"), 0).toFixed(2),
+            installments: courseInstallments.map(i => ({
+              transactionNote: i.title || `Installment ${i.installment_number}`,
+              paymentType: "Installment",
+              paymentMethod: "-",
+              bank: "-",
+              status: i.status === "PAID" ? "Paid" : i.status === "PAYMENT_PENDING" ? "Pending" : "Unpaid",
+              amount: i.due_amount,
+              offerAmount: i.total_discounts,
+              offerBy: "N/A", // Not in API
+              viewSlip: false,
+            }))
+          }
+        };
+      }
 
       setDiscountModal({ isOpen: true, details });
     }
@@ -152,7 +235,6 @@ export function StudentEnrolledCourses({ data = [], total = 0, isLoading }: Stud
       cell: (item) => {
         const status = item.financial_status;
         const isPaid = status === "PAID";
-        const isPending = status === "PAYMENT_PENDING" || status === "INITIATED";
         const isPartial = status === "PARTIALLY_PAID";
 
         let statusText = status.replace(/_/g, " ").toLowerCase();

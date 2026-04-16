@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 
+import { format } from "date-fns";
 import { MoreVertical } from "lucide-react";
 
 import { DataTable } from "@/components/common/table/DataTable";
@@ -20,176 +21,23 @@ import type { PaymentDetails } from "@/components/admin-panel/user-management/vi
 import { AddDiscountModal } from "@/components/admin-panel/user-management/view/student/AddDiscountModal";
 import type { DiscountDetails } from "@/components/admin-panel/user-management/view/student/AddDiscountModal";
 
-import { format } from "date-fns";
-
-import type { EnrolledBatchItem } from "@/types/user-management";
+import type { EnrolledBatchItem, PaymentHistoryItem, InstallmentItem } from "@/types/user-management";
 
 interface StudentEnrolledBatchesProps {
   data?: EnrolledBatchItem[];
   total?: number;
+  paymentHistory?: PaymentHistoryItem[];
+  installments?: InstallmentItem[];
   isLoading?: boolean;
 }
 
-// Mock payment details keyed by batch id
-const MOCK_PAYMENT_DETAILS: Record<string, PaymentDetails> = {
-  "1": {
-    mode: "one-time",
-    title: "Lorem Ipsum",
-    transactions: [
-      {
-        transactionNote: "Course/Batch Fee",
-        paymentType: "One-Time",
-        paymentMethod: "Bank Transfer",
-        bank: "Name of Bank\nBranch",
-        viewSlip: true,
-        status: "Paid",
-        paidAmount: "XXXX.00",
-      },
-    ],
-  },
-  "2": {
-    mode: "installment",
-    title: "Lorem Ipsum",
-    summary: {
-      paymentType: "Installment",
-      transactionNote: "Course/Batch Fee",
-      totalPayment: "XXXX.00",
-      discountedAmount: "XXXX.00",
-      totalPaid: "XXXX.00",
-      dueAmount: "XXXX.00",
-      installments: [
-        {
-          transactionNote: "1st Installment",
-          paymentType: "Installment",
-          paymentMethod: "Card Payment",
-          bank: "Name of Bank\nBranch",
-          status: "Paid",
-          paidAmount: "XXXX.00",
-        },
-      ],
-    },
-  },
-  "3": {
-    mode: "installment",
-    title: "Pending Batch",
-    summary: {
-      paymentType: "Installment",
-      transactionNote: "Course/Batch Fee",
-      totalPayment: "XXXX.00",
-      discountedAmount: "XXXX.00",
-      totalPaid: "XXXX.00",
-      dueAmount: "XXXX.00",
-      installments: [
-        {
-          transactionNote: "1st Installment",
-          paymentType: "Installment",
-          paymentMethod: "Card Payment",
-          bank: "Name of Bank\nBranch",
-          status: "Paid",
-          paidAmount: "XXXX.00",
-        },
-        {
-          transactionNote: "2nd Installment",
-          paymentType: "Installment",
-          paymentMethod: "-",
-          bank: "-",
-          status: "Pending",
-          paidAmount: "XXXX.00",
-        },
-      ],
-    },
-  },
-};
-
-// Mock discount details keyed by batch id
-const MOCK_DISCOUNT_DETAILS: Record<string, DiscountDetails> = {
-  "1": {
-    mode: "one-time",
-    title: "Lorem Ipsum",
-    actualAmount: "XXXX.00",
-    discountRecords: [
-      { actualAmount: "XXXX.00", offerAmount: "XXXX.00", offerBy: "Admin Name" },
-      { actualAmount: "XXXX.00", offerAmount: "XXXX.00", offerBy: "Admin Name" },
-    ],
-  },
-  "2": {
-    mode: "installment",
-    title: "Lorem Ipsum",
-    summary: {
-      transactionNote: "Course/Batch Fee",
-      paymentType: "Installment",
-      totalPayment: "XXXX.00",
-      discountedAmount: "XXXX.00",
-      totalPaid: "XXXX.00",
-      dueAmount: "XXXX.00",
-      installments: [
-        {
-          transactionNote: "1st Installment",
-          paymentType: "Installment",
-          paymentMethod: "Card Payment",
-          bank: "Name of Bank\nBranch",
-          status: "Paid",
-          amount: "XXXX.00",
-          offerAmount: "XXXX.00",
-          offerBy: "Admin Name",
-          viewSlip: false,
-        },
-        {
-          transactionNote: "2nd Installment",
-          paymentType: "Installment",
-          paymentMethod: "Bank Transfer",
-          bank: "Name of Bank\nBranch",
-          status: "Paid",
-          amount: "XXXX.00",
-          offerAmount: "XXXX.00",
-          offerBy: "Admin Name",
-          viewSlip: true,
-        },
-        {
-          transactionNote: "3rd Installment",
-          status: "Pending",
-          amount: "XXXX.00",
-          offerAmount: "XXXX.00",
-          offerBy: "Admin Name",
-        },
-      ],
-    },
-  },
-  "3": {
-    mode: "installment",
-    title: "Pending Batch",
-    summary: {
-      transactionNote: "Course/Batch Fee",
-      paymentType: "Installment",
-      totalPayment: "XXXX.00",
-      discountedAmount: "XXXX.00",
-      totalPaid: "XXXX.00",
-      dueAmount: "XXXX.00",
-      installments: [
-        {
-          transactionNote: "1st Installment",
-          paymentType: "Installment",
-          paymentMethod: "Bank Transfer",
-          bank: "Name of Bank\nBranch",
-          status: "Paid",
-          amount: "XXXX.00",
-          offerAmount: "XXXX.00",
-          offerBy: "Admin Name",
-          viewSlip: true,
-        },
-        {
-          transactionNote: "2nd Installment",
-          status: "Pending",
-          amount: "XXXX.00",
-          offerAmount: "XXXX.00",
-          offerBy: "Admin Name",
-        },
-      ],
-    },
-  },
-};
-
-export function StudentEnrolledBatches({ data = [], total = 0, isLoading }: StudentEnrolledBatchesProps) {
+export function StudentEnrolledBatches({ 
+  data = [], 
+  total = 0, 
+  paymentHistory = [],
+  installments = [],
+  isLoading 
+}: StudentEnrolledBatchesProps) {
   const [currentPage, setCurrentPage] = useState(1);
 
   const [paymentModal, setPaymentModal] = useState<{
@@ -207,15 +55,89 @@ export function StudentEnrolledBatches({ data = [], total = 0, isLoading }: Stud
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
 
   const handleAction = (action: string, batch: EnrolledBatchItem) => {
-    // Note: MOCK_PAYMENT_DETAILS and MOCK_DISCOUNT_DETAILS are still using hardcoded keys.
     if (action === "view-payment") {
-      const details = MOCK_PAYMENT_DETAILS[batch.enrollment_id] ?? null;
+      let details: PaymentDetails | null = null;
+      
+      if (batch.payment_type === "FULL") {
+        const history = paymentHistory.filter(h => h.enrollment_id === batch.enrollment_id);
+
+        details = {
+          mode: "one-time",
+          title: batch.batch_name,
+          transactions: history.map(h => ({
+            transactionNote: "Batch Fee",
+            paymentType: "One-Time",
+            paymentMethod: h.method || "-",
+            bank: "-",
+            viewSlip: !!h.receipt_url,
+            status: h.status === "PAID" ? "Paid" : h.status === "PENDING" ? "Pending" : "Unpaid",
+            paidAmount: h.amount,
+          }))
+        };
+      } else {
+        const batchInstallments = installments.filter(i => i.enrollment_id === batch.enrollment_id);
+
+        details = {
+          mode: "installment",
+          title: batch.batch_name,
+          summary: {
+            paymentType: "Installment",
+            transactionNote: "Batch Fee",
+            totalPayment: batch.total_amount,
+            discountedAmount: batchInstallments.reduce((acc, curr) => acc + parseFloat(curr.total_discounts || "0"), 0).toFixed(2),
+            totalPaid: batchInstallments.reduce((acc, curr) => acc + parseFloat(curr.paid_amount || "0"), 0).toFixed(2),
+            dueAmount: batchInstallments.reduce((acc, curr) => acc + parseFloat(curr.due_amount || "0"), 0).toFixed(2),
+            installments: batchInstallments.map(i => ({
+              transactionNote: i.title || `Installment ${i.installment_number}`,
+              paymentType: "Installment",
+              paymentMethod: "-",
+              bank: "-",
+              status: i.status === "PAID" ? "Paid" : i.status === "PAYMENT_PENDING" ? "Pending" : "Unpaid",
+              paidAmount: i.paid_amount,
+            }))
+          }
+        };
+      }
 
       setPaymentModal({ isOpen: true, details });
     }
 
     if (action === "add-discount") {
-      const details = MOCK_DISCOUNT_DETAILS[batch.enrollment_id] ?? null;
+      const batchInstallments = installments.filter(i => i.enrollment_id === batch.enrollment_id);
+      let details: DiscountDetails;
+
+      if (batch.payment_type === "FULL") {
+        details = {
+          mode: "one-time",
+          title: batch.batch_name,
+          actualAmount: batch.total_amount,
+          discountRecords: [], // Simplified for one-time
+        };
+      } else {
+        details = {
+          mode: "installment",
+          title: batch.batch_name,
+          summary: {
+            transactionNote: "Batch Fee",
+            paymentType: "Installment",
+            totalPayment: batch.total_amount,
+            discountedAmount: batchInstallments.reduce((acc, curr) => acc + parseFloat(curr.total_discounts || "0"), 0).toFixed(2),
+            totalPaid: batchInstallments.reduce((acc, curr) => acc + parseFloat(curr.paid_amount || "0"), 0).toFixed(2),
+            dueAmount: batchInstallments.reduce((acc, curr) => acc + parseFloat(curr.due_amount || "0"), 0).toFixed(2),
+            installments: batchInstallments.map(i => ({
+              transactionNote: i.title || `Installment ${i.installment_number}`,
+              paymentType: "Installment",
+              paymentMethod: "-",
+              bank: "-",
+              status: i.status === "PAID" ? "Paid" : i.status === "PAYMENT_PENDING" ? "Pending" : "Unpaid",
+              amount: i.due_amount,
+              offerAmount: i.total_discounts,
+              offerBy: "N/A",
+              viewSlip: false,
+            }))
+          }
+        };
+      }
 
       setDiscountModal({ isOpen: true, details });
     }
@@ -307,7 +229,6 @@ export function StudentEnrolledBatches({ data = [], total = 0, isLoading }: Stud
       cell: (item) => {
         const status = item.financial_status;
         const isPaid = status === "PAID";
-        const isPending = status === "PAYMENT_PENDING" || status === "INITIATED";
         const isPartial = status === "PARTIALLY_PAID";
 
         let statusText = status.replace(/_/g, " ").toLowerCase();
