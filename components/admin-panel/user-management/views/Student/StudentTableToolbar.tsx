@@ -99,6 +99,8 @@ interface StudentTableToolbarProps {
     from?: string;
     to?: string;
   };
+  onExportCSV: () => void;
+  isExporting?: boolean;
 }
 
 // ===== COMPONENT =====
@@ -112,6 +114,8 @@ export function StudentTableToolbar({
   onApplyFilters,
   onClearFilters,
   activeUrlFilters,
+  onExportCSV,
+  isExporting = false,
 }: StudentTableToolbarProps) {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [certificateModalOpen, setCertificateModalOpen] = useState(false);
@@ -278,9 +282,13 @@ export function StudentTableToolbar({
               <i className="file-arrow-up h-4 w-4" />
               Import
             </button>
-            <button className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}>
+            <button
+              className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}
+              onClick={onExportCSV}
+              disabled={isExporting}
+            >
               <i className="file-csv h-4 w-4" />
-              Export CSV
+              {isExporting ? "Exporting..." : "Export CSV"}
             </button>
           </div>
         </div>
@@ -340,9 +348,9 @@ export function StudentTableToolbar({
                   <i className="file-import mr-2 h-4 w-4" />
                   Import
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => console.log("Export CSV")} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
+                <DropdownMenuItem onClick={onExportCSV} disabled={isExporting} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
                   <i className="file-csv mr-2 h-4 w-4" />
-                  Export CSV
+                  {isExporting ? "Exporting..." : "Export CSV"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -404,9 +412,9 @@ export function StudentTableToolbar({
                   <i className="file-import mr-2 h-4 w-4" />
                   Import
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => console.log("Export CSV")} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
+                <DropdownMenuItem onClick={onExportCSV} disabled={isExporting} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
                   <i className="file-csv mr-2 h-4 w-4" />
-                  Export CSV
+                  {isExporting ? "Exporting..." : "Export CSV"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

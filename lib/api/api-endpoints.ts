@@ -121,5 +121,6 @@ export const API_ENDPOINTS = {
   adminStudents: {
     GET_ALL: `/api/v1/admin/students`,
     GET_BY_ID: (id: string) => `/api/v1/admin/students/${id}`,
+    UPDATE_STATUS: (id: string) => `/api/v1/admin/students/${id}/status`,
   },
 };

@@ -9,6 +9,7 @@ import type { StudentDataType, StudentStatus } from "@/types/user-management";
 import { StudentTableToolbar } from "./views/Student/StudentTableToolbar";
 import { StudentTable } from "./views/Student/StudentTable";
 import { useGetStudents } from "@/hooks/api/user-management/useGetStudents";
+import { generateStudentCSV } from "@/utils/export/CSV/generate-student-csv";
 
 export function StudentTab() {
   const router = useRouter();
@@ -61,6 +62,7 @@ export function StudentTab() {
 
   // ===== SHARED STATE =====
   const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
+  const [isExporting, setIsExporting] = useState(false);
 
   // ===== DERIVED VALUES =====
   const selectedIds = useMemo(
@@ -198,6 +200,27 @@ export function StudentTab() {
     console.log("Issue Document for:", selectedStudents);
   }, [selectedIds, selectedStudents]);
 
+  const handleExportCSV = useCallback(async () => {
+    setIsExporting(true);
+
+    try {
+      await generateStudentCSV({
+        search: localSearch || undefined,
+        district,
+        student_status: studentStatus,
+        payment_status: paymentStatus,
+        certificate_status: certificateStatus,
+        enrollment_date_from: fromDate,
+        enrollment_date_to: toDate,
+      }, selectedIds);
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast.error("Failed to export Student data");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [localSearch, district, studentStatus, paymentStatus, certificateStatus, fromDate, toDate, selectedIds]);
+
   // ===== BULK ACTIONS CONFIG =====
   const bulkActions = useMemo(
     () => ({
@@ -232,6 +255,8 @@ export function StudentTab() {
             from: fromDate,
             to: toDate,
           }}
+          onExportCSV={handleExportCSV}
+          isExporting={isExporting}
         />
       </div>
 
