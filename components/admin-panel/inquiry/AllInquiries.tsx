@@ -17,6 +17,8 @@ import { AllInquiryTable } from "./views/AllInquiries/AllInquiryTable";
 
 import { useGetEnquiries } from "@/hooks/api/enquiries/useGetEnquiries";
 import { useBulkDeleteEnquiries } from "@/hooks/api/enquiries/useBulkDeleteEnquiries";
+import { useBulkUpdateEnquiryStatus } from "@/hooks/api/enquiries/useBulkUpdateEnquiryStatus";
+import { useBulkUpdateEnquiryPriority } from "@/hooks/api/enquiries/useBulkUpdateEnquiryPriority";
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "-";
@@ -122,6 +124,8 @@ export function AllInquiries() {
   );
   
   const { mutateAsync: bulkDeleteEnquiries, isPending: isBulkDeleting } = useBulkDeleteEnquiries();
+  const { mutateAsync: bulkUpdateStatus } = useBulkUpdateEnquiryStatus();
+  const { mutateAsync: bulkUpdatePriority } = useBulkUpdateEnquiryPriority();
 
   // ===== BULK ACTION HANDLERS =====
   const handlePageChange = useCallback((page: number) => {
@@ -188,6 +192,71 @@ export function AllInquiries() {
     }
   }, [selectedIds, bulkDeleteEnquiries]);
 
+  const handleMarkCompleted = useCallback(async () => {
+    if (selectedIds.length === 0) {
+      toast.warning("Please select at least one inquiry");
+
+      return;
+    }
+
+    try {
+      await bulkUpdateStatus({ ids: selectedIds, status: "COMPLETED" });
+      setRowSelection({});
+    } catch {}
+  }, [selectedIds, bulkUpdateStatus]);
+
+  const handleMarkInProgress = useCallback(async () => {
+    if (selectedIds.length === 0) {
+      toast.warning("Please select at least one inquiry");
+
+      return;
+    }
+
+    try {
+      await bulkUpdateStatus({ ids: selectedIds, status: "IN_PROGRESS" });
+      setRowSelection({});
+    } catch {}
+  }, [selectedIds, bulkUpdateStatus]);
+
+  const handleMarkNoResponse = useCallback(async () => {
+    if (selectedIds.length === 0) {
+      toast.warning("Please select at least one inquiry");
+
+      return;
+    }
+
+    try {
+      await bulkUpdateStatus({ ids: selectedIds, status: "NO_RESPONSE" });
+      setRowSelection({});
+    } catch {}
+  }, [selectedIds, bulkUpdateStatus]);
+
+  const handleMarkHot = useCallback(async () => {
+    if (selectedIds.length === 0) {
+      toast.warning("Please select at least one inquiry");
+
+      return;
+    }
+
+    try {
+      await bulkUpdatePriority({ ids: selectedIds, priority_status: "HOT" });
+      setRowSelection({});
+    } catch {}
+  }, [selectedIds, bulkUpdatePriority]);
+
+  const handleMarkCold = useCallback(async () => {
+    if (selectedIds.length === 0) {
+      toast.warning("Please select at least one inquiry");
+      
+      return;
+    }
+
+    try {
+      await bulkUpdatePriority({ ids: selectedIds, priority_status: "COLD" });
+      setRowSelection({});
+    } catch {}
+  }, [selectedIds, bulkUpdatePriority]);
+
   const handleExportCSV = useCallback(async () => {
     setIsExportingCSV(true);
 
@@ -249,8 +318,25 @@ export function AllInquiries() {
       onSendWhatsapp: handleSendWhatsapp,
       onSendEmail: handleSendEmail,
       onDelete: handleDelete,
+      onMarkCompleted: handleMarkCompleted,
+      onMarkInProgress: handleMarkInProgress,
+      onMarkNoResponse: handleMarkNoResponse,
+      onMarkHot: handleMarkHot,
+      onMarkCold: handleMarkCold,
     }),
-    [handleSelectAll, handleClearSelection, handleSendSMS, handleSendWhatsapp, handleSendEmail, handleDelete]
+    [
+      handleSelectAll, 
+      handleClearSelection, 
+      handleSendSMS, 
+      handleSendWhatsapp, 
+      handleSendEmail, 
+      handleDelete,
+      handleMarkCompleted,
+      handleMarkInProgress,
+      handleMarkNoResponse,
+      handleMarkHot,
+      handleMarkCold
+    ]
   );
 
   return (

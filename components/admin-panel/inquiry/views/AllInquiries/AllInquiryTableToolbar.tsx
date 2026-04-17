@@ -69,6 +69,11 @@ interface BulkActionsHandlers {
   onSendWhatsapp: () => void;
   onSendEmail: () => void;
   onDelete: () => Promise<void>;
+  onMarkCompleted: () => Promise<void>;
+  onMarkInProgress: () => Promise<void>;
+  onMarkNoResponse: () => Promise<void>;
+  onMarkHot: () => Promise<void>;
+  onMarkCold: () => Promise<void>;
 }
 
 interface AllInquiryTableToolbarProps {
@@ -272,6 +277,36 @@ export function AllInquiryTableToolbar({ bulkActions, selectedCount, totalCount,
       onClick: isAllSelected ? bulkActions.onClear : bulkActions.onSelectAll 
     },
     { 
+      key: "markCompleted", 
+      label: "Mark as Completed", 
+      onClick: bulkActions.onMarkCompleted,
+      disabled: !hasSelection 
+    },
+    { 
+      key: "markInProgress", 
+      label: "Mark as In Progress", 
+      onClick: bulkActions.onMarkInProgress,
+      disabled: !hasSelection 
+    },
+    { 
+      key: "markNoResponse", 
+      label: "Mark as No Response", 
+      onClick: bulkActions.onMarkNoResponse,
+      disabled: !hasSelection 
+    },
+    { 
+      key: "markHot", 
+      label: "Mark as Hot", 
+      onClick: bulkActions.onMarkHot,
+      disabled: !hasSelection 
+    },
+    { 
+      key: "markCold", 
+      label: "Mark as Cold", 
+      onClick: bulkActions.onMarkCold,
+      disabled: !hasSelection 
+    },
+    { 
       key: "sendSMS", 
       label: "Send SMS", 
       onClick: bulkActions.onSendSMS,
@@ -290,7 +325,7 @@ export function AllInquiryTableToolbar({ bulkActions, selectedCount, totalCount,
       disabled: !hasSelection 
     },
     { 
-          key: "delete", 
+      key: "delete", 
       label: "Delete", 
       variant: "danger", 
       onClick: () => setDeleteModalOpen(true), // Intercept provided onDelete logic

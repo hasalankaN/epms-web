@@ -9,7 +9,6 @@ import type { InquiryDataType } from "@/types/inquiry";
 import { DataTable } from "@/components/common/table/DataTable";
 import type { Column } from "@/components/common/table/DataTable";
 import { Checkbox } from "@/components/ui/checkbox";
-import { StatusPopover } from "@/components/common/StatusPopover";
 import { Button } from "@/components/ui/button";
 import { InquiryDetailsModal } from "../../modals/InquiryDetailsModal";
 import { AssignStaffModal } from "../../modals/AssignStaffModal"; 
@@ -209,27 +208,6 @@ export function PendingInquiryTable({
       accessorKey: "branch",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[100px]",
       cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.branch}</div>,
-    },
-    {
-      header: "Priority",
-      accessorKey: "priority",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[100px]",
-      cell: (inquiry) => {
-        if (!inquiry.priority) return <div className="text-[11px] font-medium text-[#45556C] px-2">-</div>;
-
-        const priorityOptions = [
-          { value: "HOT", bg: "#FB2C36", text: "#FFFFFF", label: "Hot" },
-          { value: "COLD", bg: "#2563EB", text: "#FFFFFF", label: "Cold" },
-        ];
-
-        return (
-          <StatusPopover
-            value={inquiry.priority}
-            options={priorityOptions}
-            readOnly
-          />
-        );
-      },
     },
     {
       header: "Action",
