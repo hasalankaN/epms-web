@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 
+import { format } from "date-fns";
 import { MoreVertical } from "lucide-react";
 
 import { DataTable } from "@/components/common/table/DataTable";
@@ -19,211 +20,23 @@ import { PaymentDetailsModal } from "@/components/admin-panel/user-management/vi
 import type { PaymentDetails } from "@/components/admin-panel/user-management/view/student/PaymentDetailsModal";
 import { AddDiscountModal } from "@/components/admin-panel/user-management/view/student/AddDiscountModal";
 import type { DiscountDetails } from "@/components/admin-panel/user-management/view/student/AddDiscountModal";
+import { useGetEnrollmentPaymentDetails } from "@/hooks/api/user-management/useGetEnrollmentPaymentDetails";
+import { useEmailEnrollmentInvoice } from "@/hooks/api/user-management/useEmailEnrollmentInvoice";
+import type { EnrollmentPaymentDetailsResponse, EnrolledBatchItem, PaymentHistoryItem, InstallmentItem } from "@/types/user-management";
 
-interface EnrolledBatch {
-  id: string;
-  enrolledDate: string;
-  batchTitle: string;
-  assignmentStatus: string;
-  courseStatus: string;
-  certificateStatus: string;
-  paymentType: string;
-  paymentStatus: string;
+interface StudentEnrolledBatchesProps {
+  data?: EnrolledBatchItem[];
+  total?: number;
+  paymentHistory?: PaymentHistoryItem[];
+  installments?: InstallmentItem[];
+  isLoading?: boolean;
 }
 
-const MOCK_DATA: EnrolledBatch[] = [
-  {
-    id: "1",
-    enrolledDate: "2025/01/21",
-    batchTitle: "Lorem Ipsum",
-    assignmentStatus: "Completed",
-    courseStatus: "Completed",
-    certificateStatus: "Issued",
-    paymentType: "One Time",
-    paymentStatus: "Paid",
-  },
-  {
-    id: "2",
-    enrolledDate: "2025/01/21",
-    batchTitle: "Lorem Ipsum",
-    assignmentStatus: "80% Completed",
-    courseStatus: "80% Completed",
-    certificateStatus: "Pending",
-    paymentType: "Installment",
-    paymentStatus: "Pending XXXX.00",
-  },
-  {
-    id: "3",
-    enrolledDate: "2025/01/22",
-    batchTitle: "Pending Batch",
-    assignmentStatus: "0% Completed",
-    courseStatus: "0% Completed",
-    certificateStatus: "Pending",
-    paymentType: "Installment",
-    paymentStatus: "Pending XXXX.00",
-  },
-];
-
-// Mock payment details keyed by batch id
-const MOCK_PAYMENT_DETAILS: Record<string, PaymentDetails> = {
-  "1": {
-    mode: "one-time",
-    title: "Lorem Ipsum",
-    transactions: [
-      {
-        transactionNote: "Course/Batch Fee",
-        paymentType: "One-Time",
-        paymentMethod: "Bank Transfer",
-        bank: "Name of Bank\nBranch",
-        viewSlip: true,
-        status: "Paid",
-        paidAmount: "XXXX.00",
-      },
-    ],
-  },
-  "2": {
-    mode: "installment",
-    title: "Lorem Ipsum",
-    summary: {
-      paymentType: "Installment",
-      transactionNote: "Course/Batch Fee",
-      totalPayment: "XXXX.00",
-      discountedAmount: "XXXX.00",
-      totalPaid: "XXXX.00",
-      dueAmount: "XXXX.00",
-      installments: [
-        {
-          transactionNote: "1st Installment",
-          paymentType: "Installment",
-          paymentMethod: "Card Payment",
-          bank: "Name of Bank\nBranch",
-          status: "Paid",
-          paidAmount: "XXXX.00",
-        },
-      ],
-    },
-  },
-  "3": {
-    mode: "installment",
-    title: "Pending Batch",
-    summary: {
-      paymentType: "Installment",
-      transactionNote: "Course/Batch Fee",
-      totalPayment: "XXXX.00",
-      discountedAmount: "XXXX.00",
-      totalPaid: "XXXX.00",
-      dueAmount: "XXXX.00",
-      installments: [
-        {
-          transactionNote: "1st Installment",
-          paymentType: "Installment",
-          paymentMethod: "Card Payment",
-          bank: "Name of Bank\nBranch",
-          status: "Paid",
-          paidAmount: "XXXX.00",
-        },
-        {
-          transactionNote: "2nd Installment",
-          paymentType: "Installment",
-          paymentMethod: "-",
-          bank: "-",
-          status: "Pending",
-          paidAmount: "XXXX.00",
-        },
-      ],
-    },
-  },
-};
-
-// Mock discount details keyed by batch id
-const MOCK_DISCOUNT_DETAILS: Record<string, DiscountDetails> = {
-  "1": {
-    mode: "one-time",
-    title: "Lorem Ipsum",
-    actualAmount: "XXXX.00",
-    discountRecords: [
-      { actualAmount: "XXXX.00", offerAmount: "XXXX.00", offerBy: "Admin Name" },
-      { actualAmount: "XXXX.00", offerAmount: "XXXX.00", offerBy: "Admin Name" },
-    ],
-  },
-  "2": {
-    mode: "installment",
-    title: "Lorem Ipsum",
-    summary: {
-      transactionNote: "Course/Batch Fee",
-      paymentType: "Installment",
-      totalPayment: "XXXX.00",
-      discountedAmount: "XXXX.00",
-      totalPaid: "XXXX.00",
-      dueAmount: "XXXX.00",
-      installments: [
-        {
-          transactionNote: "1st Installment",
-          paymentType: "Installment",
-          paymentMethod: "Card Payment",
-          bank: "Name of Bank\nBranch",
-          status: "Paid",
-          amount: "XXXX.00",
-          offerAmount: "XXXX.00",
-          offerBy: "Admin Name",
-          viewSlip: false,
-        },
-        {
-          transactionNote: "2nd Installment",
-          paymentType: "Installment",
-          paymentMethod: "Bank Transfer",
-          bank: "Name of Bank\nBranch",
-          status: "Paid",
-          amount: "XXXX.00",
-          offerAmount: "XXXX.00",
-          offerBy: "Admin Name",
-          viewSlip: true,
-        },
-        {
-          transactionNote: "3rd Installment",
-          status: "Pending",
-          amount: "XXXX.00",
-          offerAmount: "XXXX.00",
-          offerBy: "Admin Name",
-        },
-      ],
-    },
-  },
-  "3": {
-    mode: "installment",
-    title: "Pending Batch",
-    summary: {
-      transactionNote: "Course/Batch Fee",
-      paymentType: "Installment",
-      totalPayment: "XXXX.00",
-      discountedAmount: "XXXX.00",
-      totalPaid: "XXXX.00",
-      dueAmount: "XXXX.00",
-      installments: [
-        {
-          transactionNote: "1st Installment",
-          paymentType: "Installment",
-          paymentMethod: "Bank Transfer",
-          bank: "Name of Bank\nBranch",
-          status: "Paid",
-          amount: "XXXX.00",
-          offerAmount: "XXXX.00",
-          offerBy: "Admin Name",
-          viewSlip: true,
-        },
-        {
-          transactionNote: "2nd Installment",
-          status: "Pending",
-          amount: "XXXX.00",
-          offerAmount: "XXXX.00",
-          offerBy: "Admin Name",
-        },
-      ],
-    },
-  },
-};
-
-export function StudentEnrolledBatches() {
+export function StudentEnrolledBatches({ 
+  data = [], 
+  total = 0, 
+  isLoading 
+}: StudentEnrolledBatchesProps) {
   const [currentPage, setCurrentPage] = useState(1);
 
   const [paymentModal, setPaymentModal] = useState<{
@@ -237,70 +50,162 @@ export function StudentEnrolledBatches() {
   }>({ isOpen: false, details: null });
 
   const itemsPerPage = 10;
-  const totalCount = MOCK_DATA.length;
+  const totalCount = total;
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
-  const paginatedData = MOCK_DATA.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handleAction = (action: string, batch: EnrolledBatch) => {
-    if (action === "view-payment") {
-      const details = MOCK_PAYMENT_DETAILS[batch.id] ?? null;
+  const { mutate: fetchDetails, isPending: isFetching } = useGetEnrollmentPaymentDetails();
+  const { mutate: emailInvoice } = useEmailEnrollmentInvoice();
 
-      setPaymentModal({ isOpen: true, details });
+  const handleAction = (action: string, batch: EnrolledBatchItem) => {
+    if (action === "email-invoice") {
+      emailInvoice({ enrollmentId: batch.enrollment_id });
+      
+      return;
     }
 
-    if (action === "add-discount") {
-      const details = MOCK_DISCOUNT_DETAILS[batch.id] ?? null;
-
-      setDiscountModal({ isOpen: true, details });
+    if (action === "view-payment" || action === "add-discount") {
+      fetchDetails({ enrollmentId: batch.enrollment_id }, {
+        onSuccess: (data: EnrollmentPaymentDetailsResponse) => {
+          if (action === "view-payment") {
+            let details: PaymentDetails;
+            
+            if (batch.payment_type === "FULL") {
+              details = {
+                mode: "one-time",
+                title: batch.batch_name,
+                enrollmentId: batch.enrollment_id,
+                transactions: data.payments.map(h => ({
+                  transactionNote: "Batch Fee",
+                  paymentType: "One-Time",
+                  paymentMethod: h.method || "-",
+                  bank: h.bank_name || "-",
+                  accountInfo: h.account_info || undefined,
+                  viewSlip: !!h.receipt_url,
+                  status: h.status === "PAID" ? "Paid" : h.status === "PENDING" ? "Pending" : "Unpaid",
+                  paidAmount: h.amount,
+                }))
+              };
+            } else {
+              details = {
+                mode: "installment",
+                title: batch.batch_name,
+                enrollmentId: batch.enrollment_id,
+                summary: {
+                  paymentType: "Installment",
+                  transactionNote: "Batch Fee",
+                  totalPayment: batch.total_amount,
+                  discountedAmount: data.installments.reduce((acc, curr) => acc + parseFloat(curr.total_discounts || "0"), 0).toFixed(2),
+                  totalPaid: data.installments.reduce((acc, curr) => acc + parseFloat(curr.paid_amount || "0"), 0).toFixed(2),
+                  dueAmount: data.installments.reduce((acc, curr) => acc + parseFloat(curr.due_amount || "0"), 0).toFixed(2),
+                  installments: data.installments.map(i => ({
+                    id: i.id,
+                    transactionNote: i.title || `Installment ${i.installment_number}`,
+                    paymentType: "Installment",
+                    paymentMethod: "-", 
+                    bank: "-",
+                    status: i.status === "PAID" ? "Paid" : i.status === "PAYMENT_PENDING" ? "Pending" : "Unpaid",
+                    paidAmount: i.paid_amount,
+                  }))
+                }
+              };
+            }
+            
+            setPaymentModal({ isOpen: true, details });
+          } else {
+            // Add Discount
+            let details: DiscountDetails;
+            
+            if (batch.payment_type === "FULL") {
+              details = {
+                mode: "one-time",
+                enrollmentId: batch.enrollment_id,
+                title: batch.batch_name,
+                actualAmount: batch.total_amount,
+                discountRecords: [],
+              };
+            } else {
+              details = {
+                mode: "installment",
+                enrollmentId: batch.enrollment_id,
+                title: batch.batch_name,
+                summary: {
+                  transactionNote: "Batch Fee",
+                  paymentType: "Installment",
+                  totalPayment: batch.total_amount,
+                  discountedAmount: data.installments.reduce((acc, curr) => acc + parseFloat(curr.total_discounts || "0"), 0).toFixed(2),
+                  totalPaid: data.installments.reduce((acc, curr) => acc + parseFloat(curr.paid_amount || "0"), 0).toFixed(2),
+                  dueAmount: data.installments.reduce((acc, curr) => acc + parseFloat(curr.due_amount || "0"), 0).toFixed(2),
+                  installments: data.installments.map(i => ({
+                    id: i.id,
+                    transactionNote: i.title || `Installment ${i.installment_number}`,
+                    paymentType: "Installment",
+                    status: i.status === "PAID" ? "Paid" : i.status === "PAYMENT_PENDING" ? "Pending" : "Unpaid",
+                    amount: i.due_amount,
+                    offerAmount: i.total_discounts,
+                    offerBy: i.discount_offered_by || "-",
+                  }))
+                }
+              };
+            }
+            
+            setDiscountModal({ isOpen: true, details });
+          }
+        }
+      });
     }
   };
 
-  const columns: Column<EnrolledBatch>[] = [
+  const columns: Column<EnrolledBatchItem>[] = [
     {
       header: "Enrolled Date",
-      accessorKey: "enrolledDate",
+      accessorKey: "enrolled_at",
       className: "px-4 py-3 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[120px]",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C]">{item.enrolledDate}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C]">
+          {item.enrolled_at ? format(new Date(item.enrolled_at), "yyyy/MM/dd") : "-"}
+        </div>
+      ),
     },
     {
       header: "Batch Title",
-      accessorKey: "batchTitle",
+      accessorKey: "batch_name",
       className: "px-4 py-3 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C]">{item.batchTitle}</div>,
+      cell: (item) => <div className="text-[12px] font-medium text-[#45556C]">{item.batch_name}</div>,
     },
     {
-      header: () => <div className="text-center w-full">Assignment Status</div>,
-      accessorKey: "assignmentStatus",
+      header: () => <div className="text-center w-full">Progress</div>,
+      accessorKey: "progress_percentage",
       className: "px-4 py-3 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis",
       cell: (item) => {
-        const isCompleted = item.assignmentStatus === "Completed";
-        const isPartial = item.assignmentStatus.includes("% Completed");
+        const isCompleted = item.progress_percentage === 100;
+        const isPartial = item.progress_percentage > 0 && item.progress_percentage < 100;
 
         return (
           <div className={`text-[12px] font-inter text-center font-medium leading-[16px] whitespace-nowrap overflow-hidden text-ellipsis ${isCompleted ? 'text-[#16A34A]' : isPartial ? 'text-[#2563EB]' : 'text-[#45556C]'}`}>
-            {item.assignmentStatus}
+            {item.progress_percentage}% Completed
           </div>
         );
       },
     },
     {
       header: () => <div className="text-center w-full">Course Status</div>,
-      accessorKey: "courseStatus",
+      accessorKey: "lifecycle_status",
       className: "px-4 py-3 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis",
       cell: (item) => {
-        const isCompleted = item.courseStatus === "Completed";
-        const isPartial = item.courseStatus.includes("% Completed");
+        const status = item.lifecycle_status;
+        const isCompleted = status === "COMPLETED";
+        const isActive = status === "ACTIVE";
 
         return (
-          <div className={`text-[12px] font-inter text-center font-medium leading-[16px] whitespace-nowrap overflow-hidden text-ellipsis ${isCompleted ? 'text-[#16A34A]' : isPartial ? 'text-[#2563EB]' : 'text-[#45556C]'}`}>
-            {item.courseStatus}
+          <div className={`text-[12px] font-inter text-center font-medium leading-[16px] whitespace-nowrap overflow-hidden text-ellipsis ${isCompleted ? 'text-[#16A34A]' : isActive ? 'text-[#2563EB]' : 'text-[#EF4444]'}`}>
+            {status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}
           </div>
         );
       },
     },
     {
       header: () => <div className="text-center w-full">Certificate Status</div>,
-      accessorKey: "certificateStatus",
+      accessorKey: "certificate_status",
       className: "px-4 py-3 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis",
       cell: (item) => {
         const options = [
@@ -311,7 +216,7 @@ export function StudentEnrolledBatches() {
         return (
           <div className="flex justify-center w-full">
             <StatusPopover
-              value={item.certificateStatus}
+              value={item.certificate_status}
               options={options}
               readOnly
             />
@@ -321,20 +226,30 @@ export function StudentEnrolledBatches() {
     },
     {
       header: () => <div className="text-center w-full">Payment Type</div>,
-      accessorKey: "paymentType",
+      accessorKey: "payment_type",
       className: "px-4 py-3 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis",
-      cell: (item) => <div className="text-[12px] font-medium text-center text-[#45556C]">{item.paymentType}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-center text-[#45556C]">
+          {item.payment_type === "FULL" ? "One Time" : "Installment"}
+        </div>
+      ),
     },
     {
       header: () => <div className="text-center w-full">Payment Status</div>,
-      accessorKey: "paymentStatus",
+      accessorKey: "financial_status",
       className: "px-4 py-3 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis",
       cell: (item) => {
-        const isCompleted = item.paymentStatus === "Paid" || item.paymentStatus === "Completed";
+        const status = item.financial_status;
+        const isPaid = status === "PAID";
+        const isPartial = status === "PARTIALLY_PAID";
+
+        let statusText = status.replace(/_/g, " ").toLowerCase();
+
+        statusText = statusText.charAt(0).toUpperCase() + statusText.slice(1);
 
         return (
-          <div className={`text-[12px] font-inter font-medium text-center whitespace-nowrap overflow-hidden text-ellipsis leading-[16px] ${isCompleted ? 'text-[#16A34A]' : 'text-[#FB2C36]'}`}>
-            {item.paymentStatus}
+          <div className={`text-[12px] font-inter font-medium text-center whitespace-nowrap overflow-hidden text-ellipsis leading-[16px] ${isPaid ? 'text-[#16A34A]' : isPartial ? 'text-[#2563EB]' : 'text-[#FB2C36]'}`}>
+            {statusText}
           </div>
         );
       },
@@ -376,11 +291,12 @@ export function StudentEnrolledBatches() {
 
         <div className="mt-[8px] w-full max-w-full overflow-hidden">
           <DataTable
-            data={paginatedData}
+            data={data}
             columns={columns}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.enrollment_id}
             showCheckboxes={false}
             tableContainerClassName="h-auto"
+            isLoading={isLoading || isFetching}
             pagination={{
               variant: "simple",
               totalCount: totalCount,

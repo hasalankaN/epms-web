@@ -39,7 +39,7 @@ export function StatusPopover({
 }: StatusPopoverProps) {
   const [open, setOpen] = React.useState(false);
 
-  const selectedOption = options.find((opt) => opt.value === value) || options[0]; // Fallback?
+  const selectedOption = options.find((opt) => opt.value === value);
 
   if (!selectedOption) return null;
 

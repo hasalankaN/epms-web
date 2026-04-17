@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 
-import { X, Maximize2, RotateCcw, Grid3X3, Loader2 } from "lucide-react";
+import { X, Maximize2, RotateCcw, Grid3X3, Loader2, ChevronDown } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
 import {
@@ -45,6 +46,13 @@ interface EditCertificateModalProps {
   certificate: CertificateTemplateItem | null;
 }
 
+const COLORS = {
+  slate900: "#0F172B",
+  slate800: "#1E293B",
+  slate700: "#45556C",
+  line: "#E2E8F0",
+};
+
 // ===== Reusable FieldLabel helper =====
 const FieldLabel = ({
   children,
@@ -75,6 +83,7 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
 
   // ===== Form state =====
   const [certificateName, setCertificateName] = useState("");
+  const [pricingType, setPricingType] = useState<"FREE" | "PAID">("FREE");
   const [price, setPrice] = useState("");
   
   // ===== Unified Editor state =====
@@ -125,6 +134,7 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
   useEffect(() => {
     if (isOpen && templateData) {
       setCertificateName(templateData.name || "");
+      setPricingType(templateData.pricing_type || "FREE");
       setPrice(parseFloat(templateData.price || "0").toString());
 
       setPreviewUrl(templateData.template_file_url || null);
@@ -210,10 +220,16 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
       return;
     }
 
-    if (!price || isNaN(Number(price))) {
-      toast.error("Please enter a valid price");
-      
-      return;
+    let parsedPrice = 0;
+
+    if (pricingType === "PAID") {
+      parsedPrice = parseFloat(price);
+
+      if (!price || isNaN(parsedPrice) || parsedPrice < 0) {
+        toast.error("Please enter a valid price for a paid certificate");
+
+        return;
+      }
     }
 
     if (!previewUrl && !rawTemplateFile) {
@@ -283,7 +299,8 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
       // 5. Build payload and mutate
       await updateTemplate({
         name: certificateName.trim(),
-        price: Number(price),
+        pricing_type: pricingType,
+        price: parsedPrice,
         template_file_url: finalTemplateUrl,
         file_type: finalTemplateType,
         tag_layout,
@@ -460,21 +477,82 @@ export function EditCertificateModal({ isOpen, onClose, certificate }: EditCerti
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <FieldLabel required>Assign Price</FieldLabel>
-                  <div className="relative">
-                    <Input
-                      value={price}
-                      onChange={(e) => { setPrice(e.target.value); markDirty(); }}
-                      className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "pr-12 text-[#0F172B] font-semibold")}
-                      placeholder="XXXX"
-                    />
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                      <span className="text-sm font-semibold text-[#0F172B]">LKR</span>
+                <div className="space-y-3">
+                  <FieldLabel required>Pricing Type</FieldLabel>
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        id="price-free-edit"
+                        name="pricing-type-edit"
+                        value="FREE"
+                        checked={pricingType === "FREE"}
+                        onChange={() => {
+                          setPricingType("FREE");
+                          markDirty();
+                        }}
+                        className={`accent-[${COLORS.slate900}] h-4 w-4 cursor-pointer`}
+                      />
+                      <label
+                        htmlFor="price-free-edit"
+                        className={`text-sm font-medium text-[${COLORS.slate700}] cursor-pointer`}
+                      >
+                        Free
+                      </label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        id="price-paid-edit"
+                        name="pricing-type-edit"
+                        value="PAID"
+                        checked={pricingType === "PAID"}
+                        onChange={() => {
+                          setPricingType("PAID");
+                          markDirty();
+                        }}
+                        className={`accent-[${COLORS.slate900}] h-4 w-4 cursor-pointer`}
+                      />
+                      <label
+                        htmlFor="price-paid-edit"
+                        className={`text-sm font-medium text-[${COLORS.slate700}] cursor-pointer`}
+                      >
+                        Paid
+                      </label>
                     </div>
                   </div>
                 </div>
               </div>
+
+              {/* Conditional Price Row */}
+              <AnimatePresence>
+                {pricingType === "PAID" && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="space-y-1">
+                      <FieldLabel required>Assign Price</FieldLabel>
+                      <div className="relative">
+                        <Input
+                          value={price}
+                          onChange={(e) => { setPrice(e.target.value); markDirty(); }}
+                          className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "pr-16 text-[#0F172B] font-semibold")}
+                          placeholder="XXXX"
+                          type="number"
+                          min={0}
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                          <span className={`text-sm font-semibold text-[${COLORS.slate800}]`}>LKR</span>
+                          <ChevronDown className={`h-3 w-3 text-[${COLORS.slate900}]`} />
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* UPLOAD TEMPLATE */}
               <div className="space-y-1">

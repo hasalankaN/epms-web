@@ -19,6 +19,7 @@ export interface InquiryDataType {
   interest: string;
   branch: string;
   status: InquiryStatus;
+  priority: "HOT" | "COLD" | null;
   followUp: string;
 }
 
@@ -52,6 +53,7 @@ export interface ApiEnquiryRow {
   added_by_id: string | null;
   added_by_name: string | null;
   branch_name: string | null;
+  priority_status: "HOT" | "COLD" | null;
 }
 
 export interface EnquiryFollowUp {

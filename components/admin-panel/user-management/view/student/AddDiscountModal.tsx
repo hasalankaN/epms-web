@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { AUTH_INPUT, AUTH_TYPOGRAPHY, BUTTON_STYLES } from "@/lib/constants/theme";
+import { useAddEnrollmentDiscount } from "@/hooks/api/user-management/useAddEnrollmentDiscount";
+import { useEmailEnrollmentInvoice } from "@/hooks/api/user-management/useEmailEnrollmentInvoice";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -20,6 +22,7 @@ interface OneTimeDiscountRecord {
 }
 
 interface InstallmentItem {
+  id: string; // added
   transactionNote: string;
   paymentType?: string;
   paymentMethod?: string;
@@ -44,12 +47,14 @@ interface InstallmentSummary {
 export type DiscountDetails =
   | {
       mode: "one-time";
+      enrollmentId: string;
       title: string;
       actualAmount: string;
       discountRecords: OneTimeDiscountRecord[];
     }
   | {
       mode: "installment";
+      enrollmentId: string;
       title: string;
       summary: InstallmentSummary;
     };
@@ -79,11 +84,30 @@ const CardField = ({ label, value }: { label: string; value: string }) => (
 );
 
 // Discount input row shared between both modes
-const DiscountInputRow = () => {
+const DiscountInputRow = ({ 
+  enrollmentId, 
+  installmentId}: { 
+  enrollmentId: string; 
+  installmentId?: string;
+  isPending?: boolean;
+}) => {
   const [value, setValue] = useState("");
+  const { mutate: addDiscount, isPending: isAdding } = useAddEnrollmentDiscount();
+
+  const handleAdd = () => {
+    if (!value || isNaN(parseFloat(value))) return;
+    
+    addDiscount({
+      enrollmentId,
+      installment_id: installmentId || "",
+      discount_amount: parseFloat(value),
+    }, {
+      onSuccess: () => setValue(""),
+    });
+  };
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1.5 mt-2">
       <Label className={cn(AUTH_TYPOGRAPHY.label, "flex items-center gap-0.5")}>
         Add Discount
         <span className="text-red-500 ml-0.5">*</span>
@@ -94,12 +118,14 @@ const DiscountInputRow = () => {
           placeholder="eg: 1000"
           value={value}
           onChange={(e) => setValue(e.target.value)}
+          disabled={isAdding}
         />
         <Button
           className={cn(BUTTON_STYLES.outline.md, "text-sm font-medium text-[#0F172B] shrink-0")}
-          onClick={() => console.log("Add discount:", value)}
+          onClick={handleAdd}
+          disabled={isAdding || !value}
         >
-          Add
+          {isAdding ? "Adding..." : "Add"}
         </Button>
       </div>
     </div>
@@ -128,8 +154,9 @@ const OneTimeDiscountCard = ({ record }: { record: OneTimeDiscountRecord }) => (
 );
 
 // Card used for per-installment discount records
-const InstallmentDiscountCard = ({ item }: { item: InstallmentItem }) => {
-  const isPending = item.status === "Pending";
+const InstallmentDiscountCard = ({ item, enrollmentId }: { item: InstallmentItem; enrollmentId: string }) => {
+  const isPending = item.status === "Pending" || item.status === "PAYMENT_PENDING";
+  const { mutate: emailInvoice, isPending: isEmailing } = useEmailEnrollmentInvoice();
 
   return (
     <div
@@ -140,49 +167,19 @@ const InstallmentDiscountCard = ({ item }: { item: InstallmentItem }) => {
         boxShadow: "0 1px 2px 0 rgba(16, 24, 40, 0.05)",
       }}
     >
-      {isPending ? (
-
-        /* Pending layout: Transaction Note | (empty), Status | Amount */
-        <div className="w-full grid grid-cols-2 gap-y-3 gap-x-4">
-          <div className="col-span-2 flex flex-col gap-0.5">
-            <span className={labelClass}>Transaction Note</span>
-            <span className={valueClass}>{item.transactionNote}</span>
-          </div>
-          <div className="flex flex-col gap-0.5">
-            <span className={labelClass}>Status</span>
-            <div className="inline-flex">
-              <StatusPopover value={item.status} options={STATUS_OPTIONS} readOnly />
-            </div>
-          </div>
-          <CardField label="Amount" value={item.amount} />
+      <div className="w-full grid grid-cols-2 gap-y-3 gap-x-4">
+        <div className="col-span-2 flex flex-col gap-0.5">
+          <span className={labelClass}>Transaction Note</span>
+          <span className={valueClass}>{item.transactionNote}</span>
         </div>
-      ) : (
-
-        /* Paid layout: full grid for Payment details */
-        <div className="w-full grid grid-cols-2 gap-y-3 gap-x-4">
-          <CardField label="Transaction Note" value={item.transactionNote} />
-          {item.paymentType && <CardField label="Payment Type" value={item.paymentType} />}
-          
-          <div className="flex flex-col gap-0.5">
-            <span className={labelClass}>Payment Method</span>
-            <span className={valueClass}>{item.paymentMethod || "-"}</span>
-            {item.viewSlip && (
-              <span className="text-[14px] font-normal leading-[20px] text-[#0F172B] underline cursor-pointer hover:text-[#E60076]">
-                View Slip
-              </span>
-            )}
+        <div className="flex flex-col gap-0.5">
+          <span className={labelClass}>Status</span>
+          <div className="inline-flex">
+            <StatusPopover value={item.status === "PAYMENT_PENDING" ? "Pending" : item.status} options={STATUS_OPTIONS} readOnly />
           </div>
-          <CardField label="Bank" value={item.bank || "-"} />
-          
-          <div className="flex flex-col gap-0.5">
-            <span className={labelClass}>Status</span>
-            <div className="inline-flex">
-              <StatusPopover value={item.status} options={STATUS_OPTIONS} readOnly />
-            </div>
-          </div>
-          <CardField label="Paid Amount" value={item.amount} />
         </div>
-      )}
+        <CardField label="Amount" value={item.amount} />
+      </div>
 
       {/* Offer Amount + Offer By always at the bottom of the grid */}
       <div className="w-full grid grid-cols-2 gap-x-4 mt-1">
@@ -190,12 +187,21 @@ const InstallmentDiscountCard = ({ item }: { item: InstallmentItem }) => {
         <CardField label="Offer by" value={item.offerBy} />
       </div>
 
-      <Button
-        className={cn(BUTTON_STYLES.outline.md, "text-sm font-medium text-[#0F172B]")}
-        onClick={() => console.log("View Invoice")}
-      >
-        View Invoice
-      </Button>
+      {isPending && (
+        <div className="w-full">
+          <DiscountInputRow enrollmentId={enrollmentId} installmentId={item.id} />
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 mt-2">
+        <Button
+          className={cn(BUTTON_STYLES.outline.md, "text-sm font-medium text-[#0F172B]")}
+          onClick={() => emailInvoice({ enrollmentId })}
+          disabled={isEmailing}
+        >
+          {isEmailing ? "Sending..." : "Email Invoice"}
+        </Button>
+      </div>
     </div>
   );
 };
@@ -250,7 +256,7 @@ export function AddDiscountModal({ isOpen, onClose, details }: AddDiscountModalP
                   <span className={labelClass}>Actual Amount</span>
                   <span className={valueClass}>{details.actualAmount}</span>
                 </div>
-                <DiscountInputRow />
+                <DiscountInputRow enrollmentId={details.enrollmentId} />
               </div>
 
               <div className="w-full h-[1px] bg-[#E2E8F0] mt-[28px] mb-[16px] shrink-0" />
@@ -277,8 +283,6 @@ export function AddDiscountModal({ isOpen, onClose, details }: AddDiscountModalP
                   <CardField label="Total Paid" value={details.summary.totalPaid} />
                   <CardField label="Due Amount" value={details.summary.dueAmount} />
                 </div>
-
-                <DiscountInputRow />
               </div>
 
               <div className="w-full h-[1px] bg-[#E2E8F0] mt-[28px] mb-[16px] shrink-0" />
@@ -286,7 +290,7 @@ export function AddDiscountModal({ isOpen, onClose, details }: AddDiscountModalP
               {/* Per-installment discount cards */}
               <div className="flex flex-col gap-4">
                 {details.summary.installments.map((item, i) => (
-                  <InstallmentDiscountCard key={i} item={item} />
+                  <InstallmentDiscountCard key={i} item={item} enrollmentId={details.enrollmentId} />
                 ))}
               </div>
             </>

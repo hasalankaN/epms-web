@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import api from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 import { queryKeys } from "@/lib/constants/queryKeys";
 
 export function useBulkDeleteCertificateRequests() {
@@ -8,22 +10,18 @@ export function useBulkDeleteCertificateRequests() {
 
   return useMutation({
     mutationFn: async (ids: string[]) => {
-      // Mocking the bulk delete as the backend endpoint is missing
-      // It would likely be DELETE /api/v1/admin/certificate-requests/bulk
-      console.log(`[MOCK API] Bulk deleting certificate requests:`, ids);
-
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({ status: "SUCCESS" });
-        }, 800);
+      const response = await api.delete(API_ENDPOINTS.certificateRequests.DELETE_BULK, {
+        data: { ids },
       });
+
+      return response.data;
     },
     onSuccess: (_, ids) => {
-      toast.success(`${ids.length} certificate requests deleted successfully (Mocked).`);
+      toast.success(`${ids.length} certificate requests deleted successfully.`);
       queryClient.invalidateQueries({ queryKey: [queryKeys.certificateRequests] });
     },
-    onError: () => {
-      toast.error("Failed to delete certificate requests.");
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to delete certificate requests.");
     },
   });
 }

@@ -89,8 +89,12 @@ export function FollowUpModal({
     }
   };
 
+  const currentStatus = statusOverride === "COMPLETED" ? "Completed" : 
+                        statusOverride === "NO_RESPONSE" ? "No Response" : 
+                        listInquiry.status;
+
   const statusOptions = Object.entries(INQUIRY_STATUS_CONFIG)
-    .filter(([status]) => status === "Completed" || status === "No Response")
+    .filter(([status]) => status === "Completed" || status === "No Response" || status === currentStatus)
     .map(([status, config]) => ({
       value: status,
       bg: config.bg,
@@ -259,11 +263,7 @@ export function FollowUpModal({
             {/* Status Footer */}
             <motion.div variants={itemVariants} className="flex justify-end pt-2">
                  <StatusPopover
-                    value={
-                        statusOverride === "COMPLETED" ? "Completed" : 
-                        statusOverride === "NO_RESPONSE" ? "No Response" : 
-                        listInquiry.status
-                    }
+                    value={currentStatus}
                     options={statusOptions}
                     onValueChange={(val) => {
                         // Only allow overrides for specific statuses as per requirements
