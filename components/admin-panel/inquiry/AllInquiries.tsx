@@ -50,6 +50,7 @@ export function AllInquiries() {
   const follow_up_to = searchParams.get("follow_up_to") || undefined;
   const date_from = searchParams.get("date_from") || undefined;
   const date_to = searchParams.get("date_to") || undefined;
+  const priority_status = (searchParams.get("priority_status") as "HOT" | "COLD") || undefined;
   const orderBy = searchParams.get("orderBy") || undefined;
   const order = (searchParams.get("order") as "asc" | "desc") || undefined;
 
@@ -69,6 +70,7 @@ export function AllInquiries() {
     follow_up_to,
     date_from,
     date_to,
+    priority_status,
     orderBy,
     order,
   });
@@ -85,6 +87,7 @@ export function AllInquiries() {
       if (apiStatus === "IN_PROGRESS" || apiStatus === "IN PROGRESS") normalizedStatus = "In Progress";
       else if (apiStatus === "COMPLETED") normalizedStatus = "Completed";
       else if (apiStatus === "NO_RESPONSE" || apiStatus === "NO RESPONSE") normalizedStatus = "No Response";
+      else if (apiStatus === "PENDING") normalizedStatus = "Pending";
 
       return {
         id: apiRow.id,
@@ -99,6 +102,7 @@ export function AllInquiries() {
         interest: apiRow.batch_name || apiRow.course_name || "-",
         branch: apiRow.branch_name || "-",
         status: normalizedStatus,
+        priority: apiRow.priority_status || null,
         followUp: formatDate(apiRow.next_follow_up_at),
       };
     });
@@ -199,6 +203,7 @@ export function AllInquiries() {
         date_to,
         follow_up_from,
         follow_up_to,
+        priority_status,
         tab: "all",
       });
       toast.success("CSV exported successfully");
@@ -207,7 +212,7 @@ export function AllInquiries() {
     } finally {
       setIsExportingCSV(false);
     }
-  }, [search, district, branch_id, assignee_user_id, interest_id, source, date_from, date_to, follow_up_from, follow_up_to]);
+  }, [search, district, branch_id, assignee_user_id, interest_id, source, date_from, date_to, follow_up_from, follow_up_to, priority_status]);
 
   const handleExportPDF = useCallback(async () => {
     setIsExportingPDF(true);
@@ -224,6 +229,7 @@ export function AllInquiries() {
         date_to,
         follow_up_from,
         follow_up_to,
+        priority_status,
         tab: "all",
       });
       toast.success("PDF exported successfully");
@@ -232,7 +238,7 @@ export function AllInquiries() {
     } finally {
       setIsExportingPDF(false);
     }
-  }, [search, district, branch_id, assignee_user_id, interest_id, source, date_from, date_to, follow_up_from, follow_up_to]);
+  }, [search, district, branch_id, assignee_user_id, interest_id, source, date_from, date_to, follow_up_from, follow_up_to, priority_status]);
 
   // ===== BULK ACTIONS CONFIG =====
   const bulkActions = useMemo(
@@ -253,7 +259,7 @@ export function AllInquiries() {
       <AllInquiryStatsRow />
       
       {/* Separator Line (24px below) */}
-      <div className="mt-4 h-[1px] w-full bg-[#E2E8F0]" />
+      <div className="h-[1px] w-full bg-[#E2E8F0]" />
 
       {/* Table Toolbar (24px below separator) */}
       <div className="mt-4">
