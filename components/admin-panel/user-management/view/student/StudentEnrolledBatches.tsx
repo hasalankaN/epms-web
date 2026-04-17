@@ -20,8 +20,9 @@ import { PaymentDetailsModal } from "@/components/admin-panel/user-management/vi
 import type { PaymentDetails } from "@/components/admin-panel/user-management/view/student/PaymentDetailsModal";
 import { AddDiscountModal } from "@/components/admin-panel/user-management/view/student/AddDiscountModal";
 import type { DiscountDetails } from "@/components/admin-panel/user-management/view/student/AddDiscountModal";
-
-import type { EnrolledBatchItem, PaymentHistoryItem, InstallmentItem } from "@/types/user-management";
+import { useGetEnrollmentPaymentDetails } from "@/hooks/api/user-management/useGetEnrollmentPaymentDetails";
+import { useEmailEnrollmentInvoice } from "@/hooks/api/user-management/useEmailEnrollmentInvoice";
+import type { EnrollmentPaymentDetailsResponse, EnrolledBatchItem, PaymentHistoryItem, InstallmentItem } from "@/types/user-management";
 
 interface StudentEnrolledBatchesProps {
   data?: EnrolledBatchItem[];
@@ -34,8 +35,6 @@ interface StudentEnrolledBatchesProps {
 export function StudentEnrolledBatches({ 
   data = [], 
   total = 0, 
-  paymentHistory = [],
-  installments = [],
   isLoading 
 }: StudentEnrolledBatchesProps) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -54,92 +53,105 @@ export function StudentEnrolledBatches({
   const totalCount = total;
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
 
+  const { mutate: fetchDetails, isPending: isFetching } = useGetEnrollmentPaymentDetails();
+  const { mutate: emailInvoice } = useEmailEnrollmentInvoice();
+
   const handleAction = (action: string, batch: EnrolledBatchItem) => {
-    if (action === "view-payment") {
-      let details: PaymentDetails | null = null;
+    if (action === "email-invoice") {
+      emailInvoice({ enrollmentId: batch.enrollment_id });
       
-      if (batch.payment_type === "FULL") {
-        const history = paymentHistory.filter(h => h.enrollment_id === batch.enrollment_id);
-
-        details = {
-          mode: "one-time",
-          title: batch.batch_name,
-          transactions: history.map(h => ({
-            transactionNote: "Batch Fee",
-            paymentType: "One-Time",
-            paymentMethod: h.method || "-",
-            bank: "-",
-            viewSlip: !!h.receipt_url,
-            status: h.status === "PAID" ? "Paid" : h.status === "PENDING" ? "Pending" : "Unpaid",
-            paidAmount: h.amount,
-          }))
-        };
-      } else {
-        const batchInstallments = installments.filter(i => i.enrollment_id === batch.enrollment_id);
-
-        details = {
-          mode: "installment",
-          title: batch.batch_name,
-          summary: {
-            paymentType: "Installment",
-            transactionNote: "Batch Fee",
-            totalPayment: batch.total_amount,
-            discountedAmount: batchInstallments.reduce((acc, curr) => acc + parseFloat(curr.total_discounts || "0"), 0).toFixed(2),
-            totalPaid: batchInstallments.reduce((acc, curr) => acc + parseFloat(curr.paid_amount || "0"), 0).toFixed(2),
-            dueAmount: batchInstallments.reduce((acc, curr) => acc + parseFloat(curr.due_amount || "0"), 0).toFixed(2),
-            installments: batchInstallments.map(i => ({
-              transactionNote: i.title || `Installment ${i.installment_number}`,
-              paymentType: "Installment",
-              paymentMethod: "-",
-              bank: "-",
-              status: i.status === "PAID" ? "Paid" : i.status === "PAYMENT_PENDING" ? "Pending" : "Unpaid",
-              paidAmount: i.paid_amount,
-            }))
-          }
-        };
-      }
-
-      setPaymentModal({ isOpen: true, details });
+      return;
     }
 
-    if (action === "add-discount") {
-      const batchInstallments = installments.filter(i => i.enrollment_id === batch.enrollment_id);
-      let details: DiscountDetails;
-
-      if (batch.payment_type === "FULL") {
-        details = {
-          mode: "one-time",
-          title: batch.batch_name,
-          actualAmount: batch.total_amount,
-          discountRecords: [], // Simplified for one-time
-        };
-      } else {
-        details = {
-          mode: "installment",
-          title: batch.batch_name,
-          summary: {
-            transactionNote: "Batch Fee",
-            paymentType: "Installment",
-            totalPayment: batch.total_amount,
-            discountedAmount: batchInstallments.reduce((acc, curr) => acc + parseFloat(curr.total_discounts || "0"), 0).toFixed(2),
-            totalPaid: batchInstallments.reduce((acc, curr) => acc + parseFloat(curr.paid_amount || "0"), 0).toFixed(2),
-            dueAmount: batchInstallments.reduce((acc, curr) => acc + parseFloat(curr.due_amount || "0"), 0).toFixed(2),
-            installments: batchInstallments.map(i => ({
-              transactionNote: i.title || `Installment ${i.installment_number}`,
-              paymentType: "Installment",
-              paymentMethod: "-",
-              bank: "-",
-              status: i.status === "PAID" ? "Paid" : i.status === "PAYMENT_PENDING" ? "Pending" : "Unpaid",
-              amount: i.due_amount,
-              offerAmount: i.total_discounts,
-              offerBy: "N/A",
-              viewSlip: false,
-            }))
+    if (action === "view-payment" || action === "add-discount") {
+      fetchDetails({ enrollmentId: batch.enrollment_id }, {
+        onSuccess: (data: EnrollmentPaymentDetailsResponse) => {
+          if (action === "view-payment") {
+            let details: PaymentDetails;
+            
+            if (batch.payment_type === "FULL") {
+              details = {
+                mode: "one-time",
+                title: batch.batch_name,
+                enrollmentId: batch.enrollment_id,
+                transactions: data.payments.map(h => ({
+                  transactionNote: "Batch Fee",
+                  paymentType: "One-Time",
+                  paymentMethod: h.method || "-",
+                  bank: h.bank_name || "-",
+                  accountInfo: h.account_info || undefined,
+                  viewSlip: !!h.receipt_url,
+                  status: h.status === "PAID" ? "Paid" : h.status === "PENDING" ? "Pending" : "Unpaid",
+                  paidAmount: h.amount,
+                }))
+              };
+            } else {
+              details = {
+                mode: "installment",
+                title: batch.batch_name,
+                enrollmentId: batch.enrollment_id,
+                summary: {
+                  paymentType: "Installment",
+                  transactionNote: "Batch Fee",
+                  totalPayment: batch.total_amount,
+                  discountedAmount: data.installments.reduce((acc, curr) => acc + parseFloat(curr.total_discounts || "0"), 0).toFixed(2),
+                  totalPaid: data.installments.reduce((acc, curr) => acc + parseFloat(curr.paid_amount || "0"), 0).toFixed(2),
+                  dueAmount: data.installments.reduce((acc, curr) => acc + parseFloat(curr.due_amount || "0"), 0).toFixed(2),
+                  installments: data.installments.map(i => ({
+                    id: i.id,
+                    transactionNote: i.title || `Installment ${i.installment_number}`,
+                    paymentType: "Installment",
+                    paymentMethod: "-", 
+                    bank: "-",
+                    status: i.status === "PAID" ? "Paid" : i.status === "PAYMENT_PENDING" ? "Pending" : "Unpaid",
+                    paidAmount: i.paid_amount,
+                  }))
+                }
+              };
+            }
+            
+            setPaymentModal({ isOpen: true, details });
+          } else {
+            // Add Discount
+            let details: DiscountDetails;
+            
+            if (batch.payment_type === "FULL") {
+              details = {
+                mode: "one-time",
+                enrollmentId: batch.enrollment_id,
+                title: batch.batch_name,
+                actualAmount: batch.total_amount,
+                discountRecords: [],
+              };
+            } else {
+              details = {
+                mode: "installment",
+                enrollmentId: batch.enrollment_id,
+                title: batch.batch_name,
+                summary: {
+                  transactionNote: "Batch Fee",
+                  paymentType: "Installment",
+                  totalPayment: batch.total_amount,
+                  discountedAmount: data.installments.reduce((acc, curr) => acc + parseFloat(curr.total_discounts || "0"), 0).toFixed(2),
+                  totalPaid: data.installments.reduce((acc, curr) => acc + parseFloat(curr.paid_amount || "0"), 0).toFixed(2),
+                  dueAmount: data.installments.reduce((acc, curr) => acc + parseFloat(curr.due_amount || "0"), 0).toFixed(2),
+                  installments: data.installments.map(i => ({
+                    id: i.id,
+                    transactionNote: i.title || `Installment ${i.installment_number}`,
+                    paymentType: "Installment",
+                    status: i.status === "PAID" ? "Paid" : i.status === "PAYMENT_PENDING" ? "Pending" : "Unpaid",
+                    amount: i.due_amount,
+                    offerAmount: i.total_discounts,
+                    offerBy: i.discount_offered_by || "-",
+                  }))
+                }
+              };
+            }
+            
+            setDiscountModal({ isOpen: true, details });
           }
-        };
-      }
-
-      setDiscountModal({ isOpen: true, details });
+        }
+      });
     }
   };
 
@@ -284,7 +296,7 @@ export function StudentEnrolledBatches({
             keyExtractor={(item) => item.enrollment_id}
             showCheckboxes={false}
             tableContainerClassName="h-auto"
-            isLoading={isLoading}
+            isLoading={isLoading || isFetching}
             pagination={{
               variant: "simple",
               totalCount: totalCount,

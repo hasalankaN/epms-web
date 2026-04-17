@@ -117,10 +117,16 @@ export const API_ENDPOINTS = {
     GET_ALL: `/api/v1/admin/certificate-requests`,
     DELETE: (id: string) => `/api/v1/admin/certificate-requests/${id}`,
     DELETE_BULK: `/api/v1/admin/certificate-requests/bulk`,
+    UPDATE_STATUS: (id: string) => `/api/v1/admin/certificate-requests/${id}/status`,
   },
   adminStudents: {
     GET_ALL: `/api/v1/admin/students`,
     GET_BY_ID: (id: string) => `/api/v1/admin/students/${id}`,
     UPDATE_STATUS: (id: string) => `/api/v1/admin/students/${id}/status`,
+  },
+  enrollments: {
+    GET_PAYMENT_DETAILS: (id: string) => `/api/v1/admin/enrollments/${id}/payment-details`,
+    ADD_DISCOUNT: (id: string) => `/api/v1/admin/enrollments/${id}/discounts`,
+    EMAIL_INVOICE: (id: string) => `/api/v1/admin/enrollments/${id}/email-invoice`,
   },
 };

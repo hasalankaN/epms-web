@@ -90,6 +90,9 @@ export interface CertificateRequestItem {
   certificate_type: CertificateRequestType;
   payment_required: boolean;
   status: CertificateRequestStatus;
+  effective_status: CertificateRequestStatus | "ISSUED";
+  verification_no: string | null;
+  issued_at: string | null;
   student: {
     id: string;
     full_name: string;

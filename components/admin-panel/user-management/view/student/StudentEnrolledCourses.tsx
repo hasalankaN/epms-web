@@ -16,12 +16,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { PaymentDetails} from "@/components/admin-panel/user-management/view/student/PaymentDetailsModal";
 import { PaymentDetailsModal } from "@/components/admin-panel/user-management/view/student/PaymentDetailsModal";
-import type { PaymentDetails } from "@/components/admin-panel/user-management/view/student/PaymentDetailsModal";
-import { AddDiscountModal } from "@/components/admin-panel/user-management/view/student/AddDiscountModal";
-import type { DiscountDetails } from "@/components/admin-panel/user-management/view/student/AddDiscountModal";
-
-import type { EnrolledCourseItem, PaymentHistoryItem, InstallmentItem } from "@/types/user-management";
+import { AddDiscountModal, type DiscountDetails } from "@/components/admin-panel/user-management/view/student/AddDiscountModal";
+import { useGetEnrollmentPaymentDetails } from "@/hooks/api/user-management/useGetEnrollmentPaymentDetails";
+import { useEmailEnrollmentInvoice } from "@/hooks/api/user-management/useEmailEnrollmentInvoice";
+import type { EnrollmentPaymentDetailsResponse, EnrolledCourseItem, PaymentHistoryItem, InstallmentItem } from "@/types/user-management";
 
 interface StudentEnrolledCoursesProps {
   data?: EnrolledCourseItem[];
@@ -34,8 +34,6 @@ interface StudentEnrolledCoursesProps {
 export function StudentEnrolledCourses({ 
   data = [], 
   total = 0, 
-  paymentHistory = [],
-  installments = [],
   isLoading 
 }: StudentEnrolledCoursesProps) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -54,92 +52,105 @@ export function StudentEnrolledCourses({
   const totalCount = total;
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
 
+  const { mutate: fetchDetails, isPending: isFetching } = useGetEnrollmentPaymentDetails();
+  const { mutate: emailInvoice } = useEmailEnrollmentInvoice();
+
   const handleAction = (action: string, course: EnrolledCourseItem) => {
-    if (action === "view-payment") {
-      let details: PaymentDetails | null = null;
-      
-      if (course.payment_type === "FULL") {
-        const history = paymentHistory.filter(h => h.enrollment_id === course.enrollment_id);
+    if (action === "email-invoice") {
+      emailInvoice({ enrollmentId: course.enrollment_id });
 
-        details = {
-          mode: "one-time",
-          title: course.course_name,
-          transactions: history.map(h => ({
-            transactionNote: "Course Fee",
-            paymentType: "One-Time",
-            paymentMethod: h.method || "-",
-            bank: "-", // Bank info not directly in PaymentHistoryItem
-            viewSlip: !!h.receipt_url,
-            status: h.status === "PAID" ? "Paid" : h.status === "PENDING" ? "Pending" : "Unpaid",
-            paidAmount: h.amount,
-          }))
-        };
-      } else {
-        const courseInstallments = installments.filter(i => i.enrollment_id === course.enrollment_id);
-
-        details = {
-          mode: "installment",
-          title: course.course_name,
-          summary: {
-            paymentType: "Installment",
-            transactionNote: "Course Fee",
-            totalPayment: course.total_amount,
-            discountedAmount: courseInstallments.reduce((acc, curr) => acc + parseFloat(curr.total_discounts || "0"), 0).toFixed(2),
-            totalPaid: courseInstallments.reduce((acc, curr) => acc + parseFloat(curr.paid_amount || "0"), 0).toFixed(2),
-            dueAmount: courseInstallments.reduce((acc, curr) => acc + parseFloat(curr.due_amount || "0"), 0).toFixed(2),
-            installments: courseInstallments.map(i => ({
-              transactionNote: i.title || `Installment ${i.installment_number}`,
-              paymentType: "Installment",
-              paymentMethod: "-", // Specific method per installment not in InstallmentItem
-              bank: "-",
-              status: i.status === "PAID" ? "Paid" : i.status === "PAYMENT_PENDING" ? "Pending" : "Unpaid",
-              paidAmount: i.paid_amount,
-            }))
-          }
-        };
-      }
-
-      setPaymentModal({ isOpen: true, details });
+      return;
     }
 
-    if (action === "add-discount") {
-      const courseInstallments = installments.filter(i => i.enrollment_id === course.enrollment_id);
-      let details: DiscountDetails;
-
-      if (course.payment_type === "FULL") {
-        details = {
-          mode: "one-time",
-          title: course.course_name,
-          actualAmount: course.total_amount,
-          discountRecords: [], // Simplified for one-time
-        };
-      } else {
-        details = {
-          mode: "installment",
-          title: course.course_name,
-          summary: {
-            transactionNote: "Course Fee",
-            paymentType: "Installment",
-            totalPayment: course.total_amount,
-            discountedAmount: courseInstallments.reduce((acc, curr) => acc + parseFloat(curr.total_discounts || "0"), 0).toFixed(2),
-            totalPaid: courseInstallments.reduce((acc, curr) => acc + parseFloat(curr.paid_amount || "0"), 0).toFixed(2),
-            dueAmount: courseInstallments.reduce((acc, curr) => acc + parseFloat(curr.due_amount || "0"), 0).toFixed(2),
-            installments: courseInstallments.map(i => ({
-              transactionNote: i.title || `Installment ${i.installment_number}`,
-              paymentType: "Installment",
-              paymentMethod: "-",
-              bank: "-",
-              status: i.status === "PAID" ? "Paid" : i.status === "PAYMENT_PENDING" ? "Pending" : "Unpaid",
-              amount: i.due_amount,
-              offerAmount: i.total_discounts,
-              offerBy: "N/A", // Not in API
-              viewSlip: false,
-            }))
+    if (action === "view-payment" || action === "add-discount") {
+      fetchDetails({ enrollmentId: course.enrollment_id }, {
+        onSuccess: (data: EnrollmentPaymentDetailsResponse) => {
+          if (action === "view-payment") {
+            let details: PaymentDetails;
+            
+            if (course.payment_type === "FULL") {
+              details = {
+                mode: "one-time",
+                title: course.course_name,
+                enrollmentId: course.enrollment_id,
+                transactions: data.payments.map(h => ({
+                  transactionNote: "Course Fee",
+                  paymentType: "One-Time",
+                  paymentMethod: h.method || "-",
+                  bank: h.bank_name || "-",
+                  accountInfo: h.account_info || undefined,
+                  viewSlip: !!h.receipt_url,
+                  status: h.status === "PAID" ? "Paid" : h.status === "PENDING" ? "Pending" : "Unpaid",
+                  paidAmount: h.amount,
+                }))
+              };
+            } else {
+              details = {
+                mode: "installment",
+                title: course.course_name,
+                enrollmentId: course.enrollment_id,
+                summary: {
+                  paymentType: "Installment",
+                  transactionNote: "Course Fee",
+                  totalPayment: course.total_amount,
+                  discountedAmount: data.installments.reduce((acc, curr) => acc + parseFloat(curr.total_discounts || "0"), 0).toFixed(2),
+                  totalPaid: data.installments.reduce((acc, curr) => acc + parseFloat(curr.paid_amount || "0"), 0).toFixed(2),
+                  dueAmount: data.installments.reduce((acc, curr) => acc + parseFloat(curr.due_amount || "0"), 0).toFixed(2),
+                  installments: data.installments.map(i => ({
+                    id: i.id,
+                    transactionNote: i.title || `Installment ${i.installment_number}`,
+                    paymentType: "Installment",
+                    paymentMethod: "-", 
+                    bank: "-",
+                    status: i.status === "PAID" ? "Paid" : i.status === "PAYMENT_PENDING" ? "Pending" : "Unpaid",
+                    paidAmount: i.paid_amount,
+                  }))
+                }
+              };
+            }
+            
+            setPaymentModal({ isOpen: true, details });
+          } else {
+            // Add Discount
+            let details: DiscountDetails;
+            
+            if (course.payment_type === "FULL") {
+              details = {
+                mode: "one-time",
+                enrollmentId: course.enrollment_id,
+                title: course.course_name,
+                actualAmount: course.total_amount,
+                discountRecords: [], // Backend provides current history?
+              };
+            } else {
+              details = {
+                mode: "installment",
+                enrollmentId: course.enrollment_id,
+                title: course.course_name,
+                summary: {
+                  transactionNote: "Course Fee",
+                  paymentType: "Installment",
+                  totalPayment: course.total_amount,
+                  discountedAmount: data.installments.reduce((acc, curr) => acc + parseFloat(curr.total_discounts || "0"), 0).toFixed(2),
+                  totalPaid: data.installments.reduce((acc, curr) => acc + parseFloat(curr.paid_amount || "0"), 0).toFixed(2),
+                  dueAmount: data.installments.reduce((acc, curr) => acc + parseFloat(curr.due_amount || "0"), 0).toFixed(2),
+                  installments: data.installments.map(i => ({
+                    id: i.id,
+                    transactionNote: i.title || `Installment ${i.installment_number}`,
+                    paymentType: "Installment",
+                    status: i.status === "PAID" ? "Paid" : i.status === "PAYMENT_PENDING" ? "Pending" : "Unpaid",
+                    amount: i.due_amount,
+                    offerAmount: i.total_discounts,
+                    offerBy: i.discount_offered_by || "-",
+                  }))
+                }
+              };
+            }
+            
+            setDiscountModal({ isOpen: true, details });
           }
-        };
-      }
-
-      setDiscountModal({ isOpen: true, details });
+        }
+      });
     }
   };
 
@@ -290,7 +301,7 @@ export function StudentEnrolledCourses({
             keyExtractor={(item) => item.enrollment_id}
             showCheckboxes={false}
             tableContainerClassName="h-auto"
-            isLoading={isLoading}
+            isLoading={isLoading || isFetching}
             pagination={{
               variant: "simple",
               totalCount: totalCount,

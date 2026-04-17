@@ -22,6 +22,7 @@ import { useDeleteCertificateRequest } from "@/hooks/api/certificates/useDeleteC
 const ISSUED_STATUS_OPTIONS = [
   { value: "PENDING", label: "Pending", bg: "#FFF7D7", text: "#F59E0B" },
   { value: "IN_PROGRESS", label: "Printing in progress", bg: "#D9E9FF", text: "#2563EB" },
+  { value: "ISSUED", label: "Issued", bg: "#DFFFF0", text: "#16A34A" },
   { value: "DELIVERED", label: "Delivered", bg: "#DFFFF0", text: "#16A34A" },
   { value: "DOWNLOADED", label: "Downloaded", bg: "#DFFFF0", text: "#16A34A" },
 ];
@@ -141,7 +142,7 @@ export function IssuedTable({
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[160px]",
       cell: (item) => (
         <StatusPopover
-          value={item.status || "PENDING"}
+          value={item.effective_status || item.status || "PENDING"}
           options={ISSUED_STATUS_OPTIONS}
           readOnly={true}
         />
@@ -152,14 +153,18 @@ export function IssuedTable({
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[110px]",
       cell: (item) => (
         <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
-          {item.created_at ? new Date(item.created_at).toLocaleDateString() : "-"}
+          {item.issued_at 
+            ? new Date(item.issued_at).toLocaleDateString() 
+            : item.created_at 
+              ? new Date(item.created_at).toLocaleDateString() 
+              : "-"}
         </div>
       ),
     },
     {
       header: "Verification No",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[130px]",
-      cell: () => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">-</div>,
+      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.verification_no || "-"}</div>,
     },
     {
       header: "Action",

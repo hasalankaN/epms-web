@@ -303,12 +303,18 @@ export interface PaymentHistoryItem {
   id: string;
   enrollment_id: string;
   schedule_id: string | null;
+  course_id: string | null;
+  course_name: string | null;
+  batch_id: string | null;
+  batch_name: string | null;
   method: string;
   amount: string;
   reference_number: string | null;
   receipt_url: string | null;
   status: string;
   payment_type: string;
+  bank_name: string | null;
+  account_info: string | null;
   paid_at: string | null;
   created_at: string;
 }
@@ -333,6 +339,12 @@ export interface InstallmentItem {
   due_date: string | null;
   paid_at: string | null;
   total_discounts: string;
+  course_id: string | null;
+  course_name: string | null;
+  batch_id: string | null;
+  batch_name: string | null;
+  discount_offered_by: string | null;
+  invoice_url: string | null;
 }
 
 export interface PaginatedResult<T> {
@@ -341,6 +353,15 @@ export interface PaginatedResult<T> {
   page: number;
   size: number;
   totalPages: number;
+}
+
+/**
+ * Response for the dedicated enrollment payment details API
+ */
+export interface EnrollmentPaymentDetailsResponse {
+  enrollment: EnrolledCourseItem | EnrolledBatchItem;
+  payments: PaymentHistoryItem[];
+  installments: InstallmentItem[];
 }
 
 /**
