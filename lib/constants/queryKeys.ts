@@ -41,4 +41,5 @@ export const queryKeys = {
 
   // Certificate Requests
   certificateRequests: "certificateRequests",
+  lecturer: "lecturer",
 };

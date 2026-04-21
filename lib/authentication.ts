@@ -41,8 +41,8 @@ export async function encrypt(payload: any) {
 export async function decrypt(input: string): Promise<any> {
   try {
     const { payload } = await jwtVerify(input, key, { algorithms: ["HS256"] });
-    
-  return payload;
+
+    return payload;
   } catch {
     return null;
   }
@@ -62,7 +62,7 @@ export async function login(data: LoginRequest): Promise<CommonResponseDataType<
 
     if (apiResponse.status === "FAIL") {
       securityLogger.logLoginFailure(email, apiResponse.message || "Login failed");
-      
+
       return apiResponse;
     }
 
@@ -127,12 +127,12 @@ export async function getSession(): Promise<Session | null> {
   const sessionCookie = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
 
   if (!sessionCookie) return null;
-  
+
   const decrypted = await decrypt(sessionCookie);
 
   if (decrypted) {
     decrypted.expires = new Date(decrypted.expires);
-    
+
     // Check if session has expired
     if (new Date() > decrypted.expires) {
       securityLogger.logSessionExpired(decrypted.user?.id);
@@ -142,7 +142,7 @@ export async function getSession(): Promise<Session | null> {
     }
   }
 
-  
+
   return decrypted;
 }
 
@@ -167,7 +167,7 @@ export async function updateTokensInSession(newAccessToken: string, newRefreshTo
 
   if (!session) {
     console.warn("Attempted to update tokens, but no session was found.");
-    
+
     return;
   }
 

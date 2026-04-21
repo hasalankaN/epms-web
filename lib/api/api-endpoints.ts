@@ -118,4 +118,8 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/api/v1/admin/certificate-requests/${id}`,
     DELETE_BULK: `/api/v1/admin/certificate-requests/bulk`,
   },
+  lecturer: {
+    PROFILE: `/api/v1/lecturer/profile`,
+    ASSIGNMENTS: `/api/v1/lecturer/profile/assignments`,
+  },
 };
