@@ -17,6 +17,13 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/api/v1/products/${id}`,
     DELETE_BULK: `/api/v1/products/bulk`,
   },
+  productCategories: {
+    GET_ALL: `/api/v1/admin/product-categories`,
+    CREATE: `/api/v1/admin/product-categories`,
+    UPDATE: (id: string) => `/api/v1/admin/product-categories/${id}`,
+    TOGGLE_STATUS: (id: string) => `/api/v1/admin/product-categories/${id}/toggle-status`,
+    GET_PRODUCTS: (id: string) => `/api/v1/admin/product-categories/${id}/products`,
+  },
   files: {
     UPLOAD: `/api/v1/files/upload`,
   },

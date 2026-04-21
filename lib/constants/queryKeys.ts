@@ -9,6 +9,9 @@ export const queryKeys = {
   // Products
   products: "products",
 
+  // Product Categories
+  productCategories: "productCategories",
+
   // Lecturers
   lecturers: "lecturers",
 
