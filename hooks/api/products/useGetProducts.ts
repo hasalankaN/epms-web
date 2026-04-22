@@ -19,29 +19,24 @@ export interface GetProductsParams {
   status?: ProductStatus;
   stockStatus?: ProductStockStatus;
   sortBy?: ProductSortBy;
+  category_id?: string;
 }
 
 export interface ProductResponseItem {
   id: string;
   name: string;
-  type: ProductType;
   sku: string;
+  category_id: string | null;
+  category_name: string | null;
   short_description: string;
-  long_description: string;
   price: string;
   starting_stock: number | null;
   current_stock: number | null;
   stock_threshold: number | null;
-  commission_type: "FIXED" | "PERCENTAGE";
-  commission_value: string;
-  team_commission_value: string;
+  type: ProductType;
   status: ProductStatus;
-  is_archived: boolean;
   created_at: string;
-  updated_at: string;
-  created_by: string;
-  updated_by: string;
-  deleted_at: string | null;
+  product_image_url: string | null;
   stock_status: ProductStockStatus;
 }
 
@@ -66,7 +61,7 @@ export function useGetProducts(params: GetProductsParams) {
     queryFn: async () => {
       const apiParams: Record<string, any> = {
         page: params.page || 1,
-        size: params.size || 10,
+        size: params.size || 20,
       };
 
       // Only add optional params if they have values
@@ -77,6 +72,7 @@ export function useGetProducts(params: GetProductsParams) {
       if (params.status) apiParams.status = params.status;
       if (params.stockStatus) apiParams.stockStatus = params.stockStatus;
       if (params.sortBy) apiParams.sortBy = params.sortBy;
+      if (params.category_id) apiParams.category_id = params.category_id;
 
       const response = await api.get(API_ENDPOINTS.products.GET_ALL, {
         params: apiParams,

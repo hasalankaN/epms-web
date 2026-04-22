@@ -7,7 +7,7 @@ export type StockStatus = "In Stock" | "Out of Stock";
 export interface ProductDataType {
   id: string;
   thumbnail: string;
-  gallery?: [string, string, string, string]; // Exactly 4 items
+  gallery?: string[];
   productId: string;
   productName: string;
   productType: "Digital" | "Delivery" | "Physical" | "Service";
@@ -18,6 +18,11 @@ export interface ProductDataType {
   quantity: number;
   stockThreshold?: number;
   stockStatus: StockStatus;
+  status: "ACTIVE" | "DRAFT" | "INACTIVE";
+  category?: {
+    id: string;
+    name: string;
+  };
   commissionType?: "fixed" | "percentage";
   commissionValue?: number;
   teamCommissionValue?: number;

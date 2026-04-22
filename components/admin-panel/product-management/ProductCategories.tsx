@@ -92,7 +92,7 @@ export function ProductCategories({ onRename, onViewProducts }: ProductCategorie
       />
 
       {/* Table */}
-      <div className="mt-4">
+      <div>
         <ProductCategoryTable
           data={categories}
           isLoading={isLoading}

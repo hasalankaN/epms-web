@@ -14,6 +14,7 @@ export const API_ENDPOINTS = {
     CREATE: `/api/v1/products`,
     UPDATE: (id: string) => `/api/v1/products/${id}`,
     ARCHIVE: (id: string) => `/api/v1/products/${id}/archive`,
+    ARCHIVE_BULK: `/api/v1/products/bulk/archive`,
     DELETE: (id: string) => `/api/v1/products/${id}`,
     DELETE_BULK: `/api/v1/products/bulk`,
   },

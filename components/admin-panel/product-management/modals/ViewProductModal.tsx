@@ -221,17 +221,40 @@ export function ViewProductModal({ isOpen, onClose, product: listProduct }: View
             {/* ── CONTENT PANE ── */}
             <div className="flex flex-col flex-1 min-w-0 lg:w-[628px] lg:max-w-[628px] lg:flex-none">
 
-              {/* SKU */}
-              <p
-                className="font-inter text-sm font-normal leading-[20px]"
-                style={{ color: "#62748E" }}
-              >
-                {product.sku}
-              </p>
+              <div className="flex items-center justify-between gap-4">
+                {/* SKU */}
+                <p
+                  className="font-inter text-sm font-normal leading-[20px]"
+                  style={{ color: "#62748E" }}
+                >
+                  {product.sku}
+                </p>
+
+                {/* Status Badge */}
+                <div 
+                  className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
+                  style={{ 
+                    background: product.status === "ACTIVE" ? "#DFFFF0" : "#F1F5F9",
+                    color: product.status === "ACTIVE" ? "#16A34A" : "#64748B"
+                  }}
+                >
+                  {product.status}
+                </div>
+              </div>
+
+              {/* Category */}
+              {(product.category_name || product.category_id) && (
+                <p
+                  className="font-inter text-[12px] font-semibold tracking-wider uppercase mt-3"
+                  style={{ color: "#E60076", opacity: 0.5 }}
+                >
+                  {product.category_name || "—"}
+                </p>
+              )}
 
               {/* Short Description */}
               <p
-                className="font-inter text-sm font-normal leading-[20px] mt-[12px]"
+                className="font-inter text-sm font-normal leading-[20px] mt-[8px]"
                 style={{ color: "#1D293D" }}
               >
                 {product.short_description || "—"}

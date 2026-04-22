@@ -13,7 +13,7 @@ export interface UpdateProductImage {
 }
 
 export interface UpdateProductPayload {
-  name?: string;
+  name: string;
   type?: "DIGITAL" | "DELIVERY";
   sku?: string;
   short_description?: string;
@@ -24,7 +24,8 @@ export interface UpdateProductPayload {
   commission_type?: "FIXED" | "PERCENTAGE";
   commission_value?: string;
   team_commission_value?: string;
-  status?: "ACTIVE" | "DRAFT";
+  status: "ACTIVE" | "DRAFT";
+  category_id?: string;
   images?: UpdateProductImage[];
 }
 
