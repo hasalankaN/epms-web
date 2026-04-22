@@ -30,11 +30,16 @@ export const API_ENDPOINTS = {
   certificateTemplates: {
     GET_ALL: `/api/v1/admin/certificate-templates`,
     CREATE: `/api/v1/admin/certificate-templates`,
-    GET_TEMPLATE_BY_ID: (id: string) => `/api/v1/admin/certificate-templates/${id}`,
-    UPDATE_TEMPLATE: (id: string) => `/api/v1/admin/certificate-templates/${id}`,
-    ACTIVATE_TEMPLATE: (id: string) => `/api/v1/admin/certificate-templates/${id}/activate`,
-    DEACTIVATE_TEMPLATE: (id: string) => `/api/v1/admin/certificate-templates/${id}/deactivate`,
-    DELETE_TEMPLATE: (id: string) => `/api/v1/admin/certificate-templates/${id}`,
+    GET_TEMPLATE_BY_ID: (id: string) =>
+      `/api/v1/admin/certificate-templates/${id}`,
+    UPDATE_TEMPLATE: (id: string) =>
+      `/api/v1/admin/certificate-templates/${id}`,
+    ACTIVATE_TEMPLATE: (id: string) =>
+      `/api/v1/admin/certificate-templates/${id}/activate`,
+    DEACTIVATE_TEMPLATE: (id: string) =>
+      `/api/v1/admin/certificate-templates/${id}/deactivate`,
+    DELETE_TEMPLATE: (id: string) =>
+      `/api/v1/admin/certificate-templates/${id}`,
     DELETE_BULK: `/api/v1/admin/certificate-templates/bulk`,
   },
   documentTemplates: {
@@ -42,7 +47,8 @@ export const API_ENDPOINTS = {
     GET_BY_ID: (id: string) => `/api/v1/admin/documents/templates/${id}`,
     CREATE: `/api/v1/admin/documents/templates`,
     UPDATE: (id: string) => `/api/v1/admin/documents/templates/${id}`,
-    TOGGLE_STATUS: (id: string) => `/api/v1/admin/documents/templates/${id}/toggle-active`,
+    TOGGLE_STATUS: (id: string) =>
+      `/api/v1/admin/documents/templates/${id}/toggle-active`,
     DELETE: (id: string) => `/api/v1/admin/documents/templates/${id}`,
     DELETE_BULK: "/api/v1/admin/documents/templates/bulk",
   },
@@ -100,7 +106,8 @@ export const API_ENDPOINTS = {
     CREATE: `/api/v1/admin/referrals/agents`,
     GET_SUMMARY: (id: string) => `/api/v1/admin/referrals/agents/${id}/summary`,
     UPDATE: (id: string) => `/api/v1/admin/referrals/agents/${id}`,
-    UPDATE_STATUS: (id: string) => `/api/v1/admin/referrals/agents/${id}/status`,
+    UPDATE_STATUS: (id: string) =>
+      `/api/v1/admin/referrals/agents/${id}/status`,
   },
   enquiries: {
     GET_ALL: `/api/v1/admin/enquiries`,
@@ -119,7 +126,8 @@ export const API_ENDPOINTS = {
     GET_ALL: `/api/v1/admin/certificate-requests`,
     DELETE: (id: string) => `/api/v1/admin/certificate-requests/${id}`,
     DELETE_BULK: `/api/v1/admin/certificate-requests/bulk`,
-    UPDATE_STATUS: (id: string) => `/api/v1/admin/certificate-requests/${id}/status`,
+    UPDATE_STATUS: (id: string) =>
+      `/api/v1/admin/certificate-requests/${id}/status`,
   },
   adminStudents: {
     GET_ALL: `/api/v1/admin/students`,
@@ -127,8 +135,17 @@ export const API_ENDPOINTS = {
     UPDATE_STATUS: (id: string) => `/api/v1/admin/students/${id}/status`,
   },
   enrollments: {
-    GET_PAYMENT_DETAILS: (id: string) => `/api/v1/admin/enrollments/${id}/payment-details`,
+    GET_PAYMENT_DETAILS: (id: string) =>
+      `/api/v1/admin/enrollments/${id}/payment-details`,
     ADD_DISCOUNT: (id: string) => `/api/v1/admin/enrollments/${id}/discounts`,
-    EMAIL_INVOICE: (id: string) => `/api/v1/admin/enrollments/${id}/email-invoice`,
+    EMAIL_INVOICE: (id: string) =>
+      `/api/v1/admin/enrollments/${id}/email-invoice`,
+  },
+  approvals: {
+    GET_ALL: `/api/v1/admin/approvals`,
+    APPROVE: (source: string, paymentId: string) =>
+      `/api/v1/admin/approvals/${source}/${paymentId}/approve`,
+    REJECT: (source: string, paymentId: string) =>
+      `/api/v1/admin/approvals/${source}/${paymentId}/reject`,
   },
 };

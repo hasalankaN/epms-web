@@ -1,15 +1,20 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 import { TAB_STYLES } from "@/lib/constants/theme";
+import { DateRangeFilter } from "@/components/common/filters/DateRangeFilter";
 
 import { BankTransfersContainer } from "@/components/admin-panel/approvals/bank-transfers/BankTransfersContainer";
 
-export type BankTransferTabType = "batches" | "online-courses" | "products" | "rejected";
+export type BankTransferTabType =
+  | "batches"
+  | "online-courses"
+  | "products"
+  | "rejected";
 
 const tabs = [
   { value: "batches", label: "Batches", mobileLabel: "Batches" },
@@ -24,16 +29,23 @@ export default function BankTransfersPage() {
   const pathname = usePathname();
 
   const currentTab = searchParams.get("tab") as BankTransferTabType;
-
   const activeTab = tabs.some((t) => t.value === currentTab)
     ? currentTab
     : "batches";
 
+  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
+
   const handleTabChange = (tabValue: BankTransferTabType) => {
     const params = new URLSearchParams(searchParams.toString());
-
     params.set("tab", tabValue);
     router.replace(`${pathname}?${params.toString()}`);
+  };
+
+  const handleDateApply = (startDate: Date | null, endDate: Date | null) => {
+    setDateRange({
+      from: startDate ?? undefined,
+      to: endDate ?? undefined,
+    });
   };
 
   return (
@@ -49,7 +61,9 @@ export default function BankTransfersPage() {
               className={cn(
                 TAB_STYLES.triggerBase,
                 "w-auto px-4",
-                activeTab === tab.value ? TAB_STYLES.active : TAB_STYLES.inactive
+                activeTab === tab.value
+                  ? TAB_STYLES.active
+                  : TAB_STYLES.inactive,
               )}
             >
               <span className="hidden md:inline">{tab.label}</span>
@@ -57,10 +71,17 @@ export default function BankTransfersPage() {
             </button>
           ))}
         </div>
+
+        {/* Date Range Filter */}
+        <DateRangeFilter
+          onApply={handleDateApply}
+          placeholder="Select Date Range"
+          align="end"
+        />
       </div>
 
       {/* Content Area */}
-      <BankTransfersContainer activeTab={activeTab} />
+      <BankTransfersContainer activeTab={activeTab} dateRange={dateRange} />
     </div>
   );
 }
