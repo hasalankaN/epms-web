@@ -11,10 +11,12 @@ export const API_ENDPOINTS = {
   products: {
     GET_ALL: `/api/v1/products`,
     GET_BY_ID: (id: string) => `/api/v1/products/${id}`,
+    GET_ARCHIVED: `/api/v1/products/archive`,
     CREATE: `/api/v1/products`,
     UPDATE: (id: string) => `/api/v1/products/${id}`,
     ARCHIVE: (id: string) => `/api/v1/products/${id}/archive`,
     ARCHIVE_BULK: `/api/v1/products/bulk/archive`,
+    RESTORE: (id: string) => `/api/v1/products/${id}/restore`,
     DELETE: (id: string) => `/api/v1/products/${id}`,
     DELETE_BULK: `/api/v1/products/bulk`,
   },

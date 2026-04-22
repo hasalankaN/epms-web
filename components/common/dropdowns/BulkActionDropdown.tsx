@@ -3,7 +3,7 @@
 import React from "react";
 
 import type { LucideIcon } from "lucide-react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { BUTTON_STYLES } from "@/lib/constants/theme";
@@ -22,6 +22,7 @@ export interface BulkActionItem {
   icon?: LucideIcon;
   variant?: "default" | "danger";
   disabled?: boolean;
+  isLoading?: boolean;
   onClick?: () => void;
 }
 
@@ -64,19 +65,24 @@ export function BulkActionDropdown({
       <DropdownMenuContent align="start" className="min-w-[160px]">
         {items.map((item) => {
           const Icon = item.icon;
+          const isDisabled = item.disabled || item.isLoading;
 
           return (
             <DropdownMenuItem
               key={item.key}
-              onClick={item.disabled ? undefined : item.onClick}
-              disabled={item.disabled}
+              onClick={isDisabled ? undefined : item.onClick}
+              disabled={isDisabled}
               className={cn(
                 "cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]",
                 item.variant === "danger" && "text-red-600 focus:text-red-600",
-                item.disabled && "cursor-not-allowed opacity-50 hover:bg-transparent focus:bg-transparent"
+                isDisabled && "cursor-not-allowed opacity-50 hover:bg-transparent focus:bg-transparent"
               )}
             >
-              {Icon && <Icon className="mr-2 h-4 w-4" />}
+              {item.isLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin text-[#E60076]" />
+              ) : (
+                Icon && <Icon className="mr-2 h-4 w-4" />
+              )}
               {item.label}
             </DropdownMenuItem>
           );

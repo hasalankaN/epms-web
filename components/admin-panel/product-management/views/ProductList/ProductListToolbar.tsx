@@ -111,7 +111,8 @@ export function ProductListToolbar({
       label: "Delete",
       variant: "danger",
       onClick: () => setDeleteModalOpen(true),
-      disabled: !hasSelection,
+      disabled: !hasSelection || isDeleting,
+      isLoading: isDeleting,
     },
   ];
 
