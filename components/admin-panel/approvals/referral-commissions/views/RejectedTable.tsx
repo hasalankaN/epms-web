@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React from "react";
 
 import { MoreVertical } from "lucide-react";
 
@@ -17,6 +17,8 @@ import {
 interface RejectedTableProps {
   data: CommissionRejectedRow[];
   currentPage: number;
+  totalPages: number;
+  totalCount: number;
   onPageChange: (page: number) => void;
   isLoading?: boolean;
   isError?: boolean;
@@ -25,20 +27,13 @@ interface RejectedTableProps {
 export function RejectedTable({
   data,
   currentPage,
+  totalPages,
+  totalCount,
   onPageChange,
   isLoading = false,
   isError = false,
 }: RejectedTableProps) {
   const itemsPerPage = 10;
-  const filteredData = useMemo(() => data || [], [data]);
-  const totalCount = filteredData.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-
-    return filteredData.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, currentPage]);
 
   const columns: Column<CommissionRejectedRow>[] = [
     {
@@ -135,7 +130,7 @@ export function RejectedTable({
 
   return (
     <DataTable
-      data={paginatedData}
+      data={data}
       columns={columns}
       keyExtractor={(item) => item.id}
       isLoading={isLoading}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React from "react";
 
 import { MoreVertical } from "lucide-react";
 
@@ -13,14 +13,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ViewTransactionModal, type UserSummaryData, type TransactionDetails } from "@/components/admin-panel/approvals/bank-transfers/modals/ViewTransactionModal";
-import { RejectReasonModal } from "@/components/common/RejectReasonModal";
-import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
 
 interface ProductsTableProps {
   data: CommissionProductRow[];
   currentPage: number;
+  totalPages: number;
+  totalCount: number;
   onPageChange: (page: number) => void;
+  onApproveClick: (id: string) => void;
+  onRejectClick: (id: string) => void;
   isLoading?: boolean;
   isError?: boolean;
 }
@@ -28,65 +29,15 @@ interface ProductsTableProps {
 export function ProductsTable({
   data,
   currentPage,
+  totalPages,
+  totalCount,
   onPageChange,
+  onApproveClick,
+  onRejectClick,
   isLoading = false,
   isError = false,
 }: ProductsTableProps) {
   const itemsPerPage = 10;
-  const filteredData = useMemo(() => data || [], [data]);
-  const totalCount = filteredData.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
-
-  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserSummaryData | null>(null);
-  const [selectedTransactions, setSelectedTransactions] = useState<TransactionDetails[]>([]);
-
-  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
-  const [selectedRejectItem, setSelectedRejectItem] = useState<CommissionProductRow | null>(null);
-
-  const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
-  const [selectedApproveItem, setSelectedApproveItem] = useState<CommissionProductRow | null>(null);
-
-  const handleViewTransaction = (item: CommissionProductRow) => {
-    // Mock user data based on the row
-    setSelectedUser({
-      name: item.studentName,
-      studentId: "STU-2026-001", // Placeholder
-      registeredDate: "10/01/2026", // Placeholder
-      email: "student@example.com", // Placeholder
-      phone: "+94 70 000 0000", // Placeholder
-      whatsapp: "+94 70 000 0000", // Placeholder
-    });
-
-    // Mock transaction data based on the row
-    setSelectedTransactions([
-      {
-        id: "tx-1",
-        transactionDate: item.date,
-        transactionId: "#12345",
-        amount: item.amount,
-        invoiceUrl: "#",
-      }
-    ]);
-
-    setIsTransactionModalOpen(true);
-  };
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-
-    return filteredData.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, currentPage]);
-
-  const handleReject = (item: CommissionProductRow) => {
-    setSelectedRejectItem(item);
-    setIsRejectModalOpen(true);
-  };
-
-  const handleApprove = (item: CommissionProductRow) => {
-    setSelectedApproveItem(item);
-    setIsApproveModalOpen(true);
-  };
 
   const columns: Column<CommissionProductRow>[] = [
     {
@@ -148,24 +99,18 @@ export function ProductsTable({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[160px] p-1 rounded-xl shadow-lg border border-[#E2E8F0]">
-            <DropdownMenuItem 
-               onClick={() => handleViewTransaction(item)}
-               className="text-[13px] font-medium text-[#0F172B] hover:bg-[#FDF2F8] focus:bg-[#FDF2F8] cursor-pointer"
-            >
-              View
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => handleApprove(item)}
+            <DropdownMenuItem
+              onClick={() => onApproveClick(item.id)}
               className="text-[13px] font-medium text-[#0F172B] hover:bg-[#FDF2F8] focus:bg-[#FDF2F8] cursor-pointer"
             >
               Approve
             </DropdownMenuItem>
-              <DropdownMenuItem 
-                 onClick={() => handleReject(item)}
-                 className="text-[13px] font-medium text-[#E11D48] hover:bg-red-50 focus:bg-red-50 cursor-pointer"
-              >
-                Reject
-              </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onRejectClick(item.id)}
+              className="text-[13px] font-medium text-[#E11D48] hover:bg-red-50 focus:bg-red-50 cursor-pointer"
+            >
+              Reject
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ),
@@ -185,51 +130,23 @@ export function ProductsTable({
   };
 
   return (
-    <>
-      <DataTable
-        data={paginatedData}
-        columns={columns}
-        keyExtractor={(item) => item.id}
-        isLoading={isLoading}
-        isError={isError}
-        showCheckboxes={false}
-        rowClassName={getRowClassName}
-        pagination={{
-          currentPage,
-          totalPages,
-          onPageChange,
-          totalCount,
-          selectedRowCount: 0,
-          variant: "simple",
-          itemsPerPage,
-        }}
-      />
-      <ViewTransactionModal
-        isOpen={isTransactionModalOpen}
-        onClose={() => setIsTransactionModalOpen(false)}
-        user={selectedUser}
-        transactions={selectedTransactions}
-      />
-      <RejectReasonModal
-        isOpen={isRejectModalOpen}
-        onClose={() => setIsRejectModalOpen(false)}
-        onConfirm={(reason) => {
-          console.log("Reject reason:", reason, "for item:", selectedRejectItem);
-        }}
-        description="Are you sure you want to reject this referral commission payment?"
-      />
-      <DeleteConfirmationModal
-        isOpen={isApproveModalOpen}
-        onClose={() => setIsApproveModalOpen(false)}
-        onConfirm={() => {
-          console.log("Approved item:", selectedApproveItem);
-          setIsApproveModalOpen(false);
-        }}
-        title="Confirm Action"
-        description="Are you sure you want to approve this referral comission payment?"
-        confirmText="Approve Payment"
-        confirmVariant="primary"
-      />
-    </>
+    <DataTable
+      data={data}
+      columns={columns}
+      keyExtractor={(item) => item.id}
+      isLoading={isLoading}
+      isError={isError}
+      showCheckboxes={false}
+      rowClassName={getRowClassName}
+      pagination={{
+        currentPage,
+        totalPages,
+        onPageChange,
+        totalCount,
+        selectedRowCount: 0,
+        variant: "simple",
+        itemsPerPage,
+      }}
+    />
   );
 }

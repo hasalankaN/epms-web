@@ -47,4 +47,7 @@ export const queryKeys = {
 
   // Approvals / Bank Transfers
   approvals: "approvals",
+
+  // Referral Commissions
+  commissions: "commissions",
 };

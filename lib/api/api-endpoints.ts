@@ -148,4 +148,9 @@ export const API_ENDPOINTS = {
     REJECT: (source: string, paymentId: string) =>
       `/api/v1/admin/approvals/${source}/${paymentId}/reject`,
   },
+  commissions: {
+    GET_ALL: `/api/v1/admin/commissions`,
+    APPROVE: (id: string) => `/api/v1/admin/commissions/${id}/approve`,
+    REJECT: (id: string) => `/api/v1/admin/commissions/${id}/reject`,
+  },
 };

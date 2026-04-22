@@ -159,3 +159,32 @@ export interface CommissionRejectedRow {
   comAccumulated: string;
   rejectedReason: string;
 }
+
+// ==========================================
+// COMMISSIONS API TYPES (from backend)
+// ==========================================
+
+export interface CommissionsApiItem {
+  id: string;
+  source_type: "BATCH" | "COURSE" | "PRODUCT";
+  transaction_date: string;
+  source_name: string | null;
+  student_full_name: string | null;
+  payment_amount: string | null;
+  referral_member_name: string | null;
+  commission_rate: string | null;
+  commission_amount: string;
+  rejection_reason: string | null;
+}
+
+export interface CommissionsApiMeta {
+  page: number;
+  size: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface CommissionsApiResponse {
+  data: CommissionsApiItem[];
+  meta: CommissionsApiMeta;
+}
