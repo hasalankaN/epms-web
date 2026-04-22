@@ -122,6 +122,7 @@ function mapRejectedRow(
     whatsApp: item.student_whatsapp ?? "—",
     amount: fmtAmount(item.amount),
     refNo: item.reference_number ?? "—",
+    rejectedReason: "—",
     receiptUrl: item.receipt_url,
   };
 }

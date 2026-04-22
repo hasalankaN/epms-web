@@ -106,6 +106,7 @@ export interface BankTransferRejectedRow {
   whatsApp: string;
   amount: string;
   refNo: string;
+  rejectedReason?: string;
   receiptUrl: string | null;
 }
 

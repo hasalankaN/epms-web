@@ -63,7 +63,7 @@ export function ProductsTable({
     setIsViewModalOpen(true);
   };
 
-  const handleViewTransaction = (item: BankTransferBatchRow) => {
+  const handleViewTransaction = (item: BankTransferProductRow) => {
     setSelectedUser({
       name: item.studentName,
       studentId: item.id,
@@ -100,7 +100,7 @@ export function ProductsTable({
       accessorKey: "productName",
       className: "px-2 py-2 w-[150px]",
       cell: (item) => (
-        <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">
+        <div className="text-[12px] font-medium text-[#45556C] line-clamp-2 break-words">
           {item.productName}
         </div>
       ),
@@ -110,7 +110,7 @@ export function ProductsTable({
       accessorKey: "studentName",
       className: "px-2 py-2 w-[150px]",
       cell: (item) => (
-        <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">
+        <div className="text-[12px] font-medium text-[#45556C] line-clamp-2 break-words">
           {item.studentName}
         </div>
       ),
@@ -120,7 +120,7 @@ export function ProductsTable({
       accessorKey: "enrolledBy",
       className: "px-2 py-2 w-[200px]",
       cell: (item) => (
-        <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">
+        <div className="text-[12px] font-medium text-[#45556C] line-clamp-2 break-words">
           {item.enrolledBy}
         </div>
       ),
@@ -133,11 +133,22 @@ export function ProductsTable({
       ),
       accessorKey: "whatsApp",
       className: "px-2 py-2 w-[150px]",
-      cell: (item) => (
-        <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">
-          {item.whatsApp}
-        </div>
-      ),
+      cell: (item) => {
+        if (item.whatsApp === "—") {
+          return <span className="text-[12px] font-medium text-[#45556C]">—</span>;
+        }
+        const cleaned = item.whatsApp.replace(/\D/g, "");
+        return (
+          <a
+            href={`https://wa.me/${cleaned}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[12px] font-medium text-[#25D366] hover:underline transition-colors"
+          >
+            {item.whatsApp}
+          </a>
+        );
+      },
     },
     {
       header: "Amount",
@@ -215,14 +226,8 @@ export function ProductsTable({
 
   const getRowClassName = (item: BankTransferProductRow) => {
     const lower = item.enrolledBy.toLowerCase();
-    if (
-      lower.includes("student referral") ||
-      lower.includes("referral enrollment")
-    ) {
+    if (lower.startsWith("referral enrollment")) {
       return "border-b border-[#E7E5E4] bg-[#D9E9FF] hover:bg-[#D9E9FF]";
-    }
-    if (lower.includes("agent referral")) {
-      return "border-b border-[#E7E5E4] bg-[#FFF7D7] hover:bg-[#FFF7D7]";
     }
     return "border-b border-[#E7E5E4] bg-white hover:bg-[#FFF9FC]";
   };
