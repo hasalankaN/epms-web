@@ -23,7 +23,8 @@ export interface CreateProductPayload {
   commission_type?: "PERCENTAGE" | "FIXED";
   commission_value?: string;
   team_commission_value?: string;
-  status?: "ACTIVE" | "INACTIVE";
+  status: "ACTIVE" | "DRAFT";
+  category_id: string;
   images?: ProductImage[];
 }
 

@@ -10,6 +10,7 @@ import type { ProductDataType } from "@/types/product";
 
 import { useGetProducts } from "@/hooks/api/products/useGetProducts";
 import { useBulkDeleteProducts } from "@/hooks/api/products/useBulkDeleteProducts";
+import { useBulkArchiveProducts } from "@/hooks/api/products/useBulkArchiveProducts";
 import type { ProductType, ProductStockStatus } from "@/hooks/api/products/useGetProducts";
 
 import { ProductListToolbar } from "./views/ProductList/ProductListToolbar";
@@ -26,6 +27,7 @@ export function ProductList() {
   const search = searchParams.get("search") || "";
   const type = searchParams.get("type") as ProductType | null;
   const stockStatus = searchParams.get("stockStatus") as ProductStockStatus | null;
+  const categoryId = searchParams.get("categoryId") as string | null;
 
   // ===== API HOOK =====
   const { data: apiData, isLoading, isError } = useGetProducts({
@@ -34,6 +36,7 @@ export function ProductList() {
     search: search || undefined,
     type: type || undefined,
     stockStatus: stockStatus || undefined,
+    category_id: categoryId || undefined,
   });
 
   const products = useMemo(() => {
@@ -42,14 +45,16 @@ export function ProductList() {
     // Transform API data to match UI type ProductDataType
     return apiData.results.map(item => ({
       id: item.id,
-      thumbnail: "/images/placeholder.jpg",
-      productId: item.sku || "",
+      thumbnail: item.product_image_url || "/images/placeholder.jpg",
+      productId: item.sku || "-",
       productName: item.name || "",
       productType: item.type === "DIGITAL" ? "Digital" : "Delivery",
-      barcodeSku: item.sku || "",
+      barcodeSku: item.sku || "-",
       price: Number(item.price) || 0,
       quantity: item.current_stock ?? 0,
       stockStatus: item.stock_status === "IN_STOCK" ? "In Stock" : "Out of Stock",
+      status: item.status,
+      category: item.category_id ? { id: item.category_id, name: item.category_name || "-" } : undefined,
     })) as ProductDataType[];
   }, [apiData]);
 
@@ -63,6 +68,7 @@ export function ProductList() {
   );
 
   const { mutateAsync: bulkDeleteProducts, isPending: isBulkDeleting } = useBulkDeleteProducts();
+  const { mutateAsync: bulkArchiveProducts, isPending: isBulkArchiving } = useBulkArchiveProducts();
 
   // ===== HANDLERS =====
   const [localSearch, setLocalSearch] = useState(search);
@@ -105,6 +111,7 @@ export function ProductList() {
 
     params.delete("type");
     params.delete("stockStatus");
+    params.delete("categoryId");
     params.set("page", "1");
     router.push(`${pathname}?${params.toString()}`);
   }, [searchParams, pathname, router]);
@@ -121,16 +128,23 @@ export function ProductList() {
     toast.info("Selection cleared");
   }, []);
 
-  const handleArchive = useCallback(() => {
+  const handleArchive = useCallback(async () => {
     if (selectedIds.length === 0) {
       toast.warning("Please select at least one product");
 
       return;
     }
 
-    toast.success(`Archiving ${selectedIds.length} selected product(s)`);
-    setRowSelection({});
-  }, [selectedIds]);
+    const toastId = toast.loading(`Archiving ${selectedIds.length} selected product(s)...`);
+
+    try {
+      await bulkArchiveProducts({ ids: selectedIds });
+      setRowSelection({});
+      toast.dismiss(toastId);
+    } catch {
+      toast.dismiss(toastId);
+    }
+  }, [selectedIds, bulkArchiveProducts]);
 
   const handleFilterChange = useCallback((key: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -183,9 +197,11 @@ export function ProductList() {
           onSearchChange={setLocalSearch}
           typeFilter={type}
           stockFilter={stockStatus}
+          categoryFilter={categoryId}
           onFilterChange={handleFilterChange}
           onClearFilters={handleClearFilters}
           isDeleting={isBulkDeleting}
+          isArchiving={isBulkArchiving}
         />
       </div>
 

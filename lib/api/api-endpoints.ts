@@ -11,11 +11,21 @@ export const API_ENDPOINTS = {
   products: {
     GET_ALL: `/api/v1/products`,
     GET_BY_ID: (id: string) => `/api/v1/products/${id}`,
+    GET_ARCHIVED: `/api/v1/products/archive`,
     CREATE: `/api/v1/products`,
     UPDATE: (id: string) => `/api/v1/products/${id}`,
     ARCHIVE: (id: string) => `/api/v1/products/${id}/archive`,
+    ARCHIVE_BULK: `/api/v1/products/bulk/archive`,
+    RESTORE: (id: string) => `/api/v1/products/${id}/restore`,
     DELETE: (id: string) => `/api/v1/products/${id}`,
     DELETE_BULK: `/api/v1/products/bulk`,
+  },
+  productCategories: {
+    GET_ALL: `/api/v1/admin/product-categories`,
+    CREATE: `/api/v1/admin/product-categories`,
+    UPDATE: (id: string) => `/api/v1/admin/product-categories/${id}`,
+    TOGGLE_STATUS: (id: string) => `/api/v1/admin/product-categories/${id}/toggle-status`,
+    GET_PRODUCTS: (id: string) => `/api/v1/admin/product-categories/${id}/products`,
   },
   files: {
     UPLOAD: `/api/v1/files/upload`,
@@ -155,5 +165,16 @@ export const API_ENDPOINTS = {
     GET_ALL: `/api/v1/admin/commissions`,
     APPROVE: (id: string) => `/api/v1/admin/commissions/${id}/approve`,
     REJECT: (id: string) => `/api/v1/admin/commissions/${id}/reject`,
+  },
+  orders: {
+    CREATE_ORDER: `/api/v1/admin/orders`,
+    GET_ALL: `/api/v1/admin/orders`,
+    GET_BY_ID: (id: string) => `/api/v1/admin/orders/${id}`,
+    GET_SUMMARY: `/api/v1/admin/orders/summary`,
+    GET_INVOICE: (id: string) => `/api/v1/admin/orders/${id}/invoice`,
+    GET_WAYBILL: (id: string) => `/api/v1/admin/orders/${id}/delivery-waybill`,
+    BULK_UPDATE_STATUS: `/api/v1/admin/orders/bulk/status`,
+    UPDATE_STATUS: (id: string) => `/api/v1/admin/orders/${id}/status`,
+    EXPORT_ADDRESSES: `/api/v1/admin/orders/export/addresses`,
   },
 };

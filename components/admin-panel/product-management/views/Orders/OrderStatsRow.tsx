@@ -1,105 +1,172 @@
 "use client";
 
-import React from "react";
+import React, { useMemo, useCallback } from "react";
+
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+
+import { motion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useGetOrderSummary } from "@/hooks/api/orders/useGetOrderSummary";
 
 interface OrderStatCardProps {
   title: string;
   value: string | number;
-  className?: string;
+  isActive: boolean;
+  onClick: () => void;
+  isLoading?: boolean;
 }
 
-function OrderStatCard({ title, value, className }: OrderStatCardProps) {
+function OrderStatCard({ title, value, isActive, onClick, isLoading }: OrderStatCardProps) {
   return (
-    <div className={cn("flex flex-col items-center justify-center gap-1 px-4", className)}>
+    <button
+      onClick={onClick}
+      className={cn(
+        "relative flex w-full flex-col items-center justify-center gap-[3px] rounded-[0.375rem] border-2 px-[14px] py-[14px] transition-all duration-300",
+        isActive
+          ? "border-[#F6339A] shadow-sm"
+          : "border-[#E2E8F0] bg-white hover:border-[#F6339A]/30 hover:bg-[#F8FAFC]"
+      )}
+    >
+      {/* Sliding Selection Highlight */}
+      {isActive && (
+        <motion.div
+          layoutId="active-order-stat-bg"
+          className="absolute inset-0 z-0 rounded-[0.375rem] bg-[linear-gradient(315deg,#FFCFEA_0.35%,#F8FAFC_99.65%)]"
+          initial={false}
+          transition={{
+            type: "spring",
+            stiffness: 400,
+            damping: 35,
+          }}
+        />
+      )}
+
       {/* Title */}
-      <span className="text-center font-sans text-[14px] font-normal leading-[20px] text-[#314158]">
+      <span
+        className={cn(
+          "relative z-10 text-center text-[13px] font-medium leading-[18px] transition-colors duration-300",
+          isActive ? "text-[#F6339A]" : "text-[#475569]"
+        )}
+      >
         {title}
       </span>
+
       {/* Value */}
-      <span className="text-center font-sans text-[18px] font-semibold leading-[30px] text-[#020618]">
-        {value}
-      </span>
-    </div>
+      <div className="relative z-10 w-full flex justify-center">
+        {isLoading ? (
+          <Skeleton className="h-[30px] w-12 rounded-md" />
+        ) : (
+          <span
+            className={cn(
+              "text-center text-[18px] font-bold leading-[26px] transition-colors duration-300",
+              isActive ? "text-[#F6339A]" : "text-[#0F172B]"
+            )}
+          >
+            {typeof value === "number" ? value.toString().padStart(2, "0") : value}
+          </span>
+        )}
+      </div>
+    </button>
   );
 }
 
-// 8 stats matching image 3
-const statsData = [
-  { title: "All Orders", value: "300" },
-  { title: "Pending", value: "40" },
-  { title: "Processing", value: "05" },
-  { title: "Completed", value: "50" },
-  { title: "Dispatched", value: "15" },
-  { title: "Refunded", value: "25" },
-  { title: "Direct Orders", value: "10" },
-  { title: "Referral Orders", value: "00" },
-];
-
 export function OrderStatsRow() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const { data, isLoading } = useGetOrderSummary();
+
+  const currentStatus = searchParams.get("status");
+  const currentSource = searchParams.get("source");
+
+  const handleCardClick = useCallback(
+    (type: string, value?: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      params.delete("status");
+      params.delete("source");
+      params.set("page", "1");
+
+      if (type === "status" && value) {
+        params.set("status", value);
+      } else if (type === "source" && value) {
+        params.set("source", value);
+      }
+
+      router.push(`${pathname}?${params.toString()}`);
+    },
+    [searchParams, pathname, router]
+  );
+
+  const statsData = useMemo(
+    () => [
+      {
+        title: "All Orders",
+        value: data?.all ?? 0,
+        isActive: !currentStatus && !currentSource,
+        onClick: () => handleCardClick("all"),
+      },
+      {
+        title: "Pending",
+        value: data?.pending ?? 0,
+        isActive: currentStatus === "PENDING",
+        onClick: () => handleCardClick("status", "PENDING"),
+      },
+      {
+        title: "Processing",
+        value: data?.processing ?? 0,
+        isActive: currentStatus === "PROCESSING",
+        onClick: () => handleCardClick("status", "PROCESSING"),
+      },
+      {
+        title: "Completed",
+        value: data?.completed ?? 0,
+        isActive: currentStatus === "COMPLETED",
+        onClick: () => handleCardClick("status", "COMPLETED"),
+      },
+      {
+        title: "Dispatched",
+        value: data?.dispatched ?? 0,
+        isActive: currentStatus === "DISPATCHED",
+        onClick: () => handleCardClick("status", "DISPATCHED"),
+      },
+      {
+        title: "Refunded",
+        value: data?.refunded ?? 0,
+        isActive: currentStatus === "REFUNDED",
+        onClick: () => handleCardClick("status", "REFUNDED"),
+      },
+      {
+        title: "Direct Orders",
+        value: data?.direct ?? 0,
+        isActive: currentSource === "DIRECT",
+        onClick: () => handleCardClick("source", "DIRECT"),
+      },
+      {
+        title: "Referral Orders",
+        value: data?.referral ?? 0,
+        isActive: currentSource === "REFERRAL",
+        onClick: () => handleCardClick("source", "REFERRAL"),
+      },
+    ],
+    [data, currentStatus, currentSource, handleCardClick]
+  );
+
   return (
-    <div className="w-full rounded-[8px] border border-[#E2E8F0] bg-transparent">
-      {/* Desktop (xl+): Flex layout - 8 columns */}
-      <div className="hidden items-center justify-between py-3 xl:flex overflow-x-auto">
-        {statsData.map((stat, index) => (
-          <React.Fragment key={stat.title}>
-            <OrderStatCard
-              title={stat.title}
-              value={stat.value}
-              className="flex-1 flex-shrink-0 min-w-[120px]"
-            />
-            {/* Divider - not after last item */}
-            {index < statsData.length - 1 && (
-              <div className="h-[60px] w-px shrink-0 bg-[#E2E8F0]" />
-            )}
-          </React.Fragment>
-        ))}
-      </div>
-
-      {/* Tablet (md to xl): 4 columns grid, 2 rows */}
-      <div className="hidden md:block xl:hidden">
-        {/* Row 1: First 4 items */}
-        <div className="grid grid-cols-4">
-          {statsData.slice(0, 4).map((stat, index) => (
-            <div
-              key={stat.title}
-              className={`py-3 ${index !== 0 ? "border-l border-[#E2E8F0]" : ""}`}
-            >
-              <OrderStatCard title={stat.title} value={stat.value} />
-            </div>
-          ))}
+    <div className="flex w-full flex-wrap items-stretch gap-2.5">
+      {statsData.map((stat) => (
+        <div key={stat.title} className="flex-1 min-w-[140px] md:min-w-[160px]">
+          <OrderStatCard
+            title={stat.title}
+            value={stat.value}
+            isActive={stat.isActive}
+            onClick={stat.onClick}
+            isLoading={isLoading}
+          />
         </div>
-        {/* Row 2: Last 4 items */}
-        <div className="grid grid-cols-4 border-t border-[#E2E8F0]">
-          {statsData.slice(4).map((stat, index) => (
-            <div
-              key={stat.title}
-              className={`py-3 ${index !== 0 ? "border-l border-[#E2E8F0]" : ""}`}
-            >
-              <OrderStatCard title={stat.title} value={stat.value} />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Mobile (<md): 2 columns grid */}
-      <div className="md:hidden">
-        <div className="grid grid-cols-2">
-          {statsData.map((stat, index) => (
-            <div
-              key={stat.title}
-              className={`
-                py-3
-                ${index % 2 !== 0 ? "border-l border-[#E2E8F0]" : ""}
-                ${index >= 2 ? "border-t border-[#E2E8F0]" : ""}
-              `}
-            >
-              <OrderStatCard title={stat.title} value={stat.value} />
-            </div>
-          ))}
-        </div>
-      </div>
+      ))}
     </div>
   );
 }

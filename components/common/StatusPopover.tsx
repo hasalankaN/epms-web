@@ -24,6 +24,7 @@ interface StatusPopoverProps {
   value: string;
   onValueChange?: (value: string) => void;
   options: StatusOption[];
+  dropdownOptions?: StatusOption[];
   className?: string;
   readOnly?: boolean;
   isLoading?: boolean;
@@ -33,6 +34,7 @@ export function StatusPopover({
   value,
   onValueChange,
   options,
+  dropdownOptions,
   className,
   readOnly = false,
   isLoading = false,
@@ -101,7 +103,7 @@ export function StatusPopover({
       </PopoverTrigger>
       <PopoverContent className="w-fit min-w-[140px] p-1 z-[99999999]" align="center">
         <div className="flex flex-col gap-1">
-          {options.map((option) => (
+          {(dropdownOptions || options).map((option) => (
             <div
               key={option.value}
               className={cn(
