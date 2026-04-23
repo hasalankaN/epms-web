@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+
 import { format } from "date-fns";
 
 import type { ReferralCommissionTabType } from "@/app/(main)/admin-panel/approvals/referral-commissions/page";
@@ -38,6 +39,7 @@ const TAB_TYPE_MAP: Record<ReferralCommissionTabType, CommissionTabType> = {
 
 function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return "—";
+
   try {
     return format(new Date(dateStr), "dd/MM/yyyy");
   } catch {
@@ -47,12 +49,14 @@ function formatDate(dateStr: string | null | undefined): string {
 
 function formatAmount(value: string | number | null | undefined): string {
   if (value === null || value === undefined) return "LKR 0.00";
-  return `LKR ${parseFloat(String(value)).toFixed(2)}`;
+  
+return `LKR ${parseFloat(String(value)).toFixed(2)}`;
 }
 
 function formatRate(value: string | number | null | undefined): string {
   if (value === null || value === undefined) return "0%";
-  return `${value}%`;
+  
+return `${value}%`;
 }
 
 function mapToBatchRow(item: CommissionsApiItem): CommissionBatchRow {

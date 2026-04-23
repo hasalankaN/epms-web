@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+
 import { cn } from "@/lib/utils";
 import { useGetIncomeSummary } from "@/hooks/api/finances/useGetIncomeSummary";
 
@@ -34,7 +35,9 @@ function IncomeStatCard({ title, value, isLoading, className }: IncomeStatCardPr
 function fmtLkr(val: string | null | undefined) {
   if (!val) return "LKR 0.00";
   const num = Number(val);
-  return `LKR ${num.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  
+return `LKR ${num.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export function IncomeStatsRow() {

@@ -128,6 +128,7 @@ export function EditLecturerModal({
   const { data: lecturerDetail, isLoading: isLoadingLecturer } = useGetLecturerById(
     isOpen ? lecturerId : null
   );
+
   const lecturer = lecturerDetail?.profile;
 
   const { mutateAsync: updateLecturer, isPending: isUpdating } = useUpdateLecturer(

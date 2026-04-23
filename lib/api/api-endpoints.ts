@@ -158,6 +158,10 @@ export const API_ENDPOINTS = {
     REJECT: (id: string) => `/api/v1/admin/commissions/${id}/reject`,
   },
   finances: {
+    OVERVIEW_SUMMARY: `/api/v1/admin/finances/overview/summary`,
+    OVERVIEW_GRAPH: `/api/v1/admin/finances/overview/graph`,
+    OVERVIEW_TABLE: `/api/v1/admin/finances/overview/table`,
+    OVERVIEW_EXPORT: `/api/v1/admin/finances/overview/export`,
     INCOME_SUMMARY: `/api/v1/admin/finances/income/summary`,
     INCOME_LEDGER: `/api/v1/admin/finances/income`,
     INCOME_EXPORT: `/api/v1/admin/finances/income/export`,

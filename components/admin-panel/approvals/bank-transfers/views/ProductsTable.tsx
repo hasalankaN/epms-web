@@ -46,14 +46,17 @@ export function ProductsTable({
   const itemsPerPage = 10;
 
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+
   const [selectedSlipUrl, setSelectedSlipUrl] = useState<string | undefined>(
     undefined,
   );
 
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+
   const [selectedUser, setSelectedUser] = useState<UserSummaryData | null>(
     null,
   );
+
   const [selectedTransactions, setSelectedTransactions] = useState<
     TransactionDetails[]
   >([]);
@@ -137,8 +140,11 @@ export function ProductsTable({
         if (item.whatsApp === "—") {
           return <span className="text-[12px] font-medium text-[#45556C]">—</span>;
         }
+
         const cleaned = item.whatsApp.replace(/\D/g, "");
-        return (
+
+        
+return (
           <a
             href={`https://wa.me/${cleaned}`}
             target="_blank"
@@ -226,10 +232,13 @@ export function ProductsTable({
 
   const getRowClassName = (item: BankTransferProductRow) => {
     const lower = item.enrolledBy.toLowerCase();
+
     if (lower.startsWith("referral enrollment")) {
       return "border-b border-[#E7E5E4] bg-[#D9E9FF] hover:bg-[#D9E9FF]";
     }
-    return "border-b border-[#E7E5E4] bg-white hover:bg-[#FFF9FC]";
+
+    
+return "border-b border-[#E7E5E4] bg-white hover:bg-[#FFF9FC]";
   };
 
   return (

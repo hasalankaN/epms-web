@@ -19,17 +19,21 @@ interface FinanceTableProps {
   data: FinanceTableDataType[];
   currentPage: number;
   onPageChange: (page: number) => void;
+  isLoading?: boolean;
+  totalCount?: number;
 }
 
 export function FinanceTable({
   data,
   currentPage,
   onPageChange,
+  isLoading = false,
+  totalCount: externalTotalCount,
 }: FinanceTableProps) {
   const itemsPerPage = 10;
   const filteredData = useMemo(() => data || [], [data]);
 
-  const totalCount = filteredData.length;
+  const totalCount = externalTotalCount ?? filteredData.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
 
   const paginatedData = useMemo(() => {
@@ -86,6 +90,7 @@ export function FinanceTable({
       data={paginatedData}
       columns={columns}
       keyExtractor={(item) => item.id}
+      isLoading={isLoading}
       pagination={{
         variant: "simple",
         totalCount,

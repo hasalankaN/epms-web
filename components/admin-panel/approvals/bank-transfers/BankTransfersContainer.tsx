@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+
 import { format } from "date-fns";
 
 import type { BankTransferTabType } from "@/app/(main)/admin-panel/approvals/bank-transfers/page";
@@ -139,6 +140,7 @@ export function BankTransfersContainer({
   });
 
   const currentPage = pages[activeTab];
+
   const setCurrentPage = (page: number) =>
     setPages((prev) => ({ ...prev, [activeTab]: page }));
 
@@ -151,12 +153,14 @@ export function BankTransfersContainer({
 
   const { mutate: approvePayment, isPending: isApproving } =
     useApprovePayment();
-  const { mutate: rejectPayment, isPending: isRejecting } = useRejectPayment();
+
+  const { mutate: rejectPayment } = useRejectPayment();
 
   const [pendingApprove, setPendingApprove] = useState<{
     paymentId: string;
     source: string;
   } | null>(null);
+
   const [pendingReject, setPendingReject] = useState<{
     paymentId: string;
     source: string;

@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import { format } from "date-fns";
+
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+
+import { format } from "date-fns";
 import { toast } from "sonner";
 
 import { OtherIncomeToolbar } from "./OtherIncomeToolbar";
@@ -26,6 +28,7 @@ export function OtherIncomeTab() {
 
   const handlePageChange = useCallback((page: number) => {
     const params = new URLSearchParams(searchParams.toString());
+
     params.set("page", page.toString());
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, pathname, router]);
@@ -51,12 +54,15 @@ export function OtherIncomeTab() {
   const handleExportCsv = async () => {
     try {
       const params: Record<string, string> = {};
+
       if (transactionVia !== "all") params.transaction_via = transactionVia;
       if (dateRange.start) params.date_from = dateRange.start.toISOString();
       if (dateRange.end) params.date_to = dateRange.end.toISOString();
       const res = await api.get(API_ENDPOINTS.finances.OTHER_INCOME_EXPORT, { params, responseType: "blob" });
       const url = URL.createObjectURL(new Blob([res.data]));
-      const a = document.createElement("a"); a.href = url; a.download = "other-income.csv"; a.click();
+      const a = document.createElement("a");
+
+ a.href = url; a.download = "other-income.csv"; a.click();
       URL.revokeObjectURL(url);
     } catch { toast.error("Failed to export CSV."); }
   };

@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import { format } from "date-fns";
+
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+
+import { format } from "date-fns";
 import { toast } from "sonner";
 
 import { IncomeStatsRow } from "./IncomeStatsRow";
@@ -18,16 +20,20 @@ const PAGE_SIZE = 10;
 function mapPaymentMethod(m: string) {
   if (m === "GATEWAY") return "Gateway";
   if (m === "BANK_TRANSFER") return "Bank Slip";
-  return m;
+  
+return m;
 }
 
 function mapPaymentVia(v: string | null) {
   if (!v) return "—";
+
   const map: Record<string, string> = {
     BOC: "BOC", PEOPLES_BANK: "Peoples", COMMERCIAL_BANK: "Commercial",
     HNB: "HNB", ONLINE: "Online", CASH: "Cash",
   };
-  return map[v] ?? v;
+
+  
+return map[v] ?? v;
 }
 
 function mapStatus(s: string): "Pending" | "Completed" {
@@ -45,6 +51,7 @@ export function IncomeFromStudentTab() {
 
   const handlePageChange = useCallback((page: number) => {
     const params = new URLSearchParams(searchParams.toString());
+
     params.set("page", page.toString());
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, pathname, router]);
@@ -77,13 +84,16 @@ export function IncomeFromStudentTab() {
   const handleExportCsv = async () => {
     try {
       const params: Record<string, string> = {};
+
       if (activeFilters.dateFrom) params.date_from = activeFilters.dateFrom;
       if (activeFilters.dateTo) params.date_to = activeFilters.dateTo;
       if (activeFilters.source) params.source = activeFilters.source;
       if (activeFilters.status) params.status = activeFilters.status;
       const res = await api.get(API_ENDPOINTS.finances.INCOME_EXPORT, { params, responseType: "blob" });
       const url = URL.createObjectURL(new Blob([res.data]));
-      const a = document.createElement("a"); a.href = url; a.download = "income-report.csv"; a.click();
+      const a = document.createElement("a");
+
+ a.href = url; a.download = "income-report.csv"; a.click();
       URL.revokeObjectURL(url);
     } catch { toast.error("Failed to export CSV."); }
   };
