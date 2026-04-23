@@ -21,14 +21,17 @@ export function SentTab() {
   // URL-based filter state (simplified for mock implementation)
   const fromDate = searchParams.get("from");
   const toDate = searchParams.get("to");
-  const recipients = searchParams.get("recipients")?.split(",") || [];
-  const channels = searchParams.get("channels")?.split(",") || [];
+  const recipientsParam = searchParams.get("recipients");
+  const channelsParam = searchParams.get("channels");
 
   const activeFilters = useMemo<FilterSelections>(() => {
     const selections: FilterSelections = {};
+    const recipients = recipientsParam?.split(",") || [];
+    const channels = channelsParam?.split(",") || [];
 
     if (recipients.length > 0) selections.recipient = recipients;
     if (channels.length > 0) selections.channels = channels;
+    
     if (fromDate || toDate) {
       selections.date = {
         start: fromDate ? new Date(fromDate) : null,
@@ -37,7 +40,7 @@ export function SentTab() {
     }
 
     return selections;
-  }, [recipients, channels, fromDate, toDate]);
+  }, [recipientsParam, channelsParam, fromDate, toDate]);
 
   const [localSearch, setLocalSearch] = useState(search);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
