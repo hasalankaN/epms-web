@@ -198,4 +198,12 @@ export const adminSidebarData: SidebarNavItem[] = [
       },
     ],
   },
+  {
+    id: 16,
+    type: "link",
+    title: "Notification Management",
+    icon: "notification-bell-icon",
+    value: "notification-management",
+    url: "/admin-panel/notification-management",
+  },
 ];
