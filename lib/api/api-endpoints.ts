@@ -66,6 +66,9 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/api/v1/admin/staff/${id}`,
     UPDATE_STATUS: (id: string) => `/api/v1/admin/staff/${id}/status`,
     UPDATE_PRIVILEGES: (id: string) => `/api/v1/admin/staff/${id}/privileges`,
+    GET_ASSIGNED_COURSES: (id: string) => `/api/v1/admin/staff/${id}/courses`,
+    GET_ASSIGNED_BATCHES: (id: string) => `/api/v1/admin/staff/${id}/batches`,
+    MARK_COMMISSION_PAID: (commissionId: string) => `/api/v1/admin/staff/commissions/${commissionId}/pay`,
   },
   complaints: {
     GET_ALL: `/api/v1/admin/complaints`,
