@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+
 import { format } from "date-fns";
 
 import { DataTable } from "@/components/common/table/DataTable";
@@ -48,7 +49,6 @@ interface StaffReferralDetailsProps {
 }
 
 export function StaffReferralDetails({
-  commissions = [],
   commissionsSummary,
   enquiries = [],
   isLoading = false,

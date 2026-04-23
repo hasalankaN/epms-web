@@ -42,14 +42,17 @@ export function RejectedTable({
   const itemsPerPage = 10;
 
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+
   const [selectedSlipUrl, setSelectedSlipUrl] = useState<string | undefined>(
     undefined,
   );
 
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+
   const [selectedUser, setSelectedUser] = useState<UserSummaryData | null>(
     null,
   );
+
   const [selectedTransactions, setSelectedTransactions] = useState<
     TransactionDetails[]
   >([]);
@@ -143,7 +146,9 @@ export function RejectedTable({
         if (item.whatsApp === "—") {
           return <span className="text-[12px] font-medium text-[#45556C]">—</span>;
         }
+
         const cleaned = item.whatsApp.replace(/\D/g, "");
+        
         return (
           <a
             href={`https://wa.me/${cleaned}`}
@@ -230,9 +235,11 @@ export function RejectedTable({
 
   const getRowClassName = (item: BankTransferRejectedRow) => {
     const lower = item.enrolledBy.toLowerCase();
+
     if (lower.startsWith("referral enrollment")) {
       return "border-b border-[#E7E5E4] bg-[#D9E9FF] hover:bg-[#D9E9FF]";
     }
+    
     return "border-b border-[#E7E5E4] bg-white hover:bg-[#FFF9FC]";
   };
 

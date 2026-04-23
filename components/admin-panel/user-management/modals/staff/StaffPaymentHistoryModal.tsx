@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
+
 import { format } from "date-fns";
 
 import { X } from "lucide-react";
@@ -136,17 +137,19 @@ function MonthDivider({ label }: { label: string }) {
 
 // ─── Modal ─────────────────────────────────────────────────────────────────────
 
-export function StaffPaymentHistoryModal({ isOpen, onClose, staffId, staffName }: StaffPaymentHistoryModalProps) {
+export function StaffPaymentHistoryModal({ isOpen, onClose, staffId }: StaffPaymentHistoryModalProps) {
   const { data: staffData, isLoading } = useGetStaffById(isOpen ? staffId : null);
 
   const groups = useMemo<MonthGroup[]>(() => {
     const commissions = (staffData?.commissionHistory ?? []) as any[];
+
     if (!commissions.length) return [];
 
     const map = new Map<string, PaymentCard[]>();
 
     for (const c of commissions) {
       const monthKey = format(new Date(c.created_at), "MMMM, yyyy");
+      
       const card: PaymentCard =
         c.status === "PAID"
           ? {

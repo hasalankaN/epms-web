@@ -29,6 +29,7 @@ export default function BankTransfersPage() {
   const pathname = usePathname();
 
   const currentTab = searchParams.get("tab") as BankTransferTabType;
+
   const activeTab = tabs.some((t) => t.value === currentTab)
     ? currentTab
     : "batches";
@@ -37,6 +38,7 @@ export default function BankTransfersPage() {
 
   const handleTabChange = (tabValue: BankTransferTabType) => {
     const params = new URLSearchParams(searchParams.toString());
+
     params.set("tab", tabValue);
     router.replace(`${pathname}?${params.toString()}`);
   };
