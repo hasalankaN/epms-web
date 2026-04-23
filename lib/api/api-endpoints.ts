@@ -26,6 +26,7 @@ export const API_ENDPOINTS = {
     GET_BY_ID: (id: string) => `/api/v1/admin/lecturers/${id}`,
     UPDATE: (id: string) => `/api/v1/admin/lecturers/${id}`,
     UPDATE_STATUS: (id: string) => `/api/v1/admin/lecturers/${id}/status`,
+    RECORD_SALARY_PAYMENT: (id: string) => `/api/v1/admin/lecturers/${id}/salary-payments`,
   },
   certificateTemplates: {
     GET_ALL: `/api/v1/admin/certificate-templates`,

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import { format } from "date-fns";
 
 import { X } from "lucide-react";
 
@@ -8,42 +9,34 @@ import { StatusPopover } from "@/components/common/StatusPopover";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { BUTTON_STYLES } from "@/lib/constants/theme";
-import { UpdatePaymentModal } from "@/components/admin-panel/user-management/modals/lecturer/UpdatePaymentModal";
+import { useGetLecturerById } from "@/hooks/api/lecturers/useGetLecturerById";
+import { useRecordLecturerSalaryPayment } from "@/hooks/api/lecturers/useRecordLecturerSalaryPayment";
+import type { LecturerSalaryPayment } from "@/hooks/api/lecturers/useGetLecturerById";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface PendingPayment {
-  status: "Pending";
-  expensesDescription: string;
-  courseBatch: string;
+interface PendingCard {
+  kind: "pending";
+  payment: LecturerSalaryPayment;
 }
 
-interface PaidPayment {
-  status: "Paid";
-  expensesNote: string;
-  courseBatch: string;
-  paymentMethod: string;
-  note: string;
-  paidAmount: string;
-  paidDate: string;
+interface PaidCard {
+  kind: "paid";
+  payment: LecturerSalaryPayment;
 }
 
-type Payment = PendingPayment | PaidPayment;
+type PaymentCard = PendingCard | PaidCard;
 
 interface MonthGroup {
-  monthLabel: string; // e.g. "December, 2025"
-  payments: Payment[];
+  monthLabel: string;
+  cards: PaymentCard[];
 }
 
-export interface LecturerPaymentHistoryData {
-  lecturerName: string;
-  groups: MonthGroup[];
-}
-
-interface LecturerPaymentHistoryModalProps {
+export interface LecturerPaymentHistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  data: LecturerPaymentHistoryData | null;
+  lecturerId: string | null;
+  lecturerName?: string;
 }
 
 // ─── Style helpers ────────────────────────────────────────────────────────────
@@ -54,53 +47,55 @@ const valueClass = "text-[#90A1B9] font-inter text-[14px] font-normal leading-[2
 const STATUS_OPTIONS = [
   { value: "Paid",    label: "Paid",    bg: "#DFFFF0", text: "#16A34A" },
   { value: "Pending", label: "Pending", bg: "#FFF7D7", text: "#F59E0B" },
-  { value: "Unpaid",  label: "Unpaid",  bg: "#FFE4E6", text: "#FB2C36" },
 ];
 
 // ─── Pending Card ─────────────────────────────────────────────────────────────
 
-function PendingCard({ payment, onPay }: { payment: PendingPayment; onPay: () => void }) {
+function PendingPaymentCard({ card, lecturerId }: { card: PendingCard; lecturerId: string }) {
+  const { mutate: recordPayment, isPending } = useRecordLecturerSalaryPayment(lecturerId);
+
+  const handlePay = () => {
+    recordPayment({
+      description: card.payment.description,
+      source_type: card.payment.source_type as "MONTHLY" | "COURSE" | "BATCH",
+      source_id: card.payment.source_id ?? undefined,
+      amount: Number(card.payment.amount),
+      period: card.payment.period ?? undefined,
+      paid_date: new Date().toISOString(),
+    });
+  };
+
   return (
     <div
       className="w-full flex flex-col items-end gap-2 rounded-[8px] p-3"
-      style={{
-        border: "1px solid #E2E8F0",
-        background: "#F8FAFC",
-        boxShadow: "0 1px 2px 0 rgba(16, 24, 40, 0.05)",
-      }}
+      style={{ border: "1px solid #E2E8F0", background: "#F8FAFC", boxShadow: "0 1px 2px 0 rgba(16,24,40,0.05)" }}
     >
-      {/* Fields */}
       <div className="w-full flex flex-col gap-2">
-        {/* Expenses Description */}
         <div className="flex flex-col gap-0.5">
           <span className={labelClass}>Expenses Description</span>
-          <span className={valueClass}>{payment.expensesDescription}</span>
+          <span className={valueClass}>{card.payment.description}</span>
         </div>
-
-        {/* Course / Batch */}
         <div className="flex flex-col gap-0.5">
           <span className={labelClass}>Course/ Batch</span>
-          <span className={valueClass}>{payment.courseBatch}</span>
+          <span className={valueClass}>{card.payment.source_type} {card.payment.period ?? ""}</span>
         </div>
-
-        {/* Payment Status */}
+        <div className="flex flex-col gap-0.5">
+          <span className={labelClass}>Amount</span>
+          <span className={valueClass}>LKR {Number(card.payment.amount).toFixed(2)}</span>
+        </div>
         <div className="flex flex-col gap-0.5">
           <span className={labelClass}>Payment Status</span>
           <div className="inline-flex">
-            <StatusPopover value={payment.status} options={STATUS_OPTIONS} readOnly />
+            <StatusPopover value="Pending" options={STATUS_OPTIONS} readOnly />
           </div>
         </div>
       </div>
-
-      {/* Pay Button */}
       <Button
-        className={cn(
-          BUTTON_STYLES.primary.md,
-          "text-white font-inter text-[14px] font-semibold leading-[20px]"
-        )}
-        onClick={onPay}
+        className={cn(BUTTON_STYLES.primary.md, "text-white font-inter text-[14px] font-semibold leading-[20px]")}
+        disabled={isPending}
+        onClick={handlePay}
       >
-        Pay
+        {isPending ? "Paying…" : "Pay"}
       </Button>
     </div>
   );
@@ -108,73 +103,52 @@ function PendingCard({ payment, onPay }: { payment: PendingPayment; onPay: () =>
 
 // ─── Paid Card ────────────────────────────────────────────────────────────────
 
-function PaidCard({ payment }: { payment: PaidPayment }) {
+function PaidPaymentCard({ card }: { card: PaidCard }) {
+  const p = card.payment;
   return (
     <div
       className="w-full flex flex-col items-end gap-2 rounded-[8px] p-3"
-      style={{
-        border: "1px solid #E2E8F0",
-        background: "#F8FAFC",
-        boxShadow: "0 1px 2px 0 rgba(16, 24, 40, 0.05)",
-      }}
+      style={{ border: "1px solid #E2E8F0", background: "#F8FAFC", boxShadow: "0 1px 2px 0 rgba(16,24,40,0.05)" }}
     >
-      {/* Grid fields */}
       <div className="w-full grid grid-cols-2 gap-y-3 gap-x-4">
-        {/* Expenses Note */}
         <div className="flex flex-col gap-0.5">
           <span className={labelClass}>Expenses Note</span>
-          <span className={valueClass}>{payment.expensesNote}</span>
+          <span className={valueClass}>{p.description}</span>
         </div>
-
-        {/* Course / Batch */}
         <div className="flex flex-col gap-0.5">
           <span className={labelClass}>Course/ Batch</span>
-          <span className={valueClass}>{payment.courseBatch}</span>
+          <span className={valueClass}>{p.source_type} {p.period ?? ""}</span>
         </div>
-
-        {/* Payment Method */}
-        <div className="flex flex-col gap-0.5">
-          <span className={labelClass}>Payment Method</span>
-          <span className={valueClass}>{payment.paymentMethod}</span>
-          <span className="text-[14px] font-normal leading-[20px] text-[#0F172B] underline cursor-pointer hover:text-[#E60076]">
-            View Receipt
-          </span>
-        </div>
-
-        {/* Note */}
-        <div className="flex flex-col gap-0.5">
-          <span className={labelClass}>Note</span>
-          <span className={valueClass}>{payment.note}</span>
-        </div>
-
-        {/* Paid Amount */}
+        {p.receipt_url && (
+          <div className="flex flex-col gap-0.5">
+            <span className={labelClass}>Payment Method</span>
+            <a
+              href={p.receipt_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[14px] font-normal leading-[20px] text-[#0F172B] underline hover:text-[#E60076]"
+            >
+              View Receipt
+            </a>
+          </div>
+        )}
         <div className="flex flex-col gap-0.5">
           <span className={labelClass}>Paid Amount</span>
-          <span className={valueClass}>{payment.paidAmount}</span>
+          <span className={valueClass}>LKR {Number(p.amount).toFixed(2)}</span>
         </div>
-
-        {/* Paid Date */}
         <div className="flex flex-col gap-0.5">
           <span className={labelClass}>Paid Date</span>
-          <span className={valueClass}>{payment.paidDate}</span>
+          <span className={valueClass}>
+            {p.paid_date ? format(new Date(p.paid_date), "yyyy/MM/dd") : "—"}
+          </span>
         </div>
-
-        {/* Status — full width */}
         <div className="col-span-2 flex flex-col gap-0.5">
           <span className={labelClass}>Status</span>
           <div className="inline-flex">
-            <StatusPopover value={payment.status} options={STATUS_OPTIONS} readOnly />
+            <StatusPopover value="Paid" options={STATUS_OPTIONS} readOnly />
           </div>
         </div>
       </div>
-
-      {/* View Receipt Button */}
-      <Button
-        className={cn(BUTTON_STYLES.outline.md, "text-sm font-medium text-[#0F172B]")}
-        onClick={() => console.log("View Receipt")}
-      >
-        View Recipt
-      </Button>
     </div>
   );
 }
@@ -184,13 +158,8 @@ function PaidCard({ payment }: { payment: PaidPayment }) {
 function MonthDivider({ label }: { label: string }) {
   return (
     <div className="flex flex-col gap-4">
-      {/* Separator line */}
       <div className="w-full h-[1px] bg-[#E2E8F0]" />
-      {/* Month label */}
-      <span
-        className="font-inter text-[14px] font-semibold leading-[20px]"
-        style={{ color: "#314158" }}
-      >
+      <span className="font-inter text-[14px] font-semibold leading-[20px]" style={{ color: "#314158" }}>
         {label}
       </span>
     </div>
@@ -199,96 +168,79 @@ function MonthDivider({ label }: { label: string }) {
 
 // ─── Modal ─────────────────────────────────────────────────────────────────────
 
-export function LecturerPaymentHistoryModal({
-  isOpen,
-  onClose,
-  data,
-}: LecturerPaymentHistoryModalProps) {
-  const [updatePaymentOpen, setUpdatePaymentOpen] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<PendingPayment | null>(null);
+export function LecturerPaymentHistoryModal({ isOpen, onClose, lecturerId }: LecturerPaymentHistoryModalProps) {
+  const { data: detail, isLoading } = useGetLecturerById(isOpen ? lecturerId : null);
 
-  if (!isOpen || !data) return null;
+  const groups = useMemo<MonthGroup[]>(() => {
+    const history = detail?.salaryHistory ?? [];
+    if (!history.length) return [];
+
+    const map = new Map<string, PaymentCard[]>();
+    for (const p of history) {
+      const monthKey = format(new Date(p.created_at), "MMMM, yyyy");
+      const card: PaymentCard = p.status === "PAID"
+        ? { kind: "paid", payment: p }
+        : { kind: "pending", payment: p };
+      if (!map.has(monthKey)) map.set(monthKey, []);
+      map.get(monthKey)!.push(card);
+    }
+
+    return Array.from(map.entries()).map(([monthLabel, cards]) => ({ monthLabel, cards }));
+  }, [detail?.salaryHistory]);
+
+  if (!isOpen) return null;
 
   return (
-
-    <>
-      {/* Backdrop */}
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/20 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <div
-        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/20 backdrop-blur-sm"
-        onClick={onClose}
+        className="relative flex flex-col bg-white rounded-[12px] overflow-hidden"
+        style={{ width: "470px", maxHeight: "90vh", padding: "24px", gap: "16px", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.10), 0 8px 10px -6px rgba(0,0,0,0.10)" }}
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Dialog */}
-        <div
-          className="relative flex flex-col bg-white rounded-[12px] overflow-hidden"
-          style={{
-            width: "470px",
-            maxHeight: "90vh",
-            padding: "24px",
-            gap: "16px",
-            boxShadow:
-              "0 20px 25px -5px rgba(0,0,0,0.10), 0 8px 10px -6px rgba(0,0,0,0.10)",
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4 -mt-1 shrink-0">
-            <h2 className="text-lg font-semibold leading-[30px] text-[#0F172B]">
-              Payment History
-            </h2>
-            <button
-              title="close"
-              onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-md border border-[#E2E8F0] bg-transparent shadow-[0_1px_2px_0_rgba(16,24,40,0.05)] transition-colors hover:bg-slate-50"
-            >
-              <X className="h-4 w-4 text-[#64748B]" />
-            </button>
-          </div>
+        <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4 -mt-1 shrink-0">
+          <h2 className="text-lg font-semibold leading-[30px] text-[#0F172B]">Payment History</h2>
+          <button
+            title="close"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-md border border-[#E2E8F0] bg-transparent shadow-[0_1px_2px_0_rgba(16,24,40,0.05)] transition-colors hover:bg-slate-50"
+          >
+            <X className="h-4 w-4 text-[#64748B]" />
+          </button>
+        </div>
 
-          {/* Scrollable body */}
-          <div className="flex flex-col gap-4 overflow-y-auto flex-1 pr-1">
-            {data.groups.map((group, gi) => (
-              <React.Fragment key={gi}>
-                {/* Month divider — shown between groups (not before first) */}
-                {gi > 0 && <MonthDivider label={group.monthLabel} />}
-
-                {/* First group label (no preceding divider) */}
-                {gi === 0 && (
-                  <span
-                    className="font-inter text-[14px] font-semibold leading-[20px]"
-                    style={{ color: "#314158" }}
-                  >
-                    {group.monthLabel}
-                  </span>
-                )}
-
-                {/* Cards */}
-                {group.payments.map((payment, pi) =>
-                  payment.status === "Pending" ? (
-                    <PendingCard
-                      key={pi}
-                      payment={payment as PendingPayment}
-                      onPay={() => {
-                        setSelectedPayment(payment as PendingPayment);
-                        setUpdatePaymentOpen(true);
-                      }}
-                    />
-                  ) : (
-                    <PaidCard key={pi} payment={payment as PaidPayment} />
-                  )
-                )}
-              </React.Fragment>
-            ))}
-          </div>
+        <div className="flex flex-col gap-4 overflow-y-auto flex-1 pr-1">
+          {isLoading && (
+            <p className="text-sm text-[#90A1B9] text-center py-8">Loading payment history…</p>
+          )}
+          {!isLoading && groups.length === 0 && (
+            <p className="text-sm text-[#90A1B9] text-center py-8">No payment history found.</p>
+          )}
+          {!isLoading && groups.map((group, gi) => (
+            <React.Fragment key={gi}>
+              {gi === 0 ? (
+                <span className="font-inter text-[14px] font-semibold leading-[20px]" style={{ color: "#314158" }}>
+                  {group.monthLabel}
+                </span>
+              ) : (
+                <MonthDivider label={group.monthLabel} />
+              )}
+              {group.cards.map((card, ci) =>
+                card.kind === "pending" ? (
+                  <PendingPaymentCard key={ci} card={card} lecturerId={lecturerId!} />
+                ) : (
+                  <PaidPaymentCard key={ci} card={card} />
+                )
+              )}
+            </React.Fragment>
+          ))}
         </div>
       </div>
-
-      {/* Update Payment Modal — rendered above the history modal */}
-      <UpdatePaymentModal
-        isOpen={updatePaymentOpen}
-        onClose={() => setUpdatePaymentOpen(false)}
-        expensesDescription={selectedPayment?.expensesDescription}
-        courseBatch={selectedPayment?.courseBatch}
-      />
-    </>
+    </div>
   );
 }
+
+// Keep legacy export shape for any other consumers
+export type { LecturerPaymentHistoryModalProps as LecturerPaymentHistoryData };
