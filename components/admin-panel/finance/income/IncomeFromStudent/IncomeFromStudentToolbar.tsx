@@ -92,12 +92,14 @@ interface IncomeFromStudentToolbarProps {
     dateFrom?: string;
     dateTo?: string;
   };
+  onExportCsv?: () => void;
 }
 
 export function IncomeFromStudentToolbar({
   onApplyFilters,
   onClearFilters,
   activeUrlFilters,
+  onExportCsv,
 }: IncomeFromStudentToolbarProps) {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
 
@@ -188,7 +190,7 @@ export function IncomeFromStudentToolbar({
               label="Filter Option"
               className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
             />
-            <button className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}>
+            <button onClick={onExportCsv} className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}>
               <i className="file-csv h-4 w-4" />
               Export CSV
             </button>
@@ -258,7 +260,7 @@ export function IncomeFromStudentToolbar({
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-[160px]">
-                  <DropdownMenuItem onClick={() => console.log("Export CSV")} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
+                  <DropdownMenuItem onClick={onExportCsv} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
                     <i className="file-csv mr-2 h-4 w-4" />
                     Export CSV
                   </DropdownMenuItem>

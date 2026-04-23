@@ -157,4 +157,12 @@ export const API_ENDPOINTS = {
     APPROVE: (id: string) => `/api/v1/admin/commissions/${id}/approve`,
     REJECT: (id: string) => `/api/v1/admin/commissions/${id}/reject`,
   },
+  finances: {
+    INCOME_SUMMARY: `/api/v1/admin/finances/income/summary`,
+    INCOME_LEDGER: `/api/v1/admin/finances/income`,
+    INCOME_EXPORT: `/api/v1/admin/finances/income/export`,
+    OTHER_INCOME_LIST: `/api/v1/admin/finances/other-income`,
+    OTHER_INCOME_CREATE: `/api/v1/admin/finances/other-income`,
+    OTHER_INCOME_EXPORT: `/api/v1/admin/finances/other-income/export`,
+  },
 };
