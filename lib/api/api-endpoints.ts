@@ -141,4 +141,15 @@ export const API_ENDPOINTS = {
     ADD_DISCOUNT: (id: string) => `/api/v1/admin/enrollments/${id}/discounts`,
     EMAIL_INVOICE: (id: string) => `/api/v1/admin/enrollments/${id}/email-invoice`,
   },
+  orders: {
+    CREATE_ORDER: `/api/v1/admin/orders`,
+    GET_ALL: `/api/v1/admin/orders`,
+    GET_BY_ID: (id: string) => `/api/v1/admin/orders/${id}`,
+    GET_SUMMARY: `/api/v1/admin/orders/summary`,
+    GET_INVOICE: (id: string) => `/api/v1/admin/orders/${id}/invoice`,
+    GET_WAYBILL: (id: string) => `/api/v1/admin/orders/${id}/delivery-waybill`,
+    BULK_UPDATE_STATUS: `/api/v1/admin/orders/bulk/status`,
+    UPDATE_STATUS: (id: string) => `/api/v1/admin/orders/${id}/status`,
+    EXPORT_ADDRESSES: `/api/v1/admin/orders/export/addresses`,
+  },
 };

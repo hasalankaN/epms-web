@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 
 import { MoreVertical } from "lucide-react";
 
@@ -19,39 +19,39 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ViewOrderModal } from "@/components/admin-panel/product-management/modals/ViewOrderModal";
+import { useGetOrderInvoice } from "@/hooks/api/orders/useGetOrderInvoice";
+import { useGetOrderWaybill } from "@/hooks/api/orders/useGetOrderWaybill";
+import { useUpdateOrderStatus, type OrderTargetStatus } from "@/hooks/api/orders/useUpdateOrderStatus";
 
 interface OrderTableProps {
   data: OrderDataType[];
+  isLoading?: boolean;
+  isError?: boolean;
   rowSelection: { [key: string]: boolean };
   setRowSelection: React.Dispatch<React.SetStateAction<{ [key: string]: boolean }>>;
   currentPage: number;
+  totalResults: number;
   onPageChange: (page: number) => void;
 }
 
 export function OrderTable({
   data,
+  isLoading = false,
+  isError = false,
   rowSelection,
   setRowSelection,
   currentPage,
+  totalResults,
   onPageChange,
 }: OrderTableProps) {
   const itemsPerPage = 10;
 
-  const filteredData = useMemo(() => data || [], [data]);
-
-  const totalCount = filteredData.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-
-    return filteredData.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, currentPage, itemsPerPage]);
 
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
-      const newSelection = Object.fromEntries(filteredData.map((item) => [item.id, true]));
+      const newSelection = Object.fromEntries(data.map((item) => [item.id, true]));
 
       setRowSelection(newSelection);
     } else {
@@ -66,10 +66,18 @@ export function OrderTable({
   const [viewOrder, setViewOrder] = useState<OrderDataType | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
+  const { mutate: getInvoice } = useGetOrderInvoice();
+  const { mutate: getWaybill } = useGetOrderWaybill();
+  const { mutate: updateStatus, isPending: isUpdating, variables } = useUpdateOrderStatus();
+
   const handleAction = (action: string, order: OrderDataType) => {
     if (action === "view") {
       setViewOrder(order);
       setIsViewModalOpen(true);
+    } else if (action === "print-invoice") {
+      getInvoice({ orderId: order.id });
+    } else if (action === "print-waybill") {
+      getWaybill({ orderId: order.id });
     } else {
       console.log(`Action: ${action}`, order);
     }
@@ -81,7 +89,7 @@ export function OrderTable({
       header: () => (
         <Checkbox
           checked={
-            selectedRowCount === filteredData.length && filteredData.length > 0
+            selectedRowCount === data.length && data.length > 0
               ? true
               : selectedRowCount > 0
                 ? "indeterminate"
@@ -105,7 +113,7 @@ export function OrderTable({
     {
       header: "ID",
       accessorKey: "orderId",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[80px]",
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[130px]",
       cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.orderId}</div>,
     },
     {
@@ -148,7 +156,16 @@ export function OrderTable({
       header: "Payment Method",
       accessorKey: "paymentMethod",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[120px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.paymentMethod}</div>,
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
+          {item.paymentMethod
+            .replace(/[_-]+/g, " ")
+            .toLowerCase()
+            .split(" ")
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(" ")}
+        </div>
+      ),
     },
     {
       header: "Commissions",
@@ -167,11 +184,21 @@ export function OrderTable({
           text: config.text,
         }));
 
+        const validTargets = ["Processing", "Dispatched", "Completed", "Refunded"];
+        const dropdownOptions = options.filter(opt => validTargets.includes(opt.value));
+
         return (
           <StatusPopover
             value={order.orderStatus}
+            onValueChange={(newStatus) => {
+              updateStatus({ 
+                id: order.id, 
+                target_status: newStatus.toUpperCase() as OrderTargetStatus 
+              });
+            }}
             options={options}
-            readOnly
+            dropdownOptions={dropdownOptions}
+            isLoading={isUpdating && variables?.id === order.id}
           />
         );
       },
@@ -191,6 +218,14 @@ export function OrderTable({
               <DropdownMenuItem onClick={() => handleAction("view", order)} className="cursor-pointer focus:bg-[#FDF2F8]">
                 View Order
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleAction("print-invoice", order)} className="cursor-pointer focus:bg-[#FDF2F8]">
+                Print Invoice
+              </DropdownMenuItem>
+              {order.productType === "Delivery" && (
+                <DropdownMenuItem onClick={() => handleAction("print-waybill", order)} className="cursor-pointer focus:bg-[#FDF2F8]">
+                  Print Delivery Way Bill
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -201,12 +236,14 @@ export function OrderTable({
   return (
     <>
       <DataTable
-        data={paginatedData}
+        data={data}
         columns={columns}
+        isLoading={isLoading}
+        isError={isError}
         keyExtractor={(item) => item.id}
         pagination={{
           variant: "simple",
-          totalCount,
+          totalCount: totalResults,
           selectedRowCount,
           currentPage,
           totalPages,

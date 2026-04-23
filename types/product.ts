@@ -53,6 +53,7 @@ export const DUMMY_PRODUCT_DATA: ProductDataType[] = [
     quantity: 100,
     stockThreshold: 10,
     stockStatus: "In Stock",
+    status: "ACTIVE",
     commissionType: "percentage",
     commissionValue: 15,
     teamCommissionValue: 5,
@@ -71,6 +72,7 @@ export const DUMMY_PRODUCT_DATA: ProductDataType[] = [
     quantity: 9999,
     stockThreshold: 0,
     stockStatus: "In Stock",
+    status: "ACTIVE",
     commissionType: "fixed",
     commissionValue: 200,
     teamCommissionValue: 50,
@@ -89,6 +91,7 @@ export const DUMMY_PRODUCT_DATA: ProductDataType[] = [
     quantity: 5,
     stockThreshold: 10,
     stockStatus: "Out of Stock",
+    status: "ACTIVE",
     commissionType: "percentage",
     commissionValue: 10,
     teamCommissionValue: 2,
@@ -107,6 +110,7 @@ export const DUMMY_PRODUCT_DATA: ProductDataType[] = [
     quantity: 12,
     stockThreshold: 5,
     stockStatus: "In Stock",
+    status: "ACTIVE",
     commissionType: "fixed",
     commissionValue: 1500,
     teamCommissionValue: 300,
@@ -125,6 +129,7 @@ export const DUMMY_PRODUCT_DATA: ProductDataType[] = [
     quantity: 45,
     stockThreshold: 15,
     stockStatus: "In Stock",
+    status: "ACTIVE",
     commissionType: "percentage",
     commissionValue: 8,
     teamCommissionValue: 2,
@@ -143,6 +148,7 @@ export const DUMMY_PRODUCT_DATA: ProductDataType[] = [
     quantity: 999,
     stockThreshold: 0,
     stockStatus: "In Stock",
+    status: "ACTIVE",
     commissionType: "fixed",
     commissionValue: 1000,
     teamCommissionValue: 0,
@@ -153,7 +159,19 @@ export const DUMMY_PRODUCT_DATA: ProductDataType[] = [
  * ===== ORDER TYPES =====
  */
 
-export type OrderStatus = "Processing" | "Pending" | "Downloaded" | "Refunded" | "Dispatched";
+export type OrderStatus = "Processing" | "Pending" | "Downloaded" | "Refunded" | "Dispatched" | "Completed";
+
+export interface OrderSummaryData {
+  all: number;
+  pending: number;
+  processing: number;
+  completed: number;
+  dispatched: number;
+  refunded: number;
+  downloaded: number;
+  direct: number;
+  referral: number;
+}
 
 export interface OrderDataType {
   id: string;
@@ -175,6 +193,7 @@ export const ORDER_STATUS_CONFIG: Record<OrderStatus, { bg: string; text: string
   "Downloaded": { bg: "#DFFFF0", text: "#16A34A" },
   "Refunded": { bg: "#FFDEDE", text: "#FB2C36" },
   "Dispatched": { bg: "#F1F5F9", text: "#000000" },
+  "Completed": { bg: "#DCFCE7", text: "#15803D" },
 };
 
 export const DUMMY_ORDER_DATA: OrderDataType[] = [

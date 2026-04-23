@@ -4,7 +4,7 @@ import React, { useState } from "react";
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
-import { Plus, FileText } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { TAB_STYLES, BUTTON_STYLES } from "@/lib/constants/theme";
@@ -14,6 +14,7 @@ import { ArchivedItems } from "@/components/admin-panel/product-management/Archi
 import { Orders } from "@/components/admin-panel/product-management/Orders";
 import { ProductCategories } from "@/components/admin-panel/product-management/ProductCategories";
 import { AddProductPanel } from "@/components/admin-panel/product-management/modals/AddProductPanel";
+import { AddOrderPanel } from "@/components/admin-panel/product-management/modals/AddOrderPanel";
 import { AddProductCategoryModal } from "@/components/admin-panel/product-management/modals/AddProductCategoryModal";
 import { ViewCategoryProductsModal } from "@/components/admin-panel/product-management/modals/ViewCategoryProductsModal";
 import type { ProductCategoryDataType } from "@/components/admin-panel/product-management/views/Categories/ProductCategoryTable";
@@ -28,10 +29,14 @@ const tabs = [
   { value: "categories", label: "Categories", mobileLabel: "Categories" },
 ] as const;
 
+import { useGetOrderSummary } from "@/hooks/api/orders/useGetOrderSummary";
+
 export default function ProductManagementPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+
+  const { data: orderSummary } = useGetOrderSummary();
 
   const currentTab = searchParams.get("tab") as ProductTabType;
 
@@ -41,6 +46,7 @@ export default function ProductManagementPage() {
 
   // ===== PANEL / MODAL STATE =====
   const [isAddPanelOpen, setIsAddPanelOpen] = useState(false);
+  const [isAddOrderPanelOpen, setIsAddOrderPanelOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [renameCategory, setRenameCategory] = useState<ProductCategoryDataType | null>(null);
   
@@ -102,7 +108,7 @@ export default function ProductManagementPage() {
                         activeTab === tab.value ? "bg-[#314158]" : "bg-[#90A1B9]" 
                       )}
                     >
-                      3
+                      {orderSummary?.all ?? 0}
                     </span>
                   )}
                 </button>
@@ -125,13 +131,17 @@ export default function ProductManagementPage() {
           </button>
         )}
 
-        {/* Generate Report Button (Orders Tab) */}
+        {/* Add Order Button (Orders Tab) */}
         {activeTab === "orders" && (
           <button
-            className={cn(BUTTON_STYLES.primary.responsive)}
+            onClick={() => setIsAddOrderPanelOpen(true)}
+            className={cn(
+              BUTTON_STYLES.primary.md,
+              "text-sm font-semibold text-white px-3 md:px-4"
+            )}
           >
-            <FileText className="h-5 w-5 md:hidden" />
-            <span className="hidden md:inline">Generate Report</span>
+            <Plus className="h-5 w-5 md:hidden" />
+            <span className="hidden md:inline">Add Order</span>
           </button>
         )}
 
@@ -168,6 +178,12 @@ export default function ProductManagementPage() {
       <AddProductPanel
         isOpen={isAddPanelOpen}
         onClose={() => setIsAddPanelOpen(false)}
+      />
+
+      {/* Add Order Panel */}
+      <AddOrderPanel
+        isOpen={isAddOrderPanelOpen}
+        onClose={() => setIsAddOrderPanelOpen(false)}
       />
 
       {/* Add / Rename Category Modal */}

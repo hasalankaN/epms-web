@@ -47,4 +47,7 @@ export const queryKeys = {
 
   // Students
   students: "students",
+
+  // Orders
+  orders: "orders",
 };
