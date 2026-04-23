@@ -1,20 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
-import { MoreVertical } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { DataTable } from "@/components/common/table/DataTable";
 import type { Column } from "@/components/common/table/DataTable";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 // ===== TYPES =====
 

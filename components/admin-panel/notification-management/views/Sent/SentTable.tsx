@@ -6,7 +6,6 @@ import { MoreVertical } from "lucide-react";
 
 import { DataTable } from "@/components/common/table/DataTable";
 import type { Column } from "@/components/common/table/DataTable";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

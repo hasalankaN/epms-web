@@ -1,21 +1,14 @@
 "use client";
 
-import { Search, X, MoreHorizontal } from "lucide-react";
+import { Search, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { AUTH_INPUT, BUTTON_STYLES } from "@/lib/constants/theme";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { FilterDropdown } from "@/components/common/dropdowns/FilterDropdown";
 import type { FilterCategory } from "@/components/common/dropdowns/FilterDropdown";
 import { HorizontalScrollContainer } from "@/components/common/HorizontalScrollContainer";
 
-const buttonTextStyles = "text-[14px] font-semibold leading-[20px] text-[#0F172B]";
 
 const scheduledOnCategories: FilterCategory[] = [
   {
