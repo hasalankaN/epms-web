@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/components/providers/SessionProvider";
 import { useGetLecturerProfile } from "@/hooks/api/lecturers/useGetLecturerProfile";
-import { useGetLecturerAssignments } from "@/hooks/api/lecturers/useGetLecturerAssignments";
+import { useGetLecturerDashboard } from "@/hooks/api/lecturers/useGetLecturerDashboard";
 
 // Profile Components
 import { AccountDetailsSection } from "@/components/lecturer-panel/profile/AccountDetailsSection";
@@ -22,17 +22,17 @@ export default function ProfilePage() {
   const session = useSession();
   
   const { data: lecturerProfile } = useGetLecturerProfile();
-  const { data: assignmentsData, isLoading: isAssignmentsLoading } = useGetLecturerAssignments();
+  const { data: dashboardData, isLoading: isAssignmentsLoading } = useGetLecturerDashboard();
 
   // Map real API data to component format
-  const assignedCourses = assignmentsData?.courses.map(course => ({
+  const assignedCourses = dashboardData?.courses.map(course => ({
     name: course.name,
-    category: course.courseCategory
+    category: course.categoryName || ""
   })) || [];
 
-  const assignedBatches = assignmentsData?.batches.map(batch => ({
-    name: batch.batchName,
-    category: batch.batchCategory
+  const assignedBatches = dashboardData?.batches.map(batch => ({
+    name: batch.name,
+    category: batch.categoryName || ""
   })) || [];
 
   const salaryRecords = [

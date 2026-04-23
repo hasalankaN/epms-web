@@ -3,7 +3,9 @@
 import { useState } from "react";
 
 import { motion } from "framer-motion";
-import { Search, SlidersHorizontal, MoreVertical } from "lucide-react";
+import { Search, MoreVertical } from "lucide-react";
+
+import { format } from "date-fns";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -17,56 +19,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ViewAssessmentModal } from "@/components/lecturer-panel/assignments/ViewAssessmentModal";
+import { AssignmentFilterModal } from "@/components/lecturer-panel/assignments/AssignmentFilterModal";
+import { AddFeedbackModal } from "@/components/lecturer-panel/assignments/AddFeedbackModal";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface NotReviewedItem {
-  id: string;
-  addedDate: string;
-  studentName: string;
-  type: string;
-  courseBatchName: string;
-  lessonTitle: string;
-  submittedFileType: "PDF" | "Doc" | "PPTX" | "CSV";
-}
+import type { LecturerAssignmentItem } from "@/hooks/api/lecturers/useGetLecturerAssignments";
+import { useGetLecturerAssignments } from "@/hooks/api/lecturers/useGetLecturerAssignments";
+import type { LecturerSubmissionItem } from "@/hooks/api/lecturers/useGetLecturerSubmissions";
+import { useGetLecturerSubmissions } from "@/hooks/api/lecturers/useGetLecturerSubmissions";
 
-interface ReviewedItem {
-  id: string;
-  addedDate: string;
-  studentName: string;
-  type: string;
-  courseBatchName: string;
-  lessonTitle: string;
-  feedbackSubmittedDate: string;
-}
-
-interface UploadedAssignmentItem {
-  id: string;
-  uploadedDate: string;
-  dueDate: string;
-  type: string;
-  completionRate: string;
-  courseBatchName: string;
-  lessonTitle: string;
-}
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-const NOT_REVIEWED_DATA: NotReviewedItem[] = [
-  { id: "1", addedDate: "2026/01/21", studentName: "name", type: "Course", courseBatchName: "Name", lessonTitle: "Lorem ipsum", submittedFileType: "PDF" },
-  { id: "2", addedDate: "2026/01/21", studentName: "name", type: "Course", courseBatchName: "Name", lessonTitle: "Lorem ipsum", submittedFileType: "PDF" },
-  { id: "3", addedDate: "2026/01/21", studentName: "name", type: "Course", courseBatchName: "Name", lessonTitle: "Lorem ipsum", submittedFileType: "PDF" },
-  { id: "4", addedDate: "2026/01/21", studentName: "name", type: "Course", courseBatchName: "Name", lessonTitle: "Lorem ipsum", submittedFileType: "Doc" },
-];
-
-const REVIEWED_DATA: ReviewedItem[] = [
-  { id: "1", addedDate: "2026/01/21", studentName: "name", type: "Course", courseBatchName: "Name", lessonTitle: "Lorem ipsum", feedbackSubmittedDate: "2026/03/21" },
-  { id: "2", addedDate: "2026/01/21", studentName: "name", type: "Course", courseBatchName: "Name", lessonTitle: "Lorem ipsum", feedbackSubmittedDate: "2026/03/21" },
-  { id: "3", addedDate: "2026/01/21", studentName: "name", type: "Course", courseBatchName: "Name", lessonTitle: "Lorem ipsum", feedbackSubmittedDate: "2026/03/21" },
-  { id: "4", addedDate: "2026/01/21", studentName: "name", type: "Course", courseBatchName: "Name", lessonTitle: "Lorem ipsum", feedbackSubmittedDate: "2026/03/21" },
-];
-
-const UPLOADED_DATA: UploadedAssignmentItem[] = [
-  { id: "1", uploadedDate: "2026/01/21", dueDate: "2026/02/21", type: "Course", completionRate: "35%", courseBatchName: "Name", lessonTitle: "Lorem ipsum" },
-];
+// Mock Data removed, relying on APIs
 
 // ─── File Type Cell ────────────────────────────────────────────────────────────
 function FileTypeCell({ fileType }: { fileType: string }) {
@@ -89,38 +50,90 @@ function FileTypeCell({ fileType }: { fileType: string }) {
 }
 
 // ─── Action Menu Cell ──────────────────────────────────────────────────────────
-function ActionCell({ id, onView }: { id: string; onView: () => void }) {
+type ActionType = "view" | "download" | "feedback" | "edit";
+
+function ActionCell({ 
+  id, 
+  onView, 
+  onEdit,
+  onFeedback,
+  actions = ["view", "download", "feedback"]
+}: { 
+  id: string; 
+  onView?: () => void; 
+  onEdit?: () => void;
+  onFeedback?: () => void;
+  actions?: ActionType[];
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button 
+          id={`action_btn_${id}`}
           type="button"
-          className="p-1 rounded hover:bg-[#F1F5F9] text-[#90A1B9] transition-colors outline-none"
+          className="p-1 rounded hover:bg-[#F1F5F9] text-[#90A1B9] transition-colors outline-none h-7 w-7 flex items-center justify-center"
         >
           <MoreVertical className="h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end" 
-        className="w-[136px] min-w-[128px] p-1 bg-white border-[#E5E7EB] rounded-[6px] shadow-lg"
+        sideOffset={4}
+        className="w-[136px] min-w-[128px] p-1 bg-white border border-[#E5E7EB] rounded-[6px] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)]"
       >
-        <DropdownMenuItem 
-          id={`view_assignment_${id}`}
-          className="h-[30px] px-2 flex items-center gap-2 text-[12px] text-[#314158] font-normal rounded-[6px] hover:bg-slate-100 transition-colors cursor-pointer focus:bg-slate-100 focus:outline-none"
-          onSelect={(e) => {
-            e.preventDefault();
-            onView();
-          }}
-        >
-          View
-        </DropdownMenuItem>
-        <DropdownMenuItem 
-          id={`edit_assignment_${id}`}
-          className="h-[30px] px-2 flex items-center gap-2 text-[12px] text-[#314158] font-normal rounded-[6px] hover:bg-slate-100 transition-colors cursor-pointer focus:bg-slate-100 focus:outline-none"
-          onClick={() => { /* Handle edit */ }}
-        >
-          Edit
-        </DropdownMenuItem>
+        {actions.includes("view") && (
+          <DropdownMenuItem 
+            id={`view_assignment_${id}`}
+            className="h-[30px] px-2 flex items-center rounded-[6px] cursor-pointer focus:bg-[#F1F5F9] transition-colors"
+            onSelect={(e) => {
+              e.preventDefault();
+              onView?.();
+            }}
+          >
+            <span className="text-[12px] font-normal leading-4 text-[#314158]">
+              View
+            </span>
+          </DropdownMenuItem>
+        )}
+        {actions.includes("edit") && (
+          <DropdownMenuItem 
+            id={`edit_assignment_${id}`}
+            className="h-[30px] px-2 flex items-center rounded-[6px] cursor-pointer focus:bg-[#F1F5F9] transition-colors"
+            onSelect={(e) => {
+              e.preventDefault();
+              onEdit?.();
+            }}
+          >
+            <span className="text-[12px] font-normal leading-4 text-[#314158]">
+              Edit
+            </span>
+          </DropdownMenuItem>
+        )}
+        {actions.includes("download") && (
+          <DropdownMenuItem 
+            id={`download_assignment_${id}`}
+            className="h-[30px] px-2 flex items-center rounded-[6px] cursor-pointer focus:bg-[#F1F5F9] transition-colors"
+            onClick={() => { /* Handle download */ }}
+          >
+            <span className="text-[12px] font-normal leading-4 text-[#314158]">
+              Download
+            </span>
+          </DropdownMenuItem>
+        )}
+        {actions.includes("feedback") && (
+          <DropdownMenuItem 
+            id={`feedback_assignment_${id}`}
+            className="h-[30px] px-2 flex items-center rounded-[6px] cursor-pointer focus:bg-[#F1F5F9] transition-colors"
+            onSelect={(e) => {
+              e.preventDefault();
+              onFeedback?.();
+            }}
+          >
+            <span className="text-[12px] font-normal leading-4 text-[#314158]">
+              Add Feedback
+            </span>
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -132,7 +145,19 @@ function LessonTitleCell({ title }: { title: string }) {
 }
 
 // ─── Shared Search + Filter Bar ────────────────────────────────────────────────
-function SearchFilterBar({ search, onSearch, showNew, onNewAssignment }: { search: string; onSearch: (v: string) => void; showNew?: boolean; onNewAssignment?: () => void }) {
+function SearchFilterBar({ 
+  search, 
+  onSearch, 
+  showNew, 
+  onNewAssignment,
+  onFilterOpen
+}: { 
+  search: string; 
+  onSearch: (v: string) => void; 
+  showNew?: boolean; 
+  onNewAssignment?: () => void;
+  onFilterOpen?: () => void;
+}) {
   return (
     <div className="flex items-center justify-between py-3 gap-4 border-b border-[#E2E8F0]">
       <div className="relative flex items-center">
@@ -150,9 +175,10 @@ function SearchFilterBar({ search, onSearch, showNew, onNewAssignment }: { searc
         <Button
           id="filter_option_btn"
           variant="outline"
+          onClick={onFilterOpen}
           className="flex items-center gap-2 h-9 px-4 rounded-[6px] border-[#E2E8F0] text-[13px] font-medium text-[#0F172B] hover:bg-[#F8FAFC]"
         >
-          <SlidersHorizontal className="h-4 w-4 text-[#62748E]" />
+          <i className="filter h-4 w-4 text-[#18181B]" />
           Filter Option
         </Button>
         {showNew && (
@@ -174,40 +200,87 @@ export default function AssignmentPage() {
   const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
 
-  const handleView = () => {
+  const [activeTab, setActiveTab] = useState("not-reviewed");
+
+  const { data: notReviewedRes } = useGetLecturerSubmissions({ status: "PENDING", page, limit: 10, search });
+  const { data: reviewedRes } = useGetLecturerSubmissions({ status: "REVIEWED", page, limit: 10, search });
+  const { data: uploadedRes } = useGetLecturerAssignments({ page, limit: 10, search });
+
+  const handleTabChange = (val: string) => {
+    setActiveTab(val);
+    setPage(1);
+    setSearch("");
+  };
+
+  const handleView = (item?: any) => {
+    if (item) {
+      setSelectedAssessment({
+        name: item.lesson_title || item.lessonTitle || "Assignment Name",
+        lesson: item.lesson_title || "Lesson Name",
+        category: item.type || "Category",
+        description: "Lorem ipsum dolor sit amet consectetur. Elementum montes laoreet aliquam nibh adipiscing.",
+        dueDate: item.due_date ? format(new Date(item.due_date), "EEEE, do MMMM, hh:mm a") : "Sunday, 30th November, 11:59 PM",
+        timeRemaining: "3 Days , 1 hr , 40 minutes", // Math skipped for UI display
+        lastModified: item.created_at || item.submitted_date || item.addedDate || format(new Date(), "yyyy/MM/dd")
+      });
+    }
+
     setViewModalOpen(true);
   };
 
-  // ─── Columns Definitions (Moved inside to access handleView) ───────────────────
-  const notReviewedColumns: Column<NotReviewedItem>[] = [
-    { header: "Added Date", accessorKey: "addedDate", className: "px-4 text-[13px] text-[#45556C]" },
-    { header: "Student Name", accessorKey: "studentName", className: "px-4 text-[13px] text-[#45556C]" },
+  const handleFilterOpen = () => {
+    setFilterModalOpen(true);
+  };
+
+  const handleFeedback = (item?: any) => {
+    if (item) {
+      setSelectedStudent({
+        name: item.student_name || item.studentName || "Student Name",
+        id: item.student_id ? `#${item.student_id}` : item.id ? `#${item.id}` : "#Student Id",
+        submittedDate: item.submitted_date ? format(new Date(item.submitted_date), "yyyy.MM.dd") : item.addedDate || "2025.12.21",
+        lessonTitle: item.lesson_title || item.lessonTitle || "Lesson Title",
+        courseBatchName: item.course_name || item.batch_name || item.courseBatchName || "Course/Batch Name",
+        avatar: item.student_avatar || item.avatar || "https://i.pravatar.cc/150?u=student"
+      });
+    }
+
+    setFeedbackModalOpen(true);
+  };
+
+  // ─── Columns Definitions ───────────────────
+  const notReviewedColumns: Column<LecturerSubmissionItem>[] = [
+    { header: "Added Date", cell: (item) => item.submitted_date ? format(new Date(item.submitted_date), "yyyy/MM/dd") : "-", className: "px-4 text-[13px] text-[#45556C]" },
+    { header: "Student Name", accessorKey: "student_name", className: "px-4 text-[13px] text-[#45556C]" },
     { header: "Type", accessorKey: "type", className: "px-4 text-[13px] text-[#45556C]" },
-    { header: "Course/Batch Name", accessorKey: "courseBatchName", className: "px-4 text-[13px] text-[#45556C]" },
-    { header: "Lesson Title", cell: (item) => <LessonTitleCell title={item.lessonTitle} />, className: "px-4" },
-    { header: "Submitted File Type", cell: (item) => <FileTypeCell fileType={item.submittedFileType} />, className: "px-4" },
-    { header: "Action", cell: (item) => <ActionCell id={item.id} onView={() => handleView()} />, className: "px-4" },
+    { header: "Course/Batch Name", cell: (item) => item.course_name || item.batch_name || "-", className: "px-4 text-[13px] text-[#45556C]" },
+    { header: "Lesson Title", cell: (item) => <LessonTitleCell title={item.lesson_title} />, className: "px-4" },
+    { header: "Submitted File Type", cell: (item) => <FileTypeCell fileType={item.file_type || "Doc"} />, className: "px-4" },
+    { header: "Action", cell: (item) => <ActionCell id={item.id} onView={() => handleView(item)} onFeedback={() => handleFeedback(item)} actions={["view", "download", "feedback"]} />, className: "px-4" },
   ];
 
-  const reviewedColumns: Column<ReviewedItem>[] = [
-    { header: "Added Date", accessorKey: "addedDate", className: "px-4 text-[13px] text-[#45556C]" },
-    { header: "Student Name", accessorKey: "studentName", className: "px-4 text-[13px] text-[#45556C]" },
+  const reviewedColumns: Column<LecturerSubmissionItem>[] = [
+    { header: "Added Date", cell: (item) => item.submitted_date ? format(new Date(item.submitted_date), "yyyy/MM/dd") : "-", className: "px-4 text-[13px] text-[#45556C]" },
+    { header: "Student Name", accessorKey: "student_name", className: "px-4 text-[13px] text-[#45556C]" },
     { header: "Type", accessorKey: "type", className: "px-4 text-[13px] text-[#45556C]" },
-    { header: "Course/Batch Name", accessorKey: "courseBatchName", className: "px-4 text-[13px] text-[#45556C]" },
-    { header: "Lesson Title", cell: (item) => <LessonTitleCell title={item.lessonTitle} />, className: "px-4" },
-    { header: "Feedback Submitted Date", accessorKey: "feedbackSubmittedDate", className: "px-4 text-[13px] text-[#45556C]" },
-    { header: "Action", cell: (item) => <ActionCell id={item.id} onView={() => handleView()} />, className: "px-4" },
+    { header: "Course/Batch Name", cell: (item) => item.course_name || item.batch_name || "-", className: "px-4 text-[13px] text-[#45556C]" },
+    { header: "Lesson Title", cell: (item) => <LessonTitleCell title={item.lesson_title} />, className: "px-4" },
+    { header: "Feedback Submitted Date", cell: (item) => item.feedback_date ? format(new Date(item.feedback_date), "yyyy/MM/dd") : "-", className: "px-4 text-[13px] text-[#45556C]" },
+    { header: "Action", cell: (item) => <ActionCell id={item.id} onView={() => handleFeedback(item)} actions={["view"]} />, className: "px-4" },
   ];
 
-  const uploadedColumns: Column<UploadedAssignmentItem>[] = [
-    { header: "Uploaded Date", accessorKey: "uploadedDate", className: "px-4 text-[13px] text-[#45556C]" },
-    { header: "Due Date", accessorKey: "dueDate", className: "px-4 text-[13px] text-[#45556C]" },
+  const uploadedColumns: Column<LecturerAssignmentItem>[] = [
+    { header: "Uploaded Date", cell: (item) => item.created_at ? format(new Date(item.created_at), "yyyy/MM/dd") : "-", className: "px-4 text-[13px] text-[#45556C]" },
+    { header: "Due Date", cell: (item) => item.due_date ? format(new Date(item.due_date), "yyyy/MM/dd") : "-", className: "px-4 text-[13px] text-[#45556C]" },
     { header: "Type", accessorKey: "type", className: "px-4 text-[13px] text-[#45556C]" },
-    { header: "Completion Rate", accessorKey: "completionRate", className: "px-4 text-[13px] text-[#45556C]" },
-    { header: "Course/Batch Name", accessorKey: "courseBatchName", className: "px-4 text-[13px] text-[#45556C]" },
-    { header: "Lesson Title", cell: (item) => <LessonTitleCell title={item.lessonTitle} />, className: "px-4" },
-    { header: "Action", cell: (item) => <ActionCell id={item.id} onView={() => handleView()} />, className: "px-4" },
+    { header: "Completion Rate", accessorKey: "completion_rate", className: "px-4 text-[13px] text-[#45556C]" },
+    { header: "Course/Batch Name", cell: (item) => item.course_name || item.batch_name || "-", className: "px-4 text-[13px] text-[#45556C]" },
+    { header: "Lesson Title", cell: (item) => <LessonTitleCell title={item.lesson_title} />, className: "px-4" },
+    { header: "Action", cell: (item) => <ActionCell id={item.id} onView={() => handleView(item)} actions={["view", "edit"]} />, className: "px-4" },
   ];
 
   const tabTriggerClass = cn(
@@ -218,13 +291,13 @@ export default function AssignmentPage() {
   );
 
 
-  const paginationProps = {
+  const getPaginationProps = (metaData?: { total_pages: number }) => ({
     variant: "simple" as const,
     currentPage: page,
-    totalPages: 10,
+    totalPages: metaData?.total_pages || 1,
     onPageChange: setPage,
     hideTotalCount: true,
-  };
+  });
 
   return (
     <motion.div
@@ -232,7 +305,7 @@ export default function AssignmentPage() {
       animate={{ opacity: 1 }}
       className="p-6 lg:p-8"
     >
-      <Tabs defaultValue="not-reviewed" className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         {/* Tab Bar */}
         <div className="bg-white rounded-t-[12px]">
           <TabsList className="h-9 w-[492px] justify-start rounded-[6px] bg-[#F1F5F9] p-1 gap-0">
@@ -250,40 +323,40 @@ export default function AssignmentPage() {
 
         {/* ── Not Reviewed ── */}
         <TabsContent value="not-reviewed" className="mt-0">
-          <SearchFilterBar search={search} onSearch={setSearch} />
+          <SearchFilterBar search={search} onSearch={setSearch} onFilterOpen={handleFilterOpen} />
           <DataTable
-            data={NOT_REVIEWED_DATA}
+            data={notReviewedRes?.data || []}
             columns={notReviewedColumns}
             keyExtractor={(item) => item.id}
             showCheckboxes={false}
             tableContainerClassName=""
-            pagination={paginationProps}
+            pagination={getPaginationProps(notReviewedRes?.meta)}
           />
         </TabsContent>
 
         {/* ── Reviewed ── */}
         <TabsContent value="reviewed" className="mt-0">
-          <SearchFilterBar search={search} onSearch={setSearch} />
+          <SearchFilterBar search={search} onSearch={setSearch} onFilterOpen={handleFilterOpen} />
           <DataTable
-            data={REVIEWED_DATA}
+            data={reviewedRes?.data || []}
             columns={reviewedColumns}
             keyExtractor={(item) => item.id}
             showCheckboxes={false}
             tableContainerClassName=""
-            pagination={paginationProps}
+            pagination={getPaginationProps(reviewedRes?.meta)}
           />
         </TabsContent>
 
         {/* ── Uploaded Assignment ── */}
         <TabsContent value="uploaded" className="mt-0">
-          <SearchFilterBar search={search} onSearch={setSearch} showNew onNewAssignment={() => setIsModalOpen(true)} />
+          <SearchFilterBar search={search} onSearch={setSearch} showNew onNewAssignment={() => setIsModalOpen(true)} onFilterOpen={handleFilterOpen} />
           <DataTable
-            data={UPLOADED_DATA}
+            data={uploadedRes?.data || []}
             columns={uploadedColumns}
             keyExtractor={(item) => item.id}
             showCheckboxes={false}
             tableContainerClassName=""
-            pagination={paginationProps}
+            pagination={getPaginationProps(uploadedRes?.meta)}
           />
         </TabsContent>
       </Tabs>
@@ -292,7 +365,26 @@ export default function AssignmentPage() {
       
       <ViewAssessmentModal 
         isOpen={viewModalOpen} 
-        onClose={() => setViewModalOpen(false)} 
+        onClose={() => {
+          setViewModalOpen(false);
+          setSelectedAssessment(null);
+        }} 
+        assessmentData={selectedAssessment}
+      />
+
+      <AssignmentFilterModal
+        isOpen={filterModalOpen}
+        onClose={() => setFilterModalOpen(false)}
+        onApply={(filters) => console.log("Applied filters:", filters)}
+      />
+
+      <AddFeedbackModal
+        isOpen={feedbackModalOpen}
+        onClose={() => {
+          setFeedbackModalOpen(false);
+          setSelectedStudent(null);
+        }}
+        studentData={selectedStudent}
       />
     </motion.div>
   );

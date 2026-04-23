@@ -68,6 +68,7 @@ export interface ApiBatchCommission {
 
 export interface ApiBatchDetail {
   id: string;
+  custom_id: string;
   name: string;
   category: string;
   type: string;

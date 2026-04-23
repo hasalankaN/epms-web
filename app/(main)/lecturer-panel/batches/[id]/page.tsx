@@ -5,120 +5,28 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { useParams } from "next/navigation";
+
 import { motion } from "framer-motion";
-import { ChevronLeft, Plus, Trash2, ChevronDown, ChevronUp, Edit2 } from "lucide-react";
+import { ChevronLeft, Plus, Trash2, ChevronDown, ChevronUp, Copy, Download } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AddVideoModal } from "@/components/lecturer-panel/batches/AddVideoModal";
 import { AddMaterialModal } from "@/components/lecturer-panel/batches/AddMaterialModal";
+import { CreateTierModal } from "@/components/lecturer-panel/batches/CreateTierModal";
+import { ScheduleClassModal } from "@/components/lecturer-panel/batches/ScheduleClassModal";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-type MaterialType = "File" | "Link";
-type MaterialFormat = "Youtube" | "PPTX" | "DOC" | "CSV" | "PDF";
-
-interface Material {
-  date: string;
-  title: string;
-  type: MaterialType;
-  format: MaterialFormat;
-}
-
-interface Lesson {
-  id: string;
-  name: string;
-  materials: Material[];
-  isActive?: boolean;
-}
-
-interface Week {
-  id: string;
-  title: string;
-  lessons: Lesson[];
-}
-
-interface Semester {
-  id: string;
-  title: string;
-  weeks: Week[];
-}
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-const MOCK_STRUCTURE: Semester[] = [
-  {
-    id: "semester-1",
-    title: "Semester 1",
-    weeks: [
-      {
-        id: "s1-week-1",
-        title: "Week 1",
-        lessons: [
-          { id: "s1-w1-l1", name: "Lesson 01: Introduction", materials: [{ date: "20/01/2026", title: "Intro Video.mp4", type: "Link", format: "Youtube" }] },
-        ],
-      },
-    ],
-  },
-  {
-    id: "semester-2",
-    title: "Semester 2",
-    weeks: [
-      {
-        id: "s2-week-1",
-        title: "Week 1",
-        lessons: [
-          { id: "s2-w1-l1", name: "Lesson 01: Market Research", materials: [{ date: "20/01/2026", title: "Research Basics.pdf", type: "File", format: "PDF" }] },
-        ],
-      },
-      {
-        id: "s2-week-2",
-        title: "Week 2",
-        lessons: [
-          {
-            id: "s2-w2-l1",
-            name: "Lessons 01: Lesson Name",
-            isActive: true,
-            materials: [
-              { date: "20/01/2026", title: "Lesson 1 Explanation.mp4", type: "Link", format: "Youtube" },
-              { date: "20/01/2026", title: "Lecture note.ppts", type: "File", format: "PPTX" },
-            ],
-          },
-          {
-            id: "s2-w2-l2",
-            name: "Lessons 02: Lesson Name",
-            isActive: true,
-            materials: [
-              { date: "20/01/2026", title: "Lesson 2 Explanation.mp4", type: "Link", format: "Youtube" },
-              { date: "20/01/2026", title: "Lecture note.ppts", type: "File", format: "PPTX" },
-              { date: "20/01/2026", title: "Tute Question.doc", type: "File", format: "DOC" },
-              { date: "20/01/2026", title: "Data.csv", type: "File", format: "CSV" },
-              { date: "20/01/2026", title: "Tute answer.pdf", type: "File", format: "PDF" },
-            ],
-          },
-          {
-            id: "s2-w2-l3",
-            name: "Lessons 03: Lesson Name",
-            isActive: false,
-            materials: [{ date: "20/01/2026", title: "Notes.pdf", type: "File", format: "PDF" }],
-          },
-        ],
-      },
-      {
-        id: "s2-week-3",
-        title: "Week 3",
-        lessons: [
-          { id: "s2-w3-l1", name: "Lesson 01: Deep Dive", materials: [{ date: "20/01/2026", title: "Deep Dive.mp4", type: "Link", format: "Youtube" }] },
-        ],
-      },
-      {
-        id: "s2-week-4",
-        title: "Week 4",
-        lessons: [
-          { id: "s2-w4-l1", name: "Lesson 01: Summary", materials: [{ date: "20/01/2026", title: "Summary.pdf", type: "File", format: "PDF" }] },
-        ],
-      },
-    ],
-  },
-];
+import { useGetBatchById } from "@/hooks/api/batches/useGetBatchById";
+import type { TierNode } from "@/hooks/api/batches/useGetBatchTiers";
+import { useGetBatchTiers } from "@/hooks/api/batches/useGetBatchTiers";
+import { useCreateBatchTier } from "@/hooks/api/batches/useCreateBatchTier";
+import type { Material as ApiMaterial } from "@/hooks/api/courses/useGetTierMaterials";
+import { useGetTierMaterials } from "@/hooks/api/courses/useGetTierMaterials";
+import { useCreateTierMaterial } from "@/hooks/api/courses/useCreateTierMaterial";
+import { useDeleteMaterial } from "@/hooks/api/courses/useDeleteMaterial";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ─── Animation Variants ───────────────────────────────────────────────────────
 const containerVariants = {
@@ -133,15 +41,112 @@ const itemVariants = {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function BatchDetailPage() {
-  const [expandedSemesters, setExpandedSemesters] = useState<string[]>(["semester-2"]);
-  const [expandedWeeks, setExpandedWeeks] = useState<string[]>(["s2-week-2"]);
-  const [expandedLessons, setExpandedLessons] = useState<string[]>(["s2-w2-l2"]);
+  const params = useParams();
+  const id = params.id as string;
+
+  const { data: batch, isLoading, isError } = useGetBatchById(id);
+  const { data: tiers, isLoading: isTiersLoading } = useGetBatchTiers(id);
+  const createTierMutation = useCreateBatchTier(id);
+  
+  // States for Material Creation
+  const [activeTierId, setActiveTierId] = useState<string | null>(null);
+  const createMaterialMutation = useCreateTierMaterial(activeTierId || "");
+
+  const [expandedIds, setExpandedIds] = useState<string[]>([]);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  
+  // States for Tier Creation
+  const [isTierModalOpen, setIsTierModalOpen] = useState(false);
+  const [activeParentTierId, setActiveParentTierId] = useState<string | null>(null);
+  const [tierModalTitle, setTierModalTitle] = useState("Add New Semester");
 
-  const toggle = (id: string, list: string[], setList: (v: string[]) => void) => {
-    setList(list.includes(id) ? list.filter(i => i !== id) : [...list, id]);
+  const toggle = (id: string) => {
+    setExpandedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
+
+  const handleAddTier = (parentId: string | null, level: number) => {
+    setActiveParentTierId(parentId);
+    setTierModalTitle(`Add New ${levelNames[level] || "Item"}`);
+    setIsTierModalOpen(true);
+  };
+
+  const handleSaveTier = async (data: { title: string; description: string }) => {
+    await createTierMutation.mutateAsync({
+      batch_id: id,
+      parent_tier_id: activeParentTierId,
+      title: data.title,
+      description: data.description
+    });
+    setIsTierModalOpen(false);
+  };
+
+  const handleSaveVideo = async (data: { title: string; url: string }) => {
+    if (!activeTierId) return;
+    await createMaterialMutation.mutateAsync({
+      tier_id: activeTierId,
+      material_type: "VIDEO",
+      title: data.title,
+      content_url: data.url
+    });
+    setIsVideoModalOpen(false);
+  };
+
+  const handleSaveMaterial = async (data: { title: string; url: string; fileName: string; format: string }) => {
+    if (!activeTierId) return;
+    await createMaterialMutation.mutateAsync({
+      tier_id: activeTierId,
+      material_type: "FILE",
+      title: data.title,
+      content_url: data.url,
+      file_name: data.fileName,
+      file_format: data.format
+    });
+    setIsMaterialModalOpen(false);
+  };
+
+  const handleSaveSchedule = async (data: { title: string; zoom_link: string; zoom_start_time: string; zoom_duration: number }) => {
+    if (!activeTierId) return;
+    await createMaterialMutation.mutateAsync({
+      tier_id: activeTierId,
+      material_type: "ZOOM",
+      title: data.title,
+      zoom_link: data.zoom_link,
+      zoom_start_time: data.zoom_start_time,
+      zoom_duration: data.zoom_duration
+    });
+    setIsScheduleModalOpen(false);
+  };
+
+  if (isLoading || isTiersLoading) {
+    return (
+      <div className="p-6 lg:p-10 space-y-6">
+        <Skeleton className="h-8 w-24" />
+        <Skeleton className="h-[240px] w-full rounded-[12px]" />
+        <Skeleton className="h-[600px] w-full rounded-[12px]" />
+      </div>
+    );
+  }
+
+  if (isError || !batch) {
+    return (
+      <div className="p-6 lg:p-10 text-center py-20">
+        <h2 className="text-xl font-bold text-red-500">Error loading batch details.</h2>
+        <Link href="/lecturer-panel/batches" className="text-blue-500 underline mt-4 inline-block">Back to Batches</Link>
+      </div>
+    );
+  }
+
+  const hierarchy = batch.hierarchy;
+
+  const levelNames = [
+    hierarchy?.level_1_name || "Level 1",
+    hierarchy?.level_2_name || "Level 2",
+    hierarchy?.level_3_name || "Level 3",
+    hierarchy?.level_4_name,
+    hierarchy?.level_5_name,
+  ].filter(Boolean) as string[];
 
   return (
     <motion.div
@@ -161,16 +166,16 @@ export default function BatchDetailPage() {
       {/* Hero */}
       <motion.div variants={itemVariants} className="relative w-full h-[240px] rounded-[12px] overflow-hidden">
         <Image
-          src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200"
+          src={batch.cover_image_url || "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200"}
           alt="Batch Banner"
           fill
           className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
         <div className="absolute bottom-6 left-8 flex flex-col gap-2">
-          <h1 className="text-3xl font-bold text-white">Batch Name</h1>
+          <h1 className="text-3xl font-bold text-white">{batch.name}</h1>
           <span className="w-fit bg-[#E6F0FF] text-[#0B5CFF] text-[10px] font-bold px-3 py-1 rounded-full uppercase">
-            Ongoing
+            {batch.status}
           </span>
         </div>
       </motion.div>
@@ -183,219 +188,62 @@ export default function BatchDetailPage() {
           <div className="flex flex-col gap-2">
             <span className="text-[10px] font-medium text-[#90A1B9] uppercase tracking-wider">Short Description</span>
             <p className="text-sm text-[#45556C] leading-relaxed">
-              Lorem ipsum dolor sit amet consectetur. Quis tortor porttitor eget senectus. Non turpis duis ac proin turpis gravida.
+              {batch.description || "No description available for this batch."}
             </p>
           </div>
 
           {/* Metadata Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-4 border border-[#E2E8F0] rounded-[6px] p-6 bg-[#F8FAFC]">
-            <MetaItem label="Level" value="Beginner" />
-            <MetaItem label="Lecturer" value="Mr. Ruwan" avatar="https://i.pravatar.cc/150?u=ruwan" />
-            <MetaItem label="Language" value="English" />
+            <MetaItem label="Level" value={batch.level || "Beginner"} />
+            <MetaItem 
+              label="Lecturer" 
+              value={batch.lecturer_email?.split("@")[0] || "Mr. Ruwan"} 
+              avatar="https://api.dicebear.com/7.x/avataaars/svg?seed=Ruwan"
+            />
+            <MetaItem label="Language" value={batch.language} />
             <MetaItem label="Certificates" value="Available {Free}, {UK}" />
-            <MetaItem label="Lesson Duration" value="2h" />
-            <MetaItem label="Category" value="Online" />
-            <MetaItem label="Start Date" value="2025.12.23" />
-            <MetaItem label="End Date" value="2026.02.20" />
+            <MetaItem label="Lesson Duration" value={`${batch.lesson_duration}h`} />
+            <MetaItem label="Category" value={batch.category} />
+            <MetaItem label="Start Date" value={batch.start_date.split("-").join(".")} />
+            <MetaItem label="End Date" value={batch.end_date.split("-").join(".")} />
           </div>
 
-          {/* Add New Semester Button */}
-          <div>
-            <Button className="flex items-center gap-2 bg-[#E60076] hover:bg-[#C50065] text-white font-semibold h-10 px-5 rounded-[6px]">
-              <Plus className="h-4 w-4" />
-              Add New Semester
-            </Button>
-          </div>
+          {/* Curriculum Section (Dynamic Recursive Tiers) */}
+          <div className="flex flex-col gap-8">
+            <div className="flex items-center">
+              <Button 
+                onClick={() => handleAddTier(null, 0)}
+                className="flex items-center gap-2 bg-[#E60076] hover:bg-[#C50065] text-white font-semibold h-10 px-5 rounded-[6px]"
+              >
+                <Plus className="h-4 w-4" />
+                Add New Semester
+              </Button>
+            </div>
 
-          {/* Semesters */}
-          <div className="flex flex-col gap-4">
-            {MOCK_STRUCTURE.map(semester => {
-              const isSemExpanded = expandedSemesters.includes(semester.id);
-
-              return (
-                <div key={semester.id} className="flex flex-col gap-4">
-                  {/* Semester Header */}
-                  <div
-                    className={cn(
-                      "rounded-[10px] border px-4 h-[56px] flex items-center justify-between cursor-pointer transition-all shadow-sm",
-                      isSemExpanded ? "border-[#90A1B9] border-[1.5px] bg-[#F1F5F9]" : "border-[#E2E8F0] bg-[#F8FAFC]"
-                    )}
-                    onClick={() => toggle(semester.id, expandedSemesters, setExpandedSemesters)}
-                  >
-                    <span className={cn("text-[15px] text-[#0F172B]", isSemExpanded ? "font-semibold" : "font-medium")}>
-                      {semester.title}
-                    </span>
-                    <div className="flex items-center gap-3">
-                      {isSemExpanded && (
-                        <button
-                          onClick={e => e.stopPropagation()}
-                          className="flex items-center gap-1.5 text-[12px] font-semibold text-[#0F172B] bg-white border border-[#E2E8F0] rounded-[6px] px-3 h-8 hover:bg-[#F1F5F9] shadow-sm"
-                        >
-                          <Plus className="h-3.5 w-3.5" /> Add New
-                        </button>
-                      )}
-                      {isSemExpanded ? <ChevronUp className="h-5 w-5 text-[#0F172B]" /> : <ChevronDown className="h-5 w-5 text-[#0F172B]" />}
-                    </div>
-                  </div>
-
-                  {/* Weeks */}
-                  {isSemExpanded && (
-                    <div className="ml-6 flex flex-col gap-4 border-l-2 border-[#E2E8F0]/30 pl-4">
-                      {semester.weeks.map(week => {
-                        const isWeekExpanded = expandedWeeks.includes(week.id);
-
-                        return (
-                          <div key={week.id} className="flex flex-col gap-4">
-                            {/* Week Header */}
-                            <div
-                              className={cn(
-                                "rounded-[10px] border px-4 h-[72px] flex items-center justify-between cursor-pointer transition-all shadow-sm shrink-0",
-                                isWeekExpanded ? "border-[#90A1B9] border-[1.5px] bg-[#F1F5F9]" : "border-[#E2E8F0] bg-[#F8FAFC]"
-                              )}
-                              onClick={() => toggle(week.id, expandedWeeks, setExpandedWeeks)}
-                            >
-                              <div className="flex flex-col">
-                                <span className={cn("text-[14px] text-[#0F172B]", isWeekExpanded ? "font-semibold" : "font-medium")}>
-                                  {week.title}
-                                </span>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full border border-[#E2E8F0] bg-white text-[10px] font-medium text-[#62748E]">
-                                    <i className="book-open-text h-4 w-4 text-[#62748E]" />
-                                    <span>{week.lessons.length.toString().padStart(2, "0")} Lessons</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-4">
-                                <Trash2
-                                  className="h-5 w-5 text-[#FB2C36]"
-                                  onClick={e => e.stopPropagation()}
-                                />
-                                {isWeekExpanded ? <ChevronUp className="h-5 w-5 text-[#0F172B]" /> : <ChevronDown className="h-5 w-5 text-[#0F172B]" />}
-                              </div>
-                            </div>
-
-                            {/* Lessons */}
-                            {isWeekExpanded && (
-                              <div className="ml-6 flex flex-col gap-4 border-l-2 border-[#E2E8F0]/30 pl-4">
-                                {week.lessons.map(lesson => {
-                                  const isLessonExpanded = expandedLessons.includes(lesson.id);
-                                  const videoCount = lesson.materials.filter(m => m.format === "Youtube").length;
-                                  const materialCount = lesson.materials.length - videoCount;
-
-                                  return (
-                                    <div key={lesson.id} className="flex flex-col gap-4">
-                                      {/* Lesson Row */}
-                                      <div
-                                        className={cn(
-                                          "rounded-[8px] border px-4 h-[68px] flex items-center cursor-pointer transition-all",
-                                          isLessonExpanded ? "border-[#FCCEE8] bg-[#FDF2F8]" : "border-[#E7E5E4] bg-transparent"
-                                        )}
-                                        onClick={() => toggle(lesson.id, expandedLessons, setExpandedLessons)}
-                                      >
-                                        <div className="flex flex-col flex-1 gap-1">
-                                          <div className="flex items-center gap-3">
-                                            <span className="text-sm font-medium text-[#0F172B]">{lesson.name}</span>
-                                            <div className="flex items-center gap-3">
-                                              {/* Toggle Switch */}
-                                              <div
-                                                className={cn(
-                                                  "w-[36px] h-[20px] rounded-full relative transition-colors p-[2px] flex items-center",
-                                                  lesson.isActive ? "bg-[#16A34A] justify-end" : "bg-[#E2E8F0] justify-start"
-                                                )}
-                                                onClick={e => e.stopPropagation()}
-                                              >
-                                                <div className="w-4 h-4 bg-white rounded-full shadow-sm" />
-                                              </div>
-                                              {isLessonExpanded ? <ChevronUp className="h-5 w-5 text-[#0F172B]" /> : <ChevronDown className="h-5 w-5 text-[#0F172B]" />}
-                                            </div>
-                                          </div>
-                                          {/* Badges */}
-                                          <div className="flex items-center gap-2">
-                                            {videoCount > 0 && (
-                                              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full border border-[#E2E8F0] bg-white text-[10px] font-medium text-[#62748E]">
-                                                <span>{videoCount.toString().padStart(2, "0")} Videos</span>
-                                              </div>
-                                            )}
-                                            {materialCount > 0 && (
-                                              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full border border-[#E2E8F0] bg-white text-[10px] font-medium text-[#62748E]">
-                                                <span>{materialCount.toString().padStart(2, "0")} Materials</span>
-                                              </div>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </div>
-
-                                      {/* Lesson Expanded: Materials */}
-                                      {isLessonExpanded && (
-                                        <div className="ml-6 border-l-2 border-[#E2E8F0] pl-6 py-2 flex flex-col gap-6">
-                                          <div className="flex items-center justify-between">
-                                            <span className="text-sm font-semibold text-[#45556C]">Lesson Materials</span>
-                                            <div className="flex items-center gap-6 text-[12px] font-bold text-[#E60076]">
-                                              <button 
-                                                onClick={() => setIsVideoModalOpen(true)}
-                                                className="flex items-center gap-2 hover:opacity-80"
-                                              >
-                                                <Plus className="h-4 w-4" /> Add New Video
-                                              </button>
-                                              <button 
-                                                onClick={() => setIsMaterialModalOpen(true)}
-                                                className="flex items-center gap-2 hover:opacity-80"
-                                              >
-                                                <Plus className="h-4 w-4" /> Add New Material
-                                              </button>
-                                              <button className="flex items-center gap-2 hover:opacity-80">
-                                                <Plus className="h-4 w-4" /> Schedule Class
-                                              </button>
-                                            </div>
-                                          </div>
-                                          {lesson.materials.length > 0 && (
-                                            <div className="overflow-hidden rounded-[8px] border border-[#E2E8F0]">
-                                              <table className="w-full text-left">
-                                                <thead className="bg-[#FFF1F8] text-[12px] font-bold text-[#0F172B]">
-                                                  <tr>
-                                                    <th className="px-6 py-3">Uploaded Date</th>
-                                                    <th className="px-6 py-3">Title</th>
-                                                    <th className="px-6 py-3">Type</th>
-                                                    <th className="px-6 py-3">Format</th>
-                                                    <th className="px-6 py-3 text-center">Action</th>
-                                                  </tr>
-                                                </thead>
-                                                <tbody className="bg-white">
-                                                  {lesson.materials.map((m, idx) => (
-                                                    <MaterialRow key={idx} material={m} />
-                                                  ))}
-                                                </tbody>
-                                              </table>
-                                            </div>
-                                          )}
-                                        </div>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-
-                                {/* Add New (inside week) */}
-                                <div className="flex justify-end">
-                                  <button
-                                    onClick={e => e.stopPropagation()}
-                                    className="flex items-center justify-center gap-2 w-[122px] h-[40px] bg-[#FDF2F8] border border-[#FCCEE8] shadow-sm rounded-[6px] transition-all hover:opacity-80 mt-2"
-                                  >
-                                    <Plus className="h-5 w-5 text-[#0F172B]" />
-                                    <span className="text-sm font-semibold text-[#0F172B]">Add New</span>
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+            <div className="flex flex-col gap-8">
+              {tiers?.filter(t => !t.parent_tier_id).map((tier, index, arr) => (
+                <TierItem 
+                  key={tier.id} 
+                  tier={tier} 
+                  level={1} 
+                  maxTierCount={batch.tier_count}
+                  levelNames={levelNames}
+                  expandedIds={expandedIds}
+                  onToggle={toggle}
+                  onAddSubTier={handleAddTier}
+                  onAddVideo={(tierId) => { setActiveTierId(tierId); setIsVideoModalOpen(true); }}
+                  onAddMaterial={(tierId) => { setActiveTierId(tierId); setIsMaterialModalOpen(true); }}
+                  onScheduleClass={(tierId) => { setActiveTierId(tierId); setIsScheduleModalOpen(true); }}
+                  isLast={index === arr.length - 1}
+                />
+              ))}
+              {(!tiers || tiers.length === 0) && !isTiersLoading && (
+                <div className="text-center py-20 text-[#94A3B8] border-2 border-dashed border-[#E2E8F0] rounded-[12px] bg-[#F8FAFC]">
+                  No tiers created yet for this batch.
                 </div>
-              );
-            })}
+              )}
+            </div>
           </div>
-
         </div>
       </motion.div>
 
@@ -403,51 +251,306 @@ export default function BatchDetailPage() {
       <AddVideoModal 
         isOpen={isVideoModalOpen} 
         onClose={() => setIsVideoModalOpen(false)} 
-        onSave={(data) => console.log("Saving video:", data)}
+        onSave={handleSaveVideo}
+        isLoading={createMaterialMutation.isPending}
       />
       <AddMaterialModal 
         isOpen={isMaterialModalOpen} 
         onClose={() => setIsMaterialModalOpen(false)} 
-        onSave={(data) => console.log("Saving material:", data)}
+        onSave={handleSaveMaterial}
+        isLoading={createMaterialMutation.isPending}
+      />
+      <ScheduleClassModal
+        isOpen={isScheduleModalOpen}
+        onClose={() => setIsScheduleModalOpen(false)}
+        onSave={handleSaveSchedule}
+        isLoading={createMaterialMutation.isPending}
+      />
+      <CreateTierModal
+        isOpen={isTierModalOpen}
+        onClose={() => setIsTierModalOpen(false)}
+        onSave={handleSaveTier}
+        title={tierModalTitle}
+        isLoading={createTierMutation.isPending}
       />
     </motion.div>
   );
 }
 
+// ─── Recursive Tier Item ─────────────────────────────────────────────────────
+interface TierItemProps {
+  tier: TierNode;
+  level: number;
+  maxTierCount: number;
+  levelNames: string[];
+  expandedIds: string[];
+  onToggle: (id: string) => void;
+  onAddSubTier: (parentId: string | null, level: number) => void;
+  onAddVideo: (tierId: string) => void;
+  onAddMaterial: (tierId: string) => void;
+  onScheduleClass: (tierId: string) => void;
+  isLast?: boolean;
+}
+
+function TierItem({ tier, level, maxTierCount, levelNames, expandedIds, onToggle, onAddSubTier, onAddVideo, onAddMaterial, onScheduleClass, isLast }: TierItemProps) {
+  const isExpanded = expandedIds.includes(tier.id);
+  const isLeaf = level === maxTierCount;
+
+  // For leaf nodes (lessons), we might want to fetch materials
+  const { data: materials } = useGetTierMaterials(tier.id, isExpanded && isLeaf);
+
+  if (level === 1) {
+    // Level 1: Semester (Static Card Container)
+    return (
+      <div className="flex flex-col gap-6 p-6 rounded-[12px] border border-[#E2E8F0] bg-white shadow-sm">
+        <div className="flex items-center justify-between">
+          <span className="text-[20px] font-bold text-[#0F172B]">{tier.title}</span>
+          <button 
+            onClick={() => onAddSubTier(tier.id, level)}
+            className="flex items-center gap-1.5 text-[14px] font-semibold text-[#0F172B] bg-[#F8FAFC] border border-[#E2E8F0] rounded-[6px] px-4 h-9 hover:bg-[#F1F5F9] transition-all shadow-sm"
+          >
+            <Plus className="h-4 w-4" /> Add New
+          </button>
+        </div>
+        <div className="flex flex-col gap-4">
+          {tier.children.map((child, index) => (
+            <TierItem 
+              key={child.id} 
+              tier={child} 
+              level={level + 1} 
+              maxTierCount={maxTierCount} 
+              levelNames={levelNames}
+              expandedIds={expandedIds} 
+              onToggle={onToggle}
+              onAddSubTier={onAddSubTier}
+              onAddVideo={onAddVideo}
+              onAddMaterial={onAddMaterial}
+              onScheduleClass={onScheduleClass}
+              isLast={index === tier.children.length - 1}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (isLeaf) {
+    // Leaf Level: Lesson
+    const videoCount = materials?.filter(m => m.material_type === "VIDEO" || m.material_type === "LINK").length || 0;
+    const materialCount = (materials?.length || 0) - videoCount;
+
+    return (
+      <div className={cn("flex flex-col gap-4", isLast && "mr-3")}>
+        <div
+          className={cn(
+            "rounded-[8px] border px-4 h-[68px] flex items-center cursor-pointer transition-all",
+            isExpanded ? "border-[#FCCEE8] bg-[#FDF2F8]" : "border-[#E7E5E4] bg-transparent"
+          )}
+          onClick={() => onToggle(tier.id)}
+        >
+          <div className="flex flex-col flex-1 gap-1">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-[#0F172B]">{tier.title}</span>
+              <div className="flex items-center gap-3">
+                <div className={cn("w-[36px] h-[20px] rounded-full relative transition-colors p-[2px] flex items-center", tier.is_enabled ? "bg-[#16A34A] justify-end" : "bg-[#E2E8F0] justify-start")}>
+                  <div className="w-4 h-4 bg-white rounded-full shadow-sm" />
+                </div>
+                {isExpanded ? <ChevronUp className="h-5 w-5 text-[#0F172B]" /> : <ChevronDown className="h-5 w-5 text-[#0F172B]" />}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {videoCount > 0 && <span className="px-2 py-0.5 rounded-full border border-[#E2E8F0] bg-white text-[10px] font-medium text-[#62748E]">{videoCount} Videos</span>}
+              {materialCount > 0 && <span className="px-2 py-0.5 rounded-full border border-[#E2E8F0] bg-white text-[10px] font-medium text-[#62748E]">{materialCount} Materials</span>}
+            </div>
+          </div>
+        </div>
+
+        {isExpanded && (
+          <div className={cn(
+            "ml-6 border-[#E2E8F0] pl-6 py-2 flex flex-col gap-6",
+            isLast ? "border-l-2" : "border-l-2 border-b-2 border-r-2 rounded-b-[12px] pb-6"
+          )}>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-[#45556C]">Lesson Materials</span>
+              <div className="flex items-center gap-8 text-[12px] font-bold text-[#E60076]">
+                <button onClick={() => onAddVideo(tier.id)} className="flex items-center gap-2 hover:opacity-80 transition-all"><Plus className="h-4 w-4" /> Add New Video</button>
+                <button onClick={() => onAddMaterial(tier.id)} className="flex items-center gap-2 hover:opacity-80 transition-all"><Plus className="h-4 w-4" /> Add New Material</button>
+                <button onClick={() => onScheduleClass(tier.id)} className="flex items-center gap-2 hover:opacity-80 transition-all"><Plus className="h-4 w-4" /> Schedule Class</button>
+              </div>
+            </div>
+            {materials && materials.length > 0 && (
+              <div className="overflow-hidden rounded-[8px] border border-[#E2E8F0]">
+                <table className="w-full text-left">
+                  <thead className="bg-[#FFF1F8] text-[12px] font-bold text-[#0F172B]">
+                    <tr>
+                      <th className="px-6 py-3">Uploaded Date</th>
+                      <th className="px-6 py-3">Title</th>
+                      <th className="px-6 py-3">Type</th>
+                      <th className="px-6 py-3">Format</th>
+                      <th className="px-6 py-3 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white">
+                    {materials.map((m) => <MaterialRow key={m.id} material={m} />)}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("flex flex-col gap-4", isLast && "mr-3")}>
+      <div
+        className={cn(
+          "rounded-[10px] border px-4 h-[72px] flex items-center justify-between cursor-pointer transition-all shadow-sm shrink-0",
+          isExpanded ? "border-[#90A1B9] border-[1.5px] bg-[#F1F5F9]" : "border-[#E2E8F0] bg-[#F8FAFC]"
+        )}
+        onClick={() => onToggle(tier.id)}
+      >
+        <div className="flex flex-col">
+          <span className={cn("text-[14px] text-[#0F172B]", isExpanded ? "font-semibold" : "font-medium")}>
+            {tier.title}
+          </span>
+          <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full border border-[#E2E8F0] bg-white text-[10px] font-medium text-[#62748E]">
+              <i className="book-open-text h-4 w-4 text-[#62748E]" />
+              <span>{tier.children.length} {levelNames[level] || "Item"}s</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <Trash2 className="h-5 w-5 text-[#FB2C36]" onClick={(e) => e.stopPropagation()} />
+          {isExpanded ? <ChevronUp className="h-5 w-5 text-[#0F172B]" /> : <ChevronDown className="h-5 w-5 text-[#0F172B]" />}
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className={cn(
+          "ml-6 flex flex-col gap-4 border-[#E2E8F0] pl-6",
+          isLast ? "border-l-2" : "border-l-2 border-b-2 border-r-2 rounded-b-[12px] pb-6"
+        )}>
+          {tier.children.map((child, index) => (
+            <TierItem 
+              key={child.id} 
+              tier={child} 
+              level={level + 1} 
+              maxTierCount={maxTierCount} 
+              levelNames={levelNames}
+              expandedIds={expandedIds} 
+              onToggle={onToggle}
+              onAddSubTier={onAddSubTier}
+              onAddVideo={onAddVideo}
+              onAddMaterial={onAddMaterial}
+              onScheduleClass={onScheduleClass}
+              isLast={index === tier.children.length - 1}
+            />
+          ))}
+          {/* Add New Button at bottom right of children list */}
+          <div className="flex justify-end mt-2 mr-3">
+            <Button
+              onClick={() => onAddSubTier(tier.id, level)}
+              variant="outline"
+              className="flex items-center gap-2 border-[#FCCEE8] bg-[#FFF1F8] hover:bg-[#FDF2F8] text-[#E60076] font-semibold h-9 px-4 rounded-[8px]"
+            >
+              <Plus className="h-4 w-4" /> Add New
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Material Row ─────────────────────────────────────────────────────────────
-function MaterialRow({ material }: { material: Material }) {
-  const icons: Record<string, React.JSX.Element> = {
-    Youtube: <i className="youtube-logo h-5 w-5 text-[#45556C]" />,
-    PPTX: <i className="file-ppt h-5 w-5 text-[#45556C]" />,
-    DOC: <i className="file-doc h-5 w-5 text-[#45556C]" />,
-    CSV: <i className="file-csv h-5 w-5 text-[#45556C]" />,
-    PDF: <i className="file-pdf h-5 w-5 text-[#45556C]" />,
+function MaterialRow({ material }: { material: ApiMaterial }) {
+  const deleteMutation = useDeleteMaterial();
+
+  const handleCopyLink = (url: string | null) => {
+    if (!url) {
+      toast.error("No link available");
+      
+return;
+    }
+
+    navigator.clipboard.writeText(url);
+    toast.success("Link copied to clipboard!");
   };
+
+  const handleDownload = (url: string | null, fileName: string | null) => {
+    if (!url) {
+      toast.error("No file URL available");
+      
+return;
+    }
+
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = fileName || "download";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const icons: Record<string, React.JSX.Element> = {
+    VIDEO: <i className="youtube-logo h-5 w-5 text-[#45556C]" />,
+    LINK: <i className="youtube-logo h-5 w-5 text-[#45556C]" />,
+    FILE: <i className="file-doc h-5 w-5 text-[#45556C]" />,
+    DEFAULT: <i className="file-doc h-5 w-5 text-[#45556C]" />,
+  };
+
+  const isVideoOrLink = material.material_type === "VIDEO" || material.material_type === "LINK";
+  const isFile = material.material_type === "FILE";
+  const format = material.file_format || (material.material_type === "VIDEO" ? "Youtube" : material.material_type);
 
   return (
     <tr className="border-t border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors">
-      <td className="px-6 py-4 text-[13px] text-[#45556C]">{material.date}</td>
+      <td className="px-6 py-4 text-[13px] text-[#45556C]">{new Date(material.created_at).toLocaleDateString()}</td>
       <td className="px-6 py-4 text-[13px] font-medium text-[#0F172B]">{material.title}</td>
       <td className="px-6 py-4 text-[13px] text-[#45556C]">
-        <div className="flex items-center gap-2">
-          {material.type}
-          {material.type === "Link" && (
-            <svg width="14" height="14" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#0F172B]">
-              <path d="M11.875 2.5H0.625C0.459 2.5 0.3 2.566 0.183 2.683C0.066 2.8 0 2.959 0 3.125V14.375C0 14.541 0.066 14.7 0.183 14.817C0.3 14.934 0.459 15 0.625 15H11.875C12.041 15 12.2 14.934 12.317 14.817C12.434 14.7 12.5 14.541 12.5 14.375V3.125C12.5 2.959 12.434 2.8 12.317 2.683C12.2 2.566 12.041 2.5 11.875 2.5ZM11.25 13.75H1.25V3.75H11.25V13.75ZM15 0.625V11.875C15 12.041 14.934 12.2 14.817 12.317C14.7 12.434 14.541 12.5 14.375 12.5C14.209 12.5 14.05 12.434 13.933 12.317C13.816 12.2 13.75 12.041 13.75 11.875V1.25H3.125C2.959 1.25 2.8 1.184 2.683 1.067C2.566 0.95 2.5 0.791 2.5 0.625C2.5 0.459 2.566 0.3 2.683 0.183C2.8 0.066 2.959 0 3.125 0H14.375C14.541 0 14.7 0.066 14.817 0.183C14.934 0.3 15 0.459 15 0.625Z" fill="currentColor" />
-            </svg>
-          )}
-        </div>
+        {isVideoOrLink ? (
+          <div className="flex items-center gap-2">
+            <span className="text-[13px] text-[#0F172B]">Link</span>
+            <button 
+              onClick={() => handleCopyLink(material.content_url)}
+              className="p-1 hover:bg-slate-100 rounded transition-colors"
+            >
+              <Copy className="h-3.5 w-3.5 text-[#45556C]" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            {material.material_type}
+          </div>
+        )}
       </td>
       <td className="px-6 py-4 text-[12px] font-semibold text-[#0F172B]">
-        <div className="flex items-center gap-2">{icons[material.format]} {material.format}</div>
+        <div className="flex items-center gap-2">
+          {icons[material.material_type] || icons.DEFAULT} {format}
+        </div>
       </td>
       <td className="px-6 py-4">
         <div className="flex items-center justify-center gap-3">
-          <button className="text-[#90A1B9] hover:text-[#0B5CFF] p-1.5 bg-[#F8FAFC] rounded-full">
-            <Edit2 className="h-3.5 w-3.5" />
+          {isFile && (
+            <button 
+              onClick={() => handleDownload(material.content_url, material.file_name)}
+              className="text-[#0B5CFF] p-2 bg-[#F8FAFC] rounded-full hover:bg-blue-50 transition-colors"
+            >
+              <Download className="h-4 w-4" />
+            </button>
+          )}
+          <button className="flex items-center justify-center w-8 h-8 rounded-full bg-[#F1F5F9] hover:bg-[#F1F5F9] transition-colors">
+            <i className="edit-icon h-[10.94px] w-[10.94px] text-[#18181B]" />
           </button>
-          <button className="text-[#90A1B9] hover:text-red-500 p-1.5 bg-[#F8FAFC] rounded-full">
-            <Trash2 className="h-3.5 w-3.5" />
+          <button 
+            onClick={() => { if(confirm("Are you sure?")) deleteMutation.mutate(material.id); }}
+            className="text-[#FB2C36] p-2 bg-[#F1F5F9] rounded-full  transition-colors"
+          >
+            <Trash2 className="h-4 w-4" />
           </button>
         </div>
       </td>

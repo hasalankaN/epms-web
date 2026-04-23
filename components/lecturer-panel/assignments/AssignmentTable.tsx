@@ -105,6 +105,7 @@ export function AssignmentTable({ assignments }: AssignmentTableProps) {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button 
+                          id={`action_btn_${assignment.id}`}
                           type="button"
                           className="text-[#90A1B9] hover:text-[#0b5cff] p-1.5 bg-[#f8fafc] rounded-full transition-colors flex items-center justify-center border-0 outline-none"
                         >
@@ -113,25 +114,41 @@ export function AssignmentTable({ assignments }: AssignmentTableProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent 
                         align="end" 
-                        className="w-[136px] min-w-[128px] p-1 bg-white border-[#E5E7EB] rounded-[6px] shadow-lg animate-in fade-in-0 zoom-in-95"
+                        sideOffset={4}
+                        className="w-[136px] min-w-[128px] p-1 bg-white border border-[#E5E7EB] rounded-[6px] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)]"
                       >
                         <DropdownMenuItem 
                           id={`view_assignment_${assignment.id}`}
-                          className="h-[30px] px-2 flex items-center gap-2 text-[12px] text-[#314158] font-normal rounded-[6px] hover:bg-slate-100 transition-colors cursor-pointer focus:bg-slate-100 focus:outline-none"
+                          className="h-[30px] px-2 flex items-center rounded-[6px] cursor-pointer focus:bg-[#F1F5F9] transition-colors"
                           onSelect={(e) => {
                             e.preventDefault();
                             setSelectedAssignment(assignment);
                             setViewModalOpen(true);
                           }}
                         >
-                          View
+                          <span className="text-[12px] font-normal leading-4 text-[#314158]">
+                            View
+                          </span>
                         </DropdownMenuItem>
+
                         <DropdownMenuItem 
-                          id={`edit_assignment_${assignment.id}`}
-                          className="h-[30px] px-2 flex items-center gap-2 text-[12px] text-[#314158] font-normal rounded-[6px] hover:bg-slate-100 transition-colors cursor-pointer focus:bg-slate-100 focus:outline-none"
-                          onClick={() => { /* Handle edit */ }}
+                          id={`download_assignment_${assignment.id}`}
+                          className="h-[30px] px-2 flex items-center rounded-[6px] cursor-pointer focus:bg-[#F1F5F9] transition-colors"
+                          onClick={() => { /* Handle download */ }}
                         >
-                          Edit
+                          <span className="text-[12px] font-normal leading-4 text-[#314158]">
+                            Download
+                          </span>
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem 
+                          id={`feedback_assignment_${assignment.id}`}
+                          className="h-[30px] px-2 flex items-center rounded-[6px] cursor-pointer focus:bg-[#F1F5F9] transition-colors"
+                          onClick={() => { /* Handle add feedback */ }}
+                        >
+                          <span className="text-[12px] font-normal leading-4 text-[#314158]">
+                            Add Feedback
+                          </span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

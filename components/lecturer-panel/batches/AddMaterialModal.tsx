@@ -9,21 +9,39 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import { useUploadFile } from "@/hooks/api/files/useUploadFile";
+
 interface AddMaterialModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: { title: string; file: File | null }) => void;
+  onSave: (data: { title: string; url: string; fileName: string; format: string }) => void;
+  isLoading?: boolean;
 }
 
-export function AddMaterialModal({ isOpen, onClose, onSave }: AddMaterialModalProps) {
+export function AddMaterialModal({ isOpen, onClose, onSave, isLoading: isSaving }: AddMaterialModalProps) {
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const { mutateAsync: uploadFile, isPending: isUploading } = useUploadFile();
 
-  const handleSave = () => {
-    onSave({ title, file });
-    setTitle("");
-    setFile(null);
-    onClose();
+  const handleSave = async () => {
+    if (!title || !file) return;
+
+    try {
+      const uploadResponse = await uploadFile({ file });
+
+      if (uploadResponse.status === "SUCCESS") {
+        onSave({ 
+          title, 
+          url: uploadResponse.data.url,
+          fileName: uploadResponse.data.fileName,
+          format: uploadResponse.data.mimetype.split('/').pop()?.toUpperCase() || "FILE"
+        });
+        setTitle("");
+        setFile(null);
+      }
+    } catch {
+      // Error handled by hook
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,9 +99,10 @@ export function AddMaterialModal({ isOpen, onClose, onSave }: AddMaterialModalPr
         <div className="flex justify-end mt-2">
           <Button 
             onClick={handleSave}
-            className="h-10 w-[80px] bg-[#E60076] hover:bg-[#C50065] text-white font-semibold rounded-[6px] shadow-sm"
+            disabled={isUploading || isSaving || !title || !file}
+            className="h-10 w-[120px] bg-[#E60076] hover:bg-[#C50065] text-white font-semibold rounded-[6px] shadow-sm"
           >
-            Save
+            {isUploading ? "Uploading..." : isSaving ? "Saving..." : "Save"}
           </Button>
         </div>
       </DialogContent>

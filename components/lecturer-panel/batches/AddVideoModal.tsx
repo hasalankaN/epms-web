@@ -13,9 +13,10 @@ interface AddVideoModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: { title: string; url: string }) => void;
+  isLoading?: boolean;
 }
 
-export function AddVideoModal({ isOpen, onClose, onSave }: AddVideoModalProps) {
+export function AddVideoModal({ isOpen, onClose, onSave, isLoading }: AddVideoModalProps) {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
 
@@ -68,9 +69,10 @@ export function AddVideoModal({ isOpen, onClose, onSave }: AddVideoModalProps) {
         <div className="flex justify-end mt-2">
           <Button 
             onClick={handleSave}
+            disabled={isLoading || !title || !url}
             className="h-10 w-[80px] bg-[#E60076] hover:bg-[#C50065] text-white font-semibold rounded-[6px] shadow-sm"
           >
-            Save
+            {isLoading ? "Saving..." : "Save"}
           </Button>
         </div>
       </DialogContent>

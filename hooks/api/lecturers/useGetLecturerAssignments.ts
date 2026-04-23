@@ -1,34 +1,46 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
-import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
-import { queryKeys } from "@/lib/constants/queryKeys";
 
-export interface LecturerAssignmentCourse {
+export interface LecturerAssignmentItem {
   id: string;
-  name: string;
-  courseCategory: string;
+  title: string;
+  due_date: string;
+  created_at: string;
+  is_draft: boolean;
+  lesson_title: string;
+  course_name: string | null;
+  batch_name: string | null;
   type: string;
-  enrollmentCount: number;
+  source_name: string;
+  total_enrolled: number;
+  total_submitted: number;
+  completion_rate: string;
 }
 
-export interface LecturerAssignmentBatch {
-  id: string;
-  batchName: string;
-  batchCategory: string;
-  type: string;
-  enrollmentCount: number;
+export interface PaginatedAssignmentsResponse {
+  message: string;
+  data: LecturerAssignmentItem[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+  };
 }
 
-export interface LecturerAssignmentsResponse {
-  courses: LecturerAssignmentCourse[];
-  batches: LecturerAssignmentBatch[];
-}
-
-export function useGetLecturerAssignments() {
-  return useQuery<LecturerAssignmentsResponse>({
-    queryKey: [queryKeys.lecturer, "assignments"],
+export function useGetLecturerAssignments(params?: { 
+  page?: number; 
+  limit?: number; 
+  search?: string; 
+  type?: string 
+}) {
+  return useQuery({
+    queryKey: ["lecturer-assignments", params],
     queryFn: async () => {
-      const response = await api.get(API_ENDPOINTS.lecturer.ASSIGNMENTS);
+      const response = await api.get<{ data: PaginatedAssignmentsResponse }>(
+        "/api/v1/lecturer/assignments",
+        { params }
+      );
       return response.data.data;
     },
   });
