@@ -26,7 +26,7 @@ export const queryKeys = {
 
   // Staff
   staff: "staff",
-  
+
   // Complaints
   complaints: "complaints",
 
@@ -35,7 +35,7 @@ export const queryKeys = {
 
   // Courses
   courses: "courses",
-  
+
   // Referrals
   referrals: "referrals",
 
@@ -50,4 +50,10 @@ export const queryKeys = {
 
   // Orders
   orders: "orders",
+
+  // Approvals / Bank Transfers
+  approvals: "approvals",
+
+  // Referral Commissions
+  commissions: "commissions",
 };
