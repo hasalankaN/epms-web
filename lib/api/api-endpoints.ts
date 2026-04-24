@@ -168,5 +168,9 @@ export const API_ENDPOINTS = {
     OTHER_INCOME_LIST: `/api/v1/admin/finances/other-income`,
     OTHER_INCOME_CREATE: `/api/v1/admin/finances/other-income`,
     OTHER_INCOME_EXPORT: `/api/v1/admin/finances/other-income/export`,
+    PNL_SUMMARY: `/api/v1/admin/finances/pnl/summary`,
+    PNL_LIST: `/api/v1/admin/finances/pnl`,
+    PNL_DETAIL: (sourceType: string, id: string) => `/api/v1/admin/finances/pnl/${sourceType}/${id}`,
+    PNL_EXPORT: `/api/v1/admin/finances/pnl/export`,
   },
 };

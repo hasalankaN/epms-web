@@ -47,6 +47,7 @@ interface StaffPaymentHistoryModalProps {
 
 const labelClass =
   "text-[#0F172B] font-inter text-[16px] font-semibold leading-[24px]";
+
 const valueClass =
   "text-[#90A1B9] font-inter text-[14px] font-normal leading-[20px]";
 

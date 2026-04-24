@@ -91,6 +91,7 @@ export function FinanceTable({
       columns={columns}
       keyExtractor={(item) => item.id}
       isLoading={isLoading}
+      tableContainerClassName="overflow-auto"
       pagination={{
         variant: "simple",
         totalCount,

@@ -71,6 +71,7 @@ export function StaffReferralDetails({
 
   const totalCount = data.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
+
   const paginatedData = data.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
