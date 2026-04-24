@@ -45,23 +45,36 @@ interface StaffPaymentHistoryModalProps {
 
 // ─── Style helpers ────────────────────────────────────────────────────────────
 
-const labelClass = "text-[#0F172B] font-inter text-[16px] font-semibold leading-[24px]";
-const valueClass = "text-[#90A1B9] font-inter text-[14px] font-normal leading-[20px]";
+const labelClass =
+  "text-[#0F172B] font-inter text-[16px] font-semibold leading-[24px]";
+
+const valueClass =
+  "text-[#90A1B9] font-inter text-[14px] font-normal leading-[20px]";
 
 const STATUS_OPTIONS = [
-  { value: "Paid",    label: "Paid",    bg: "#DFFFF0", text: "#16A34A" },
+  { value: "Paid", label: "Paid", bg: "#DFFFF0", text: "#16A34A" },
   { value: "Pending", label: "Pending", bg: "#FFF7D7", text: "#F59E0B" },
 ];
 
 // ─── Pending Card ─────────────────────────────────────────────────────────────
 
-function PendingPaymentCard({ card, staffId }: { card: PendingCard; staffId: string }) {
+function PendingPaymentCard({
+  card,
+  staffId,
+}: {
+  card: PendingCard;
+  staffId: string;
+}) {
   const { mutate: markPaid, isPending } = useMarkCommissionPaid(staffId);
 
   return (
     <div
       className="w-full flex flex-col items-end gap-2 rounded-[8px] p-3"
-      style={{ border: "1px solid #E2E8F0", background: "#F8FAFC", boxShadow: "0 1px 2px 0 rgba(16,24,40,0.05)" }}
+      style={{
+        border: "1px solid #E2E8F0",
+        background: "#F8FAFC",
+        boxShadow: "0 1px 2px 0 rgba(16,24,40,0.05)",
+      }}
     >
       <div className="w-full flex flex-col gap-2">
         <div className="flex flex-col gap-0.5">
@@ -70,7 +83,9 @@ function PendingPaymentCard({ card, staffId }: { card: PendingCard; staffId: str
         </div>
         <div className="flex flex-col gap-0.5">
           <span className={labelClass}>Amount</span>
-          <span className={valueClass}>LKR {Number(card.amount).toFixed(2)}</span>
+          <span className={valueClass}>
+            LKR {Number(card.amount).toFixed(2)}
+          </span>
         </div>
         <div className="flex flex-col gap-0.5">
           <span className={labelClass}>Payment Status</span>
@@ -80,7 +95,10 @@ function PendingPaymentCard({ card, staffId }: { card: PendingCard; staffId: str
         </div>
       </div>
       <Button
-        className={cn(BUTTON_STYLES.primary.md, "text-white font-inter text-[14px] font-semibold leading-[20px]")}
+        className={cn(
+          BUTTON_STYLES.primary.md,
+          "text-white font-inter text-[14px] font-semibold leading-[20px]",
+        )}
         disabled={isPending}
         onClick={() => markPaid(card.commissionId)}
       >
@@ -96,7 +114,11 @@ function PaidPaymentCard({ card }: { card: PaidCard }) {
   return (
     <div
       className="w-full flex flex-col items-end gap-2 rounded-[8px] p-3"
-      style={{ border: "1px solid #E2E8F0", background: "#F8FAFC", boxShadow: "0 1px 2px 0 rgba(16,24,40,0.05)" }}
+      style={{
+        border: "1px solid #E2E8F0",
+        background: "#F8FAFC",
+        boxShadow: "0 1px 2px 0 rgba(16,24,40,0.05)",
+      }}
     >
       <div className="w-full grid grid-cols-2 gap-y-3 gap-x-4">
         <div className="flex flex-col gap-0.5">
@@ -111,7 +133,9 @@ function PaidPaymentCard({ card }: { card: PaidCard }) {
         </div>
         <div className="flex flex-col gap-0.5">
           <span className={labelClass}>Paid Amount</span>
-          <span className={valueClass}>LKR {Number(card.amount).toFixed(2)}</span>
+          <span className={valueClass}>
+            LKR {Number(card.amount).toFixed(2)}
+          </span>
         </div>
         <div className="flex flex-col gap-0.5">
           <span className={labelClass}>Paid Date</span>
@@ -128,7 +152,10 @@ function MonthDivider({ label }: { label: string }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="w-full h-[1px] bg-[#E2E8F0]" />
-      <span className="font-inter text-[14px] font-semibold leading-[20px]" style={{ color: "#314158" }}>
+      <span
+        className="font-inter text-[14px] font-semibold leading-[20px]"
+        style={{ color: "#314158" }}
+      >
         {label}
       </span>
     </div>
@@ -156,7 +183,9 @@ export function StaffPaymentHistoryModal({ isOpen, onClose, staffId }: StaffPaym
               kind: "paid",
               description: `${c.source_type} ${c.commission_type} Commission`,
               amount: c.amount_snapshot,
-              paidDate: c.paid_at ? format(new Date(c.paid_at), "yyyy/MM/dd") : "—",
+              paidDate: c.paid_at
+                ? format(new Date(c.paid_at), "yyyy/MM/dd")
+                : "—",
             }
           : {
               kind: "pending",
@@ -169,7 +198,10 @@ export function StaffPaymentHistoryModal({ isOpen, onClose, staffId }: StaffPaym
       map.get(monthKey)!.push(card);
     }
 
-    return Array.from(map.entries()).map(([monthLabel, cards]) => ({ monthLabel, cards }));
+    return Array.from(map.entries()).map(([monthLabel, cards]) => ({
+      monthLabel,
+      cards,
+    }));
   }, [staffData]);
 
   if (!isOpen) return null;
@@ -181,12 +213,21 @@ export function StaffPaymentHistoryModal({ isOpen, onClose, staffId }: StaffPaym
     >
       <div
         className="relative flex flex-col bg-white rounded-[12px] overflow-hidden"
-        style={{ width: "470px", maxHeight: "90vh", padding: "24px", gap: "16px", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.10), 0 8px 10px -6px rgba(0,0,0,0.10)" }}
+        style={{
+          width: "470px",
+          maxHeight: "90vh",
+          padding: "24px",
+          gap: "16px",
+          boxShadow:
+            "0 20px 25px -5px rgba(0,0,0,0.10), 0 8px 10px -6px rgba(0,0,0,0.10)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4 -mt-1 shrink-0">
-          <h2 className="text-lg font-semibold leading-[30px] text-[#0F172B]">Payment History</h2>
+          <h2 className="text-lg font-semibold leading-[30px] text-[#0F172B]">
+            Payment History
+          </h2>
           <button
             title="close"
             onClick={onClose}
@@ -199,16 +240,23 @@ export function StaffPaymentHistoryModal({ isOpen, onClose, staffId }: StaffPaym
         {/* Body */}
         <div className="flex flex-col gap-4 overflow-y-auto flex-1 pr-1">
           {isLoading && (
-            <p className="text-sm text-[#90A1B9] text-center py-8">Loading payment history…</p>
+            <p className="text-sm text-[#90A1B9] text-center py-8">
+              Loading payment history…
+            </p>
           )}
           {!isLoading && groups.length === 0 && (
-            <p className="text-sm text-[#90A1B9] text-center py-8">No payment history found.</p>
+            <p className="text-sm text-[#90A1B9] text-center py-8">
+              No payment history found.
+            </p>
           )}
           {!isLoading &&
             groups.map((group, gi) => (
               <React.Fragment key={gi}>
                 {gi === 0 ? (
-                  <span className="font-inter text-[14px] font-semibold leading-[20px]" style={{ color: "#314158" }}>
+                  <span
+                    className="font-inter text-[14px] font-semibold leading-[20px]"
+                    style={{ color: "#314158" }}
+                  >
                     {group.monthLabel}
                   </span>
                 ) : (
@@ -217,10 +265,14 @@ export function StaffPaymentHistoryModal({ isOpen, onClose, staffId }: StaffPaym
 
                 {group.cards.map((card, ci) =>
                   card.kind === "pending" ? (
-                    <PendingPaymentCard key={ci} card={card} staffId={staffId!} />
+                    <PendingPaymentCard
+                      key={ci}
+                      card={card}
+                      staffId={staffId!}
+                    />
                   ) : (
                     <PaidPaymentCard key={ci} card={card} />
-                  )
+                  ),
                 )}
               </React.Fragment>
             ))}

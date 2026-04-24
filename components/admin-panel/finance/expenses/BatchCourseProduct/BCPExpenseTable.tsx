@@ -14,6 +14,7 @@ export interface BCPExpenseData {
   branch: string;
   transactionVia: string;
   source?: string;
+  evidenceUrl?: string;
 }
 
 interface BCPExpenseTableProps {
@@ -21,6 +22,7 @@ interface BCPExpenseTableProps {
   currentPage: number;
   onPageChange: (page: number) => void;
   totalResults: number;
+  totalPages?: number;
   isLoading?: boolean;
   isError?: boolean;
 }
@@ -30,18 +32,13 @@ export function BCPExpenseTable({
   currentPage,
   onPageChange,
   totalResults,
+  totalPages: externalTotalPages,
   isLoading = false,
   isError = false,
 }: BCPExpenseTableProps) {
-  const itemsPerPage = 10;
   const tableData = useMemo(() => data || [], [data]);
-  const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
-
-  const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-
-    return tableData.slice(start, start + itemsPerPage);
-  }, [tableData, currentPage]);
+  const totalPages = externalTotalPages ?? Math.max(1, Math.ceil(totalResults / 20));
+  const paginatedData = tableData;
 
   const columns: Column<BCPExpenseData>[] = [
     {
@@ -84,10 +81,13 @@ export function BCPExpenseTable({
       header: "Evidence",
       accessorKey: "id",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[90px]",
-      cell: () => (
-        <button className="text-[12px] font-semibold text-[#E60076] hover:underline bg-transparent border-none p-0 cursor-pointer">
+      cell: (item) => item.evidenceUrl ? (
+        <a href={item.evidenceUrl} target="_blank" rel="noopener noreferrer"
+          className="text-[12px] font-semibold text-[#E60076] hover:underline">
           View
-        </button>
+        </a>
+      ) : (
+        <span className="text-[12px] text-[#CBD5E1]">—</span>
       ),
     },
   ];
@@ -99,6 +99,7 @@ export function BCPExpenseTable({
       keyExtractor={(item) => item.id}
       isLoading={isLoading}
       isError={isError}
+      tableContainerClassName="overflow-auto"
       pagination={{
         variant: "simple",
         totalCount: totalResults,

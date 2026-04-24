@@ -12,7 +12,8 @@ export default function ViewLecturerPage({ params }: { params: Promise<{ id: str
   const unwrappedParams = use(params);
   const lecturerId = unwrappedParams.id;
 
-  const { data: lecturer, isLoading } = useGetLecturerById(lecturerId);
+  const { data: detail, isLoading } = useGetLecturerById(lecturerId);
+  const lecturer = detail?.profile;
 
   return (
     <div className="space-y-6">
@@ -69,11 +70,17 @@ export default function ViewLecturerPage({ params }: { params: Promise<{ id: str
         )}
         
         <div className="mt-6">
-          <LecturerAssignedCourses />
+          <LecturerAssignedCourses
+            courses={detail?.assignedCourses ?? []}
+            isLoading={isLoading}
+          />
         </div>
 
         <div className="mt-6">
-          <LecturerAssignedBatches />
+          <LecturerAssignedBatches
+            batches={detail?.assignedBatches ?? []}
+            isLoading={isLoading}
+          />
         </div>
       </div>
     </div>

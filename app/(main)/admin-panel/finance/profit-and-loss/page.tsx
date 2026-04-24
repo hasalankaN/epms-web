@@ -1,28 +1,22 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+
+import { subDays, format } from "date-fns";
 
 import { ProfitLossStatsRow } from "@/components/admin-panel/finance/profit-and-loss/ProfitLossStatsRow";
 import { ProfitLossToolbar } from "@/components/admin-panel/finance/profit-and-loss/ProfitLossToolbar";
 import { ProfitLossTable } from "@/components/admin-panel/finance/profit-and-loss/ProfitLossTable";
-import type { ProfitLossTableDataType } from "@/components/admin-panel/finance/profit-and-loss/ProfitLossTable";
+import {
+  useGetPnlSummary,
+  useGetPnlList,
+} from "@/hooks/api/finances/useGetPnlData";
+import type { PnlStatus } from "@/hooks/api/finances/useGetPnlData";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
-const rawMockData: ProfitLossTableDataType[] = Array.from({ length: 45 }).map((_, i) => {
-  const isBatch = i % 3 === 0;
-  const isCourse = i % 3 === 1;
-  const income = Math.floor(Math.random() * 500000) + 50000;
-  const expenses = Math.floor(Math.random() * 400000) + 10000;
-
-  return {
-    id: `PL-${i + 1}`,
-    description: isBatch ? `Batch Name ${i + 1}` : isCourse ? `Course Name ${i + 1}` : `Product Name ${i + 1}`,
-    totalIncome: income,
-    totalExpenses: expenses,
-    status: income > expenses ? "Profited" : "Loss",
-  };
-});
+const PAGE_SIZE = 20;
 
 export default function ProfitAndLossPage() {
   const router = useRouter();
@@ -32,43 +26,120 @@ export default function ProfitAndLossPage() {
   const pageParam = searchParams.get("page");
   const currentPage = pageParam ? parseInt(pageParam) : 1;
 
-  const handlePageChange = useCallback((page: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    
-    params.set("page", page.toString());
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [searchParams, pathname, router]);
+  const handlePageChange = useCallback(
+    (page: number) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      params.set("page", page.toString());
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, pathname, router],
+  );
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState<string | null>(null);
+  const [dateTo, setDateTo] = useState<string | null>(null);
 
-  // Apply filters
-  const filteredData = rawMockData.filter((item) => {
-    const matchesSearch = item.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter ? item.status === statusFilter : true;
+  // Default date range: last 30 days when no custom range set
+  const effectiveDateFrom =
+    dateFrom ?? format(subDays(new Date(), 30), "yyyy-MM-dd");
 
-    return matchesSearch && matchesStatus;
-  });
+  const effectiveDateTo = dateTo ?? format(new Date(), "yyyy-MM-dd");
+
+  const apiStatus: PnlStatus | undefined =
+    statusFilter === "Profited"
+      ? "PROFIT"
+      : statusFilter === "Loss"
+        ? "LOSS"
+        : undefined;
+
+  const summaryParams = {
+    date_from: effectiveDateFrom,
+    date_to: effectiveDateTo,
+    ...(apiStatus ? { status: apiStatus } : {}),
+  };
+
+  const listParams = {
+    date_from: effectiveDateFrom,
+    date_to: effectiveDateTo,
+    ...(apiStatus ? { status: apiStatus } : {}),
+    page: currentPage,
+    size: PAGE_SIZE,
+  };
+
+  const { data: summary, isLoading: summaryLoading } =
+    useGetPnlSummary(summaryParams);
+
+  const {
+    data: listData,
+    isLoading: listLoading,
+    isError: listError,
+  } = useGetPnlList(listParams);
+
+  const allRows = listData?.data ?? [];
+
+  const totalCount = listData?.meta.total ?? 0;
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  // Client-side search filter on top of API results
+  const filteredRows = useMemo(() => {
+    if (!searchQuery) return allRows;
+    const q = searchQuery.toLowerCase();
+
+    return allRows.filter((r) => r.source_name.toLowerCase().includes(q));
+  }, [allRows, searchQuery]);
+
+  const handleClearFilters = useCallback(() => {
+    setSearchQuery("");
+    setStatusFilter(null);
+    setDateFrom(null);
+    setDateTo(null);
+  }, []);
+
+  const handleExportCsv = useCallback(() => {
+    const params = new URLSearchParams({
+      date_from: effectiveDateFrom,
+      date_to: effectiveDateTo,
+      ...(apiStatus ? { status: apiStatus } : {}),
+    });
+
+    window.open(
+      `${API_ENDPOINTS.finances.PNL_EXPORT}?${params.toString()}`,
+      "_blank",
+    );
+  }, [effectiveDateFrom, effectiveDateTo, apiStatus]);
 
   return (
     <div className="space-y-3 p-4 md:p-6 w-full">
       <div className="flex w-full flex-col pb-10">
-        <ProfitLossStatsRow />
-        
+        <ProfitLossStatsRow summary={summary} isLoading={summaryLoading} />
+
         <div className="mt-6 flex w-full flex-col space-y-4">
-          <ProfitLossToolbar 
+          <ProfitLossToolbar
             search={searchQuery}
             onSearchChange={setSearchQuery}
             statusFilter={statusFilter}
-            onStatusFilterChange={(val: string | null) => setStatusFilter(val)}
-            onClearFilters={() => {
-              setSearchQuery("");
-              setStatusFilter(null);
+            onStatusFilterChange={(val) => {
+              setStatusFilter(val);
+              handlePageChange(1);
             }}
+            onClearFilters={handleClearFilters}
+            onDateRangeChange={(from, to) => {
+              setDateFrom(from);
+              setDateTo(to);
+              handlePageChange(1);
+            }}
+            onExportCsv={handleExportCsv}
           />
           <ProfitLossTable
-            data={filteredData}
+            data={filteredRows}
+            isLoading={listLoading}
+            isError={listError}
             currentPage={currentPage}
+            totalCount={filteredRows.length}
+            totalPages={totalPages}
             onPageChange={handlePageChange}
           />
         </div>

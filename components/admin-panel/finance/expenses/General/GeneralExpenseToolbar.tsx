@@ -48,6 +48,7 @@ interface GeneralExpenseToolbarProps {
     dateFrom?: string;
     dateTo?: string;
   };
+  onExport?: () => void;
 }
 
 export function GeneralExpenseToolbar({
@@ -56,6 +57,7 @@ export function GeneralExpenseToolbar({
   onApplyFilters,
   onClearFilters,
   activeUrlFilters,
+  onExport,
 }: GeneralExpenseToolbarProps) {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
 
@@ -141,7 +143,7 @@ export function GeneralExpenseToolbar({
               label="Filter Option"
               className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
             />
-            <button className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}>
+            <button onClick={() => onExport?.()} className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}>
               <i className="file-csv h-4 w-4" />
               Export CSV
             </button>
@@ -209,7 +211,7 @@ export function GeneralExpenseToolbar({
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-[160px]">
-                  <DropdownMenuItem onClick={() => console.log("Export CSV")} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
+                  <DropdownMenuItem onClick={() => onExport?.()} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
                     <i className="file-csv mr-2 h-4 w-4" />
                     Export CSV
                   </DropdownMenuItem>

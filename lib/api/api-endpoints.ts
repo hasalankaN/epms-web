@@ -24,8 +24,10 @@ export const API_ENDPOINTS = {
     GET_ALL: `/api/v1/admin/product-categories`,
     CREATE: `/api/v1/admin/product-categories`,
     UPDATE: (id: string) => `/api/v1/admin/product-categories/${id}`,
-    TOGGLE_STATUS: (id: string) => `/api/v1/admin/product-categories/${id}/toggle-status`,
-    GET_PRODUCTS: (id: string) => `/api/v1/admin/product-categories/${id}/products`,
+    TOGGLE_STATUS: (id: string) =>
+      `/api/v1/admin/product-categories/${id}/toggle-status`,
+    GET_PRODUCTS: (id: string) =>
+      `/api/v1/admin/product-categories/${id}/products`,
   },
   files: {
     UPLOAD: `/api/v1/files/upload`,
@@ -36,6 +38,8 @@ export const API_ENDPOINTS = {
     GET_BY_ID: (id: string) => `/api/v1/admin/lecturers/${id}`,
     UPDATE: (id: string) => `/api/v1/admin/lecturers/${id}`,
     UPDATE_STATUS: (id: string) => `/api/v1/admin/lecturers/${id}/status`,
+    RECORD_SALARY_PAYMENT: (id: string) =>
+      `/api/v1/admin/lecturers/${id}/salary-payments`,
   },
   certificateTemplates: {
     GET_ALL: `/api/v1/admin/certificate-templates`,
@@ -78,7 +82,8 @@ export const API_ENDPOINTS = {
     UPDATE_PRIVILEGES: (id: string) => `/api/v1/admin/staff/${id}/privileges`,
     GET_ASSIGNED_COURSES: (id: string) => `/api/v1/admin/staff/${id}/courses`,
     GET_ASSIGNED_BATCHES: (id: string) => `/api/v1/admin/staff/${id}/batches`,
-    MARK_COMMISSION_PAID: (commissionId: string) => `/api/v1/admin/staff/commissions/${commissionId}/pay`,
+    MARK_COMMISSION_PAID: (commissionId: string) =>
+      `/api/v1/admin/staff/commissions/${commissionId}/pay`,
   },
   complaints: {
     GET_ALL: `/api/v1/admin/complaints`,
@@ -176,5 +181,30 @@ export const API_ENDPOINTS = {
     BULK_UPDATE_STATUS: `/api/v1/admin/orders/bulk/status`,
     UPDATE_STATUS: (id: string) => `/api/v1/admin/orders/${id}/status`,
     EXPORT_ADDRESSES: `/api/v1/admin/orders/export/addresses`,
+  },
+  finances: {
+    OVERVIEW_SUMMARY: `/api/v1/admin/finances/overview/summary`,
+    OVERVIEW_GRAPH: `/api/v1/admin/finances/overview/graph`,
+    OVERVIEW_TABLE: `/api/v1/admin/finances/overview/table`,
+    OVERVIEW_EXPORT: `/api/v1/admin/finances/overview/export`,
+    INCOME_SUMMARY: `/api/v1/admin/finances/income/summary`,
+    INCOME_LEDGER: `/api/v1/admin/finances/income`,
+    INCOME_EXPORT: `/api/v1/admin/finances/income/export`,
+    OTHER_INCOME_LIST: `/api/v1/admin/finances/other-income`,
+    OTHER_INCOME_CREATE: `/api/v1/admin/finances/other-income`,
+    OTHER_INCOME_EXPORT: `/api/v1/admin/finances/other-income/export`,
+    PNL_SUMMARY: `/api/v1/admin/finances/pnl/summary`,
+    PNL_LIST: `/api/v1/admin/finances/pnl`,
+    PNL_DETAIL: (sourceType: string, id: string) =>
+      `/api/v1/admin/finances/pnl/${sourceType}/${id}`,
+    PNL_EXPORT: `/api/v1/admin/finances/pnl/export`,
+    EXPENSES_LIST: `/api/v1/admin/finances/expenses`,
+    EXPENSES_CREATE: `/api/v1/admin/finances/expenses`,
+    EXPENSES_EXPORT: `/api/v1/admin/finances/expenses/export`,
+    SOURCE_WISE_SUMMARY: `/api/v1/admin/finances/source-wise/summary`,
+    SOURCE_WISE_DETAIL: (via: string) =>
+      `/api/v1/admin/finances/source-wise/detail/${via}`,
+    SOURCE_WISE_EXPORT: (via: string) =>
+      `/api/v1/admin/finances/source-wise/export/${via}`,
   },
 };

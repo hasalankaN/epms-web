@@ -33,6 +33,7 @@ import { DateRangeCalendar } from "@/components/common/filters/DateRangeCalendar
 import { cn } from "@/lib/utils";
 import { AUTH_TYPOGRAPHY, AUTH_INPUT, BUTTON_STYLES } from "@/lib/constants/theme";
 import { useGetBranches } from "@/hooks/api/branches/useGetBranches";
+import { useCreateOtherIncome } from "@/hooks/api/finances/useCreateOtherIncome";
 
 // ===== SCHEMA =====
 
@@ -111,6 +112,8 @@ export function AddIncomePanel({ isOpen, onClose }: AddIncomePanelProps) {
   const { data: branchesData } = useGetBranches({ size: 100 });
   const branches = branchesData?.results || [];
 
+  const { mutateAsync: createOtherIncome } = useCreateOtherIncome();
+
   const [showDiscardModal, setShowDiscardModal] = useState(false);
   const [evidenceUrl, setEvidenceUrl] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -159,11 +162,16 @@ export function AddIncomePanel({ isOpen, onClose }: AddIncomePanelProps) {
     setIsSubmitting(true);
 
     try {
-      console.log("Submitting Income:", { ...values, evidence: evidenceUrl });
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await createOtherIncome({
+        transaction_date: values.transaction_date?.toISOString(),
+        description: values.description,
+        amount: values.transaction_amount,
+        transaction_via: values.transaction_via,
+        branch_id: values.branch_id,
+        evidence_url: evidenceUrl || undefined,
+      });
       reset();
+      setEvidenceUrl("");
       onClose();
     } catch (error) {
       console.error(error);

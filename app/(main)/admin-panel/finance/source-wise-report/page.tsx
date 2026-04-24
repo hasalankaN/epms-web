@@ -1,23 +1,16 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 import { SourceWiseToolbar } from "@/components/admin-panel/finance/source-wise-report/SourceWiseToolbar";
 import { SourceWiseTable } from "@/components/admin-panel/finance/source-wise-report/SourceWiseTable";
-import type { SourceWiseData } from "@/components/admin-panel/finance/source-wise-report/SourceWiseTable";
-
-const TRANSACTION_SOURCES = ["BOC", "Cash", "Peoples"] as const;
-
-const mockData: SourceWiseData[] = TRANSACTION_SOURCES.flatMap((source, sIdx) =>
-  Array.from({ length: 15 }).map((_, i) => ({
-    id: `SW-${sIdx}-${i + 1}`,
-    transactionSource: source,
-    totalIncome: "X,XXX.00",
-    totalExpenses: "X,XXX.00",
-  }))
-);
+import {
+  useGetSourceWiseSummary,
+  FILTER_KEY_TO_VIA,
+  PAYMENT_VIA_LABELS,
+} from "@/hooks/api/finances/useGetSourceWise";
 
 export default function SourceWiseReportPage() {
   const router = useRouter();
@@ -27,83 +20,147 @@ export default function SourceWiseReportPage() {
   const pageParam = searchParams.get("page");
   const currentPage = pageParam ? parseInt(pageParam) : 1;
 
-  const handlePageChange = useCallback((page: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    params.set("page", page.toString());
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [searchParams, pathname, router]);
-
   const search = searchParams.get("search") || "";
-  const transactionSource = searchParams.get("transactionSource") || undefined;
+
+  const transactionSourceParam =
+    searchParams.get("transactionSource") || undefined;
+
   const dateFrom = searchParams.get("dateFrom") || undefined;
   const dateTo = searchParams.get("dateTo") || undefined;
 
-  const activeUrlFilters = { transactionSource, dateFrom, dateTo };
+  const activeUrlFilters = {
+    transactionSource: transactionSourceParam,
+    dateFrom,
+    dateTo,
+  };
+
+  // Convert filter chip keys (e.g. "cash,boc") to backend enum values (["CASH","BOC"])
+  const paymentViaFilter = useMemo(() => {
+    if (!transactionSourceParam) return undefined;
+
+    return transactionSourceParam
+      .split(",")
+      .map((k) => FILTER_KEY_TO_VIA[k.toLowerCase()])
+      .filter(Boolean);
+  }, [transactionSourceParam]);
+
+  const { data, isLoading, isError } = useGetSourceWiseSummary({
+    payment_via:
+      paymentViaFilter && paymentViaFilter.length > 0
+        ? paymentViaFilter
+        : undefined,
+    date_from: dateFrom,
+    date_to: dateTo,
+    page: 1,
+    size: 200,
+  });
+
+  // Map API rows to table rows, applying client-side search on the display label
+  const tableData = useMemo(() => {
+    const rows = (data?.data ?? []).map((item) => ({
+      transaction_via: item.transaction_via,
+      transactionSource:
+        PAYMENT_VIA_LABELS[item.transaction_via] ?? item.transaction_via,
+      totalIncome: Number(item.total_income ?? 0).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+      totalExpenses: Number(item.total_expense ?? 0).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    }));
+
+    if (!search) return rows;
+    const lower = search.toLowerCase();
+
+    return rows.filter((r) =>
+      r.transactionSource.toLowerCase().includes(lower),
+    );
+  }, [data, search]);
+
+  const totalResults = tableData.length;
 
   const updateParams = useCallback(
     (updates: Record<string, string | null>) => {
       const params = new URLSearchParams(searchParams.toString());
 
       Object.entries(updates).forEach(([key, value]) => {
-        if (value === null) {
-          params.delete(key);
-        } else {
-          params.set(key, value);
-        }
+        if (value === null) params.delete(key);
+        else params.set(key, value);
       });
-     
-      // Reset page when filters change
       params.set("page", "1");
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
-    [router, pathname, searchParams]
+    [router, pathname, searchParams],
   );
 
-  const handleSearchChange = (value: string) => {
-    updateParams({ search: value || null });
-  };
+  const handlePageChange = useCallback(
+    (page: number) => {
+      const params = new URLSearchParams(searchParams.toString());
 
-  const handleApplyFilters = (filters: Record<string, string | null>) => {
-    updateParams(filters);
-  };
+      params.set("page", page.toString());
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, pathname, router],
+  );
 
-  const handleClearFilters = () => {
-    updateParams({ search: null, transactionSource: null, dateFrom: null, dateTo: null });
-  };
+  const handleExportCSV = useCallback(() => {
+    const headers = ["Transaction Source", "Total Income", "Total Expenses"];
 
-  const filteredData = mockData.filter((item) => {
-    const matchesSearch =
-      !search ||
-      item.transactionSource.toLowerCase().includes(search.toLowerCase());
+    const rows = tableData.map((r) => [
+      r.transactionSource,
+      r.totalIncome,
+      r.totalExpenses,
+    ]);
 
-    const matchesSource =
-      !transactionSource ||
-      transactionSource
-        .split(",")
-        .some((s) => s.toLowerCase() === item.transactionSource.toLowerCase());
+    const csv = [headers, ...rows]
+      .map((row) =>
+        row.map((v) => `"${String(v).replace(/"/g, "'")}"`).join(","),
+      )
+      .join("\n");
 
-    return matchesSearch && matchesSource;
-  });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.setAttribute("download", "source-wise-report.csv");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, [tableData]);
 
   return (
     <div className="space-y-3 p-4 md:p-6 w-full">
       <div className="flex w-full flex-col gap-4 pb-10">
         <SourceWiseToolbar
           search={search}
-          onSearchChange={handleSearchChange}
-          onApplyFilters={handleApplyFilters}
-          onClearFilters={handleClearFilters}
+          onSearchChange={(value) => updateParams({ search: value || null })}
+          onApplyFilters={(filters) => updateParams(filters)}
+          onClearFilters={() =>
+            updateParams({
+              search: null,
+              transactionSource: null,
+              dateFrom: null,
+              dateTo: null,
+            })
+          }
+          onExportCSV={handleExportCSV}
           activeUrlFilters={activeUrlFilters}
         />
         <SourceWiseTable
-          data={filteredData}
+          data={tableData}
           currentPage={currentPage}
           onPageChange={handlePageChange}
-          totalResults={filteredData.length}
+          totalResults={totalResults}
+          isLoading={isLoading}
+          isError={isError}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
         />
       </div>
     </div>
-
   );
 }

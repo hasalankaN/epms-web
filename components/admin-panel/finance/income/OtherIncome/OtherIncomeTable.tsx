@@ -12,6 +12,7 @@ export interface OtherIncomeData {
   branch: string;
   transactionVia: string;
   amount: string;
+  evidenceUrl?: string;
 }
 
 interface OtherIncomeTableProps {
@@ -40,7 +41,7 @@ export function OtherIncomeTable({
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
 
   const handleViewEvidence = (item: OtherIncomeData) => {
-    console.log(`View Evidence for`, item);
+    if (item.evidenceUrl) window.open(item.evidenceUrl, "_blank", "noopener,noreferrer");
   };
 
   const columns: Column<OtherIncomeData>[] = [
@@ -80,7 +81,8 @@ export function OtherIncomeTable({
       cell: (item) => (
         <button
           onClick={() => handleViewEvidence(item)}
-          className="text-[12px] font-semibold text-[#E60076] hover:underline whitespace-nowrap bg-transparent border-none p-0 cursor-pointer"
+          disabled={!item.evidenceUrl}
+          className="text-[12px] font-semibold text-[#E60076] hover:underline whitespace-nowrap bg-transparent border-none p-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
           View
         </button>
