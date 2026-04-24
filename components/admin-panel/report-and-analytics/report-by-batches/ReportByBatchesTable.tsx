@@ -52,44 +52,41 @@ export function ReportByBatchesTable({
     return filteredData.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredData, currentPage, itemsPerPage]);
 
-  const formatCurrency = (val: number) => {
-    return `${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formatCurrency = (val: number | null) => {
+    if (val === null) return "N/A";
+    
+    return val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
-
-  const formatLargeCurrency = (val: number) => {
-      // Just returning simple string as per design "X,XXX.00"
-      return `${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  }
 
   const columns: Column<ReportByBatchesDataType>[] = [
     {
       header: "Batch Name",
       accessorKey: "batchName",
-      className: "px-4 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[200px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{item.batchName}</div>,
+      className: "px-4 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap",
+      cell: (item) => <div className="text-[11px] font-medium text-[#45556C]">{item.batchName}</div>,
     },
     {
       header: "Branch",
       accessorKey: "branch",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{item.branch}</div>,
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap",
+      cell: (item) => <div className="text-[11px] font-medium text-[#45556C]">{item.branch}</div>,
     },
     {
       header: "Total Amount to Collect",
       accessorKey: "totalAmountToCollect",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[180px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{formatLargeCurrency(item.totalAmountToCollect)}</div>,
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap",
+      cell: (item) => <div className="text-[11px] font-medium text-[#45556C]">{formatCurrency(item.totalAmountToCollect)}</div>,
     },
     {
       header: "Total Pending Payment",
       accessorKey: "totalPendingPayment",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[180px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{formatCurrency(item.totalPendingPayment)}</div>,
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap",
+      cell: (item) => <div className="text-[11px] font-medium text-[#45556C]">{formatCurrency(item.totalPendingPayment)}</div>,
     },
     {
       header: "Total Payment Status",
       accessorKey: "status",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[180px]",
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap",
       cell: (item) => {
         const options = Object.entries(STATUS_CONFIG).map(([status, config]) => ({
           value: status,
@@ -108,25 +105,23 @@ export function ReportByBatchesTable({
     },
     {
       header: "Action",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[100px]",
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap",
       cell: (item) => (
-        <div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4 text-[#64748B]" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[160px]">
-              <DropdownMenuItem onClick={() => console.log("View", item)} className="cursor-pointer focus:bg-[#FDF2F8]">
-                <span className="text-[#45556C] font-medium text-[13px]">View</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => console.log("Export CSV", item)} className="cursor-pointer focus:bg-[#FDF2F8]">
-                <span className="text-[#45556C] font-medium text-[13px]">Export CSV</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreVertical className="h-4 w-4 text-[#64748B]" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[160px]">
+            <DropdownMenuItem onClick={() => console.log("View", item)} className="cursor-pointer focus:bg-[#FDF2F8]">
+              <span className="text-[#45556C] font-medium text-[13px]">View</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => console.log("Export CSV", item)} className="cursor-pointer focus:bg-[#FDF2F8]">
+              <span className="text-[#45556C] font-medium text-[13px]">Export CSV</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ),
     },
   ];

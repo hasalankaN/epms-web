@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useState } from "react";
+
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 import { ReportByCoursesTopBar } from "@/components/admin-panel/report-and-analytics/report-by-courses/ReportByCoursesTopBar";
@@ -97,12 +98,14 @@ export default function ReportByCoursesPage() {
 
   const handlePageChange = useCallback((page: number) => {
     const params = new URLSearchParams(searchParams.toString());
+
     params.set("page", page.toString());
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, pathname, router]);
 
   const handleTabChange = useCallback((tab: string) => {
     const params = new URLSearchParams(searchParams.toString());
+
     params.set("tab", tab);
     params.set("page", "1");
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
@@ -119,6 +122,7 @@ export default function ReportByCoursesPage() {
 
   // Extra filter configurations based on active tab
   let extraFilter: any = undefined;
+
   if (activeTab === "commission") {
     extraFilter = {
       type: "dropdown",
