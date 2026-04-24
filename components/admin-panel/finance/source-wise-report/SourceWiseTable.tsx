@@ -19,23 +19,11 @@ import { TransactionReportModal } from "./TransactionReportModal";
 // ===== TYPES =====
 
 export interface SourceWiseData {
-  id: string;
+  transaction_via: string;
   transactionSource: string;
   totalIncome: string;
   totalExpenses: string;
 }
-
-// ===== MOCK REPORT DATA for modal =====
-
-export const mockIncomeItems = [
-  { id: "1", date: "2026/01/21", description: "Lorem ipsum", batchCourseProduct: "Course", amount: "XXXX.00" },
-  { id: "2", date: "2026/01/21", description: "Lorrem ipsum", batchCourseProduct: "Product", amount: "XXXX.00" },
-];
-
-export const mockExpenseItems = [
-  { id: "1", date: "2026/01/21", description: "Lorem ipsum", batchCourseProduct: "Product", amount: "XXXX.00" },
-  { id: "2", date: "2026/01/21", description: "Lorrem ipsum", batchCourseProduct: "Product", amount: "XXXX.00" },
-];
 
 // ===== TABLE COMPONENT =====
 
@@ -46,6 +34,8 @@ interface SourceWiseTableProps {
   totalResults: number;
   isLoading?: boolean;
   isError?: boolean;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 export function SourceWiseTable({
@@ -55,6 +45,8 @@ export function SourceWiseTable({
   totalResults,
   isLoading = false,
   isError = false,
+  dateFrom,
+  dateTo,
 }: SourceWiseTableProps) {
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<SourceWiseData | null>(null);
@@ -66,7 +58,8 @@ export function SourceWiseTable({
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
 
-    return tableData.slice(start, start + itemsPerPage);
+    
+return tableData.slice(start, start + itemsPerPage);
   }, [tableData, currentPage]);
 
   const handleViewReport = (row: SourceWiseData) => {
@@ -101,7 +94,7 @@ export function SourceWiseTable({
     },
     {
       header: "Action",
-      accessorKey: "id",
+      accessorKey: "transaction_via",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] text-center w-[80px]",
       cell: (item) => (
         <div className="flex justify-center">
@@ -130,7 +123,7 @@ export function SourceWiseTable({
       <DataTable
         data={paginatedData}
         columns={columns}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.transaction_via}
         isLoading={isLoading}
         isError={isError}
         pagination={{
@@ -151,12 +144,9 @@ export function SourceWiseTable({
             setSelectedRow(null);
           }}
           transactionSource={selectedRow.transactionSource}
-          openingCash=""
-          incomeItems={mockIncomeItems}
-          incomeTotal="+XXXX.00"
-          expenseItems={mockExpenseItems}
-          expenseTotal="-XXXX.00"
-          balance="+XXX.00"
+          transactionVia={selectedRow.transaction_via}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
         />
       )}
     </>

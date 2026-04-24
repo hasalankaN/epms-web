@@ -1,28 +1,18 @@
 "use client";
 
-import React from "react";
+import React, { useCallback } from "react";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+
+import { format } from "date-fns";
 
 import { BCPExpenseToolbar } from "./BCPExpenseToolbar";
 import { BCPExpenseTable } from "./BCPExpenseTable";
 import type { BCPExpenseData } from "./BCPExpenseTable";
+import { useGetExpenses } from "@/hooks/api/finances/useGetExpenses";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
-const mockBCPData: BCPExpenseData[] = Array.from({ length: 45 }).map((_, i) => {
-  const sourceTypes = ["Batch Name", "Course Name", "Products Name"] as const;
-  const transactionVias = ["BOC", "Cash", "Peoples"] as const;
-
-  return {
-    id: `BCP-${i + 1}`,
-    date: `2026/01/${String((i % 28) + 1).padStart(2, "0")}`,
-    expenseDescription: "Lorem ipsum",
-    batchCourseProductName: sourceTypes[i % 3],
-    amount: "X,XXX.00",
-    branch: "Branch Name",
-    transactionVia: transactionVias[i % 3],
-    source: sourceTypes[i % 3].split(" ")[0].toLowerCase(),
-  };
-});
+const PAGE_SIZE = 20;
 
 export function BCPExpenseTab() {
   const router = useRouter();
@@ -32,6 +22,23 @@ export function BCPExpenseTab() {
   const pageParam = searchParams.get("page");
   const currentPage = pageParam ? parseInt(pageParam) : 1;
 
+  const search = searchParams.get("search") || "";
+  const source = (searchParams.get("source") || undefined) as "BATCH" | "COURSE" | "PRODUCT" | undefined;
+  const transactionVia = searchParams.get("transactionVia") || undefined;
+  const dateFrom = searchParams.get("dateFrom") || undefined;
+  const dateTo = searchParams.get("dateTo") || undefined;
+
+  const updateParams = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null) params.delete(key);
+      else params.set(key, value);
+    });
+    params.set("page", "1");
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [searchParams, pathname, router]);
+
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
 
@@ -39,64 +46,57 @@ export function BCPExpenseTab() {
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  const search = searchParams.get("search") || "";
-  const source = searchParams.get("source") || undefined;
-  const transactionVia = searchParams.get("transactionVia") || undefined;
-  const dateFrom = searchParams.get("dateFrom") || undefined;
-  const dateTo = searchParams.get("dateTo") || undefined;
-
-  const activeUrlFilters = { source, transactionVia, dateFrom, dateTo };
-
-  const updateParams = (updates: Record<string, string | null>) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value === null) {
-        params.delete(key);
-      } else {
-        params.set(key, value);
-      }
-    });
-    
-    // Reset page when filters change
-    params.set("page", "1");
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  };
-
-  const handleSearchChange = (value: string) => {
-    updateParams({ search: value || null });
-  };
-
-  const handleApplyFilters = (filters: Record<string, string | null>) => {
-    updateParams(filters);
-  };
-
-  const handleClearFilters = () => {
-    updateParams({ search: null, source: null, transactionVia: null, dateFrom: null, dateTo: null });
-  };
-
-  const filteredData = mockBCPData.filter((item) => {
-    const matchesSearch = !search || item.batchCourseProductName.toLowerCase().includes(search.toLowerCase()) || item.expenseDescription.toLowerCase().includes(search.toLowerCase());
-    const matchesSource = !source || item.source === source;
-    const matchesVia = !transactionVia || item.transactionVia.toLowerCase() === transactionVia.toLowerCase();
-
-    return matchesSearch && matchesSource && matchesVia;
+  const { data, isLoading, isError } = useGetExpenses({
+    related_entity_type: (source as "BATCH" | "COURSE" | "PRODUCT") ?? "BATCH",
+    date_from: dateFrom,
+    date_to: dateTo,
+    transaction_via: transactionVia,
+    search: search || undefined,
+    page: currentPage,
+    size: PAGE_SIZE,
   });
+
+  const rows: BCPExpenseData[] = (data?.results ?? []).map((r) => ({
+    id: r.id,
+    date: r.date ? format(new Date(r.date), "yyyy/MM/dd") : "—",
+    expenseDescription: r.description,
+    batchCourseProductName: r.related_entity_name ?? r.related_entity_type,
+    amount: `LKR ${Number(r.amount).toLocaleString("en-LK", { minimumFractionDigits: 2 })}`,
+    branch: "—",
+    transactionVia: r.transaction_via,
+    source: r.related_entity_type.toLowerCase(),
+  }));
+
+  const handleExport = () => {
+    const params = new URLSearchParams({
+      related_entity_type: source ?? "BATCH",
+      ...(dateFrom ? { date_from: dateFrom } : {}),
+      ...(dateTo ? { date_to: dateTo } : {}),
+      ...(transactionVia ? { transaction_via: transactionVia } : {}),
+      ...(search ? { search } : {}),
+    });
+
+    window.open(`${API_ENDPOINTS.finances.EXPENSES_EXPORT}?${params.toString()}`, "_blank");
+  };
 
   return (
     <div className="mt-4 flex w-full flex-col space-y-4">
       <BCPExpenseToolbar
         search={search}
-        onSearchChange={handleSearchChange}
-        onApplyFilters={handleApplyFilters}
-        onClearFilters={handleClearFilters}
-        activeUrlFilters={activeUrlFilters}
+        onSearchChange={(v) => updateParams({ search: v || null })}
+        onApplyFilters={(filters) => updateParams(filters)}
+        onClearFilters={() => updateParams({ search: null, source: null, transactionVia: null, dateFrom: null, dateTo: null })}
+        activeUrlFilters={{ source, transactionVia, dateFrom, dateTo }}
+        onExport={handleExport}
       />
       <BCPExpenseTable
-        data={filteredData}
+        data={rows}
         currentPage={currentPage}
         onPageChange={handlePageChange}
-        totalResults={filteredData.length}
+        totalResults={data?.totalResults ?? 0}
+        totalPages={data?.totalPages ?? 1}
+        isLoading={isLoading}
+        isError={isError}
       />
     </div>
   );

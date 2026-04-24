@@ -14,10 +14,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import type { FilterCategory, FilterSelections } from "@/components/common/filters/FilterModal";
-import { FilterModal, FilterModalTrigger } from "@/components/common/filters/FilterModal";
+import type {
+  FilterCategory,
+  FilterSelections,
+} from "@/components/common/filters/FilterModal";
+import {
+  FilterModal,
+  FilterModalTrigger,
+} from "@/components/common/filters/FilterModal";
 
-const buttonTextStyles = "text-[14px] font-semibold leading-[20px] text-[#0F172B]";
+const buttonTextStyles =
+  "text-[14px] font-semibold leading-[20px] text-[#0F172B]";
 
 const sourceWiseFilterCategories: FilterCategory[] = [
   {
@@ -43,6 +50,7 @@ interface SourceWiseToolbarProps {
   onSearchChange: (value: string) => void;
   onApplyFilters: (filters: Record<string, string | null>) => void;
   onClearFilters: () => void;
+  onExportCSV: () => void;
   activeUrlFilters: {
     transactionSource?: string;
     dateFrom?: string;
@@ -55,6 +63,7 @@ export function SourceWiseToolbar({
   onSearchChange,
   onApplyFilters,
   onClearFilters,
+  onExportCSV,
   activeUrlFilters,
 }: SourceWiseToolbarProps) {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
@@ -63,12 +72,15 @@ export function SourceWiseToolbar({
     const selections: FilterSelections = {};
 
     if (activeUrlFilters.transactionSource) {
-      selections.transactionSource = activeUrlFilters.transactionSource.split(",");
+      selections.transactionSource =
+        activeUrlFilters.transactionSource.split(",");
     }
 
     if (activeUrlFilters.dateFrom || activeUrlFilters.dateTo) {
       selections.date = {
-        start: activeUrlFilters.dateFrom ? new Date(activeUrlFilters.dateFrom) : null,
+        start: activeUrlFilters.dateFrom
+          ? new Date(activeUrlFilters.dateFrom)
+          : null,
         end: activeUrlFilters.dateTo ? new Date(activeUrlFilters.dateTo) : null,
       };
     }
@@ -89,7 +101,10 @@ export function SourceWiseToolbar({
         dateTo: null,
       };
 
-      if (Array.isArray(selections.transactionSource) && selections.transactionSource.length) {
+      if (
+        Array.isArray(selections.transactionSource) &&
+        selections.transactionSource.length
+      ) {
         updates.transactionSource = selections.transactionSource.join(",");
       }
 
@@ -109,7 +124,7 @@ export function SourceWiseToolbar({
 
       onApplyFilters(updates);
     },
-    [onApplyFilters]
+    [onApplyFilters],
   );
 
   const searchInput = (placeholder: string, className?: string) => (
@@ -120,7 +135,11 @@ export function SourceWiseToolbar({
         placeholder={placeholder}
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
-        className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "w-full border border-[#E2E8F0] pl-10 pr-4")}
+        className={cn(
+          AUTH_INPUT.base,
+          AUTH_INPUT.placeholder,
+          "w-full border border-[#E2E8F0] pl-10 pr-4",
+        )}
       />
     </div>
   );
@@ -137,7 +156,10 @@ export function SourceWiseToolbar({
               <button
                 type="button"
                 onClick={onClearFilters}
-                className={cn(BUTTON_STYLES.outline.md, "border-dashed text-[#64748B] hover:text-[#0F172B]")}
+                className={cn(
+                  BUTTON_STYLES.outline.md,
+                  "border-dashed text-[#64748B] hover:text-[#0F172B]",
+                )}
               >
                 <X className="h-4 w-4" />
                 Clear
@@ -148,7 +170,14 @@ export function SourceWiseToolbar({
               label="Filter Option"
               className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
             />
-            <button className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap flex items-center gap-2", buttonTextStyles)}>
+            <button
+              onClick={onExportCSV}
+              className={cn(
+                BUTTON_STYLES.outline.md,
+                "whitespace-nowrap flex items-center gap-2",
+                buttonTextStyles,
+              )}
+            >
               <i className="file-csv h-4 w-4" />
               Export CSV
             </button>
@@ -164,7 +193,10 @@ export function SourceWiseToolbar({
               <button
                 type="button"
                 onClick={onClearFilters}
-                className={cn(BUTTON_STYLES.outline.md, "border-dashed text-[#64748B] hover:text-[#0F172B]")}
+                className={cn(
+                  BUTTON_STYLES.outline.md,
+                  "border-dashed text-[#64748B] hover:text-[#0F172B]",
+                )}
               >
                 <X className="h-4 w-4" />
                 Clear
@@ -175,7 +207,14 @@ export function SourceWiseToolbar({
               label="Filter"
               className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
             />
-            <button className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap px-3 flex items-center gap-2", buttonTextStyles)}>
+            <button
+              onClick={onExportCSV}
+              className={cn(
+                BUTTON_STYLES.outline.md,
+                "whitespace-nowrap px-3 flex items-center gap-2",
+                buttonTextStyles,
+              )}
+            >
               <i className="file-csv h-4 w-4" />
               Export CSV
             </button>
@@ -194,7 +233,10 @@ export function SourceWiseToolbar({
               <button
                 type="button"
                 onClick={onClearFilters}
-                className={cn(BUTTON_STYLES.outline.md, "px-3 border-dashed text-[#64748B] hover:text-[#0F172B] shrink-0")}
+                className={cn(
+                  BUTTON_STYLES.outline.md,
+                  "px-3 border-dashed text-[#64748B] hover:text-[#0F172B] shrink-0",
+                )}
                 title="Clear filters"
               >
                 <X className="h-4 w-4" />
@@ -203,7 +245,10 @@ export function SourceWiseToolbar({
             <FilterModalTrigger
               onClick={() => setFilterModalOpen(true)}
               iconOnly
-              className={cn(hasActiveFilters && BUTTON_STYLES.active.md, "shrink-0")}
+              className={cn(
+                hasActiveFilters && BUTTON_STYLES.active.md,
+                "shrink-0",
+              )}
               aria-label="Filter"
             />
 
@@ -218,7 +263,7 @@ export function SourceWiseToolbar({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-[160px]">
                 <DropdownMenuItem
-                  onClick={() => console.log("Export CSV")}
+                  onClick={onExportCSV}
                   className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8] flex items-center gap-2"
                 >
                   <i className="file-csv h-4 w-4" />

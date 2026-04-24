@@ -198,5 +198,13 @@ export const API_ENDPOINTS = {
     PNL_DETAIL: (sourceType: string, id: string) =>
       `/api/v1/admin/finances/pnl/${sourceType}/${id}`,
     PNL_EXPORT: `/api/v1/admin/finances/pnl/export`,
+    EXPENSES_LIST: `/api/v1/admin/finances/expenses`,
+    EXPENSES_CREATE: `/api/v1/admin/finances/expenses`,
+    EXPENSES_EXPORT: `/api/v1/admin/finances/expenses/export`,
+    SOURCE_WISE_SUMMARY: `/api/v1/admin/finances/source-wise/summary`,
+    SOURCE_WISE_DETAIL: (via: string) =>
+      `/api/v1/admin/finances/source-wise/detail/${via}`,
+    SOURCE_WISE_EXPORT: (via: string) =>
+      `/api/v1/admin/finances/source-wise/export/${via}`,
   },
 };
