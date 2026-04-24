@@ -34,6 +34,8 @@ interface ProfitLossToolbarProps {
   statusFilter: string | null;
   onStatusFilterChange: (status: string | null) => void;
   onClearFilters: () => void;
+  onDateRangeChange?: (from: string | null, to: string | null) => void;
+  onExportCsv?: () => void;
 }
 
 export function ProfitLossToolbar({
@@ -42,6 +44,8 @@ export function ProfitLossToolbar({
   statusFilter,
   onStatusFilterChange,
   onClearFilters,
+  onDateRangeChange,
+  onExportCsv,
 }: ProfitLossToolbarProps) {
   const [hasDateFilter, setHasDateFilter] = useState(false);
   const [clearKey, setClearKey] = useState(0);
@@ -51,8 +55,9 @@ export function ProfitLossToolbar({
   const handleClearAll = useCallback(() => {
     onClearFilters();
     setHasDateFilter(false);
+    onDateRangeChange?.(null, null);
     setClearKey((k) => k + 1);
-  }, [onClearFilters]);
+  }, [onClearFilters, onDateRangeChange]);
 
   const handleFilterSelect = useCallback(
     (categoryKey: string, itemKey: string) => {
@@ -67,7 +72,13 @@ export function ProfitLossToolbar({
     <DateRangeFilter
       key={clearKey}
       placeholder="By Date"
-      onApply={(start, end) => setHasDateFilter(start !== null || end !== null)}
+      onApply={(start, end) => {
+        setHasDateFilter(start !== null || end !== null);
+        onDateRangeChange?.(
+          start ? start.toISOString().split("T")[0] : null,
+          end ? end.toISOString().split("T")[0] : null,
+        );
+      }}
     />
   );
 
@@ -109,6 +120,7 @@ export function ProfitLossToolbar({
           />
 
           <button
+            onClick={() => onExportCsv?.()}
             className={cn(
               BUTTON_STYLES.outline.md,
               "gap-[8px] whitespace-nowrap text-[14px] font-semibold leading-[20px] text-[#0F172B]"
@@ -156,6 +168,7 @@ export function ProfitLossToolbar({
             />
 
             <button
+              onClick={() => onExportCsv?.()}
               className={cn(
                 BUTTON_STYLES.outline.md,
                 "gap-[8px] whitespace-nowrap text-[14px] font-semibold leading-[20px] text-[#0F172B] px-3"
@@ -216,7 +229,7 @@ export function ProfitLossToolbar({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-[160px]">
-                <DropdownMenuItem onClick={() => console.log("Export CSV")} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
+                <DropdownMenuItem onClick={() => onExportCsv?.()} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
                   <i className="file-csv mr-2 h-4 w-4" />
                   Export CSV
                 </DropdownMenuItem>

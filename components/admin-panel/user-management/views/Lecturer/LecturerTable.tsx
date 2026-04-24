@@ -23,10 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  LecturerPaymentHistoryModal,
-  type LecturerPaymentHistoryData,
-} from "@/components/admin-panel/user-management/modals/lecturer/LecturerPaymentHistoryModal";
+import { LecturerPaymentHistoryModal } from "@/components/admin-panel/user-management/modals/lecturer/LecturerPaymentHistoryModal";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
 import { useUpdateLecturerStatus } from "@/hooks/api/lecturers/useUpdateLecturerStatus";
 import { EditLecturerModal } from "@/components/admin-panel/user-management/modals/lecturer/EditLecturerModal";
@@ -55,7 +52,8 @@ export function LecturerTable({
 }: LecturerTableProps) {
   const router = useRouter();
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [paymentModalData, setPaymentModalData] = useState<LecturerPaymentHistoryData | null>(null);
+  const [paymentModalLecturerId, setPaymentModalLecturerId] = useState<string | null>(null);
+  const [paymentModalLecturerName, setPaymentModalLecturerName] = useState<string | undefined>();
   
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   const [selectedLecturer, setSelectedLecturer] = useState<LecturerDataType | null>(null);
@@ -96,49 +94,8 @@ export function LecturerTable({
 
       return;
     } else if (action === "payment-history") {
-      setPaymentModalData({
-        lecturerName: lecturer.name,
-        groups: [
-          {
-            monthLabel: "December, 2025",
-            payments: [
-              {
-                status: "Pending",
-                expensesDescription: "December Salary",
-                courseBatch: "Course A",
-              },
-              {
-                status: "Pending",
-                expensesDescription: "December Salary",
-                courseBatch: "Course B",
-              },
-            ],
-          },
-          {
-            monthLabel: "November, 2025",
-            payments: [
-              {
-                status: "Paid",
-                expensesNote: "November Salary",
-                courseBatch: "Course A",
-                paymentMethod: "Bank Transfer",
-                note: "Lorem Ipsum",
-                paidAmount: "XXXX.00",
-                paidDate: "2025/12/01",
-              },
-              {
-                status: "Paid",
-                expensesNote: "October Salary",
-                courseBatch: "Course B",
-                paymentMethod: "Bank Transfer",
-                note: "Lorem Ipsum",
-                paidAmount: "XXXX.00",
-                paidDate: "2025/11/01",
-              },
-            ],
-          },
-        ],
-      });
+      setPaymentModalLecturerId(lecturer.id);
+      setPaymentModalLecturerName(lecturer.name);
       setPaymentModalOpen(true);
 
       return;
@@ -393,7 +350,8 @@ export function LecturerTable({
       <LecturerPaymentHistoryModal
         isOpen={paymentModalOpen}
         onClose={() => setPaymentModalOpen(false)}
-        data={paymentModalData}
+        lecturerId={paymentModalLecturerId}
+        lecturerName={paymentModalLecturerName}
       />
 
       {/* Edit Lecturer Modal */}

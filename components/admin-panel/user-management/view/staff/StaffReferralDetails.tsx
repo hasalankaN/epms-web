@@ -58,16 +58,24 @@ export function StaffReferralDetails({
 
   const data: ReferralDetail[] = enquiries.map((e) => ({
     id: e.id,
-    receivedDate: e.created_at ? format(new Date(e.created_at), "yyyy/MM/dd") : "—",
+    receivedDate: e.created_at
+      ? format(new Date(e.created_at), "yyyy/MM/dd")
+      : "—",
     inquiryId: `#${e.id.split("-")[0].toUpperCase()}`,
     studentName: e.student_name ?? "—",
     inquiredOn: e.inquired_on ?? "—",
-    completedDate: e.completed_at ? format(new Date(e.completed_at), "yyyy/MM/dd") : "—",
+    completedDate: e.completed_at
+      ? format(new Date(e.completed_at), "yyyy/MM/dd")
+      : "—",
   }));
 
   const totalCount = data.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
-  const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const paginatedData = data.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
 
   const fmt = (val?: string) =>
     val ? `LKR ${Number(val).toFixed(2)}` : "LKR 0.00";
@@ -76,32 +84,55 @@ export function StaffReferralDetails({
     {
       header: "Received Date",
       accessorKey: "receivedDate",
-      className: "px-4 py-3 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[150px]",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C]">{item.receivedDate}</div>,
+      className:
+        "px-4 py-3 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[150px]",
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C]">
+          {item.receivedDate}
+        </div>
+      ),
     },
     {
       header: "Inquiry Id",
       accessorKey: "inquiryId",
-      className: "px-4 py-3 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C]">{item.inquiryId}</div>,
+      className:
+        "px-4 py-3 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap",
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C]">
+          {item.inquiryId}
+        </div>
+      ),
     },
     {
       header: "Student Name",
       accessorKey: "studentName",
       className: "px-4 py-3 text-[13px] font-semibold text-[#1D293D]",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C] line-clamp-2 break-words">{item.studentName}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C] line-clamp-2 break-words">
+          {item.studentName}
+        </div>
+      ),
     },
     {
       header: "Inquired On",
       accessorKey: "inquiredOn",
       className: "px-4 py-3 text-[13px] font-semibold text-[#1D293D]",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C]">{item.inquiredOn}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C]">
+          {item.inquiredOn}
+        </div>
+      ),
     },
     {
       header: "Completed Date",
       accessorKey: "completedDate",
-      className: "px-4 py-3 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C]">{item.completedDate}</div>,
+      className:
+        "px-4 py-3 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap",
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C]">
+          {item.completedDate}
+        </div>
+      ),
     },
   ];
 
@@ -116,7 +147,8 @@ export function StaffReferralDetails({
           className="flex flex-col justify-center items-center gap-2 flex-1 rounded-[8px] py-6 min-w-0"
           style={{
             border: "1px solid #FFCFEA",
-            background: "linear-gradient(315deg, #FFCFEA 0.35%, #F8FAFC 99.65%)",
+            background:
+              "linear-gradient(315deg, #FFCFEA 0.35%, #F8FAFC 99.65%)",
             boxShadow: "0 1px 2px 0 rgba(16, 24, 40, 0.05)",
           }}
         >

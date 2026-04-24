@@ -62,7 +62,7 @@ export default function DynamicBreadcrumb({ sidebarData }: { sidebarData: Sideba
             const isLast = index === labels.length - 1;
 
             return (
-              <React.Fragment key={label}>
+              <React.Fragment key={`${index}-${label}`}>
                 {index > 0 && <BreadcrumbSeparator />}
 
                 <BreadcrumbItem>

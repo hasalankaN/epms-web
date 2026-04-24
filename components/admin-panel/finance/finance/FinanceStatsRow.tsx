@@ -3,75 +3,64 @@
 import React from "react";
 
 import { cn } from "@/lib/utils";
+import type { OverviewSummary } from "@/hooks/api/finances/useGetFinanceOverview";
 
 interface FinanceStatCardProps {
   title: string;
-  value: string | number;
+  value: string;
+  isLoading?: boolean;
   className?: string;
 }
 
-function FinanceStatCard({ title, value, className }: FinanceStatCardProps) {
+function FinanceStatCard({ title, value, isLoading, className }: FinanceStatCardProps) {
   return (
     <div className={cn(
       "flex h-[120px] flex-1 flex-col items-start justify-center gap-2 rounded-lg border border-[#E2E8F0] bg-white p-3",
       className
     )}>
-      {/* Title/Label */}
-      <span className="font-inter text-[14px] font-normal leading-[20px] text-[#45556C]">
-        {title}
-      </span>
-      {/* Value */}
-      <span className="font-inter text-[24px] font-semibold leading-[38px] text-[#1D293D]">
-        {value}
-      </span>
+      <span className="font-inter text-[14px] font-normal leading-[20px] text-[#45556C]">{title}</span>
+      {isLoading ? (
+        <div className="h-8 w-36 animate-pulse rounded bg-slate-200" />
+      ) : (
+        <span className="font-inter text-[24px] font-semibold leading-[38px] text-[#1D293D]">{value}</span>
+      )}
     </div>
   );
 }
 
-const statsData = [
-  { title: "Total Payments", value: "LKR XXX,XXX.00" },
-  { title: "Total Discounts", value: "LKR X,XXX.00" },
-  { title: "Total Commissions", value: "LKR XX,XXX.00" },
-  { title: "Total Expenses", value: "LKR XX,XXX.00" },
-  { title: "Net Profit", value: "LKR XX,XXX.00" },
-];
+function fmtLkr(val: string | null | undefined) {
+  if (!val) return "LKR 0.00";
+  
+return `LKR ${Number(val).toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
-export function FinanceStatsRow() {
+interface FinanceStatsRowProps {
+  summary?: OverviewSummary;
+  isLoading?: boolean;
+}
+
+export function FinanceStatsRow({ summary, isLoading }: FinanceStatsRowProps) {
+  const stats = [
+    { title: "Total Payments",     value: fmtLkr(summary?.total_payments) },
+    { title: "Total Discounts",    value: fmtLkr(summary?.total_discounts) },
+    { title: "Total Commissions",  value: fmtLkr(summary?.total_referral_commissions) },
+    { title: "Total Expenses",     value: fmtLkr(summary?.total_expenses) },
+    { title: "Net Profit",         value: fmtLkr(summary?.net_profit) },
+  ];
+
   return (
     <div className="w-full">
-      {/* Desktop (lg+): 5 columns flex row */}
       <div className="hidden items-center gap-4 lg:flex lg:flex-row lg:items-stretch">
-        {statsData.map((stat) => (
-          <FinanceStatCard
-            key={stat.title}
-            title={stat.title}
-            value={stat.value}
-          />
-        ))}
+        {stats.map((s) => <FinanceStatCard key={s.title} {...s} isLoading={isLoading} />)}
       </div>
-
-      {/* Tablet (md to lg): Grid for 5 items. We can use 3 columns for top row, 2 for bottom row */}
       <div className="hidden md:flex lg:hidden flex-wrap gap-4">
-        {statsData.map((stat, index) => (
-          <FinanceStatCard
-            key={stat.title}
-            title={stat.title}
-            value={stat.value}
-            className={cn(index < 3 ? "w-[calc(33.333%-11px)]" : "w-[calc(50%-8px)]")}
-          />
+        {stats.map((s, i) => (
+          <FinanceStatCard key={s.title} {...s} isLoading={isLoading}
+            className={cn(i < 3 ? "w-[calc(33.333%-11px)]" : "w-[calc(50%-8px)]")} />
         ))}
       </div>
-
-      {/* Mobile (<md): 1 column (5 rows) */}
       <div className="grid grid-cols-1 gap-3 md:hidden">
-        {statsData.map((stat) => (
-          <FinanceStatCard 
-            key={stat.title} 
-            title={stat.title} 
-            value={stat.value}
-            className="h-[100px]"
-          />
-        ))}
+        {stats.map((s) => <FinanceStatCard key={s.title} {...s} isLoading={isLoading} className="h-[100px]" />)}
       </div>
     </div>
   );

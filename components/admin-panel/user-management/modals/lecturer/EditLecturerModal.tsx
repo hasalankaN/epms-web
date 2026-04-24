@@ -125,9 +125,11 @@ export function EditLecturerModal({
   onClose,
   lecturerId,
 }: EditLecturerModalProps) {
-  const { data: lecturer, isLoading: isLoadingLecturer } = useGetLecturerById(
+  const { data: lecturerDetail, isLoading: isLoadingLecturer } = useGetLecturerById(
     isOpen ? lecturerId : null
   );
+
+  const lecturer = lecturerDetail?.profile;
 
   const { mutateAsync: updateLecturer, isPending: isUpdating } = useUpdateLecturer(
     lecturerId || ""
