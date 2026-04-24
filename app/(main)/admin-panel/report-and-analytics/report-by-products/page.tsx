@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useState } from "react";
+
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 import { ReportByProductsTopBar } from "@/components/admin-panel/report-and-analytics/report-by-products/ReportByProductsTopBar";
@@ -34,6 +35,7 @@ export default function ReportByProductsPage() {
 
   const handlePageChange = useCallback((page: number) => {
     const params = new URLSearchParams(searchParams.toString());
+
     params.set("page", page.toString());
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, pathname, router]);

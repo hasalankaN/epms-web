@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
+
 import { DataTable } from "@/components/common/table/DataTable";
 import type { Column } from "@/components/common/table/DataTable";
 
@@ -32,6 +33,7 @@ export function ReportByProductsTable({
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
+
     return filteredData.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredData, currentPage, itemsPerPage]);
 

@@ -77,19 +77,18 @@ export default function ProfitAndLossPage() {
     isError: listError,
   } = useGetPnlList(listParams);
 
-  const allRows = listData?.data ?? [];
-
   const totalCount = listData?.meta.total ?? 0;
-
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   // Client-side search filter on top of API results
   const filteredRows = useMemo(() => {
-    if (!searchQuery) return allRows;
+    const rows = listData?.data ?? [];
+
+    if (!searchQuery) return rows;
     const q = searchQuery.toLowerCase();
 
-    return allRows.filter((r) => r.source_name.toLowerCase().includes(q));
-  }, [allRows, searchQuery]);
+    return rows.filter((r) => r.source_name.toLowerCase().includes(q));
+  }, [listData?.data, searchQuery]);
 
   const handleClearFilters = useCallback(() => {
     setSearchQuery("");

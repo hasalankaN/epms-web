@@ -220,7 +220,7 @@ export const sidebarData: SidebarNavItem[] = [
     id: 17,
     type: "sub",
     title: "Report & Analytics",
-    icon: "analytics-icon",
+    icon: "chart-bar",
     children: [
       {
         id: 171,

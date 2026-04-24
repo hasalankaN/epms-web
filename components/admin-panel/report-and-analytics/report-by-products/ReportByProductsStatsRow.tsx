@@ -19,7 +19,7 @@ interface ReportByProductsStatCardProps {
 function ReportByProductsStatCard({ title, value, className }: ReportByProductsStatCardProps) {
   return (
     <div
-      className={cn("flex flex-col items-center justify-center gap-1 px-4 py-3 md:px-[68.5px] md:py-[24px] self-stretch", className)}
+      className={cn("flex flex-col items-center justify-center gap-1 px-4 py-3 md:px-4 lg:px-[68.5px] md:py-[24px] self-stretch", className)}
     >
       <span className="text-center font-inter text-[14px] font-normal leading-[20px] text-[#314158]">
         {title}
