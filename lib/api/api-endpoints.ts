@@ -204,6 +204,13 @@ export const API_ENDPOINTS = {
     BATCH_WISE_SUMMARY: `/api/v1/admin/finances/batch-wise/summary`,
     BATCH_WISE_TABLE: `/api/v1/admin/finances/batch-wise/table`,
     BATCH_WISE_GRAPH: `/api/v1/admin/finances/batch-wise/graph`,
+    COURSE_WISE_SUMMARY: `/api/v1/admin/finances/courses/summary`,
+    COURSE_WISE_PAYMENTS: `/api/v1/admin/finances/courses/payments`,
+    COURSE_WISE_DISCOUNTS: `/api/v1/admin/finances/courses/discounts`,
+    COURSE_WISE_COMMISSIONS: `/api/v1/admin/finances/courses/commissions`,
+    COURSE_WISE_EXPENSES: `/api/v1/admin/finances/courses/expenses`,
+    COURSE_WISE_NET_PROFIT: `/api/v1/admin/finances/courses/net-profit`,
+    COURSE_WISE_CHART: `/api/v1/admin/finances/courses/chart`,
     SOURCE_WISE_SUMMARY: `/api/v1/admin/finances/source-wise/summary`,
     SOURCE_WISE_DETAIL: (via: string) =>
       `/api/v1/admin/finances/source-wise/detail/${via}`,

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 
 import { MoreHorizontal, X } from "lucide-react";
 
@@ -17,79 +17,59 @@ import {
 
 const buttonTextStyles = "text-[14px] font-semibold leading-[20px] text-[#0F172B]";
 
-const courseCategories: FilterCategory[] = [
-  {
-    key: "course",
-    label: "Course",
-    items: [
-      { key: "all", label: "All Courses" },
-      { key: "course-it", label: "IT" },
-      { key: "course-hr", label: "HR" },
-      { key: "course-bm", label: "BM" },
-    ],
-  },
-];
+interface CourseOption {
+  id: string;
+  name: string;
+}
 
-const categoryCategories: FilterCategory[] = [
-  {
-    key: "category",
-    label: "Category",
-    items: [
-      { key: "all", label: "All Categories" },
-      { key: "cat-diploma", label: "Diploma" },
-      { key: "cat-degree", label: "Degree" },
-    ],
-  },
-];
+interface ReportByCoursesTopBarProps {
+  courses?: CourseOption[];
+  selectedCourseId?: string | null;
+  onSelectCourse?: (id: string | null) => void;
+  onExport?: () => void;
+}
 
-export function ReportByCoursesTopBar() {
-  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+export function ReportByCoursesTopBar({
+  courses = [],
+  selectedCourseId,
+  onSelectCourse,
+  onExport,
+}: ReportByCoursesTopBarProps) {
+  const courseCategories: FilterCategory[] = [
+    {
+      key: "course",
+      label: "Course",
+      items: [
+        { key: "all", label: "All Courses" },
+        ...courses.map((c) => ({ key: c.id, label: c.name })),
+      ],
+    },
+  ];
 
-  const handleCourseSelect = (
-    _categoryKey: string,
-    _itemKey: string,
-    itemLabel: string
-  ) => {
-    setSelectedCourse(itemLabel === "All Courses" ? null : itemLabel);
+  const selectedLabel = selectedCourseId
+    ? courses.find((c) => c.id === selectedCourseId)?.name ?? null
+    : null;
+
+  const handleCourseSelect = (_categoryKey: string, itemKey: string) => {
+    onSelectCourse?.(itemKey === "all" ? null : itemKey);
   };
 
-  const handleCategorySelect = (
-    _categoryKey: string,
-    _itemKey: string,
-    itemLabel: string
-  ) => {
-    setSelectedCategory(itemLabel === "All Categories" ? null : itemLabel);
-  };
+  const handleClearFilters = () => onSelectCourse?.(null);
+  const hasActiveFilters = !!selectedCourseId;
 
-  const handleClearFilters = () => {
-    setSelectedCourse(null);
-    setSelectedCategory(null);
-  };
-
-  const hasActiveFilters = selectedCourse !== null || selectedCategory !== null;
-
-  const filters = (
-    <div className="flex items-center gap-3">
-      <FilterDropdown
-        categories={courseCategories}
-        onFilterSelect={handleCourseSelect}
-        label="All Courses"
-        value={selectedCourse}
-      />
-      <FilterDropdown
-        categories={categoryCategories}
-        onFilterSelect={handleCategorySelect}
-        label="All Categories"
-        value={selectedCategory}
-      />
-    </div>
+  const filterDropdown = (
+    <FilterDropdown
+      categories={courseCategories}
+      onFilterSelect={handleCourseSelect}
+      label="All Courses"
+      value={selectedLabel}
+    />
   );
 
   const exportButton = (
     <button
       className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}
-      onClick={() => console.log("Export CSV")}
+      onClick={() => onExport?.()}
     >
       <i className="file-csv h-4 w-4" />
       Export CSV
@@ -98,7 +78,7 @@ export function ReportByCoursesTopBar() {
 
   return (
     <div className="flex w-full flex-col">
-      {/* ===== DESKTOP/TABLET (md+): Simple Row ===== */}
+      {/* DESKTOP/TABLET */}
       <div className="hidden w-full items-center justify-end gap-3 md:flex">
         {hasActiveFilters && (
           <button
@@ -111,11 +91,11 @@ export function ReportByCoursesTopBar() {
             Clear All
           </button>
         )}
-        {filters}
+        {filterDropdown}
         {exportButton}
       </div>
 
-      {/* ===== MOBILE (<md): Responsive Layout matching FinanceToolbar pattern ===== */}
+      {/* MOBILE */}
       <div className="flex w-full items-center justify-between gap-2 md:hidden overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
         <div className="flex items-center gap-2 flex-1 justify-end">
           {hasActiveFilters && (
@@ -128,7 +108,7 @@ export function ReportByCoursesTopBar() {
               <X className="h-4 w-4" />
             </button>
           )}
-          <div className="shrink-0">{filters}</div>
+          <div className="shrink-0">{filterDropdown}</div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -141,7 +121,7 @@ export function ReportByCoursesTopBar() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[160px]">
-              <DropdownMenuItem onClick={() => console.log("Export CSV")} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
+              <DropdownMenuItem onClick={() => onExport?.()} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
                 <i className="file-csv mr-2 h-4 w-4" />
                 Export CSV
               </DropdownMenuItem>

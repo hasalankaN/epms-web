@@ -13,11 +13,15 @@ const filterOptions = [
   { label: "Last 90 days", value: 90 },
 ];
 
-export function ReportByCoursesFilterRow() {
-  const [selectedFilter, setSelectedFilter] = useState(30);
+interface ReportByCoursesFilterRowProps {
+  selectedDays: number;
+  onSelectDays: (days: number) => void;
+}
+
+export function ReportByCoursesFilterRow({ selectedDays, onSelectDays }: ReportByCoursesFilterRowProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const selectedLabel = filterOptions.find(opt => opt.value === selectedFilter)?.label || "Last 30 days";
+  const selectedLabel = filterOptions.find(opt => opt.value === selectedDays)?.label || "Last 30 days";
 
   return (
     <div className="mt-4 flex w-full items-center gap-2 md:gap-3">
@@ -48,12 +52,12 @@ export function ReportByCoursesFilterRow() {
               <button
                 key={option.value}
                 onClick={() => {
-                  setSelectedFilter(option.value);
+                  onSelectDays(option.value);
                   setIsDropdownOpen(false);
                 }}
                 className={cn(
                   "w-full px-3 py-2 text-left font-sans text-[12px] font-medium leading-[16px] transition-colors hover:bg-[#FDF2F8]",
-                  selectedFilter === option.value
+                  selectedDays === option.value
                     ? "bg-[#FDF2F8] text-[#F6339A]"
                     : "text-[#45556C]"
                 )}
@@ -71,8 +75,8 @@ export function ReportByCoursesFilterRow() {
           <FilterChip
             key={option.value}
             label={option.label}
-            selected={selectedFilter === option.value}
-            onClick={() => setSelectedFilter(option.value)}
+            selected={selectedDays === option.value}
+            onClick={() => onSelectDays(option.value)}
           />
         ))}
       </div>
