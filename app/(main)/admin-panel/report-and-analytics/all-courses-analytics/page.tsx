@@ -26,9 +26,7 @@ export default function AllCoursesAnalyticsPage() {
   const [dateFrom, setDateFrom] = useState<string | undefined>(undefined);
   const [dateTo, setDateTo] = useState<string | undefined>(undefined);
 
-
   const params = { date_from: dateFrom, date_to: dateTo };
-
 
   const { data: summary } = useGetCourseAnalyticsSummary(params);
   const { data: studentSummary } = useGetCourseStudentSummary(params);
@@ -51,13 +49,28 @@ export default function AllCoursesAnalyticsPage() {
       p.set("date_to", dateTo);
     }
 
-    window.open(`${API_ENDPOINTS.finances.COURSE_ANALYTICS_SUMMARY}?${p.toString()}`, "_blank");
+    window.open(
+      `${API_ENDPOINTS.finances.COURSE_ANALYTICS_SUMMARY}?${p.toString()}`,
+      "_blank",
+    );
   };
 
   const courseStats = [
-    { key: "total-courses", title: "Total Courses", value: fmt(summary?.total_courses) },
-    { key: "ongoing-courses", title: "Ongoing Courses", value: fmt(summary?.ongoing_courses) },
-    { key: "deactivated-courses", title: "Deactivated Courses", value: fmt(summary?.deactivated_courses) },
+    {
+      key: "total-courses",
+      title: "Total Courses",
+      value: fmt(summary?.total_courses),
+    },
+    {
+      key: "ongoing-courses",
+      title: "Ongoing Courses",
+      value: fmt(summary?.ongoing_courses),
+    },
+    {
+      key: "deactivated-courses",
+      title: "Deactivated Courses",
+      value: fmt(summary?.deactivated_courses),
+    },
   ];
 
   const districtItems = (districtData ?? []).map((d) => ({
@@ -77,7 +90,10 @@ export default function AllCoursesAnalyticsPage() {
 
   return (
     <div className="w-full space-y-6 p-4 pb-10 md:p-6">
-      <AnalyticsTopBar onDateChange={handleDateChange} onExport={handleExport} />
+      <AnalyticsTopBar
+        onDateChange={handleDateChange}
+        onExport={handleExport}
+      />
 
       <AnalyticsStatsRow stats={courseStats} />
 

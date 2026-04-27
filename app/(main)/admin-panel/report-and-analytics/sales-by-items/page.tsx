@@ -17,7 +17,6 @@ import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
 const PAGE_SIZE = 10;
 
-
 export default function SalesByItemsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -28,19 +27,23 @@ export default function SalesByItemsPage() {
 
   const [search, setSearch] = useState("");
 
+  const handlePageChange = useCallback(
+    (page: number) => {
+      const params = new URLSearchParams(searchParams.toString());
 
-  const handlePageChange = useCallback((page: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    
-    
-    params.set("page", page.toString());
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [searchParams, pathname, router]);
+      params.set("page", page.toString());
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, pathname, router],
+  );
 
-  const handleSearchChange = useCallback((val: string) => {
-    setSearch(val);
-    handlePageChange(1);
-  }, [handlePageChange]);
+  const handleSearchChange = useCallback(
+    (val: string) => {
+      setSearch(val);
+      handlePageChange(1);
+    },
+    [handlePageChange],
+  );
 
   const { data: top5Data, isLoading: top5Loading } = useGetSalesByItemsTop5();
 
@@ -49,29 +52,36 @@ export default function SalesByItemsPage() {
     page: currentPage,
     size: PAGE_SIZE,
   });
-  
-  const tableRows = useMemo(() =>
-    (tableData?.data ?? []).map((r, i) => ({
-      id: `${r.item_name}-${i}`,
-      itemName: r.item_name,
-      noOfItemsSold: parseInt(r.quantity_sold ?? "0"),
-      grossSale: parseFloat(r.gross_sale ?? "0"),
-      totalDiscounts: parseFloat(r.total_discounts ?? "0"),
-      totalRefCommissions: parseFloat(r.total_commissions ?? "0"),
-      totalRefunds: parseFloat(r.total_refunds ?? "0"),
-      netSales: parseFloat(r.net_sales ?? "0"),
-    } satisfies SalesByItemsDataType)),
-  [tableData]
+
+  const tableRows = useMemo(
+    () =>
+      (tableData?.data ?? []).map(
+        (r, i) =>
+          ({
+            id: `${r.item_name}-${i}`,
+            itemName: r.item_name,
+            noOfItemsSold: parseInt(r.quantity_sold ?? "0"),
+            grossSale: parseFloat(r.gross_sale ?? "0"),
+            totalDiscounts: parseFloat(r.total_discounts ?? "0"),
+            totalRefCommissions: parseFloat(r.total_commissions ?? "0"),
+            totalRefunds: parseFloat(r.total_refunds ?? "0"),
+            netSales: parseFloat(r.net_sales ?? "0"),
+          }) satisfies SalesByItemsDataType,
+      ),
+    [tableData],
   );
 
   const handleExport = () => {
     const params = new URLSearchParams();
-    
+
     if (search) {
       params.set("search", search);
     }
 
-    window.open(`${API_ENDPOINTS.finances.SALES_BY_ITEMS_EXPORT}?${params.toString()}`, "_blank");
+    window.open(
+      `${API_ENDPOINTS.finances.SALES_BY_ITEMS_EXPORT}?${params.toString()}`,
+      "_blank",
+    );
   };
 
   const totalCount = parseInt(String(tableData?.pagination?.total ?? "0"));
