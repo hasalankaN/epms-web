@@ -75,10 +75,13 @@ export default function ReportByCoursesPage() {
   const activeTab = searchParams.get("tab") || "payment";
 
   const [search, setSearch] = useState("");
+
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null,
   );
+
   const [selectedDays, setSelectedDays] = useState(90);
 
   const dateFrom = format(subDays(new Date(), selectedDays), "yyyy-MM-dd");
@@ -115,12 +118,14 @@ export default function ReportByCoursesPage() {
 
   // Courses and categories for TopBar dropdowns
   const { data: coursesData } = useGetCourses({ size: 100 });
+
   const courses = (coursesData?.results ?? []).map((c: any) => ({
     id: c.id,
     name: c.name,
   }));
 
   const { data: categoriesData } = useGetCategories({ size: 100 });
+
   const categories = (categoriesData?.results ?? []).map((c) => ({
     id: c.id,
     name: c.name,
@@ -154,12 +159,16 @@ export default function ReportByCoursesPage() {
 
   const { data: paymentsData, isLoading: paymentsLoading } =
     useGetCourseWisePayments(commonParams);
+
   const { data: discountsData, isLoading: discountsLoading } =
     useGetCourseWiseDiscounts(commonParams);
+
   const { data: commissionsData, isLoading: commissionsLoading } =
     useGetCourseWiseCommissions(commonParams);
+
   const { data: expensesData, isLoading: expensesLoading } =
     useGetCourseWiseExpenses(commonParams);
+
   const { data: profitData, isLoading: profitLoading } =
     useGetCourseWiseNetProfit(commonParams);
 
@@ -177,6 +186,7 @@ export default function ReportByCoursesPage() {
     () => (activeData.data as any)?.data ?? [],
     [activeData.data],
   );
+
   const pagination = (activeData.data as any)?.pagination;
   const totalResults = pagination?.total ?? 0;
   const totalPages = pagination?.total_pages ?? 1;

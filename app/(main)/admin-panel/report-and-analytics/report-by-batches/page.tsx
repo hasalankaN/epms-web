@@ -113,13 +113,16 @@ export default function ReportByBatchesPage() {
   );
 
   // Batch list for TopBar dropdown
+
   const { data: batchesData } = useGetBatches({ size: 100 });
+
   const batches = (batchesData?.results ?? []).map((b) => ({
     id: b.id,
     name: b.name,
   }));
 
   const metric = METRIC_MAP[activeTab] ?? "PAYMENTS";
+
   const commonParams = {
     batch_id: selectedBatchId ?? undefined,
     date_from: dateFrom,
