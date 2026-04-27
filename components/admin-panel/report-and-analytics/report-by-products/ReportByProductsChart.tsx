@@ -16,6 +16,7 @@ import type { ProductChartPoint } from "@/hooks/api/finances/useGetProductWiseRe
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
+
     return (
       <div className="rounded-lg border border-[#E2E8F0] bg-white p-3 shadow-sm">
         <p className="mb-2 text-xs font-semibold text-[#1D293D]">
@@ -31,6 +32,7 @@ const CustomTooltip = ({ active, payload }: any) => {
       </div>
     );
   }
+  
   return null;
 };
 
@@ -43,7 +45,11 @@ export function ReportByProductsChart({ graphData, isLoading }: ReportByProducts
   const chartData = (graphData ?? []).map((p) => ({
     date: p.period,
     displayDate: (() => {
-      try { return format(new Date(p.period), "MMM d"); } catch { return p.period; }
+      try {
+        return format(new Date(p.period), "MMM d");
+      } catch {
+        return p.period;
+      }
     })(),
     value: parseFloat(p.value ?? "0"),
   }));

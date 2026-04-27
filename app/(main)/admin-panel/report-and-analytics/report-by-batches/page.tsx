@@ -137,21 +137,21 @@ export default function ReportByBatchesPage() {
     { key: "profit", title: "Net Profit", value: fmtLkr(summary?.net_profit), isActive: activeTab === "profit" },
   ];
 
-  const rows = tableData?.results ?? [];
+  const memoRows = useMemo(() => tableData?.results ?? [], [tableData]);
   const totalResults = tableData?.totalResults ?? 0;
   const totalPages = tableData?.totalPages ?? 1;
 
   // Map API rows to table data types
-  const paymentRows = useMemo(() => (rows as BatchPaymentRow[]).map((r) => ({
+  const paymentRows = useMemo(() => (memoRows as BatchPaymentRow[]).map((r) => ({
     id: r.batch_id,
     batchName: r.batch_name ?? "—",
     branch: r.branch ?? "—",
     totalAmountToCollect: parseFloat(r.total_amount_to_collect ?? "0"),
     totalPendingPayment: parseFloat(r.total_pending_payment ?? "0"),
     status: (r.payment_status === "Completed" ? "Completed" : "Pending") as "Pending" | "Completed",
-  } satisfies ReportByBatchesDataType)), [rows]);
+  } satisfies ReportByBatchesDataType)), [memoRows]);
 
-  const discountRows = useMemo(() => (rows as BatchDiscountRow[]).map((r, i) => ({
+  const discountRows = useMemo(() => (memoRows as BatchDiscountRow[]).map((r, i) => ({
     id: r.batch_id ?? String(i),
     batchName: r.batch_name ?? "—",
     branch: "—",
@@ -161,9 +161,9 @@ export default function ReportByBatchesPage() {
     offerValue: parseFloat(String(r.offer_value ?? "0")),
     discountReceived: parseFloat(r.discount_percentage ?? "0"),
     offeredOn: fmtDate(r.offered_on),
-  } satisfies TotalDiscountDataType)), [rows]);
+  } satisfies TotalDiscountDataType)), [memoRows]);
 
-  const commissionRows = useMemo(() => (rows as BatchCommissionRow[]).map((r, i) => ({
+  const commissionRows = useMemo(() => (memoRows as BatchCommissionRow[]).map((r, i) => ({
     id: r.batch_id ?? String(i),
     batchName: r.batch_name ?? "—",
     studentName: r.student_name ?? "—",
@@ -172,9 +172,9 @@ export default function ReportByBatchesPage() {
     referralPerson: r.referral_name ?? "—",
     date: fmtDate(r.date),
     offeredBy: r.offered_by ?? "—",
-  } satisfies TotalReferralCommissionDataType)), [rows]);
+  } satisfies TotalReferralCommissionDataType)), [memoRows]);
 
-  const expenseRows = useMemo(() => (rows as BatchExpenseRow[]).map((r, i) => ({
+  const expenseRows = useMemo(() => (memoRows as BatchExpenseRow[]).map((r, i) => ({
     id: String(i),
     date: fmtDate(r.date),
     batchName: r.batch_name ?? "—",
@@ -182,9 +182,9 @@ export default function ReportByBatchesPage() {
     description: r.expense_description ?? "—",
     transactionVia: r.transaction_via ?? "—",
     amount: parseFloat(String(r.amount ?? "0")),
-  } satisfies TotalExpenseDataType)), [rows]);
+  } satisfies TotalExpenseDataType)), [memoRows]);
 
-  const profitRows = useMemo(() => (rows as BatchNetProfitRow[]).map((r) => ({
+  const profitRows = useMemo(() => (memoRows as BatchNetProfitRow[]).map((r) => ({
     id: r.batch_id,
     batchName: r.batch_name ?? "—",
     branch: r.branch ?? "—",
@@ -192,7 +192,7 @@ export default function ReportByBatchesPage() {
     totalExpense: parseFloat(r.total_expenses ?? "0"),
     profitOrLossValue: parseFloat(r.profit_loss_value ?? "0"),
     status: (r.profit_loss_status === "PROFIT" ? "Profit" : r.profit_loss_status === "LOSS" ? "Loss" : "Profit") as "Profit" | "Loss",
-  } satisfies NetProfitDataType)), [rows]);
+  } satisfies NetProfitDataType)), [memoRows]);
 
   const handleExport = () => {
     const params = new URLSearchParams({

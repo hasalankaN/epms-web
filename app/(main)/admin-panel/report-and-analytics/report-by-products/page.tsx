@@ -3,6 +3,7 @@
 import React, { useCallback, useState, useMemo } from "react";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+
 import { subDays, format } from "date-fns";
 
 import { ReportByProductsTopBar } from "@/components/admin-panel/report-and-analytics/report-by-products/ReportByProductsTopBar";
@@ -25,12 +26,20 @@ const PAGE_SIZE = 10;
 
 function fmtLkr(val: string | null | undefined) {
   const n = parseFloat(val ?? "0");
+  
   return `LKR ${n.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function fmtDate(val: string | null) {
-  if (!val) return "—";
-  try { return format(new Date(val), "yyyy/MM/dd"); } catch { return val; }
+  if (!val) {
+    return "—";
+  }
+
+  try {
+    return format(new Date(val), "yyyy/MM/dd");
+  } catch {
+    return val;
+  }
 }
 
 export default function ReportByProductsPage() {
@@ -50,6 +59,7 @@ export default function ReportByProductsPage() {
 
   const handlePageChange = useCallback((page: number) => {
     const params = new URLSearchParams(searchParams.toString());
+
     params.set("page", page.toString());
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, pathname, router]);
@@ -93,7 +103,8 @@ export default function ReportByProductsPage() {
       totalRefunds: parseFloat(r.total_expenses ?? "0"),
       netSales: parseFloat(r.net_income ?? "0"),
     } satisfies ReportByProductsDataType)),
-  [tableData]);
+    [tableData]
+  );
 
   const stats = [
     { key: "payment", title: "Total Payment", value: fmtLkr(summary?.total_payments) },
@@ -110,6 +121,7 @@ export default function ReportByProductsPage() {
       ...(selectedProductId ? { product_id: selectedProductId } : {}),
       ...(search ? { search } : {}),
     });
+
     window.open(`${API_ENDPOINTS.finances.PRODUCT_WISE_EXPORT}?${params.toString()}`, "_blank");
   };
 

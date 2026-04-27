@@ -153,7 +153,8 @@ export default function ReportByCoursesPage() {
 
 
   const tableLoading = activeData.loading;
-  const rawData = (activeData.data as any)?.data ?? [];
+
+  const rawData = useMemo(() => (activeData.data as any)?.data ?? [], [activeData.data]);
   const pagination = (activeData.data as any)?.pagination;
   const totalResults = pagination?.total ?? 0;
   const totalPages = pagination?.total_pages ?? 1;
