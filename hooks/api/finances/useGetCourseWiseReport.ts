@@ -6,6 +6,7 @@ export type CourseReportMetric = "PAYMENTS" | "DISCOUNTS" | "COMMISSIONS" | "EXP
 
 export interface CourseWiseParams {
   course_id?: string;
+  category_id?: string;
   date_from?: string;
   date_to?: string;
   search?: string;

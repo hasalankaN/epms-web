@@ -34,6 +34,7 @@ import {
 } from "@/hooks/api/finances/useGetCourseWiseReport";
 import type { CourseReportMetric } from "@/hooks/api/finances/useGetCourseWiseReport";
 import { useGetCourses } from "@/hooks/api/courses/useGetCourses";
+import { useGetCategories } from "@/hooks/api/course-categories/useGetCategories";
 import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
 const METRIC_MAP: Record<string, CourseReportMetric> = {
@@ -75,6 +76,7 @@ export default function ReportByCoursesPage() {
 
   const [search, setSearch] = useState("");
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedDays, setSelectedDays] = useState(90);
 
   const dateFrom = format(subDays(new Date(), selectedDays), "yyyy-MM-dd");
@@ -100,14 +102,18 @@ export default function ReportByCoursesPage() {
     handlePageChange(1);
   }, [handlePageChange]);
 
-  // Courses list for TopBar dropdown
+  // Courses and categories for TopBar dropdowns
   const { data: coursesData } = useGetCourses({ size: 100 });
   const courses = (coursesData?.results ?? []).map((c: any) => ({ id: c.id, name: c.name }));
+
+  const { data: categoriesData } = useGetCategories({ size: 100 });
+  const categories = (categoriesData?.results ?? []).map((c) => ({ id: c.id, name: c.name }));
 
   const metric = METRIC_MAP[activeTab] ?? "PAYMENTS";
 
   const commonParams = {
     course_id: selectedCourseId ?? undefined,
+    category_id: selectedCategoryId ?? undefined,
     date_from: dateFrom,
     date_to: dateTo,
     search: search || undefined,
@@ -115,13 +121,12 @@ export default function ReportByCoursesPage() {
     size: PAGE_SIZE,
   };
 
-
   const { data: summary } = useGetCourseWiseSummary({
     course_id: selectedCourseId ?? undefined,
+    category_id: selectedCategoryId ?? undefined,
     date_from: dateFrom,
     date_to: dateTo,
   });
-
 
   const { data: chartData, isLoading: chartLoading } = useGetCourseWiseChart({
     metric,
@@ -238,8 +243,11 @@ export default function ReportByCoursesPage() {
       <div className="flex w-full flex-col pb-10">
         <ReportByCoursesTopBar
           courses={courses}
+          categories={categories}
           selectedCourseId={selectedCourseId}
+          selectedCategoryId={selectedCategoryId}
           onSelectCourse={setSelectedCourseId}
+          onSelectCategory={setSelectedCategoryId}
           onExport={handleExport}
         />
 

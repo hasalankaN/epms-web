@@ -17,25 +17,31 @@ import {
 
 const buttonTextStyles = "text-[14px] font-semibold leading-[20px] text-[#0F172B]";
 
-interface CourseOption {
+interface Option {
   id: string;
   name: string;
 }
 
 interface ReportByCoursesTopBarProps {
-  courses?: CourseOption[];
+  courses?: Option[];
+  categories?: Option[];
   selectedCourseId?: string | null;
+  selectedCategoryId?: string | null;
   onSelectCourse?: (id: string | null) => void;
+  onSelectCategory?: (id: string | null) => void;
   onExport?: () => void;
 }
 
 export function ReportByCoursesTopBar({
   courses = [],
+  categories = [],
   selectedCourseId,
+  selectedCategoryId,
   onSelectCourse,
+  onSelectCategory,
   onExport,
 }: ReportByCoursesTopBarProps) {
-  const courseCategories: FilterCategory[] = [
+  const courseFilterCategories: FilterCategory[] = [
     {
       key: "course",
       label: "Course",
@@ -46,24 +52,55 @@ export function ReportByCoursesTopBar({
     },
   ];
 
-  const selectedLabel = selectedCourseId
+  const categoryFilterCategories: FilterCategory[] = [
+    {
+      key: "category",
+      label: "Category",
+      items: [
+        { key: "all", label: "All Categories" },
+        ...categories.map((c) => ({ key: c.id, label: c.name })),
+      ],
+    },
+  ];
+
+  const selectedCourseLabel = selectedCourseId
     ? courses.find((c) => c.id === selectedCourseId)?.name ?? null
+    : null;
+
+  const selectedCategoryLabel = selectedCategoryId
+    ? categories.find((c) => c.id === selectedCategoryId)?.name ?? null
     : null;
 
   const handleCourseSelect = (_categoryKey: string, itemKey: string) => {
     onSelectCourse?.(itemKey === "all" ? null : itemKey);
   };
 
-  const handleClearFilters = () => onSelectCourse?.(null);
-  const hasActiveFilters = !!selectedCourseId;
+  const handleCategorySelect = (_categoryKey: string, itemKey: string) => {
+    onSelectCategory?.(itemKey === "all" ? null : itemKey);
+  };
 
-  const filterDropdown = (
-    <FilterDropdown
-      categories={courseCategories}
-      onFilterSelect={handleCourseSelect}
-      label="All Courses"
-      value={selectedLabel}
-    />
+  const handleClearFilters = () => {
+    onSelectCourse?.(null);
+    onSelectCategory?.(null);
+  };
+
+  const hasActiveFilters = !!selectedCourseId || !!selectedCategoryId;
+
+  const filterDropdowns = (
+    <div className="flex items-center gap-3">
+      <FilterDropdown
+        categories={courseFilterCategories}
+        onFilterSelect={handleCourseSelect}
+        label="All Courses"
+        value={selectedCourseLabel}
+      />
+      <FilterDropdown
+        categories={categoryFilterCategories}
+        onFilterSelect={handleCategorySelect}
+        label="All Category"
+        value={selectedCategoryLabel}
+      />
+    </div>
   );
 
   const exportButton = (
@@ -91,7 +128,7 @@ export function ReportByCoursesTopBar({
             Clear All
           </button>
         )}
-        {filterDropdown}
+        {filterDropdowns}
         {exportButton}
       </div>
 
@@ -108,7 +145,7 @@ export function ReportByCoursesTopBar({
               <X className="h-4 w-4" />
             </button>
           )}
-          <div className="shrink-0">{filterDropdown}</div>
+          <div className="shrink-0">{filterDropdowns}</div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
