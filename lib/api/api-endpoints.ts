@@ -201,6 +201,9 @@ export const API_ENDPOINTS = {
     EXPENSES_LIST: `/api/v1/admin/finances/expenses`,
     EXPENSES_CREATE: `/api/v1/admin/finances/expenses`,
     EXPENSES_EXPORT: `/api/v1/admin/finances/expenses/export`,
+    BATCH_WISE_SUMMARY: `/api/v1/admin/finances/batch-wise/summary`,
+    BATCH_WISE_TABLE: `/api/v1/admin/finances/batch-wise/table`,
+    BATCH_WISE_GRAPH: `/api/v1/admin/finances/batch-wise/graph`,
     SOURCE_WISE_SUMMARY: `/api/v1/admin/finances/source-wise/summary`,
     SOURCE_WISE_DETAIL: (via: string) =>
       `/api/v1/admin/finances/source-wise/detail/${via}`,

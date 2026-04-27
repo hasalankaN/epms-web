@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 
 import { MoreHorizontal, X } from "lucide-react";
 
@@ -17,49 +17,60 @@ import {
 
 const buttonTextStyles = "text-[14px] font-semibold leading-[20px] text-[#0F172B]";
 
-const batchCategories: FilterCategory[] = [
-  {
-    key: "batch",
-    label: "Batch",
-    items: [
-      { key: "all", label: "All Batches" },
-      { key: "batch-dip-hr", label: "Dip. HR" },
-      { key: "batch-dip-it", label: "Dip. IT" },
-      { key: "batch-dip-bm", label: "Dip. BM" },
-    ],
-  },
-];
+interface BatchOption {
+  id: string;
+  name: string;
+}
 
-export function ReportByBatchesTopBar() {
-  const [selectedBatch, setSelectedBatch] = useState<string | null>(null);
+interface ReportByBatchesTopBarProps {
+  batches?: BatchOption[];
+  selectedBatchId?: string | null;
+  onSelectBatch?: (id: string | null) => void;
+  onExport?: () => void;
+}
 
-  const handleFilterSelect = (
-    _categoryKey: string,
-    _itemKey: string,
-    itemLabel: string
-  ) => {
-    setSelectedBatch(itemLabel === "All Batches" ? null : itemLabel);
+export function ReportByBatchesTopBar({
+  batches = [],
+  selectedBatchId,
+  onSelectBatch,
+  onExport,
+}: ReportByBatchesTopBarProps) {
+  const batchCategories: FilterCategory[] = [
+    {
+      key: "batch",
+      label: "Batch",
+      items: [
+        { key: "all", label: "All Batches" },
+        ...batches.map((b) => ({ key: b.id, label: b.name })),
+      ],
+    },
+  ];
+
+  const selectedLabel = selectedBatchId
+    ? batches.find((b) => b.id === selectedBatchId)?.name ?? null
+    : null;
+
+  const handleFilterSelect = (_categoryKey: string, itemKey: string) => {
+    onSelectBatch?.(itemKey === "all" ? null : itemKey);
   };
 
-  const handleClearFilters = () => {
-    setSelectedBatch(null);
-  };
+  const handleClearFilters = () => onSelectBatch?.(null);
 
-  const hasActiveFilters = selectedBatch !== null;
+  const hasActiveFilters = !!selectedBatchId;
 
   const filterDropdown = (
     <FilterDropdown
       categories={batchCategories}
       onFilterSelect={handleFilterSelect}
       label="All Batches"
-      value={selectedBatch}
+      value={selectedLabel}
     />
   );
 
   const exportButton = (
     <button
       className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}
-      onClick={() => console.log("Export CSV")}
+      onClick={() => onExport?.()}
     >
       <i className="file-csv h-4 w-4" />
       Export CSV
@@ -111,7 +122,7 @@ export function ReportByBatchesTopBar() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[160px]">
-              <DropdownMenuItem onClick={() => console.log("Export CSV")} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
+              <DropdownMenuItem onClick={() => onExport?.()} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
                 <i className="file-csv mr-2 h-4 w-4" />
                 Export CSV
               </DropdownMenuItem>

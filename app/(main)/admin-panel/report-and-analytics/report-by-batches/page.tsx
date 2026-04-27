@@ -1,88 +1,71 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useMemo } from "react";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
+import { subDays, format } from "date-fns";
+
 import { ReportByBatchesTopBar } from "@/components/admin-panel/report-and-analytics/report-by-batches/ReportByBatchesTopBar";
-import type { ReportByBatchesStatItem } from "@/components/admin-panel/report-and-analytics/report-by-batches/ReportByBatchesStatsRow";
 import { ReportByBatchesStatsRow } from "@/components/admin-panel/report-and-analytics/report-by-batches/ReportByBatchesStatsRow";
+import type { ReportByBatchesStatItem } from "@/components/admin-panel/report-and-analytics/report-by-batches/ReportByBatchesStatsRow";
 import { ReportByBatchesFilterRow } from "@/components/admin-panel/report-and-analytics/report-by-batches/ReportByBatchesFilterRow";
 import { ReportByBatchesChart } from "@/components/admin-panel/report-and-analytics/report-by-batches/ReportByBatchesChart";
 import { ReportByBatchesSearch } from "@/components/admin-panel/report-and-analytics/report-by-batches/ReportByBatchesSearch";
-
-// Tables
-import type { ReportByBatchesDataType } from "@/components/admin-panel/report-and-analytics/report-by-batches/ReportByBatchesTable";
 import { ReportByBatchesTable } from "@/components/admin-panel/report-and-analytics/report-by-batches/ReportByBatchesTable";
-import type { TotalDiscountDataType } from "@/components/admin-panel/report-and-analytics/report-by-batches/tables/TotalDiscountTable";
+import type { ReportByBatchesDataType } from "@/components/admin-panel/report-and-analytics/report-by-batches/ReportByBatchesTable";
 import { TotalDiscountTable } from "@/components/admin-panel/report-and-analytics/report-by-batches/tables/TotalDiscountTable";
-import type { TotalReferralCommissionDataType } from "@/components/admin-panel/report-and-analytics/report-by-batches/tables/TotalReferralCommissionTable";
+import type { TotalDiscountDataType } from "@/components/admin-panel/report-and-analytics/report-by-batches/tables/TotalDiscountTable";
 import { TotalReferralCommissionTable } from "@/components/admin-panel/report-and-analytics/report-by-batches/tables/TotalReferralCommissionTable";
-import type { TotalExpenseDataType } from "@/components/admin-panel/report-and-analytics/report-by-batches/tables/TotalExpenseTable";
+import type { TotalReferralCommissionDataType } from "@/components/admin-panel/report-and-analytics/report-by-batches/tables/TotalReferralCommissionTable";
 import { TotalExpenseTable } from "@/components/admin-panel/report-and-analytics/report-by-batches/tables/TotalExpenseTable";
-import type { NetProfitDataType } from "@/components/admin-panel/report-and-analytics/report-by-batches/tables/NetProfitTable";
+import type { TotalExpenseDataType } from "@/components/admin-panel/report-and-analytics/report-by-batches/tables/TotalExpenseTable";
 import { NetProfitTable } from "@/components/admin-panel/report-and-analytics/report-by-batches/tables/NetProfitTable";
+import type { NetProfitDataType } from "@/components/admin-panel/report-and-analytics/report-by-batches/tables/NetProfitTable";
 
-// Mock Data Generators
-const generatePaymentData = (): ReportByBatchesDataType[] => Array.from({ length: 45 }).map((_, i) => ({
-  id: `BCH-${i + 1}`,
-  batchName: "Dip. HR",
-  branch: "Colombo",
-  totalAmountToCollect: Math.floor(Math.random() * 500000) + 100000,
-  totalPendingPayment: Math.floor(Math.random() * 50000) + 10000,
-  status: i % 3 === 0 ? "Pending" : "Completed",
-}));
+import {
+  useGetBatchWiseSummary,
+  useGetBatchWiseTable,
+  useGetBatchWiseGraph,
+} from "@/hooks/api/finances/useGetBatchWiseReport";
+import type {
+  BatchPaymentRow,
+  BatchDiscountRow,
+  BatchCommissionRow,
+  BatchExpenseRow,
+  BatchNetProfitRow,
+  BatchReportMetric,
+} from "@/hooks/api/finances/useGetBatchWiseReport";
+import { useGetBatches } from "@/hooks/api/batches/useGetBatches";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
-const generateDiscountData = (): TotalDiscountDataType[] => Array.from({ length: 45 }).map((_, i) => ({
-  id: `DISC-${i + 1}`,
-  batchName: "Dip. HR",
-  branch: "Colombo",
-  studentName: "name",
-  referralName: "name",
-  actualValue: Math.floor(Math.random() * 50000) + 10000,
-  offerValue: Math.floor(Math.random() * 40000) + 5000,
-  discountReceived: Math.floor(Math.random() * 10000) + 1000,
-  offeredOn: "2026/01/21",
-}));
-
-const generateCommissionData = (): TotalReferralCommissionDataType[] => Array.from({ length: 45 }).map((_, i) => ({
-  id: `COM-${i + 1}`,
-  batchName: "Dip. HR",
-  studentName: "name",
-  paymentAmount: Math.floor(Math.random() * 50000) + 10000,
-  referralCom: Math.floor(Math.random() * 5000) + 500,
-  referralPerson: "name",
-  date: "2026/01/21",
-  offeredBy: "Admin",
-}));
-
-const generateExpenseData = (): TotalExpenseDataType[] => Array.from({ length: 45 }).map((_, i) => ({
-  id: `EXP-${i + 1}`,
-  date: "2026/01/21",
-  batchName: "Dip. HR",
-  branch: "Colombo",
-  description: "Lorem Ipsum",
-  transactionVia: "BOC",
-  amount: Math.floor(Math.random() * 50000) + 10000,
-}));
-
-const generateProfitData = (): NetProfitDataType[] => Array.from({ length: 45 }).map((_, i) => ({
-  id: `PRO-${i + 1}`,
-  batchName: "Dip. HR",
-  branch: "Colombo",
-  totalIncome: Math.floor(Math.random() * 500000) + 100000,
-  totalExpense: Math.floor(Math.random() * 200000) + 50000,
-  profitOrLossValue: Math.floor(Math.random() * 300000) + 10000,
-  status: i % 4 === 0 ? "Loss" : "Profit",
-}));
-
-const MOCK_DATA = {
-  payment: generatePaymentData(),
-  discount: generateDiscountData(),
-  commission: generateCommissionData(),
-  expense: generateExpenseData(),
-  profit: generateProfitData(),
+const METRIC_MAP: Record<string, BatchReportMetric> = {
+  payment: "PAYMENTS",
+  discount: "DISCOUNTS",
+  commission: "REFERRAL_COMMISSIONS",
+  expense: "EXPENSES",
+  profit: "NET_PROFIT",
 };
+
+const PAGE_SIZE = 10;
+
+function fmtLkr(val: string | null | undefined) {
+  const n = parseFloat(val ?? "0");
+
+  return `LKR ${n.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function fmtDate(val: string | Date | null) {
+  if (!val) {
+    return "—";
+  }
+
+  try {
+    return format(new Date(val as string), "yyyy/MM/dd");
+  } catch {
+    return String(val);
+  }
+}
 
 export default function ReportByBatchesPage() {
   const router = useRouter();
@@ -92,7 +75,13 @@ export default function ReportByBatchesPage() {
   const pageParam = searchParams.get("page");
   const currentPage = pageParam ? parseInt(pageParam) : 1;
   const activeTab = searchParams.get("tab") || "payment";
+
   const [search, setSearch] = useState("");
+  const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
+  const [selectedDays, setSelectedDays] = useState(90);
+
+  const dateFrom = format(subDays(new Date(), selectedDays), "yyyy-MM-dd");
+  const dateTo = format(new Date(), "yyyy-MM-dd");
 
   const handlePageChange = useCallback((page: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -105,78 +94,189 @@ export default function ReportByBatchesPage() {
     const params = new URLSearchParams(searchParams.toString());
 
     params.set("tab", tab);
-    params.set("page", "1"); // reset page on tab change
+    params.set("page", "1");
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, pathname, router]);
 
+  const handleSelectDays = useCallback((days: number) => {
+    setSelectedDays(days);
+    handlePageChange(1);
+  }, [handlePageChange]);
+
+  // Batch list for TopBar dropdown
+  const { data: batchesData } = useGetBatches({ size: 100 });
+  const batches = (batchesData?.results ?? []).map((b) => ({ id: b.id, name: b.name }));
+
+  const metric = METRIC_MAP[activeTab] ?? "PAYMENTS";
+  const commonParams = { batch_id: selectedBatchId ?? undefined, date_from: dateFrom, date_to: dateTo };
+
+  // Summary cards
+  const { data: summary } = useGetBatchWiseSummary(commonParams);
+
+  // Graph
+  const { data: graphData, isLoading: graphLoading } = useGetBatchWiseGraph({
+    metric,
+    time_grouping: selectedDays <= 30 ? "DAYS" : "MONTHS",
+    ...commonParams,
+  });
+
+  // Table
+  const { data: tableData, isLoading: tableLoading } = useGetBatchWiseTable({
+    metric,
+    ...commonParams,
+    search: search || undefined,
+    page: currentPage,
+    size: PAGE_SIZE,
+  });
+
   const stats: ReportByBatchesStatItem[] = [
-    { key: "payment", title: "Total Payment", value: "XXXX.00", isActive: activeTab === "payment" },
-    { key: "discount", title: "Total Discount", value: "XXXX.00", isActive: activeTab === "discount" },
-    { key: "commission", title: "Total Referral Commision", value: "XXXX.00", isActive: activeTab === "commission" },
-    { key: "expense", title: "Total Expense", value: "XXXX.00", isActive: activeTab === "expense" },
-    { key: "profit", title: "Net Profit", value: "XXXX.00", isActive: activeTab === "profit" },
+    { key: "payment", title: "Total Payment", value: fmtLkr(summary?.total_payments), isActive: activeTab === "payment" },
+    { key: "discount", title: "Total Discount", value: fmtLkr(summary?.total_discounts), isActive: activeTab === "discount" },
+    { key: "commission", title: "Total Referral Commision", value: fmtLkr(summary?.total_referral_commissions), isActive: activeTab === "commission" },
+    { key: "expense", title: "Total Expense", value: fmtLkr(summary?.total_expenses), isActive: activeTab === "expense" },
+    { key: "profit", title: "Net Profit", value: fmtLkr(summary?.net_profit), isActive: activeTab === "profit" },
   ];
+
+  const rows = tableData?.results ?? [];
+  const totalResults = tableData?.totalResults ?? 0;
+  const totalPages = tableData?.totalPages ?? 1;
+
+  // Map API rows to table data types
+  const paymentRows = useMemo(() => (rows as BatchPaymentRow[]).map((r) => ({
+    id: r.batch_id,
+    batchName: r.batch_name ?? "—",
+    branch: r.branch ?? "—",
+    totalAmountToCollect: parseFloat(r.total_amount_to_collect ?? "0"),
+    totalPendingPayment: parseFloat(r.total_pending_payment ?? "0"),
+    status: (r.payment_status === "Completed" ? "Completed" : "Pending") as "Pending" | "Completed",
+  } satisfies ReportByBatchesDataType)), [rows]);
+
+  const discountRows = useMemo(() => (rows as BatchDiscountRow[]).map((r, i) => ({
+    id: r.batch_id ?? String(i),
+    batchName: r.batch_name ?? "—",
+    branch: "—",
+    studentName: r.student_name ?? "—",
+    referralName: r.referral_name ?? "—",
+    actualValue: parseFloat(String(r.actual_value ?? "0")),
+    offerValue: parseFloat(String(r.offer_value ?? "0")),
+    discountReceived: parseFloat(r.discount_percentage ?? "0"),
+    offeredOn: fmtDate(r.offered_on),
+  } satisfies TotalDiscountDataType)), [rows]);
+
+  const commissionRows = useMemo(() => (rows as BatchCommissionRow[]).map((r, i) => ({
+    id: r.batch_id ?? String(i),
+    batchName: r.batch_name ?? "—",
+    studentName: r.student_name ?? "—",
+    paymentAmount: parseFloat(String(r.payment_amount ?? "0")),
+    referralCom: parseFloat(String(r.referral_commission ?? "0")),
+    referralPerson: r.referral_name ?? "—",
+    date: fmtDate(r.date),
+    offeredBy: r.offered_by ?? "—",
+  } satisfies TotalReferralCommissionDataType)), [rows]);
+
+  const expenseRows = useMemo(() => (rows as BatchExpenseRow[]).map((r, i) => ({
+    id: String(i),
+    date: fmtDate(r.date),
+    batchName: r.batch_name ?? "—",
+    branch: r.branch ?? "—",
+    description: r.expense_description ?? "—",
+    transactionVia: r.transaction_via ?? "—",
+    amount: parseFloat(String(r.amount ?? "0")),
+  } satisfies TotalExpenseDataType)), [rows]);
+
+  const profitRows = useMemo(() => (rows as BatchNetProfitRow[]).map((r) => ({
+    id: r.batch_id,
+    batchName: r.batch_name ?? "—",
+    branch: r.branch ?? "—",
+    totalIncome: parseFloat(r.total_income ?? "0"),
+    totalExpense: parseFloat(r.total_expenses ?? "0"),
+    profitOrLossValue: parseFloat(r.profit_loss_value ?? "0"),
+    status: (r.profit_loss_status === "PROFIT" ? "Profit" : r.profit_loss_status === "LOSS" ? "Loss" : "Profit") as "Profit" | "Loss",
+  } satisfies NetProfitDataType)), [rows]);
+
+  const handleExport = () => {
+    const params = new URLSearchParams({
+      metric,
+      date_from: dateFrom,
+      date_to: dateTo,
+      ...(selectedBatchId ? { batch_id: selectedBatchId } : {}),
+    });
+
+    window.open(`${API_ENDPOINTS.finances.BATCH_WISE_TABLE}?${params.toString()}`, "_blank");
+  };
 
   return (
     <div className="space-y-3 p-4 md:p-6 w-full">
       <div className="flex w-full flex-col pb-10">
-        
-        {/* 1. Top Bar */}
-        <ReportByBatchesTopBar />
+        <ReportByBatchesTopBar
+          batches={batches}
+          selectedBatchId={selectedBatchId}
+          onSelectBatch={setSelectedBatchId}
+          onExport={handleExport}
+        />
 
-        {/* 2. Stats Row (Clickable) */}
         <div className="mt-4">
           <ReportByBatchesStatsRow stats={stats} onCardClick={handleTabChange} />
         </div>
 
-        {/* 3. Filter Row */}
-        <ReportByBatchesFilterRow />
+        <ReportByBatchesFilterRow selectedDays={selectedDays} onSelectDays={handleSelectDays} />
 
-        {/* 4. Chart */}
-        <ReportByBatchesChart />
-        
-        {/* 5. Search Bar & Table */}
+        <ReportByBatchesChart graphData={graphData} isLoading={graphLoading} />
+
         <div className="mt-2 flex w-full flex-col space-y-4">
           <ReportByBatchesSearch search={search} onSearchChange={setSearch} />
-          
-          {/* Dynamic Table Rendering based on Active Tab */}
+
           {activeTab === "payment" && (
             <ReportByBatchesTable
-              data={MOCK_DATA.payment}
+              data={paymentRows}
               currentPage={currentPage}
               onPageChange={handlePageChange}
+              serverTotalCount={totalResults}
+              serverTotalPages={totalPages}
+              isLoading={tableLoading}
             />
           )}
           {activeTab === "discount" && (
             <TotalDiscountTable
-              data={MOCK_DATA.discount}
+              data={discountRows}
               currentPage={currentPage}
               onPageChange={handlePageChange}
+              serverTotalCount={totalResults}
+              serverTotalPages={totalPages}
+              isLoading={tableLoading}
             />
           )}
           {activeTab === "commission" && (
             <TotalReferralCommissionTable
-              data={MOCK_DATA.commission}
+              data={commissionRows}
               currentPage={currentPage}
               onPageChange={handlePageChange}
+              serverTotalCount={totalResults}
+              serverTotalPages={totalPages}
+              isLoading={tableLoading}
             />
           )}
           {activeTab === "expense" && (
             <TotalExpenseTable
-              data={MOCK_DATA.expense}
+              data={expenseRows}
               currentPage={currentPage}
               onPageChange={handlePageChange}
+              serverTotalCount={totalResults}
+              serverTotalPages={totalPages}
+              isLoading={tableLoading}
             />
           )}
           {activeTab === "profit" && (
             <NetProfitTable
-              data={MOCK_DATA.profit}
+              data={profitRows}
               currentPage={currentPage}
               onPageChange={handlePageChange}
+              serverTotalCount={totalResults}
+              serverTotalPages={totalPages}
+              isLoading={tableLoading}
             />
           )}
         </div>
-
       </div>
     </div>
   );

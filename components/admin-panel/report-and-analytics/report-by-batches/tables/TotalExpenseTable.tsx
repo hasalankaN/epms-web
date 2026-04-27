@@ -19,23 +19,23 @@ interface TotalExpenseTableProps {
   data: TotalExpenseDataType[];
   currentPage: number;
   onPageChange: (page: number) => void;
+  serverTotalCount?: number;
+  serverTotalPages?: number;
+  isLoading?: boolean;
 }
 
 export function TotalExpenseTable({
   data,
   currentPage,
   onPageChange,
+  serverTotalCount,
+  serverTotalPages,
+  isLoading = false,
 }: TotalExpenseTableProps) {
-  const itemsPerPage = 10;
   const filteredData = useMemo(() => data || [], [data]);
-  const totalCount = filteredData.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    
-    return filteredData.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, currentPage, itemsPerPage]);
+  const totalCount = serverTotalCount ?? filteredData.length;
+  const totalPages = serverTotalPages ?? Math.max(1, Math.ceil(totalCount / 10));
+  const paginatedData = filteredData;
 
   const formatCurrency = (val: number) => `${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -83,6 +83,8 @@ export function TotalExpenseTable({
       data={paginatedData}
       columns={columns}
       keyExtractor={(item) => item.id}
+      isLoading={isLoading}
+      tableContainerClassName="overflow-auto"
       pagination={{
         variant: "simple",
         totalCount,
