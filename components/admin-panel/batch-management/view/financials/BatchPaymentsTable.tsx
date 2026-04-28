@@ -13,7 +13,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
 import { AddPaymentModal } from "./AddPaymentModal";
 
 import type { ApiBatchFeeItem } from "@/hooks/api/batches/useGetBatchById";
@@ -26,6 +25,7 @@ export function BatchPaymentsTable({ feeItems = [] }: BatchPaymentsTableProps) {
   const totalAmount = feeItems
     .reduce((sum, item) => sum + parseFloat(item.amount || "0"), 0)
     .toFixed(2);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (

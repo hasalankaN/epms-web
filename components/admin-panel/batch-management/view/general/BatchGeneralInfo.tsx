@@ -16,36 +16,43 @@ import { useGetCertificateTemplateById } from "@/hooks/api/certificates/useGetCe
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-const InfoItem = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div className="flex flex-col items-start gap-1 w-full">
-    <span className="font-inter text-[12px] font-normal leading-[16px] text-[#90A1B9]">
-      {label}
-    </span>
-    <div className="font-inter text-[16px] font-medium leading-[24px] text-[#314158] w-full">
-      {children}
-    </div>
-  </div>
-);
-
-const Avatar = ({ src, name }: { src: string | null | undefined; name: string }) => (
-  <div className="h-6 w-6 rounded-full bg-gray-200 overflow-hidden shrink-0">
-    {src ? (
-      <img src={src} alt={name} className="h-full w-full object-cover" />
-    ) : (
-      <div className="h-full w-full flex items-center justify-center bg-slate-300 text-[10px] font-semibold text-white">
-        {name.charAt(0).toUpperCase()}
+const InfoItem = ({ label, children }: { label: string; children: React.ReactNode }) => {
+  return (
+    <div className="flex flex-col items-start gap-1 w-full">
+      <span className="font-inter text-[12px] font-normal leading-[16px] text-[#90A1B9]">
+        {label}
+      </span>
+      <div className="font-inter text-[16px] font-medium leading-[24px] text-[#314158] w-full">
+        {children}
       </div>
-    )}
-  </div>
-);
+    </div>
+  );
+};
+
+const Avatar = ({ src, name }: { src: string | null | undefined; name: string }) => {
+  return (
+    <div className="h-6 w-6 rounded-full bg-gray-200 overflow-hidden shrink-0">
+      {src ? (
+        <img src={src} alt={name} className="h-full w-full object-cover" />
+      ) : (
+        <div className="h-full w-full flex items-center justify-center bg-slate-300 text-[10px] font-semibold text-white">
+          {name.charAt(0).toUpperCase()}
+        </div>
+      )}
+    </div>
+  );
+};
 
 // ── Staff chip (fetches one staff member) ─────────────────────────────────────
 
 function StaffChip({ staffId }: { staffId: string }) {
   const { data } = useGetStaffById(staffId);
   const profile = data?.profile;
+
   if (!profile) return null;
+
   const name = `${profile.first_name} ${profile.last_name}`;
+
   return (
     <div className="flex items-center gap-2">
       <Avatar src={profile.profile_image_url} name={name} />
@@ -58,10 +65,11 @@ function StaffChip({ staffId }: { staffId: string }) {
 
 function CertChip({ certId }: { certId: string }) {
   const { data } = useGetCertificateTemplateById(certId);
+
   if (!data) return null;
-  const label = data.pricing_type === "FREE"
-    ? `${data.name} {Free}`
-    : `${data.name}`;
+
+  const label = data.pricing_type === "FREE" ? `${data.name} {Free}` : `${data.name}`;
+
   return <span className="truncate">{label}</span>;
 }
 
@@ -78,6 +86,7 @@ export function BatchGeneralInfo({ batch }: BatchGeneralInfoProps) {
   const lecturerName = lecturer
     ? `${lecturer.profile.first_name} ${lecturer.profile.last_name}`
     : "—";
+  
   const branchName = branch?.name ?? "—";
   const assessment = batch?.has_assignment ? "Assignment" : "—";
   const staffIds = batch?.staff_ids ?? [];
