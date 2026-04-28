@@ -1,107 +1,57 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
+
+import { format } from "date-fns";
 
 import type { BatchDataType } from "@/types/batch";
+import { useGetBatches } from "@/hooks/api/batches/useGetBatches";
 
 import { BranchBatchToolbar } from "./BranchBatchToolbar";
 import { BranchBatchTable } from "./BranchBatchTable";
 
-// ===== MOCK DATA =====
-const mockBatches: BatchDataType[] = [
-  {
-    id: "batch-1",
-    batchId: "#000001",
-    batchName: "English Language Class",
-    category: "On-Site",
-    branch: "Negombo",
-    type: "HND",
-    lecturer: "Miss. Akarshani",
-    studentsCount: 200,
-    payment: "Paid",
-    startDate: "2026/01/11",
-    endDate: "2026/03/11",
-    status: "Active",
-  },
-  {
-    id: "batch-2",
-    batchId: "#000001",
-    batchName: "UI/UX",
-    category: "Hybrid",
-    branch: "Galle",
-    type: "Diploma",
-    lecturer: "Mr. Saadh",
-    studentsCount: 500,
-    payment: "Free",
-    startDate: "2025/11/03",
-    endDate: "2026/01/03",
-    status: "Completed",
-  },
-  {
-    id: "batch-3",
-    batchId: "#000001",
-    batchName: "UI/UX",
-    category: "Hybrid",
-    branch: "Galle",
-    type: "Diploma",
-    lecturer: "Mr. Saadh",
-    studentsCount: 500,
-    payment: "Free",
-    startDate: "2025/11/03",
-    endDate: "2026/01/03",
-    status: "Completed",
-  },
-  {
-    id: "batch-4",
-    batchId: "#000001",
-    batchName: "UI/UX",
-    category: "Hybrid",
-    branch: "Galle",
-    type: "Diploma",
-    lecturer: "Mr. Saadh",
-    studentsCount: 500,
-    payment: "Free",
-    startDate: "2026/01/03",
-    endDate: "2026/02/03",
-    status: "Inactive",
-  },
-  {
-    id: "batch-5",
-    batchId: "#000001",
-    batchName: "UI/UX",
-    category: "Hybrid",
-    branch: "Galle",
-    type: "Diploma",
-    lecturer: "Mr. Saadh",
-    studentsCount: 500,
-    payment: "Free",
-    startDate: "2026/02/03",
-    endDate: "2026/03/03",
-    status: "Upcoming",
-  },
-];
+const PAGE_SIZE = 10;
 
-export function BranchBatchDetails() {
+interface BranchBatchDetailsProps {
+  branchId: string;
+}
+
+function fmtDate(val: string | null | undefined) {
+  if (!val) return "—";
+  try { return format(new Date(val), "yyyy/MM/dd"); } catch { return val; }
+}
+
+export function BranchBatchDetails({ branchId }: BranchBatchDetailsProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-
-  const filteredData = useMemo(() => {
-    if (!searchQuery) return mockBatches;
-
-    const lowerQuery = searchQuery.toLowerCase();
-
-    return mockBatches.filter(
-      (item) =>
-        item.batchName.toLowerCase().includes(lowerQuery) ||
-        item.batchId.toLowerCase().includes(lowerQuery) ||
-        item.category.toLowerCase().includes(lowerQuery) ||
-        item.lecturer.toLowerCase().includes(lowerQuery)
-    );
-  }, [searchQuery]);
-
   const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
-  const pageSize = 10;
-  const totalPages = Math.ceil(filteredData.length / pageSize) || 1;
+
+  const { data, isLoading } = useGetBatches({
+    branch_id: branchId,
+    search: searchQuery || undefined,
+    page: currentPage,
+    size: PAGE_SIZE,
+  });
+
+  const tableData: BatchDataType[] = useMemo(() =>
+    (data?.results ?? []).map((b) => ({
+      id: b.id,
+      batchId: b.custom_id ?? "—",
+      batchName: b.name ?? "—",
+      category: b.category ?? "—",
+      branch: b.branch_name ?? "—",
+      type: b.type ?? "—",
+      lecturer: "—",
+      studentsCount: 0,
+      payment: "—",
+      startDate: fmtDate(b.start_date),
+      endDate: fmtDate(b.end_date),
+      status: b.status,
+    })),
+  [data]);
+
+  const totalPages = data?.totalPages ?? 1;
+  const totalResults = data?.totalResults ?? 0;
 
   const handleRowSelectionChange = useCallback((id: string, checked: boolean) => {
     setRowSelection((prev) => ({ ...prev, [id]: checked }));
@@ -109,35 +59,33 @@ export function BranchBatchDetails() {
 
   const handleSelectAll = useCallback((checked: boolean) => {
     if (checked) {
-      const newSelection = Object.fromEntries(filteredData.map((batch) => [batch.id, true]));
-
-      setRowSelection(newSelection);
+      setRowSelection(Object.fromEntries(tableData.map((b) => [b.id, true])));
     } else {
       setRowSelection({});
     }
-  }, [filteredData]);
+  }, [tableData]);
 
-  const handleStatusChange = useCallback((id: string, status: string) => {
-    console.log("Status change:", id, status);
-    
-    // TODO: Update backend/mock state
+  const handleSearchChange = useCallback((val: string) => {
+    setSearchQuery(val);
+    setCurrentPage(1);
   }, []);
 
   return (
     <div className="flex flex-col gap-4">
       <BranchBatchToolbar
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={handleSearchChange}
       />
-      
       <BranchBatchTable
-        data={filteredData}
+        data={tableData}
         rowSelection={rowSelection}
         onRowSelectionChange={handleRowSelectionChange}
         onSelectAll={handleSelectAll}
-        onStatusChange={handleStatusChange}
+        onStatusChange={() => {}}
+        isLoading={isLoading}
         currentPage={currentPage}
         totalPages={totalPages}
+        totalCount={totalResults}
         onPageChange={setCurrentPage}
       />
     </div>

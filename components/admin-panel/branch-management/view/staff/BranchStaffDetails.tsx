@@ -1,126 +1,56 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
+
+import { format } from "date-fns";
 
 import type { StaffDataType } from "@/types/user-management";
+import { useGetStaff } from "@/hooks/api/staff/useGetStaff";
 
 import { BranchStaffToolbar } from "./BranchStaffToolbar";
 import { BranchStaffTable } from "./BranchStaffTable";
 
-// ===== MOCK DATA =====
-const mockStaff: StaffDataType[] = [
-  {
-    id: "staff-1",
-    regDate: "01/21",
-    idNo: "#000001",
-    name: "Amali Perera",
-    district: "Colombo",
-    phone: "+9470 492 2345",
-    whatsApp: "+9470 492 2345",
-    email: "user@gmail.com",
-    privileges: "Privilege 1",
-    commissions: "N/A",
-    branch: "Colombo",
-    salaryStatus: "OVER_DUE",
-    status: "ACTIVE",
-    role: "Manager",
-    rawPrivileges: [],
-    isBranchManager: false
-  },
-  {
-    id: "staff-2",
-    regDate: "01/21",
-    idNo: "#000001",
-    name: "Amali Perera",
-    district: "Colombo",
-    phone: "+9470 492 2345",
-    whatsApp: "+9470 492 2345",
-    email: "user@gmail.com",
-    privileges: "Privilege 1",
-    commissions: "N/A",
-    branch: "Colombo",
-    salaryStatus: "PENDING",
-    status: "ACTIVE",
-    role: "",
-    rawPrivileges: [],
-    isBranchManager: false
-  },
-  {
-    id: "staff-3",
-    regDate: "01/21",
-    idNo: "#000001",
-    name: "Amali Perera",
-    district: "Colombo",
-    phone: "+9470 492 2345",
-    whatsApp: "+9470 492 2345",
-    email: "user@gmail.com",
-    privileges: "Privilege 1",
-    commissions: "N/A",
-    branch: "Colombo",
-    salaryStatus: "PAID",
-    status: "ACTIVE",
-    role: "",
-    rawPrivileges: [],
-    isBranchManager: false
-  },
-  {
-    id: "staff-4",
-    regDate: "01/21",
-    idNo: "#000001",
-    name: "Amali Perera",
-    district: "Colombo",
-    phone: "+9470 492 2345",
-    whatsApp: "+9470 492 2345",
-    email: "user@gmail.com",
-    privileges: "Privilege 1",
-    commissions: "N/A",
-    branch: "Colombo",
-    salaryStatus: "OVER_DUE",
-    status: "INACTIVE",
-    role: "",
-    rawPrivileges: [],
-    isBranchManager: false
-  },
-  {
-    id: "staff-5",
-    regDate: "01/21",
-    idNo: "#000001",
-    name: "Amali Perera",
-    district: "Colombo",
-    phone: "+9470 492 2345",
-    whatsApp: "+9470 492 2345",
-    email: "user@gmail.com",
-    privileges: "Privilege 1",
-    commissions: "N/A",
-    branch: "Colombo",
-    salaryStatus: "PAID",
-    status: "INACTIVE",
-    role: "",
-    rawPrivileges: [],
-    isBranchManager: false
-  },
-];
+const PAGE_SIZE = 10;
 
-export function BranchStaffDetails() {
+interface BranchStaffDetailsProps {
+  branchId: string;
+}
+
+export function BranchStaffDetails({ branchId }: BranchStaffDetailsProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-
-  const filteredData = useMemo(() => {
-    if (!searchQuery) return mockStaff;
-
-    const lowerQuery = searchQuery.toLowerCase();
-
-    return mockStaff.filter(
-      (item) =>
-        item.name.toLowerCase().includes(lowerQuery) ||
-        item.idNo.toLowerCase().includes(lowerQuery) ||
-        item.phone.toLowerCase().includes(lowerQuery)
-    );
-  }, [searchQuery]);
-
   const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
-  const pageSize = 10;
-  const totalPages = Math.ceil(filteredData.length / pageSize) || 1;
+
+  const { data, isLoading } = useGetStaff({
+    branch_id: branchId,
+    search: searchQuery || undefined,
+    page: currentPage,
+    size: PAGE_SIZE,
+  });
+
+  const tableData: StaffDataType[] = useMemo(() =>
+    (data?.results ?? []).map((s) => ({
+      id: s.userId,
+      regDate: s.createdAt ? format(new Date(s.createdAt), "MM/dd") : "—",
+      idNo: s.customId ?? "—",
+      name: `${s.firstName ?? ""} ${s.lastName ?? ""}`.trim() || "—",
+      district: s.branchName ?? "—",
+      phone: s.mobile ?? "—",
+      whatsApp: s.whatsapp ?? "—",
+      email: s.email ?? "—",
+      privileges: s.privileges?.join(", ") || "—",
+      commissions: s.commissionEarned ? `LKR ${parseFloat(s.commissionEarned).toLocaleString("en-LK", { minimumFractionDigits: 2 })}` : "N/A",
+      branch: s.branchName ?? "—",
+      salaryStatus: (s.salaryStatus as any) ?? "PENDING",
+      status: s.status === "ACTIVE" ? "ACTIVE" : "INACTIVE",
+      role: s.isBranchManager ? "Manager" : "",
+      rawPrivileges: s.privileges ?? [],
+      isBranchManager: s.isBranchManager,
+    })),
+  [data]);
+
+  const totalPages = data?.totalPages ?? 1;
+  const totalResults = data?.totalResults ?? 0;
 
   const handleRowSelectionChange = useCallback((id: string, checked: boolean) => {
     setRowSelection((prev) => ({ ...prev, [id]: checked }));
@@ -128,28 +58,32 @@ export function BranchStaffDetails() {
 
   const handleSelectAll = useCallback((checked: boolean) => {
     if (checked) {
-      const newSelection = Object.fromEntries(filteredData.map((staff) => [staff.id, true]));
-      
-      setRowSelection(newSelection);
+      setRowSelection(Object.fromEntries(tableData.map((s) => [s.id, true])));
     } else {
       setRowSelection({});
     }
-  }, [filteredData]);
+  }, [tableData]);
+
+  const handleSearchChange = useCallback((val: string) => {
+    setSearchQuery(val);
+    setCurrentPage(1);
+  }, []);
 
   return (
     <div className="flex flex-col gap-4">
       <BranchStaffToolbar
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={handleSearchChange}
       />
-      
       <BranchStaffTable
-        data={filteredData}
+        data={tableData}
         rowSelection={rowSelection}
         onRowSelectionChange={handleRowSelectionChange}
         onSelectAll={handleSelectAll}
+        isLoading={isLoading}
         currentPage={currentPage}
         totalPages={totalPages}
+        totalCount={totalResults}
         onPageChange={setCurrentPage}
       />
     </div>

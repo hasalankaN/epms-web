@@ -21,6 +21,7 @@ interface BranchBatchTableProps {
   isError?: boolean;
   currentPage: number;
   totalPages: number;
+  totalCount?: number;
   onPageChange: (page: number) => void;
 }
 
@@ -34,6 +35,7 @@ export function BranchBatchTable({
   isError = false,
   currentPage,
   totalPages,
+  totalCount,
   onPageChange,
 }: BranchBatchTableProps) {
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
@@ -158,7 +160,7 @@ export function BranchBatchTable({
       tableContainerClassName="h-auto"
       pagination={{
         variant: "simple",
-        totalCount: data.length,
+        totalCount: totalCount ?? data.length,
         selectedRowCount,
         currentPage,
         totalPages,

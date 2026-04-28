@@ -23,6 +23,7 @@ interface BatchCoverHeaderProps {
 export function BatchCoverHeader({ batch }: BatchCoverHeaderProps) {
   const coverImage = batch?.cover_image_url || DEFAULT_COVER;
   const status = (batch?.status as BatchStatus) ?? "Active";
+
   const statusColors =
     BATCH_STATUS_CONFIG[status] ?? BATCH_STATUS_CONFIG["Active"];
 
