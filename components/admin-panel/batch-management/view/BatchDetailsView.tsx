@@ -2,6 +2,7 @@
 
 import React from "react";
 
+import { useGetBatchById } from "@/hooks/api/batches/useGetBatchById";
 import { BatchCoverHeader } from "./general/BatchCoverHeader";
 import { BatchGeneralInfo } from "./general/BatchGeneralInfo";
 import { BatchEnrollmentStats } from "./students/BatchEnrollmentStats";
@@ -13,98 +14,99 @@ import { BatchRevenueCard } from "./financials/BatchRevenueCard";
 import { BatchAccountCard } from "./financials/BatchAccountCard";
 
 export function BatchDetailsView({ batchId }: { batchId: string }) {
+  const { data: batch, isLoading } = useGetBatchById(batchId);
+
   return (
-    <div className="mt-3"> 
-      {/* 
-         Header Section 
-         Spacing: 12px from top elements (mt-3 = 12px since 1 = 4px)
-         User specified: "begins with cover image after 12px from back and generate button"
-      */}
-      <BatchCoverHeader batchId={batchId} />
-      
-      {/* Description Section */}
-      <div className="mt-[12px] flex flex-col gap-1 w-full px-4 md:px-6"> 
-          <h2 className="font-inter text-[12px] font-normal leading-[16px] text-[#90A1B9]">
-            Description
-          </h2>
+    <div className="mt-3">
+      {/* Cover Header */}
+      <BatchCoverHeader batch={batch} />
+
+      {/* Description */}
+      <div className="mt-[12px] flex flex-col gap-1 w-full px-4 md:px-6">
+        <h2 className="font-inter text-[12px] font-normal leading-[16px] text-[#90A1B9]">
+          Description
+        </h2>
+        {isLoading ? (
+          <div className="space-y-2 mt-1">
+            <div className="h-4 w-full animate-pulse rounded bg-slate-100" />
+            <div className="h-4 w-5/6 animate-pulse rounded bg-slate-100" />
+            <div className="h-4 w-4/6 animate-pulse rounded bg-slate-100" />
+          </div>
+        ) : (
           <p className="font-inter text-[14px] font-normal leading-[20px] text-[#314158] flex-1">
-            Lorem ipsum dolor sit amet consectetur. Quis tortor porttitor eget senectus. Non turpis duis ac proin turpis gravida. Vitae mi scelerisque blandit morbi magna. Facilisis aenean lectus arcu sodales rhoncus pellentesque euismod vel at. Diam a sem enim pharetra commodo at. Eget massa pellentesque vel turpis ornare. Arcu ligula mauris scelerisque enim in eu. Porta ultrices ac enim amet diam aliquet est bibendum. Id sollicitudin phasellus facilisis sit sagittis. Id risus risus praesent magna arcu.
+            {batch?.description ?? "No description provided."}
           </p>
+        )}
       </div>
 
-      {/* General Info Card */}
+      {/* General Info */}
       <div className="mt-4 w-full px-4 md:px-6">
-         <BatchGeneralInfo />
+        <BatchGeneralInfo batch={batch} />
       </div>
 
-      {/* Enrollment Statistics Title */}
+      {/* Enrollment Statistics */}
       <div className="mt-6 px-4 md:px-6">
-          <h2 className="font-inter text-[20px] font-semibold leading-[32px] text-[#0F172B]">
-            Enrollment Statistics
-          </h2>
+        <h2 className="font-inter text-[20px] font-semibold leading-[32px] text-[#0F172B]">
+          Enrollment Statistics
+        </h2>
       </div>
-
-      {/* Enrollment Statistics Card */}
       <div className="mt-4 w-full px-4 md:px-6">
-         <BatchEnrollmentStats />
+        {/* TODO: wire to useGetBatchEnrollmentStats(batchId) when endpoint is available */}
+        <BatchEnrollmentStats />
       </div>
 
-      {/* Student Details Title (16px below enrollment stats) */}
+      {/* Student Details */}
       <div className="mt-4 px-4 md:px-6">
-          <h2 className="font-inter text-[20px] font-semibold leading-[32px] text-[#0F172B]">
-            Student Details
-          </h2>
+        <h2 className="font-inter text-[20px] font-semibold leading-[32px] text-[#0F172B]">
+          Student Details
+        </h2>
       </div>
-
-      {/* Student Details Toolbar + Table (16px below title) */}
       <div className="mt-4 w-full px-4 md:px-6">
-         <BatchStudentDetails />
+        {/* TODO: wire to useGetBatchStudents(batchId) when endpoint is available */}
+        <BatchStudentDetails />
       </div>
 
-      {/* Certificate Details Title (16px below student details) */}
+      {/* Certificate Details */}
       <div className="mt-4 px-4 md:px-6">
-          <h2 className="font-inter text-[20px] font-semibold leading-[32px] text-[#0F172B]">
-            Certificate Details
-          </h2>
+        <h2 className="font-inter text-[20px] font-semibold leading-[32px] text-[#0F172B]">
+          Certificate Details
+        </h2>
       </div>
-
-      {/* Certificate Stats Grid */}
       <div className="mt-4 px-4 md:px-6">
+        {/* TODO: wire to useGetBatchCertificateStats(batchId) when endpoint is available */}
         <BatchCertificateStats />
       </div>
 
-      {/* Allocated Certificates Title (16px below stats) */}
+      {/* Allocated Certificates */}
       <div className="mt-4 px-4 md:px-6">
-          <h2 className="font-inter text-[16px] font-semibold leading-[24px] text-[#0F172B]">
-            Allocated Certificates
-          </h2>
+        <h2 className="font-inter text-[16px] font-semibold leading-[24px] text-[#0F172B]">
+          Allocated Certificates
+        </h2>
       </div>
-
-      {/* Allocated Certificates Table */}
       <div className="mt-4 w-full px-4 md:px-6">
-          <BatchAllocatedCertificates />
+        <BatchAllocatedCertificates certificateIds={batch?.certificate_ids} />
       </div>
 
-      {/* Batch Payments Title */}
+      {/* Batch Payments */}
       <div className="mt-6 px-4 md:px-6">
-          <h2 className="font-inter text-[20px] font-semibold leading-[32px] text-[#0F172B]">
-            Batch Payments
-          </h2>
+        <h2 className="font-inter text-[20px] font-semibold leading-[32px] text-[#0F172B]">
+          Batch Payments
+        </h2>
       </div>
-
-      {/* Batch Payments Table (16px below title) */}
       <div className="mt-4 w-full px-4 md:px-6">
-          <BatchPaymentsTable />
+        <BatchPaymentsTable feeItems={batch?.fee_items} />
       </div>
 
-      {/* Divider Line (15px below button) */}
+      {/* Divider */}
       <div className="mt-[15px] px-4 md:px-6 w-full">
-         <div className="h-[1px] w-full bg-[#E2E8F0]" />
+        <div className="h-[1px] w-full bg-[#E2E8F0]" />
       </div>
 
-      {/* Revenue and Batch Account Section (16px below divider) */}
+      {/* Revenue + Batch Account */}
+      {/* TODO: wire completedPercentage, estimatedPayment, pendingPayment, account data
+               to useGetBatchFinancialSummary(batchId) when endpoint is available */}
       <div className="mt-4 px-4 md:px-6 w-full flex flex-col lg:flex-row gap-4 mb-10">
-        <BatchRevenueCard 
+        <BatchRevenueCard
           completedPercentage={75}
           estimatedPayment="89,935"
           pendingPayment="19,935"

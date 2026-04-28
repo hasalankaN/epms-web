@@ -16,35 +16,16 @@ import {
 import { cn } from "@/lib/utils";
 import { AddPaymentModal } from "./AddPaymentModal";
 
-const PAYMENT_ITEMS = [
-  {
-    id: "reg",
-    description: "Registration Fee",
-    amount: "1000.00",
-    isAdditional: false,
-  },
-  {
-    id: "course",
-    description: "Course Fee",
-    amount: "5000.00",
-    isAdditional: false,
-  },
-  {
-    id: "uk",
-    description: "UK Certificate Fee",
-    amount: "500.00",
-    isAdditional: true,
-  },
-  {
-    id: "exam",
-    description: "Exam Fee",
-    amount: "2000.00",
-    isAdditional: true,
-  },
-];
+import type { ApiBatchFeeItem } from "@/hooks/api/batches/useGetBatchById";
 
-export function BatchPaymentsTable() {
-  const totalAmount = "7500.00";
+interface BatchPaymentsTableProps {
+  feeItems?: ApiBatchFeeItem[];
+}
+
+export function BatchPaymentsTable({ feeItems = [] }: BatchPaymentsTableProps) {
+  const totalAmount = feeItems
+    .reduce((sum, item) => sum + parseFloat(item.amount || "0"), 0)
+    .toFixed(2);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -62,26 +43,24 @@ export function BatchPaymentsTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {PAYMENT_ITEMS.map((item) => (
-              <TableRow key={item.id} className="border-b border-[#F1F5F9] last:border-none hover:bg-transparent">
-                <TableCell 
-                  className={cn(
-                    "text-sm font-normal font-inter leading-5 break-all px-6 py-3",
-                    item.isAdditional ? "text-[#3b4452]" : "text-[#8a99ad]"
-                  )}
-                >
-                  {item.description}
-                </TableCell>
-                <TableCell 
-                  className={cn(
-                    "w-[152px] shrink-0 text-sm font-normal font-inter leading-5 text-right px-6 py-3 align-middle",
-                    item.isAdditional ? "text-[#3b4452]" : "text-[#8a99ad]"
-                  )}
-                >
-                  {item.amount}
+            {feeItems.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={2} className="text-center text-sm text-slate-400 py-6">
+                  No payment items defined
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              feeItems.map((item) => (
+                <TableRow key={item.id} className="border-b border-[#F1F5F9] last:border-none hover:bg-transparent">
+                  <TableCell className="text-sm font-normal font-inter leading-5 break-all px-6 py-3 text-[#3b4452]">
+                    {item.label}
+                  </TableCell>
+                  <TableCell className="w-[152px] shrink-0 text-sm font-normal font-inter leading-5 text-right px-6 py-3 align-middle text-[#3b4452]">
+                    {parseFloat(item.amount).toFixed(2)}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
           <TableFooter className="border-t-[2px] border-t-[#62748E] bg-[#F8FAFC]">
             <TableRow className="hover:bg-[#F8FAFC] border-none">
