@@ -23,7 +23,8 @@ interface BatchCoverHeaderProps {
 export function BatchCoverHeader({ batch }: BatchCoverHeaderProps) {
   const coverImage = batch?.cover_image_url || DEFAULT_COVER;
   const status = (batch?.status as BatchStatus) ?? "Active";
-  const statusColors = BATCH_STATUS_CONFIG[status] ?? BATCH_STATUS_CONFIG["Active"];
+  const statusColors =
+    BATCH_STATUS_CONFIG[status] ?? BATCH_STATUS_CONFIG["Active"];
 
   return (
     <div
@@ -54,7 +55,10 @@ export function BatchCoverHeader({ batch }: BatchCoverHeaderProps) {
         <div className="mt-[10px] flex flex-col items-start gap-[10px]">
           <div
             className="inline-flex h-[24px] items-center justify-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium shadow-[0_1px_2px_0_rgba(16,24,40,0.05)] font-inter"
-            style={{ backgroundColor: statusColors.bg, color: statusColors.text }}
+            style={{
+              backgroundColor: statusColors.bg,
+              color: statusColors.text,
+            }}
           >
             <span>{status}</span>
           </div>

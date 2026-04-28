@@ -16,7 +16,13 @@ import { useGetCertificateTemplateById } from "@/hooks/api/certificates/useGetCe
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-const InfoItem = ({ label, children }: { label: string; children: React.ReactNode }) => {
+const InfoItem = ({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) => {
   return (
     <div className="flex flex-col items-start gap-1 w-full">
       <span className="font-inter text-[12px] font-normal leading-[16px] text-[#90A1B9]">
@@ -29,7 +35,13 @@ const InfoItem = ({ label, children }: { label: string; children: React.ReactNod
   );
 };
 
-const Avatar = ({ src, name }: { src: string | null | undefined; name: string }) => {
+const Avatar = ({
+  src,
+  name,
+}: {
+  src: string | null | undefined;
+  name: string;
+}) => {
   return (
     <div className="h-6 w-6 rounded-full bg-gray-200 overflow-hidden shrink-0">
       {src ? (
@@ -68,7 +80,8 @@ function CertChip({ certId }: { certId: string }) {
 
   if (!data) return null;
 
-  const label = data.pricing_type === "FREE" ? `${data.name} {Free}` : `${data.name}`;
+  const label =
+    data.pricing_type === "FREE" ? `${data.name} {Free}` : `${data.name}`;
 
   return <span className="truncate">{label}</span>;
 }
@@ -86,7 +99,7 @@ export function BatchGeneralInfo({ batch }: BatchGeneralInfoProps) {
   const lecturerName = lecturer
     ? `${lecturer.profile.first_name} ${lecturer.profile.last_name}`
     : "—";
-  
+
   const branchName = branch?.name ?? "—";
   const assessment = batch?.has_assignment ? "Assignment" : "—";
   const staffIds = batch?.staff_ids ?? [];
@@ -105,7 +118,10 @@ export function BatchGeneralInfo({ batch }: BatchGeneralInfoProps) {
         {/* Lecturer */}
         <InfoItem label="Lecturer">
           <div className="flex items-center gap-2">
-            <Avatar src={lecturer?.profile.profile_image_url} name={lecturerName} />
+            <Avatar
+              src={lecturer?.profile.profile_image_url}
+              name={lecturerName}
+            />
             <span>{lecturerName}</span>
           </div>
         </InfoItem>
@@ -127,9 +143,14 @@ export function BatchGeneralInfo({ batch }: BatchGeneralInfoProps) {
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-3 bg-white" align="start">
                   <div className="flex flex-col gap-2">
-                    <span className="text-xs font-semibold text-slate-500 mb-1">All Certificates</span>
+                    <span className="text-xs font-semibold text-slate-500 mb-1">
+                      All Certificates
+                    </span>
                     {certIds.map((id) => (
-                      <div key={id} className="text-sm text-slate-700 py-1 border-b border-slate-100 last:border-0">
+                      <div
+                        key={id}
+                        className="text-sm text-slate-700 py-1 border-b border-slate-100 last:border-0"
+                      >
                         <CertChip certId={id} />
                       </div>
                     ))}
@@ -150,7 +171,9 @@ export function BatchGeneralInfo({ batch }: BatchGeneralInfoProps) {
         <InfoItem label="Category">{batch?.category ?? "—"}</InfoItem>
 
         {/* Lesson Duration */}
-        <InfoItem label="Lesson Duration">{batch?.lesson_duration ?? "—"}</InfoItem>
+        <InfoItem label="Lesson Duration">
+          {batch?.lesson_duration ?? "—"}
+        </InfoItem>
 
         {/* Assessment */}
         <InfoItem label="Assessment">{assessment}</InfoItem>
@@ -169,7 +192,9 @@ export function BatchGeneralInfo({ batch }: BatchGeneralInfoProps) {
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-3 bg-white" align="start">
                   <div className="flex flex-col gap-3">
-                    <span className="text-xs font-semibold text-slate-500">All Staff Members</span>
+                    <span className="text-xs font-semibold text-slate-500">
+                      All Staff Members
+                    </span>
                     {staffIds.map((id) => (
                       <StaffChip key={id} staffId={id} />
                     ))}

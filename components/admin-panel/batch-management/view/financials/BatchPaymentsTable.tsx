@@ -45,13 +45,19 @@ export function BatchPaymentsTable({ feeItems = [] }: BatchPaymentsTableProps) {
           <TableBody>
             {feeItems.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={2} className="text-center text-sm text-slate-400 py-6">
+                <TableCell
+                  colSpan={2}
+                  className="text-center text-sm text-slate-400 py-6"
+                >
                   No payment items defined
                 </TableCell>
               </TableRow>
             ) : (
               feeItems.map((item) => (
-                <TableRow key={item.id} className="border-b border-[#F1F5F9] last:border-none hover:bg-transparent">
+                <TableRow
+                  key={item.id}
+                  className="border-b border-[#F1F5F9] last:border-none hover:bg-transparent"
+                >
                   <TableCell className="text-sm font-normal font-inter leading-5 break-all px-6 py-3 text-[#3b4452]">
                     {item.label}
                   </TableCell>
@@ -77,22 +83,22 @@ export function BatchPaymentsTable({ feeItems = [] }: BatchPaymentsTableProps) {
 
       {/* Add New Payment Button */}
       <div className="mt-2 flex justify-end">
-          <button 
-            type="button" 
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#E2E8F0] bg-transparent px-4 py-2 shadow-sm transition-colors hover:bg-[#F1F5F9] focus:border-[#90A1B9] focus:bg-[#F1F5F9] disabled:border-[#F1F5F9] disabled:bg-[#F1F5F9]"
-          >
-            <Plus className="h-4 w-4 text-[#0F172B]" />
-            <span className="font-inter text-[14px] font-semibold leading-[20px] text-[#0F172B]">
-              Add New Payment
-            </span>
-          </button>
+        <button
+          type="button"
+          onClick={() => setIsModalOpen(true)}
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#E2E8F0] bg-transparent px-4 py-2 shadow-sm transition-colors hover:bg-[#F1F5F9] focus:border-[#90A1B9] focus:bg-[#F1F5F9] disabled:border-[#F1F5F9] disabled:bg-[#F1F5F9]"
+        >
+          <Plus className="h-4 w-4 text-[#0F172B]" />
+          <span className="font-inter text-[14px] font-semibold leading-[20px] text-[#0F172B]">
+            Add New Payment
+          </span>
+        </button>
       </div>
 
-      <AddPaymentModal 
-        open={isModalOpen} 
-        onOpenChange={setIsModalOpen} 
-        onSave={(data) => console.log("New Payment:", data)} 
+      <AddPaymentModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        onSave={(data) => console.log("New Payment:", data)}
       />
     </>
   );
