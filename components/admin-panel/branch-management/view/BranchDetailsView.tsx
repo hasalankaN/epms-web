@@ -23,12 +23,14 @@ export function BranchDetailsView({ branchId }: BranchDetailsViewProps) {
   const { data: batchData } = useGetBatches({ branch_id: branchId, size: 1 });
 
   // Financial summary (income & expenses)
-  const { data: financeSummary } = useGetBatchWiseSummary({ branch_id: branchId });
+  const { data: financeSummary } = useGetBatchWiseSummary({
+    branch_id: branchId,
+  });
 
   function fmtLkr(val: string | null | undefined) {
     const n = parseFloat(val ?? "0");
 
-      return `LKR ${n.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `LKR ${n.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 
   return (
