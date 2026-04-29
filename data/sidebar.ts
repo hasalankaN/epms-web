@@ -109,6 +109,15 @@ export const sidebarData: SidebarNavItem[] = [
   {
     id: 10,
     type: "link",
+    title: "Website Management",
+    icon: "globe",
+    value: "website-management",
+    url: "/website-management",
+  },
+
+  {
+    id: 11,
+    type: "link",
     title: "Task Management",
     icon: "list-checks",
     value: "task-management",
