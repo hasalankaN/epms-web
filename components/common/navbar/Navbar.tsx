@@ -4,6 +4,11 @@ import React from "react";
 
 
 import Image from "next/image";
+import Link from "next/link";
+
+import { usePathname } from "next/navigation";
+
+import { cn } from "@/lib/utils";
 
 import MobileSidebar from "../sidebar/MobileSidebar";
 import type { SidebarNavItem } from "@/data/sidebar";
@@ -15,6 +20,8 @@ export interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ filteredSidebarData }) => {
+  const pathname = usePathname();
+  const isChatActive = pathname === "/admin-panel/chat";
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 py-[11px] shadow-[0_4px_12px_8px_rgba(0,0,0,0.05)] md:px-6 lg:px-8">
@@ -39,12 +46,24 @@ const Navbar: React.FC<NavbarProps> = ({ filteredSidebarData }) => {
 
       <div className="flex items-center gap-4">
         {/* Chat Button */}
-        <button className="relative flex h-8 w-8 items-center justify-center rounded-md bg-[#F1F5F9] shadow-sm transition-colors hover:bg-slate-200">
-          <i className="message-icon h-5 w-5 shrink-0 text-[#0F172B]" />
+        <Link
+          href="/admin-panel/chat"
+          className={cn(
+            "relative flex h-8 w-8 items-center justify-center rounded-md shadow-sm transition-colors",
+            isChatActive 
+              ? "bg-[#0F172B] text-white hover:bg-[#0F172B]/90" 
+              : "bg-[#F1F5F9] text-[#0F172B] hover:bg-slate-200"
+          )}
+          aria-label="Chat"
+        >
+          <i className={cn(
+            "message-icon h-5 w-5 shrink-0",
+            isChatActive ? "brightness-0 invert" : "text-[#0F172B]"
+          )} />
           <span className="absolute -right-1.5 -top-1.5 inline-flex h-4 min-w-[16px] max-w-[34px] items-center justify-center rounded-full bg-[#FB2C36] px-1 text-[11px] font-medium leading-4 tracking-[0.5px] text-white" style={{ fontFamily: 'Roboto, sans-serif' }}>
             3
           </span>
-        </button>
+        </Link>
       </div>
     </header>
   );

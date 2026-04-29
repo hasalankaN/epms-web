@@ -32,6 +32,7 @@ interface SearchableSelectProps {
   error?: boolean;
   isLoading?: boolean;
   className?: string;
+  icon?: React.ReactNode;
 }
 
 export function SearchableSelect({
@@ -46,6 +47,7 @@ export function SearchableSelect({
   error,
   isLoading,
   className,
+  icon,
 }: SearchableSelectProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -65,7 +67,8 @@ export function SearchableSelect({
             className
           )}
         >
-          <span className="truncate min-w-0">
+          <span className="flex items-center gap-2 truncate min-w-0">
+            {icon && <span className="shrink-0">{icon}</span>}
             {selectedOption ? selectedOption.label : placeholder}
           </span>
           {isLoading ? (
