@@ -4,6 +4,7 @@ import React from "react";
 
 
 import Image from "next/image";
+import Link from "next/link";
 
 import MobileSidebar from "../sidebar/MobileSidebar";
 import type { SidebarNavItem } from "@/data/sidebar";
@@ -39,12 +40,16 @@ const Navbar: React.FC<NavbarProps> = ({ filteredSidebarData }) => {
 
       <div className="flex items-center gap-4">
         {/* Chat Button */}
-        <button className="relative flex h-8 w-8 items-center justify-center rounded-md bg-[#F1F5F9] shadow-sm transition-colors hover:bg-slate-200">
+        <Link
+          href="/admin-panel/chat"
+          className="relative flex h-8 w-8 items-center justify-center rounded-md bg-[#F1F5F9] shadow-sm transition-colors hover:bg-slate-200"
+          aria-label="Chat"
+        >
           <i className="message-icon h-5 w-5 shrink-0 text-[#0F172B]" />
           <span className="absolute -right-1.5 -top-1.5 inline-flex h-4 min-w-[16px] max-w-[34px] items-center justify-center rounded-full bg-[#FB2C36] px-1 text-[11px] font-medium leading-4 tracking-[0.5px] text-white" style={{ fontFamily: 'Roboto, sans-serif' }}>
             3
           </span>
-        </button>
+        </Link>
       </div>
     </header>
   );
