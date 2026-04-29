@@ -4,6 +4,8 @@ import React, { useRef, useEffect } from "react";
 
 import { motion, AnimatePresence } from "framer-motion";
 
+
+
 import { cn } from "@/lib/utils";
 
 import { ReceivedBubble, SentBubble } from "./MessageBubbles";
@@ -15,9 +17,11 @@ interface ChatWindowProps {
   contact: ChatContact | null;
   groups: ChatGroup[];
   onBack?: () => void;
+  onSendMessage?: (text: string, attachment?: any) => void;
+  onToggleMute?: (id: string) => void;
 }
 
-export function ChatWindow({ contact, groups, onBack }: ChatWindowProps) {
+export function ChatWindow({ contact, groups, onBack, onSendMessage, onToggleMute }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -26,15 +30,34 @@ export function ChatWindow({ contact, groups, onBack }: ChatWindowProps) {
 
   if (!contact) {
     return (
-      <div className="flex flex-1 items-center justify-center bg-[#F8FAFC] text-[#90A1B9]">
-        <p className="font-inter text-[14px]">Select a conversation to start chatting</p>
+      <div className="flex flex-1 flex-col items-center justify-center bg-white p-6 relative">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeIn" }}
+          className="flex w-full max-w-[486px] flex-col items-center gap-[16px]"
+        >
+          <div className="flex h-[96px] w-[96px] items-center justify-center text-[#90A1B9]">
+            <i className="chat-text" style={{ width: 96, height: 96 }} />
+          </div>
+          <div className="flex flex-col items-center self-stretch text-center">
+            <p className="font-inter text-[14px] font-medium leading-[20px] text-[#90A1B9]">
+              Important updates from the registrar or Lecturers, <br />
+              Inquires from students will be delivered here. <br />
+              You&apos;re currently all caught up.
+            </p>
+          </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden rounded-r-[8px] bg-white">
-      <ChatHeader contact={contact} onBack={onBack} />
+      <ChatHeader 
+        contact={contact} 
+        onBack={onBack} 
+      />
 
       {/* ===== MESSAGE AREA ===== */}
       <div className="flex flex-1 flex-col gap-[16px] overflow-y-auto px-[24px] py-[16px]">
@@ -104,7 +127,11 @@ export function ChatWindow({ contact, groups, onBack }: ChatWindowProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      <ChatFooter onSendMessage={(text) => console.log("Sending:", text)} />
+      <ChatFooter 
+        onSendMessage={onSendMessage ?? (() => {})} 
+        isMuted={contact.isMuted}
+        onToggleMute={() => onToggleMute?.(contact.id)}
+      />
     </div>
   );
 }

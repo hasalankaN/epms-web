@@ -1,13 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState , Suspense } from "react";
 
 import Link from "next/link";
+
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 import { ChevronLeft } from "lucide-react";
 
 import { ChatSidebar } from "@/components/admin-panel/chat/ChatSidebar";
 import { ChatWindow } from "@/components/admin-panel/chat/ChatWindow";
+import { StartNewChatModal } from "@/components/admin-panel/chat/modals/StartNewChatModal";
 import type { ChatContact, ChatGroup } from "@/components/admin-panel/chat/types";
 
 // ===== MOCK DATA =====
@@ -46,6 +49,7 @@ const MOCK_CONTACTS: ChatContact[] = [
     time: "Yesterday",
     unreadCount: 5,
     isOnline: false,
+    isMuted: true,
     avatar: "https://i.pravatar.cc/150?u=sarah",
   },
   {
@@ -150,22 +154,78 @@ const MOCK_MESSAGES: Record<string, ChatGroup[]> = {
 
 // ===== PAGE =====
 
-export default function ChatPage() {
-  const [selectedId, setSelectedId] = useState<string | null>("1");
-  const [showSidebar, setShowSidebar] = useState(true);
 
-  const selectedContact = MOCK_CONTACTS.find((c) => c.id === selectedId) ?? null;
+function ChatContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const selectedId = searchParams.get("id");
+
+  const [contacts, setContacts] = useState<ChatContact[]>(MOCK_CONTACTS);
+  const [showSidebar, setShowSidebar] = useState(true);
+  const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
+
+  const selectedContact = contacts.find((c) => c.id === selectedId) ?? null;
   const groups = selectedId ? (MOCK_MESSAGES[selectedId] ?? []) : [];
-  const unreadTotal = MOCK_CONTACTS.filter((c) => (c.unreadCount ?? 0) > 0).length;
+  const unreadTotal = contacts.filter((c) => (c.unreadCount ?? 0) > 0).length;
+
+  const updateUrl = (id: string | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (id) {
+      params.set("id", id);
+    } else {
+      params.delete("id");
+    }
+
+    router.replace(`${pathname}?${params.toString()}`);
+  };
 
   const handleSelectContact = (id: string) => {
-    setSelectedId(id);
+    updateUrl(id);
     setShowSidebar(false); // mobile: hide sidebar, show chat window
   };
 
   const handleBack = () => {
     setShowSidebar(true);
-    setSelectedId(null);
+    updateUrl(null);
+  };
+
+  const handleSendMessage = (text: string, attachment?: any) => {
+    console.log("Message Sent:", {
+      text,
+      attachment,
+      recipientId: selectedId,
+      timestamp: new Date().toISOString()
+    });
+  };
+
+  const handleStartChat = (role: string, personId: string) => {
+    console.log("Starting new chat:", { role, personId });
+    
+    const existing = contacts.find(c => c.id === personId);
+
+    if (!existing) {
+      const newContact: ChatContact = {
+        id: personId,
+        name: personId.startsWith("s") ? "Student Name" : role.charAt(0).toUpperCase() + role.slice(1) + " Name",
+        lastMessage: "Start of conversation",
+        time: "Just now",
+        isOnline: true
+      };
+
+      setContacts(prev => [newContact, ...prev]);
+    }
+
+    updateUrl(personId);
+    setShowSidebar(false);
+    setIsNewChatModalOpen(false);
+  };
+
+  const handleToggleMute = (id: string) => {
+    setContacts(prev => prev.map(c => 
+      c.id === id ? { ...c, isMuted: !c.isMuted } : c
+    ));
   };
 
   return (
@@ -194,10 +254,10 @@ export default function ChatPage() {
           ].join(" ")}
         >
           <ChatSidebar
-            contacts={MOCK_CONTACTS}
+            contacts={contacts}
             selectedId={selectedId}
             onSelectContact={handleSelectContact}
-            onNewChat={() => console.log("New chat")}
+            onNewChat={() => setIsNewChatModalOpen(true)}
             unreadTotal={unreadTotal}
           />
         </div>
@@ -213,9 +273,25 @@ export default function ChatPage() {
             contact={selectedContact}
             groups={groups}
             onBack={handleBack}
+            onSendMessage={handleSendMessage}
+            onToggleMute={handleToggleMute}
           />
         </div>
       </div>
+
+      <StartNewChatModal
+        isOpen={isNewChatModalOpen}
+        onClose={() => setIsNewChatModalOpen(false)}
+        onStartChat={handleStartChat}
+      />
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-[#94A3B8]">Loading chat...</div>}>
+      <ChatContent />
+    </Suspense>
   );
 }

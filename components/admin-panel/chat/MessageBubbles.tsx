@@ -111,7 +111,7 @@ export function SentBubble({
       {msg.text && !msg.attachment && (
         <div
           className={cn(
-            "bg-[#5D0EC0] px-[16px] py-[8px] font-inter text-[14px] font-normal leading-[20px] text-white",
+            "bg-[#5D0EC0] px-[16px] py-[8px] font-inter text-[14px] font-normal leading-[20px] text-white mr-[32px]",
             hideHeader ? "rounded-[16px]" : "rounded-[16px_0_16px_16px]"
           )}
           style={{ maxWidth: 320 }}
@@ -123,7 +123,7 @@ export function SentBubble({
       {msg.attachment && (
         <div
           className={cn(
-            "flex flex-col items-start gap-[4px] bg-[#5D0EC0] pb-[12px] pl-[13px] pr-[13px] pt-[8px] w-full max-w-[311px]",
+            "flex flex-col items-start gap-[4px] bg-[#5D0EC0] pb-[12px] pl-[13px] pr-[13px] pt-[8px] w-full max-w-[311px] mr-[32px]",
             hideHeader ? "rounded-[16px]" : "rounded-[16px_0_16px_16px]"
           )}
         >

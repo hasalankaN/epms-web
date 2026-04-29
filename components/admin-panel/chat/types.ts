@@ -6,6 +6,7 @@ export interface ChatContact {
   avatar?: string;
   unreadCount?: number;
   isOnline?: boolean;
+  isMuted?: boolean;
 }
 
 export interface ChatMessage {

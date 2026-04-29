@@ -1,21 +1,43 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 
-import { Paperclip, Smile, Send } from "lucide-react";
+import { toast } from "sonner";
+import { Paperclip, X, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useUploadFile } from "@/hooks/api/files/useUploadFile";
+import { Progress } from "@/components/ui/progress";
 
 interface ChatFooterProps {
-  onSendMessage: (text: string) => void;
+  onSendMessage: (text: string, attachment?: any) => void;
+  isMuted?: boolean;
+  onToggleMute?: () => void;
 }
 
-export function ChatFooter({ onSendMessage }: ChatFooterProps) {
+export function ChatFooter({ onSendMessage, isMuted, onToggleMute }: ChatFooterProps) {
   const [inputText, setInputText] = useState("");
-  const [muted, setMuted] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState<any[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState<any[]>([]);
+  
   const recognitionRef = useRef<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [isChrome, setIsChrome] = useState(false);
+  const { mutateAsync: uploadFile } = useUploadFile();
+
+  useEffect(() => {
+    // Detect Chrome (excluding Edge and Brave)
+    const isChromium = !!(window as any).chrome;
+    const isEdge = navigator.userAgent.indexOf("Edg") > -1;
+    const isBrave = !!(navigator as any).brave;
+    
+    if (isChromium && !isEdge && !isBrave) {
+      setIsChrome(true);
+    }
+  }, []);
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {
@@ -32,7 +54,7 @@ export function ChatFooter({ onSendMessage }: ChatFooterProps) {
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognitionAPI) {
-      alert("Speech recognition is not supported in your browser. Please use Chrome or Edge.");
+      toast.info("Speech recognition is not supported in your browser. Please use Chrome.");
       
       return;
     }
@@ -100,39 +122,150 @@ export function ChatFooter({ onSendMessage }: ChatFooterProps) {
     }
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+
+    if (files.length === 0) return;
+
+    const currentTotal = attachedFiles.length + uploadingFiles.length;
+
+    if (currentTotal + files.length > 5) {
+      toast.error("You can only upload a maximum of 5 files.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      
+      return;
+    }
+
+    // Process each file
+    for (const file of files) {
+      const tempId = Math.random().toString(36).substring(7);
+      
+      setUploadingFiles(prev => [...prev, { id: tempId, name: file.name, progress: 0 }]);
+
+      try {
+        const res = await uploadFile({
+          file,
+          onUploadProgress: (progressEvent: any) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / (progressEvent.total || file.size)
+            );
+
+            setUploadingFiles(prev => 
+              prev.map(f => f.id === tempId ? { ...f, progress: percentCompleted } : f)
+            );
+          },
+        });
+        
+        const newAttachment = {
+          id: tempId,
+          url: res.data.url,
+          name: file.name,
+          size: (file.size / 1024).toFixed(1) + " KB",
+          type: file.type,
+          fileType: file.type.includes("pdf") ? "pdf" : file.type.includes("image") ? "image" : "other"
+        };
+
+        setAttachedFiles(prev => [...prev, newAttachment]);
+      } catch (error) {
+        console.error("Upload failed for", file.name, error);
+      } finally {
+        setUploadingFiles(prev => prev.filter(f => f.id !== tempId));
+      }
+    }
+
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeAttachment = (id: string) => {
+    setAttachedFiles(prev => prev.filter(f => f.id !== id));
+  };
+
   const handleSend = () => {
-    if (inputText.trim()) {
+    if ((inputText.trim() || attachedFiles.length > 0) && uploadingFiles.length === 0) {
+      // Stop recording before sending
       if (isListening) {
         stopListening();
       }
-      
-      onSendMessage(inputText);
+
+      onSendMessage(inputText, attachedFiles);
       setInputText("");
+      setAttachedFiles([]);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
   return (
-    <div className="shrink-0 border-t border-[#E2E8F0] px-[24px] py-[16px]">
+    <div className="shrink-0 border-t border-[#E2E8F0] px-[24px] py-[16px] flex flex-col gap-[12px]">
+      {(attachedFiles.length > 0 || uploadingFiles.length > 0) && (
+        <div className="flex flex-wrap gap-[10px] animate-in fade-in slide-in-from-bottom-2 duration-200">
+          {attachedFiles.map((file) => (
+            <div key={file.id} className="flex items-center gap-[8px] bg-[#F8FAFC] p-[8px] rounded-[8px] border border-[#E2E8F0] w-fit max-w-[200px]">
+              <div className="bg-[#E2E8F0] p-[6px] rounded-[4px] shrink-0">
+                <Paperclip className="w-[14px] h-[14px] text-[#475569]" />
+              </div>
+              <div className="flex flex-col flex-1 min-w-0">
+                <span className="text-[12px] font-medium text-[#0F172B] truncate">
+                  {file.name}
+                </span>
+                <span className="text-[10px] text-[#94A3B8]">
+                  {file.size}
+                </span>
+              </div>
+              <button 
+                onClick={() => removeAttachment(file.id)}
+                className="ml-[4px] p-[4px] hover:bg-black/5 rounded-full transition-colors"
+              >
+                <X className="w-[14px] h-[14px] text-[#94A3B8]" />
+              </button>
+            </div>
+          ))}
+
+          {uploadingFiles.map((file) => (
+            <div key={file.id} className="flex flex-col gap-2 bg-[#F8FAFC] p-[10px] rounded-[8px] border border-[#E2E8F0] w-fit min-w-[150px]">
+              <div className="flex items-center gap-[8px]">
+                <div className="bg-[#E2E8F0] p-[6px] rounded-[4px] shrink-0">
+                  <Loader2 className="w-[14px] h-[14px] text-[#2563EB] animate-spin" />
+                </div>
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span className="text-[12px] font-medium text-[#0F172B] truncate">
+                    {file.name}
+                  </span>
+                  <span className="text-[10px] text-[#94A3B8]">
+                    {file.progress}%
+                  </span>
+                </div>
+              </div>
+              <Progress 
+                value={file.progress} 
+                className="h-[4px] w-full bg-[#E2E8F0] [&>div]:bg-[#2563EB]" 
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="flex h-[56px] items-center gap-3 rounded-[100px] border border-[#90A1B9] bg-transparent px-[20px]">
-        {/* Mic Button */}
-        <button
-          type="button"
-          aria-label={isListening ? "Stop recording" : "Start voice message"}
-          onClick={toggleListening}
-          className={cn(
-            "relative flex shrink-0 items-center justify-center transition-transform hover:scale-110 active:scale-95",
-            isListening && "text-red-500"
-          )}
-        >
-          {/* Pulsing ring while listening */}
-          {isListening && (
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-40" />
-          )}
-          <i
-            className={cn("mic-fill", isListening ? "text-red-500" : "text-[#0F172B]")}
-            style={{ width: 20, height: 20 }}
-          />
-        </button>
+        {/* Mic Button - Only visible on Chrome */}
+        {isChrome && (
+          <button
+            type="button"
+            aria-label={isListening ? "Stop recording" : "Start voice message"}
+            onClick={toggleListening}
+            className={cn(
+              "relative flex shrink-0 items-center justify-center transition-transform hover:scale-110 active:scale-95",
+              isListening && "text-red-500"
+            )}
+          >
+            {/* Pulsing ring while listening */}
+            {isListening && (
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-40" />
+            )}
+            <i
+              className={cn("mic-fill", isListening ? "text-red-500" : "text-[#0F172B]")}
+              style={{ width: 20, height: 20 }}
+            />
+          </button>
+        )}
 
         <input
           ref={inputRef}
@@ -144,31 +277,39 @@ export function ChatFooter({ onSendMessage }: ChatFooterProps) {
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
         />
 
-        <div className="flex shrink-0 items-center gap-[8px]">
-          <button aria-label="Attach file" className="flex h-[24px] w-[24px] shrink-0 items-center justify-center">
-            <Paperclip className="text-[#0F172B]" style={{ width: 12, height: 18, strokeWidth: 1.5 }} />
-          </button>
-          <button aria-label="Emoji" className="flex h-[24px] w-[24px] shrink-0 items-center justify-center">
-            <Smile className="text-[#0F172B]" style={{ width: 12, height: 18, strokeWidth: 1.5 }} />
+        <div className="flex shrink-0 items-center">
+          <input
+            type="file"
+            multiple={true}
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <button 
+            aria-label="Attach file" 
+            onClick={() => fileInputRef.current?.click()}
+            className="flex h-[32px] w-[32px] shrink-0 items-center justify-center transition-colors hover:bg-black/5 rounded-full"
+          >
+            <Paperclip className="text-[#0F172B]" style={{ width: 20, height: 20, strokeWidth: 2 }} />
           </button>
         </div>
       </div>
 
-      <div className="mt-[12px] flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-[8px]">
           <button
             role="switch"
-            aria-checked={muted}
-            onClick={() => setMuted((v) => !v)}
+            aria-checked={isMuted}
+            onClick={onToggleMute}
             className={cn(
               "relative inline-flex h-[22px] w-[40px] shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:outline-none",
-              muted ? "bg-[#E60076]" : "bg-[#E2E8F0]"
+              isMuted ? "bg-[#E60076]" : "bg-[#E2E8F0]"
             )}
           >
             <span
               className={cn(
                 "pointer-events-none inline-block h-[18px] w-[18px] translate-x-0 rounded-full bg-white shadow ring-0 transition-transform",
-                muted ? "translate-x-[18px]" : "translate-x-0"
+                isMuted ? "translate-x-[18px]" : "translate-x-0"
               )}
             />
           </button>
@@ -184,7 +325,7 @@ export function ChatFooter({ onSendMessage }: ChatFooterProps) {
           <span className="font-inter text-[14px] font-medium leading-[20px] text-white">
             Send
           </span>
-          <Send className="h-[14px] w-[14px] text-white" />
+          <i className="paper-plane-right h-[14px] w-[14px] text-white" />
         </button>
       </div>
     </div>

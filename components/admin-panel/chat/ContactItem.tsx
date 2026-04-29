@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import { BellOff } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { ChatAvatar } from "./ChatAvatar";
@@ -49,7 +49,10 @@ export function ContactItem({
         </div>
       </div>
 
-      <div className="flex w-full justify-end mt-[2px]">
+      <div className="flex w-full items-center justify-end gap-1.5 mt-[2px]">
+        {contact.isMuted && (
+          <BellOff className="h-3 w-3 text-[#94A3B8]" strokeWidth={2} />
+        )}
         <span className="overflow-hidden text-ellipsis font-inter text-[10px] font-normal leading-[16px] text-[#90A1B9]">
           {contact.time}
         </span>
