@@ -39,6 +39,7 @@ interface DataTableProps<T> {
   tableContainerClassName?: string;
   emptyState?: React.ReactNode;
   footerRow?: React.ReactNode;
+  hideBorder?: boolean;
 }
 
 export function DataTable<T>({
@@ -53,6 +54,7 @@ export function DataTable<T>({
   tableContainerClassName,
   emptyState,
   footerRow,
+  hideBorder = false,
 }: DataTableProps<T>) {
   const [animationData, setAnimationData] = useState<any>(cachedLoadingAnimationData);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -146,7 +148,10 @@ export function DataTable<T>({
     <div
       onMouseEnter={() => setIsTableHovered(true)}
       onMouseLeave={() => setIsTableHovered(false)}
-      className="flex flex-col rounded-lg border border-[#E4E4E7] bg-white shadow-[0_1px_2_px_0_rgba(0,0,0,0.05)] relative group/table"
+      className={cn(
+        "flex flex-col relative group/table",
+        !hideBorder && "rounded-lg border border-[#E4E4E7] bg-white shadow-[0_1px_2_px_0_rgba(0,0,0,0.05)]"
+      )}
     >
       {/* Edge Gradients - Visual cue for horizontal overflow */}
       <AnimatePresence>
@@ -219,7 +224,7 @@ export function DataTable<T>({
                 <th
                   key={col.id || index}
                   className={cn(
-                    "h-9 px-2 text-left align-middle font-semibold text-[#1D293D] [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+                    "h-9 px-2 text-left align-middle font-semibold text-[#1D293D] whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
                     col.headerClassName || col.className
                   )}
                 >
@@ -257,7 +262,7 @@ export function DataTable<T>({
                     <td
                       key={col.id || index}
                       className={cn(
-                        "p-1.5 align-middle",
+                        "p-1.5 align-middle whitespace-nowrap",
                         showCheckboxes && "[&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
                         col.className
                       )}

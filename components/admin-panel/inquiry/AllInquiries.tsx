@@ -362,7 +362,7 @@ export function AllInquiries() {
       </div>
 
       {/* Inquiry Table (16px below toolbar) */}
-      <div className="mt-4">
+      <div>
         <AllInquiryTable
           data={data}
           currentPage={currentPage}

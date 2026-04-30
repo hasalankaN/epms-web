@@ -341,7 +341,7 @@ export function PendingInquiries() {
   return (
     <div className="flex flex-col gap-4">
       {/* Table Toolbar */}
-      <div className="mt-4">
+      <div>
         <PendingInquiryTableToolbar
           bulkActions={bulkActions}
           selectedCount={selectedIds.length}
@@ -355,7 +355,7 @@ export function PendingInquiries() {
       </div>
 
       {/* Inquiry Table */}
-      <div className="mt-4">
+      <div>
         <PendingInquiryTable
           data={data}
           currentPage={currentPage}
