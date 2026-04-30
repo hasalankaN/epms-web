@@ -19,3 +19,12 @@ export interface Album {
   title: string;
   images?: string[];
 }
+
+export interface NewsPoster {
+  id: number;
+  imageUrl: string;
+  title: string;
+  date: string;
+  content?: string;
+  images?: string[];
+}

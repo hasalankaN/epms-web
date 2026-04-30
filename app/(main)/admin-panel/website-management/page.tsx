@@ -17,6 +17,7 @@ import { NewsPostersTab } from "@/components/admin-panel/website-management/News
 import { TermsAndConditionsTab } from "@/components/admin-panel/website-management/TermsAndConditionsTab";
 import { AddBannerModal } from "@/components/admin-panel/website-management/modals/AddBannerModal";
 import { AddAlbumModal } from "@/components/admin-panel/website-management/modals/AddAlbumModal";
+import { AddEditNewsPosterModal } from "@/components/admin-panel/website-management/modals/AddEditNewsPosterModal";
 
 export type WebsiteManagementTabType =
   | "hero-banner"
@@ -49,6 +50,7 @@ function WebsiteManagementContent() {
   const [isAddBannerOpen, setIsAddBannerOpen] = useState(false);
   const [isAddAlbumOpen, setIsAddAlbumOpen] = useState(false);
   const [isAddTestimonialOpen, setIsAddTestimonialOpen] = useState(false);
+  const [isAddNewsOpen, setIsAddNewsOpen] = useState(false);
 
   const handleTabChange = (tabValue: WebsiteManagementTabType) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -130,6 +132,20 @@ function WebsiteManagementContent() {
               <span className="hidden md:inline">Create New Testimonial</span>
             </button>
           )}
+
+          {/* Add News Button */}
+          {activeTab === "news-posters" && (
+            <button
+              onClick={() => setIsAddNewsOpen(true)}
+              className={cn(
+                BUTTON_STYLES.primary.md,
+                "text-sm font-semibold text-white px-3 md:px-4 shrink-0"
+              )}
+            >
+              <Plus className="h-5 w-5 md:hidden" />
+              <span className="hidden md:inline">Create New</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -143,7 +159,12 @@ function WebsiteManagementContent() {
           onAddClose={() => setIsAddTestimonialOpen(false)} 
         />
       )}
-      {activeTab === "news-posters" && <NewsPostersTab />}
+      {activeTab === "news-posters" && (
+        <NewsPostersTab 
+          isAddOpen={isAddNewsOpen} 
+          onAddClose={() => setIsAddNewsOpen(false)} 
+        />
+      )}
       {activeTab === "terms-and-conditions" && <TermsAndConditionsTab />}
 
       {/* Modals */}
@@ -158,6 +179,14 @@ function WebsiteManagementContent() {
           console.log("Creating album:", { name, thumbnail });
 
           // Handle creation logic here
+        }}
+      />
+      <AddEditNewsPosterModal
+        isOpen={isAddNewsOpen}
+        onClose={() => setIsAddNewsOpen(false)}
+        onSave={(data) => {
+          console.log("Saving news/poster from page level:", data);
+          setIsAddNewsOpen(false);
         }}
       />
     </div>
