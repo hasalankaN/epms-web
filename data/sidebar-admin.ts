@@ -99,6 +99,15 @@ export const adminSidebarData: SidebarNavItem[] = [
   {
     id: 10,
     type: "link",
+    title: "Website Management",
+    icon: "globe",
+    value: "website-management",
+    url: "/admin-panel/website-management",
+  },
+
+  {
+    id: 11,
+    type: "link",
     title: "Task Management",
     icon: "list-checks",
     value: "task-management",
@@ -106,7 +115,7 @@ export const adminSidebarData: SidebarNavItem[] = [
   },
 
   {
-    id: 11,
+    id: 18,
     type: "link",
     title: "Certificate Management",
     icon: "certificate",
