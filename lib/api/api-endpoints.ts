@@ -232,4 +232,12 @@ export const API_ENDPOINTS = {
     SOURCE_WISE_EXPORT: (via: string) =>
       `/api/v1/admin/finances/source-wise/export/${via}`,
   },
+  notifications: {
+    CREATE: `/api/v1/admin/notifications`,
+    GET_SENT: `/api/v1/admin/notifications/sent`,
+    GET_SCHEDULED: `/api/v1/admin/notifications/scheduled`,
+    UPDATE_SCHEDULED: (id: string) => `/api/v1/admin/notifications/scheduled/${id}`,
+    DELETE_SCHEDULED: (id: string) => `/api/v1/admin/notifications/scheduled/${id}`,
+    GET_RESPONSE_LOGS: `/api/v1/admin/notifications/response-tracking`,
+  },
 };

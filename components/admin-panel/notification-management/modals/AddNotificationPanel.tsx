@@ -11,16 +11,32 @@ import { z } from "zod";
 import { format } from "date-fns";
 
 import { cn } from "@/lib/utils";
-import { AUTH_INPUT, AUTH_TYPOGRAPHY, BUTTON_STYLES } from "@/lib/constants/theme";
+import {
+  AUTH_INPUT,
+  AUTH_TYPOGRAPHY,
+  BUTTON_STYLES,
+} from "@/lib/constants/theme";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { DateRangeCalendar } from "@/components/common/filters/DateRangeCalendar";
 import { TimePicker } from "@/components/common/TimePicker";
-import { RecipientSelector, type RecipientSelection } from "./RecipientSelector";
+import {
+  RecipientSelector,
+  type RecipientSelection,
+} from "./RecipientSelector";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
+import { useCreateNotification } from "@/hooks/api/notifications/useCreateNotification";
+import type {
+  CreateNotificationDto,
+  NotificationTargetType,
+} from "@/types/notifications";
 
 // ===== SCHEMA =====
 
@@ -28,8 +44,8 @@ const notificationSchema = z.object({
   channels: z
     .array(z.enum(["PUSH", "SMS", "EMAIL"]))
     .min(1, "Select at least one channel."),
-  recipients: z.any().refine((v) => v.selectedGroups?.length > 0, { 
-    message: "Select at least one recipient group." 
+  recipients: z.any().refine((v) => v.selectedGroups?.length > 0, {
+    message: "Select at least one recipient group.",
   }),
   title: z.string().min(1, "Notification title is required."),
   sendingOption: z.enum(["IMMEDIATELY", "SCHEDULE"]),
@@ -54,8 +70,8 @@ const Portal = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => setMounted(true), []);
   if (!mounted) return null;
-  
-return createPortal(children, document.body);
+
+  return createPortal(children, document.body);
 };
 
 // ===== FIELD LABEL =====
@@ -71,7 +87,9 @@ const FieldLabel = ({
 }) => (
   <Label className={cn(AUTH_TYPOGRAPHY.label, className)}>
     {children}
-    {required && <span className={cn(AUTH_TYPOGRAPHY.required, "ml-0.5")}>*</span>}
+    {required && (
+      <span className={cn(AUTH_TYPOGRAPHY.required, "ml-0.5")}>*</span>
+    )}
   </Label>
 );
 
@@ -105,8 +123,68 @@ const CHANNELS: Array<{ value: "PUSH" | "SMS" | "EMAIL"; label: string }> = [
 
 // ===== COMPONENT =====
 
-export function AddNotificationPanel({ isOpen, onClose }: AddNotificationPanelProps) {
+// Convert RecipientSelection → { targetType, targetIds }
+function resolveTarget(
+  recipients: RecipientSelection,
+): Pick<CreateNotificationDto, "targetType" | "targetIds"> {
+  const { selectedGroups, roleSettings, courseSettings, batchSettings } =
+    recipients;
+
+  if (
+    selectedGroups.includes("batches") &&
+    batchSettings.selectedIds.length > 0
+  ) {
+    return { targetType: "BATCH", targetIds: batchSettings.selectedIds };
+  }
+
+  if (
+    selectedGroups.includes("courses") &&
+    courseSettings.selectedIds.length > 0
+  ) {
+    return { targetType: "COURSE", targetIds: courseSettings.selectedIds };
+  }
+
+  const ROLE_MAP: Record<string, string> = {
+    staff: "STAFF",
+    lecturers: "LECTURER",
+    students: "STUDENT",
+    referral_agents: "REFERRAL_AGENT",
+  };
+
+  const roleGroups = selectedGroups.filter((g) =>
+    ["staff", "lecturers", "students", "referral_agents"].includes(g),
+  );
+
+  const specificIds: string[] = [];
+  const roles: string[] = [];
+
+  for (const group of roleGroups) {
+    const settings = roleSettings[group as keyof typeof roleSettings];
+
+    if (settings.mode === "specific") {
+      specificIds.push(...settings.specificIds);
+    } else {
+      roles.push(ROLE_MAP[group]);
+    }
+  }
+
+  if (specificIds.length > 0) {
+    return { targetType: "USER_IDS", targetIds: specificIds };
+  }
+
+  if (roles.length > 0) {
+    return { targetType: "ROLE", targetIds: roles };
+  }
+
+  return { targetType: "ALL" };
+}
+
+export function AddNotificationPanel({
+  isOpen,
+  onClose,
+}: AddNotificationPanelProps) {
   const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const { mutate: createNotification, isPending } = useCreateNotification();
 
   const {
     register,
@@ -130,12 +208,12 @@ export function AddNotificationPanel({ isOpen, onClose }: AddNotificationPanelPr
         },
         courseSettings: {
           selectedIds: [],
-          targetRoles: { students: true, lecturers: true, staff: true }
+          targetRoles: { students: true, lecturers: true, staff: true },
         },
         batchSettings: {
           selectedIds: [],
-          targetRoles: { students: true, lecturers: true, staff: true }
-        }
+          targetRoles: { students: true, lecturers: true, staff: true },
+        },
       },
       title: "",
       sendingOption: "IMMEDIATELY",
@@ -182,10 +260,41 @@ export function AddNotificationPanel({ isOpen, onClose }: AddNotificationPanelPr
     setValue("channels", updated, { shouldDirty: true, shouldValidate: true });
   };
 
-  const onSubmit = async (values: NotificationFormValues) => {
-    console.log("Notification payload:", values);
-    reset();
-    onClose();
+  const onSubmit = (values: NotificationFormValues) => {
+    let scheduledAt: string | undefined;
+
+    if (
+      values.sendingOption === "SCHEDULE" &&
+      values.scheduledDate &&
+      values.scheduledTime
+    ) {
+      const [h, m] = values.scheduledTime.split(":").map(Number);
+
+      const dt = new Date(values.scheduledDate);
+
+      dt.setHours(h, m, 0, 0);
+      scheduledAt = dt.toISOString();
+    }
+
+    const { targetType, targetIds } = resolveTarget(
+      values.recipients as RecipientSelection,
+    );
+
+    const dto: CreateNotificationDto = {
+      title: values.title,
+      body: values.message,
+      channels: values.channels,
+      targetType: targetType as NotificationTargetType,
+      ...(targetIds && { targetIds }),
+      ...(scheduledAt && { scheduledAt }),
+    };
+
+    createNotification(dto, {
+      onSuccess: () => {
+        reset();
+        onClose();
+      },
+    });
   };
 
   return (
@@ -238,14 +347,16 @@ export function AddNotificationPanel({ isOpen, onClose }: AddNotificationPanelPr
                 </motion.div>
 
                 {/* Scrollable Content */}
-                <motion.div variants={itemVariants} className="flex-1 overflow-y-auto">
+                <motion.div
+                  variants={itemVariants}
+                  className="flex-1 overflow-y-auto"
+                >
                   <form
                     id="add-notification-form"
                     onSubmit={handleSubmit(onSubmit)}
                     className="px-6 py-6 custom-scrollbar"
                   >
                     <div className="flex flex-col gap-5">
-
                       {/* ── Channel ── */}
                       <div className="space-y-3">
                         <FieldLabel required>Select the Channel</FieldLabel>
@@ -255,18 +366,24 @@ export function AddNotificationPanel({ isOpen, onClose }: AddNotificationPanelPr
                               key={ch.value}
                               className="flex cursor-pointer items-center gap-2"
                             >
-                              <input 
+                              <input
                                 type="checkbox"
                                 checked={channels?.includes(ch.value)}
-                                onChange={(e) => toggleChannel(ch.value, e.target.checked)}
+                                onChange={(e) =>
+                                  toggleChannel(ch.value, e.target.checked)
+                                }
                                 className="h-4 w-4 cursor-pointer accent-[#0F172B]"
                               />
-                              <span className="text-sm font-medium text-[#45556C] cursor-pointer">{ch.label}</span>
+                              <span className="text-sm font-medium text-[#45556C] cursor-pointer">
+                                {ch.label}
+                              </span>
                             </label>
                           ))}
                         </div>
                         {errors.channels && (
-                          <p className="mt-1 text-xs text-red-500">{errors.channels.message}</p>
+                          <p className="mt-1 text-xs text-red-500">
+                            {errors.channels.message}
+                          </p>
                         )}
                       </div>
 
@@ -301,12 +418,14 @@ export function AddNotificationPanel({ isOpen, onClose }: AddNotificationPanelPr
                           className={cn(
                             AUTH_INPUT.base,
                             AUTH_INPUT.placeholder,
-                            errors.title && AUTH_INPUT.error
+                            errors.title && AUTH_INPUT.error,
                           )}
                           placeholder="eg: Welcome to new batch"
                         />
                         {errors.title && (
-                          <p className="mt-1 text-xs text-red-500">{errors.title.message}</p>
+                          <p className="mt-1 text-xs text-red-500">
+                            {errors.title.message}
+                          </p>
                         )}
                       </div>
 
@@ -318,22 +437,26 @@ export function AddNotificationPanel({ isOpen, onClose }: AddNotificationPanelPr
                           control={control}
                           render={({ field }) => (
                             <div className="flex flex-col gap-3 pt-1">
-                              {(["IMMEDIATELY", "SCHEDULE"] as const).map((opt) => (
-                                <label
-                                  key={opt}
-                                  className="flex cursor-pointer items-center gap-2"
-                                >
-                                  <input 
-                                    type="radio" 
-                                    className="accent-[#0F172B] h-4 w-4 cursor-pointer"
-                                    checked={field.value === opt}
-                                    onChange={() => field.onChange(opt)}
-                                  />
-                                  <span className="text-sm font-medium text-[#45556C] cursor-pointer">
-                                    {opt === "IMMEDIATELY" ? "Send Immediately" : "Schedule for Later"}
-                                  </span>
-                                </label>
-                              ))}
+                              {(["IMMEDIATELY", "SCHEDULE"] as const).map(
+                                (opt) => (
+                                  <label
+                                    key={opt}
+                                    className="flex cursor-pointer items-center gap-2"
+                                  >
+                                    <input
+                                      type="radio"
+                                      className="accent-[#0F172B] h-4 w-4 cursor-pointer"
+                                      checked={field.value === opt}
+                                      onChange={() => field.onChange(opt)}
+                                    />
+                                    <span className="text-sm font-medium text-[#45556C] cursor-pointer">
+                                      {opt === "IMMEDIATELY"
+                                        ? "Send Immediately"
+                                        : "Schedule for Later"}
+                                    </span>
+                                  </label>
+                                ),
+                              )}
                             </div>
                           )}
                         />
@@ -355,22 +478,34 @@ export function AddNotificationPanel({ isOpen, onClose }: AddNotificationPanelPr
                                           <CalendarIcon className="h-4 w-4 text-[#64748B]" />
                                         </div>
                                         <input
-                                          value={field.value ? format(field.value, "dd/MM/yyyy") : ""}
+                                          value={
+                                            field.value
+                                              ? format(
+                                                  field.value,
+                                                  "dd/MM/yyyy",
+                                                )
+                                              : ""
+                                          }
                                           readOnly
                                           placeholder="Pick a date"
                                           className={cn(
                                             "flex-1 cursor-pointer bg-transparent px-3 py-2 text-sm outline-none pointer-events-none text-[#1D293D]",
-                                            AUTH_INPUT.placeholder
+                                            AUTH_INPUT.placeholder,
                                           )}
                                         />
                                       </div>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0 z-[99999999]" align="start">
+                                    <PopoverContent
+                                      className="w-auto p-0 z-[99999999]"
+                                      align="start"
+                                    >
                                       <DateRangeCalendar
                                         mode="single"
                                         startDate={field.value || null}
                                         endDate={null}
-                                        onDateChange={(start) => field.onChange(start || undefined)}
+                                        onDateChange={(start) =>
+                                          field.onChange(start || undefined)
+                                        }
                                       />
                                     </PopoverContent>
                                   </Popover>
@@ -406,15 +541,16 @@ export function AddNotificationPanel({ isOpen, onClose }: AddNotificationPanelPr
                           className={cn(
                             "min-h-[100px] resize-none text-[#1D293D] text-sm",
                             AUTH_INPUT.placeholder,
-                            errors.message && AUTH_INPUT.error
+                            errors.message && AUTH_INPUT.error,
                           )}
                           placeholder="eg: Type your message here"
                         />
                         {errors.message && (
-                          <p className="mt-1 text-xs text-red-500">{errors.message.message}</p>
+                          <p className="mt-1 text-xs text-red-500">
+                            {errors.message.message}
+                          </p>
                         )}
                       </div>
-
                     </div>
                   </form>
                 </motion.div>
@@ -435,12 +571,10 @@ export function AddNotificationPanel({ isOpen, onClose }: AddNotificationPanelPr
                   <Button
                     type="submit"
                     form="add-notification-form"
-                    className={cn(
-                      BUTTON_STYLES.primary.full,
-                      "w-auto px-6"
-                    )}
+                    disabled={isPending}
+                    className={cn(BUTTON_STYLES.primary.full, "w-auto px-6")}
                   >
-                    Create
+                    {isPending ? "Sending..." : "Create"}
                   </Button>
                 </motion.div>
               </motion.div>

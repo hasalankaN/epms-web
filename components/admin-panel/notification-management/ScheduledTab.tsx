@@ -57,7 +57,11 @@ export function ScheduledTab() {
         onFilterSelect={handleFilterSelect}
         onClearFilters={handleClearFilters}
       />
-      <ScheduledTable currentPage={currentPage} onPageChange={handlePageChange} />
+      <ScheduledTable
+        currentPage={currentPage}
+        onPageChange={handlePageChange}
+        channels={channel}
+      />
     </div>
   );
 }

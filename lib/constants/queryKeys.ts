@@ -56,4 +56,9 @@ export const queryKeys = {
 
   // Referral Commissions
   commissions: "commissions",
+
+  // Notifications
+  notificationsSent: "notificationsSent",
+  notificationsScheduled: "notificationsScheduled",
+  notificationsResponseLogs: "notificationsResponseLogs",
 };
