@@ -91,7 +91,13 @@ export function SentTab() {
         onApplyFilters={handleApplyFilters}
         onClearFilters={handleClearFilters}
       />
-      <SentTable currentPage={currentPage} onPageChange={handlePageChange} />
+      <SentTable
+        currentPage={currentPage}
+        onPageChange={handlePageChange}
+        dateFrom={fromDate}
+        dateTo={toDate}
+        channels={channelsParam}
+      />
     </div>
   );
 }

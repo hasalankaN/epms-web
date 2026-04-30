@@ -58,7 +58,14 @@ export function ResponseTrackingTab() {
         fromDate={fromDate ?? undefined}
         toDate={toDate ?? undefined}
       />
-      <ResponseTrackingTable currentPage={currentPage} onPageChange={handlePageChange} />
+      <ResponseTrackingTable
+        currentPage={currentPage}
+        onPageChange={handlePageChange}
+        search={search}
+        status={status}
+        dateFrom={fromDate}
+        dateTo={toDate}
+      />
     </div>
   );
 }
