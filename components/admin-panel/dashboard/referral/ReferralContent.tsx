@@ -4,9 +4,14 @@ import React, { useRef, useState, useEffect } from "react";
 
 import { CircleCheck, ChevronLeft, ChevronRight } from "lucide-react";
 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { TAB_STYLES } from "@/lib/constants/theme";
 import { cn } from "@/lib/utils";
+import { PendingApprovalsTable } from "./views/PendingApprovalsTable";
+import { ReferralApprovalTable } from "./views/ReferralApprovalTable";
+import { PendingLeadsTable } from "./views/PendingLeadsTable";
+import { PendingFollowUpsTable } from "./views/PendingFollowUpsTable";
+import { PendingOrdersTable } from "./views/PendingOrdersTable";
 
 export function ReferralContent() {
   const [activeTab, setActiveTab] = useState("approvals");
@@ -137,12 +142,22 @@ export function ReferralContent() {
           </button>
         </div>
         
-        {/* Placeholder content */}
-        <div className="mt-[10px] flex w-full flex-col items-center justify-center rounded-lg border border-[#E2E8F0] bg-white py-20 text-center shadow-sm">
-             <div className="text-[14px] font-medium text-[#1D293D]">
-                Last 5 entries will display here...
-            </div>
-        </div>
+        {/* Tab Content */}
+        <TabsContent value="approvals" className="mt-0 outline-none">
+          <PendingApprovalsTable />
+        </TabsContent>
+        <TabsContent value="referral-approval" className="mt-0 outline-none">
+          <ReferralApprovalTable />
+        </TabsContent>
+        <TabsContent value="leads" className="mt-0 outline-none">
+          <PendingLeadsTable />
+        </TabsContent>
+        <TabsContent value="follow-ups" className="mt-0 outline-none">
+          <PendingFollowUpsTable />
+        </TabsContent>
+        <TabsContent value="orders" className="mt-0 outline-none">
+          <PendingOrdersTable />
+        </TabsContent>
       </Tabs>
     </div>
   );
