@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
@@ -45,12 +45,32 @@ export function SentTab() {
   const [localSearch, setLocalSearch] = useState(search);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localSearch.trim() !== search.trim()) {
+        const params = new URLSearchParams(searchParams.toString());
+
+        if (localSearch.trim()) {
+          params.set("search", localSearch.trim());
+        } else {
+          params.delete("search");
+        }
+
+        params.set("page", "1");
+        router.replace(`${pathname}?${params.toString()}`);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [localSearch, search, searchParams, pathname, router]);
+
   const handlePageChange = useCallback(
     (page: number) => {
       const params = new URLSearchParams(searchParams.toString());
 
       params.set("page", page.toString());
-      router.push(`${pathname}?${params.toString()}`);
+      router.replace(`${pathname}?${params.toString()}`);
     },
     [searchParams, pathname, router]
   );
@@ -64,7 +84,7 @@ export function SentTab() {
         else params.delete(key);
       });
       params.set("page", "1");
-      router.push(`${pathname}?${params.toString()}`);
+      router.replace(`${pathname}?${params.toString()}`);
     },
     [searchParams, pathname, router]
   );

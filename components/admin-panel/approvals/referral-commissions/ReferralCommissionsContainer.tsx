@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+
 import { format } from "date-fns";
 
 import type { ReferralCommissionTabType } from "@/app/(main)/admin-panel/approvals/referral-commissions/page";
@@ -121,28 +123,29 @@ function mapToRejectedRow(item: CommissionsApiItem): CommissionRejectedRow {
 
 interface ReferralCommissionsContainerProps {
   activeTab: ReferralCommissionTabType;
+  dateRange?: { from?: Date; to?: Date };
 }
 
 export function ReferralCommissionsContainer({
   activeTab,
+  dateRange,
 }: ReferralCommissionsContainerProps) {
-  const [pages, setPages] = useState<Record<ReferralCommissionTabType, number>>({
-    batches: 1,
-    "online-courses": 1,
-    products: 1,
-    rejected: 1,
-  });
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const currentPage = Number(searchParams.get("page")) || 1;
 
   const [pendingApproveId, setPendingApproveId] = useState<string | null>(null);
   const [pendingRejectId, setPendingRejectId] = useState<string | null>(null);
 
   const apiType = TAB_TYPE_MAP[activeTab];
-  const currentPage = pages[activeTab];
 
   const { data: apiResponse, isLoading, isError } = useGetCommissions({
     type: apiType,
     page: currentPage,
     size: 10,
+    dateRange,
   });
 
   const approveCommission = useApproveCommission();
@@ -154,7 +157,10 @@ export function ReferralCommissionsContainer({
   const totalCount = meta?.total ?? 0;
 
   const handlePageChange = (page: number) => {
-    setPages((prev) => ({ ...prev, [activeTab]: page }));
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.set("page", page.toString());
+    router.replace(`${pathname}?${params.toString()}`);
   };
 
   return (

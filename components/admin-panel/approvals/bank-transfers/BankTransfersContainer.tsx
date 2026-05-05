@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+
 import { format } from "date-fns";
 
 import type { BankTransferTabType } from "@/app/(main)/admin-panel/approvals/bank-transfers/page";
@@ -132,17 +134,18 @@ export function BankTransfersContainer({
   activeTab,
   dateRange,
 }: BankTransfersContainerProps) {
-  const [pages, setPages] = useState<Record<BankTransferTabType, number>>({
-    batches: 1,
-    "online-courses": 1,
-    products: 1,
-    rejected: 1,
-  });
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const currentPage = pages[activeTab];
-  
-  const setCurrentPage = (page: number) =>
-    setPages((prev) => ({ ...prev, [activeTab]: page }));
+  const currentPage = Number(searchParams.get("page")) || 1;
+
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.set("page", page.toString());
+    router.replace(`${pathname}?${params.toString()}`);
+  };
 
   const { data, isLoading, isError } = useGetApprovals({
     type: TAB_TYPE_MAP[activeTab],
@@ -199,7 +202,7 @@ export function BankTransfersContainer({
           currentPage={currentPage}
           totalPages={totalPages}
           totalCount={totalCount}
-          onPageChange={setCurrentPage}
+          onPageChange={handlePageChange}
           isLoading={isLoading}
           isError={isError}
           onApproveClick={handleApproveClick}
@@ -212,7 +215,7 @@ export function BankTransfersContainer({
           currentPage={currentPage}
           totalPages={totalPages}
           totalCount={totalCount}
-          onPageChange={setCurrentPage}
+          onPageChange={handlePageChange}
           isLoading={isLoading}
           isError={isError}
           onApproveClick={handleApproveClick}
@@ -225,7 +228,7 @@ export function BankTransfersContainer({
           currentPage={currentPage}
           totalPages={totalPages}
           totalCount={totalCount}
-          onPageChange={setCurrentPage}
+          onPageChange={handlePageChange}
           isLoading={isLoading}
           isError={isError}
           onApproveClick={handleApproveClick}
@@ -238,7 +241,7 @@ export function BankTransfersContainer({
           currentPage={currentPage}
           totalPages={totalPages}
           totalCount={totalCount}
-          onPageChange={setCurrentPage}
+          onPageChange={handlePageChange}
           isLoading={isLoading}
           isError={isError}
         />

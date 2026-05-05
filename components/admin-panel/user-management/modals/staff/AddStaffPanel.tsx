@@ -62,9 +62,11 @@ const staffSchema = z.object({
     .optional()
     .refine(val => !val || /^[0-9]{9}$/.test(val), "WhatsApp must be exactly 9 digits."),
   district: z.string().optional(),
-  salary_type: z.enum(["MONTHLY", "COMMISSION_PER_ENROLLMENT", "COMMISSION_PER_ENROLLMENT_BY_BRANCH"], {
+  salary_type: z.enum(["MONTHLY", "PERCENTAGE_FROM_BATCH_DEPOSITS", "BATCH_OR_COURSE_WISE_PAYMENT"], {
     required_error: "Salary type is required.",
   }),
+  salary_due_day: z.string().optional(),
+  salary_due_frequency: z.string().optional(),
   is_branch_manager: z.boolean().default(false),
   branch_id: z.string().optional(),
   privilege_codes: z.array(z.string()).default([]),
@@ -114,8 +116,8 @@ const FieldLabel = ({
 
 const SALARY_TYPES = [
   { value: "MONTHLY", label: "Monthly Salary" },
-  { value: "COMMISSION_PER_ENROLLMENT", label: "Commission per enrollments" },
-  { value: "COMMISSION_PER_ENROLLMENT_BY_BRANCH", label: "Commission per enrollments by branch" },
+  { value: "PERCENTAGE_FROM_BATCH_DEPOSITS", label: "Percentage from batch deposit" },
+  { value: "BATCH_OR_COURSE_WISE_PAYMENT", label: "Batch or Course Wise Payment" },
 ] as const;
 
 const PRIVILEGES = [
@@ -179,6 +181,8 @@ export function AddStaffPanel({ isOpen, onClose }: AddStaffPanelProps) {
       is_branch_manager: false,
       branch_id: undefined,
       privilege_codes: [],
+      salary_due_day: undefined,
+      salary_due_frequency: "EVERY_MONTH",
     },
   });
 
@@ -225,10 +229,12 @@ export function AddStaffPanel({ isOpen, onClose }: AddStaffPanelProps) {
         salary_type: values.salary_type,
         is_branch_manager: values.is_branch_manager,
         ...(values.branch_id ? { branch_id: values.branch_id } : {}),
+        ...(values.salary_due_day ? { salary_due_day: values.salary_due_day } : {}),
+        ...(values.salary_due_frequency ? { salary_due_frequency: values.salary_due_frequency } : {}),
         privilege_codes: values.privilege_codes.length > 0 ? values.privilege_codes : ["all"],
       };
 
-      await createStaff(payload as any);
+      await createStaff(payload);
       reset();
       onClose();
     } catch {
@@ -524,7 +530,7 @@ export function AddStaffPanel({ isOpen, onClose }: AddStaffPanelProps) {
                                 name="salary_type"
                                 value={type.value}
                                 checked={salaryType === type.value}
-                                onChange={() => setValue("salary_type", type.value, { shouldDirty: true, shouldValidate: true })}
+                                onChange={() => setValue("salary_type", type.value as any, { shouldDirty: true, shouldValidate: true })}
                                 className="h-4 w-4 cursor-pointer accent-[#0F172B]"
                               />
                               <label
@@ -535,6 +541,41 @@ export function AddStaffPanel({ isOpen, onClose }: AddStaffPanelProps) {
                               </label>
                             </div>
                           ))}
+                        </div>
+                      </div>
+
+                      {/* Salary Due */}
+                      <div className="space-y-1.5">
+                        <FieldLabel>Salary Due</FieldLabel>
+                        <div className="grid grid-cols-2 gap-3">
+                          {/* Day Selector */}
+                          <Select onValueChange={(val) => setValue("salary_due_day", val, { shouldDirty: true })}>
+                            <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9]")}>
+                              <SelectValue placeholder="Date" />
+                            </SelectTrigger>
+                            <SelectContent className="z-[99999999] max-h-[200px]">
+                              {Array.from({ length: 31 }, (_, i) => (
+                                <SelectItem key={i + 1} value={(i + 1).toString()}>
+                                  {i + 1}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+
+                          {/* Frequency Selector */}
+                          <Select 
+                            defaultValue="EVERY_MONTH"
+                            onValueChange={(val) => setValue("salary_due_frequency", val, { shouldDirty: true })}
+                          >
+                            <SelectTrigger className={cn(AUTH_INPUT.base, "text-[#1D293D]")}>
+                              <SelectValue placeholder="Every Month" />
+                            </SelectTrigger>
+                            <SelectContent className="z-[99999999]">
+                              <SelectItem value="EVERY_MONTH">Every Month</SelectItem>
+                              <SelectItem value="QUARTERLY">Quarterly</SelectItem>
+                              <SelectItem value="YEARLY">Yearly</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
 

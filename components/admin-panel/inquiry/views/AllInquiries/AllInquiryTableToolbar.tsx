@@ -188,11 +188,16 @@ export function AllInquiryTableToolbar({ bulkActions, selectedCount, totalCount,
     setActiveFilters(filters);
   }, [searchParams]);
 
-  // Fetch options for filters
-  const { data: branchesData } = useGetBranches({ size: 100 });
-  const { data: staffData } = useGetStaff({ size: 100 });
-  const { data: coursesData } = useGetCourses({ size: 100 });
-  const { data: batchesData } = useGetBatches({ size: 100 });
+  // Fetch options for filters with pagination
+  const [branchesSize, setBranchesSize] = useState(10);
+  const [staffSize, setStaffSize] = useState(10);
+  const [coursesSize, setCoursesSize] = useState(10);
+  const [batchesSize, setBatchesSize] = useState(10);
+
+  const { data: branchesData } = useGetBranches({ size: branchesSize });
+  const { data: staffData } = useGetStaff({ size: staffSize });
+  const { data: coursesData } = useGetCourses({ size: coursesSize });
+  const { data: batchesData } = useGetBatches({ size: batchesSize });
 
   const dynamicCategories = useMemo<FilterCategory[]>(() => {
     return [
@@ -203,6 +208,8 @@ export function AllInquiryTableToolbar({ bulkActions, selectedCount, totalCount,
         type: "chips",
         multiSelect: false,
         items: staffData?.results.map(s => ({ key: s.userId, label: `${s.firstName} ${s.lastName}` })) || [],
+        onShowMore: () => setStaffSize(prev => prev + 10),
+        hasMore: staffData ? !staffData.isLastPage : false,
       },
       {
         key: "branches",
@@ -210,6 +217,8 @@ export function AllInquiryTableToolbar({ bulkActions, selectedCount, totalCount,
         type: "chips",
         multiSelect: false,
         items: branchesData?.results.map(b => ({ key: b.id, label: b.name })) || [],
+        onShowMore: () => setBranchesSize(prev => prev + 10),
+        hasMore: branchesData ? !branchesData.isLastPage : false,
       },
       {
         key: "district",
@@ -227,6 +236,11 @@ export function AllInquiryTableToolbar({ bulkActions, selectedCount, totalCount,
           ...(coursesData?.results.map(c => ({ key: c.id, label: c.name })) || []),
           ...(batchesData?.results.map(b => ({ key: b.id, label: b.name })) || []),
         ],
+        onShowMore: () => {
+          setCoursesSize(prev => prev + 10);
+          setBatchesSize(prev => prev + 10);
+        },
+        hasMore: (coursesData ? !coursesData.isLastPage : false) || (batchesData ? !batchesData.isLastPage : false),
       },
       {
         key: "sources",

@@ -16,7 +16,10 @@ interface WeekAccordionProps {
   isExpanded?: boolean;
   onToggle?: () => void;
   onDelete?: () => void;
+  onUpdateWeek?: (updates: Partial<Week>) => void;
   onAddLesson?: () => void;
+  onUpdateLesson?: (lessonId: string, updates: Partial<Week['lessons'][0]>) => void;
+  onDeleteLesson?: (lessonId: string) => void;
 }
 
 export function WeekAccordion({
@@ -24,13 +27,32 @@ export function WeekAccordion({
   isExpanded = false,
   onToggle,
   onDelete,
+  onUpdateWeek,
   onAddLesson,
+  onUpdateLesson,
+  onDeleteLesson,
 }: WeekAccordionProps) {
   const [expanded, setExpanded] = useState(isExpanded);
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempTitle, setTempTitle] = useState(week.title);
   
   const handleToggle = () => {
+    if (isEditing) return;
     setExpanded(!expanded);
     onToggle?.();
+  };
+
+  const handleTitleSubmit = () => {
+    setIsEditing(false);
+
+    if (tempTitle.trim() !== week.title) {
+      onUpdateWeek?.({ title: tempTitle });
+    }
+  };
+
+  const handleTitleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsEditing(true);
   };
 
   const lessonCount = week.lessons.length;
@@ -54,12 +76,32 @@ export function WeekAccordion({
       >
         <div className="flex items-center justify-between w-full">
           {/* Title - Aligned with actions */}
-          <span className={cn(
-            "font-inter text-[14px] font-medium leading-[20px]",
-            expanded ? "text-white" : "text-[#0F172B]"
-          )}>
-            {week.title}
-          </span>
+          <div className="flex-1 mr-2">
+            {isEditing ? (
+              <input
+                autoFocus
+                className={cn(
+                  "font-inter text-[14px] font-medium leading-[20px] bg-white border border-[#0F172B] rounded px-1 w-full outline-none",
+                  expanded ? "text-[#0F172B]" : "text-[#0F172B]"
+                )}
+                value={tempTitle}
+                onChange={(e) => setTempTitle(e.target.value)}
+                onBlur={handleTitleSubmit}
+                onKeyDown={(e) => e.key === "Enter" && handleTitleSubmit()}
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <span 
+                className={cn(
+                  "font-inter text-[14px] font-medium leading-[20px] hover:bg-slate-100/10 rounded px-1 transition-colors",
+                  expanded ? "text-white" : "text-[#0F172B]"
+                )}
+                onClick={handleTitleClick}
+              >
+                {week.title}
+              </span>
+            )}
+          </div>
 
           <div className="flex items-center gap-2">
             {/* Delete Button */}
@@ -97,7 +139,12 @@ export function WeekAccordion({
         <div className="flex flex-col gap-3 p-3 sm:p-4 bg-white rounded-b-lg">
           {/* Lessons */}
           {week.lessons.map((lesson) => (
-            <LessonAccordion key={lesson.id} lesson={lesson} />
+            <LessonAccordion 
+              key={lesson.id} 
+              lesson={lesson} 
+              onUpdate={(updates) => onUpdateLesson?.(lesson.id, updates)}
+              onDelete={() => onDeleteLesson?.(lesson.id)}
+            />
           ))}
 
           {/* Add New Lessons Button */}
@@ -109,7 +156,7 @@ export function WeekAccordion({
             onClick={onAddLesson}
           >
             <Plus className="h-4 w-4" />
-            Add New Lesson
+            Add New
           </Button>
         </div>
       )}

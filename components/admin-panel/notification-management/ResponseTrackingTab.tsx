@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+
+import type { FilterSelections } from "@/components/common/filters/FilterModal";
 
 import { ResponseTrackingToolbar } from "./views/ResponseTracking/ResponseTrackingToolbar";
 import { ResponseTrackingTable } from "./views/ResponseTracking/ResponseTrackingTable";
@@ -12,59 +14,104 @@ export function ResponseTrackingTab() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
-  const pageParam = searchParams.get("r_page");
+  const pageParam = searchParams.get("page");
   const currentPage = pageParam ? parseInt(pageParam) : 1;
+  const search = searchParams.get("search") || "";
 
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<string | null>(null);
-  const [fromDate, setFromDate] = useState<Date | null>(null);
-  const [toDate, setToDate] = useState<Date | null>(null);
+  const status = searchParams.get("status");
+  const fromParam = searchParams.get("from");
+  const toParam = searchParams.get("to");
+
+  const activeFilters = useMemo<FilterSelections>(() => {
+    const selections: FilterSelections = {};
+
+    if (status) selections.status = [status];
+    
+    if (fromParam || toParam) {
+      selections.date = {
+        start: fromParam ? new Date(fromParam) : null,
+        end: toParam ? new Date(toParam) : null,
+      };
+    }
+
+    return selections;
+  }, [status, fromParam, toParam]);
+
+  const [localSearch, setLocalSearch] = useState(search);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localSearch.trim() !== search.trim()) {
+        const params = new URLSearchParams(searchParams.toString());
+
+        if (localSearch.trim()) {
+          params.set("search", localSearch.trim());
+        } else {
+          params.delete("search");
+        }
+
+        params.set("page", "1");
+        router.replace(`${pathname}?${params.toString()}`);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [localSearch, search, searchParams, pathname, router]);
 
   const handlePageChange = useCallback(
     (page: number) => {
       const params = new URLSearchParams(searchParams.toString());
 
-      params.set("r_page", page.toString());
-      router.push(`${pathname}?${params.toString()}`);
+      params.set("page", page.toString());
+      router.replace(`${pathname}?${params.toString()}`);
     },
     [searchParams, pathname, router]
   );
 
-  const handleFilterSelect = (_key: string, _value: string, label: string) => {
-    setStatus(label);
-  };
+  const handleApplyFilters = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
 
-  const handleDateApply = (start: Date | null, end: Date | null) => {
-    setFromDate(start);
-    setToDate(end);
-    console.log("Date filter applied:", { start, end });
-  };
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value) params.set(key, value);
+        else params.delete(key);
+      });
+      params.set("page", "1");
+      router.replace(`${pathname}?${params.toString()}`);
+    },
+    [searchParams, pathname, router]
+  );
 
   const handleClearFilters = useCallback(() => {
-    setStatus(null);
-    setFromDate(null);
-    setToDate(null);
-  }, []);
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.delete("status");
+    params.delete("from");
+    params.delete("to");
+    params.set("page", "1");
+    router.replace(`${pathname}?${params.toString()}`);
+  }, [searchParams, pathname, router]);
 
   return (
     <div className="flex flex-col gap-4">
       <ResponseTrackingToolbar
-        search={search}
-        onSearchChange={setSearch}
-        statusValue={status}
-        onFilterSelect={handleFilterSelect}
-        onDateApply={handleDateApply}
+        search={localSearch}
+        onSearchChange={setLocalSearch}
+        isFilterModalOpen={isFilterModalOpen}
+        onFilterModalOpenChange={setIsFilterModalOpen}
+        activeFilters={activeFilters}
+        onApplyFilters={handleApplyFilters}
         onClearFilters={handleClearFilters}
-        fromDate={fromDate ?? undefined}
-        toDate={toDate ?? undefined}
       />
       <ResponseTrackingTable
         currentPage={currentPage}
         onPageChange={handlePageChange}
         search={search}
         status={status}
-        dateFrom={fromDate}
-        dateTo={toDate}
+        dateFrom={fromParam ? new Date(fromParam) : undefined}
+        dateTo={toParam ? new Date(toParam) : undefined}
       />
     </div>
   );

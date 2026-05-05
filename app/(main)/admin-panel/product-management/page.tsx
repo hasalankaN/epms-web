@@ -2,9 +2,11 @@
 
 import React, { useState } from "react";
 
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 import { Plus } from "lucide-react";
+
+import { useTabNavigation } from "@/hooks/useTabNavigation";
+
 
 import { cn } from "@/lib/utils";
 import { TAB_STYLES, BUTTON_STYLES } from "@/lib/constants/theme";
@@ -32,17 +34,9 @@ const tabs = [
 import { useGetOrderSummary } from "@/hooks/api/orders/useGetOrderSummary";
 
 export default function ProductManagementPage() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-
   const { data: orderSummary } = useGetOrderSummary();
 
-  const currentTab = searchParams.get("tab") as ProductTabType;
-
-  const activeTab = tabs.some((t) => t.value === currentTab)
-    ? currentTab
-    : "orders";
+  const { activeTab, handleTabChange } = useTabNavigation<ProductTabType>("orders", tabs.map(t => t.value));
 
   // ===== PANEL / MODAL STATE =====
   const [isAddPanelOpen, setIsAddPanelOpen] = useState(false);
@@ -52,14 +46,6 @@ export default function ProductManagementPage() {
   
   const [isViewProductsModalOpen, setIsViewProductsModalOpen] = useState(false);
   const [viewProductsCategory, setViewProductsCategory] = useState<ProductCategoryDataType | null>(null);
-
-  // ===== HANDLERS =====
-  const handleTabChange = (tabValue: ProductTabType) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    params.set("tab", tabValue);
-    router.replace(`${pathname}?${params.toString()}`);
-  };
 
   const handleRenameCategory = (category: ProductCategoryDataType) => {
     setRenameCategory(category);

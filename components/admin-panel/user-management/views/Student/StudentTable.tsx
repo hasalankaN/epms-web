@@ -243,7 +243,6 @@ export function StudentTable({
       cell: (student) => {
         const options = Object.entries(STUDENT_STATUS_CONFIG).map(([status, config]) => ({
           value: status,
-          label: status.charAt(0) + status.slice(1).toLowerCase(), // E.g. ACTIVE -> Active
           bg: config.bg,
           text: config.text,
         }));

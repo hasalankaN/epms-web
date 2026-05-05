@@ -34,6 +34,7 @@ export default function ReferralListingPage() {
     const params = new URLSearchParams();
 
     params.set("tab", tabValue);
+    params.set("page", "1");
     router.replace(`${pathname}?${params.toString()}`);
   };
 

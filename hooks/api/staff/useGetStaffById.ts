@@ -16,7 +16,9 @@ export interface StaffProfile {
   district: string | null;
   gender: "MALE" | "FEMALE" | null;
   profile_image_url: string | null;
-  salary_type: "MONTHLY" | "COMMISSION_PER_ENROLLMENT" | "COMMISSION_PER_ENROLLMENT_BY_BRANCH";
+  salary_type: "MONTHLY" | "PERCENTAGE_FROM_BATCH_DEPOSITS" | "BATCH_OR_COURSE_WISE_PAYMENT";
+  salary_due_day?: string;
+  salary_due_frequency?: string;
   is_branch_manager: boolean;
   status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
   branch_id: string | null;

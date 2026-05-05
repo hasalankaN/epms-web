@@ -1,19 +1,26 @@
 "use client";
 
+import { useCallback, useMemo } from "react";
+
 import { Search, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { AUTH_INPUT, BUTTON_STYLES } from "@/lib/constants/theme";
 import { Input } from "@/components/ui/input";
-import { DateRangeFilter } from "@/components/common/filters/DateRangeFilter";
-import { FilterDropdown } from "@/components/common/dropdowns/FilterDropdown";
-import type { FilterCategory } from "@/components/common/dropdowns/FilterDropdown";
-import { HorizontalScrollContainer } from "@/components/common/HorizontalScrollContainer";
+import type { FilterCategory, FilterSelections } from "@/components/common/filters/FilterModal";
+import { FilterModal, FilterModalTrigger } from "@/components/common/filters/FilterModal";
 
 const statusCategories: FilterCategory[] = [
   {
+    key: "date",
+    label: "By Date",
+    type: "dateRange",
+  },
+  {
     key: "status",
     label: "Status",
+    type: "chips",
+    multiSelect: false,
     items: [
       { key: "responded", label: "Responded" },
       { key: "pending", label: "Pending" },
@@ -25,25 +32,46 @@ const statusCategories: FilterCategory[] = [
 interface ResponseTrackingToolbarProps {
   search: string;
   onSearchChange: (value: string) => void;
-  statusValue: string | null;
-  onFilterSelect: (key: string, value: string, label: string) => void;
-  onDateApply: (start: Date | null, end: Date | null) => void;
-  onClearFilters?: () => void;
-  fromDate?: Date;
-  toDate?: Date;
+  isFilterModalOpen: boolean;
+  onFilterModalOpenChange: (open: boolean) => void;
+  activeFilters: FilterSelections;
+  onApplyFilters: (filters: Record<string, string | null>) => void;
+  onClearFilters: () => void;
 }
 
 export function ResponseTrackingToolbar({
   search,
   onSearchChange,
-  statusValue,
-  onFilterSelect,
-  onDateApply,
+  isFilterModalOpen,
+  onFilterModalOpenChange,
+  activeFilters,
+  onApplyFilters,
   onClearFilters,
-  fromDate,
-  toDate,
 }: ResponseTrackingToolbarProps) {
-  const hasActiveFilters = !!(statusValue || fromDate || toDate);
+  const hasActiveFilters = useMemo(() => {
+    return Object.values(activeFilters).some((v) => {
+      if (Array.isArray(v)) return v.length > 0;
+      if (v && typeof v === "object" && "start" in v) return !!(v.start || v.end);
+
+      return v !== null && v !== undefined;
+    });
+  }, [activeFilters]);
+
+  const handleApplyFilters = useCallback((selections: FilterSelections) => {
+    const updates: Record<string, string | null> = {
+      status: (selections.status as unknown as string) || null,
+      from: null,
+      to: null,
+    };
+
+    if (selections.date && !Array.isArray(selections.date)) {
+      if (selections.date.start) updates.from = selections.date.start.toISOString();
+      if (selections.date.end) updates.to = selections.date.end.toISOString();
+    }
+
+    onApplyFilters(updates);
+    onFilterModalOpenChange(false);
+  }, [onApplyFilters, onFilterModalOpenChange]);
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -54,7 +82,7 @@ export function ResponseTrackingToolbar({
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#90A1B9]" />
           <Input
             type="text"
-            placeholder="Search by student name or Lecturer name"
+            placeholder="Search student or Lecturer name"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             className={cn(
@@ -77,16 +105,10 @@ export function ResponseTrackingToolbar({
               Clear
             </button>
           )}
-          <DateRangeFilter
-            placeholder="Date"
-            onApply={onDateApply}
-            initialRange={fromDate || toDate ? { from: fromDate, to: toDate } : undefined}
-          />
-          <FilterDropdown
-            categories={statusCategories}
-            label="Status"
-            value={statusValue}
-            onFilterSelect={onFilterSelect}
+          <FilterModalTrigger
+            onClick={() => onFilterModalOpenChange(true)}
+            label="Filter Option"
+            className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
           />
         </div>
       </div>
@@ -114,21 +136,14 @@ export function ResponseTrackingToolbar({
               type="button"
               onClick={onClearFilters}
               className={cn(BUTTON_STYLES.outline.md, "border-dashed text-[#64748B] hover:text-[#0F172B]")}
-              aria-label="Clear filters"
             >
               <X className="h-4 w-4" />
             </button>
           )}
-          <DateRangeFilter
-            placeholder="Date"
-            onApply={onDateApply}
-            initialRange={fromDate || toDate ? { from: fromDate, to: toDate } : undefined}
-          />
-          <FilterDropdown
-            categories={statusCategories}
-            label="Status"
-            value={statusValue}
-            onFilterSelect={onFilterSelect}
+          <FilterModalTrigger
+            onClick={() => onFilterModalOpenChange(true)}
+            label="Filter Option"
+            className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
           />
         </div>
       </div>
@@ -150,36 +165,32 @@ export function ResponseTrackingToolbar({
           />
         </div>
 
-        <HorizontalScrollContainer className="w-full pb-2">
-          <div className="flex min-w-max items-center gap-2">
-            {hasActiveFilters && (
-              <button
-                type="button"
-                onClick={onClearFilters}
-                className={cn(BUTTON_STYLES.outline.md, "px-3 border-dashed text-[#64748B] hover:text-[#0F172B] shrink-0")}
-                aria-label="Clear filters"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-            <div className="shrink-0">
-              <DateRangeFilter
-                placeholder="Date"
-                onApply={onDateApply}
-                initialRange={fromDate || toDate ? { from: fromDate, to: toDate } : undefined}
-              />
-            </div>
-            <div className="shrink-0">
-              <FilterDropdown
-                categories={statusCategories}
-                label="Status"
-                value={statusValue}
-                onFilterSelect={onFilterSelect}
-              />
-            </div>
-          </div>
-        </HorizontalScrollContainer>
+        <div className="flex items-center gap-2">
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={onClearFilters}
+              className={cn(BUTTON_STYLES.outline.md, "px-3 border-dashed text-[#64748B] hover:text-[#0F172B] shrink-0")}
+              aria-label="Clear filters"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+          <FilterModalTrigger
+            onClick={() => onFilterModalOpenChange(true)}
+            label="Filter"
+            className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
+          />
+        </div>
       </div>
+
+      <FilterModal
+        open={isFilterModalOpen}
+        onOpenChange={onFilterModalOpenChange}
+        categories={statusCategories}
+        onApply={handleApplyFilters}
+        initialSelections={activeFilters}
+      />
     </div>
   );
 }

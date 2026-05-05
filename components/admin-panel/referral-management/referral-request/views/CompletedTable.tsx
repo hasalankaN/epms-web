@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 
 import { DataTable } from "@/components/common/table/DataTable";
 import type { Column } from "@/components/common/table/DataTable";
 
 import type { CompletedRequestDataType } from "../CompletedTab";
+import { ViewSlipModal } from "@/components/admin-panel/approvals/bank-transfers/modals/ViewSlipModal";
 
 interface CompletedTableProps {
   data: CompletedRequestDataType[];
@@ -20,6 +21,9 @@ export function CompletedTable({
   onPageChange,
   totalResults,
 }: CompletedTableProps) {
+  const [isSlipModalOpen, setIsSlipModalOpen] = useState(false);
+  const [selectedSlipUrl, setSelectedSlipUrl] = useState<string | undefined>(undefined);
+
   const itemsPerPage = 10;
   const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
 
@@ -70,7 +74,10 @@ export function CompletedTable({
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[100px]",
       cell: (item) => (
         <button 
-          onClick={() => console.log('View slip', item.bankSlipUrl)}
+          onClick={() => {
+            setSelectedSlipUrl(item.bankSlipUrl);
+            setIsSlipModalOpen(true);
+          }}
           className="text-[11px] font-semibold text-[#F6339A] hover:underline"
         >
           View
@@ -80,6 +87,7 @@ export function CompletedTable({
   ];
 
   return (
+    <>
     <DataTable
       data={data}
       columns={columns}
@@ -93,5 +101,11 @@ export function CompletedTable({
         onPageChange,
       }}
     />
+    <ViewSlipModal
+      isOpen={isSlipModalOpen}
+      onClose={() => setIsSlipModalOpen(false)}
+      imageUrl={selectedSlipUrl}
+    />
+    </>
   );
 }

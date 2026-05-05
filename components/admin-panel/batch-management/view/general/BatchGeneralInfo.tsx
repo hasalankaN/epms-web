@@ -16,20 +16,36 @@ import { useGetCertificateTemplateById } from "@/hooks/api/certificates/useGetCe
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
+const toTitleCase = (str?: string | null) => {
+  if (!str) return "-";
+  
+  return str
+    .toLowerCase()
+    .split(/[_\s]+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+};
+
 const InfoItem = ({
   label,
   children,
+  isLoading = false,
 }: {
   label: string;
   children: React.ReactNode;
+  isLoading?: boolean;
 }) => {
   return (
     <div className="flex flex-col items-start gap-1 w-full">
       <span className="font-inter text-[12px] font-normal leading-[16px] text-[#90A1B9]">
         {label}
       </span>
-      <div className="font-inter text-[16px] font-medium leading-[24px] text-[#314158] w-full">
-        {children}
+      <div className="font-inter text-[16px] font-medium leading-[24px] text-[#314158] w-full min-h-[24px]">
+        {isLoading ? (
+          <div className="h-4 w-full max-w-[120px] animate-pulse rounded bg-slate-200 mt-1" />
+        ) : (
+          children
+        )}
       </div>
     </div>
   );
@@ -58,8 +74,17 @@ const Avatar = ({
 // ── Staff chip (fetches one staff member) ─────────────────────────────────────
 
 function StaffChip({ staffId }: { staffId: string }) {
-  const { data } = useGetStaffById(staffId);
+  const { data, isLoading } = useGetStaffById(staffId);
   const profile = data?.profile;
+
+  if (isLoading) {
+    return (
+       <div className="flex items-center gap-2">
+         <div className="h-6 w-6 rounded-full bg-slate-200 animate-pulse" />
+         <div className="h-3 w-20 bg-slate-200 animate-pulse rounded" />
+       </div>
+    );
+  }
 
   if (!profile) return null;
 
@@ -76,7 +101,11 @@ function StaffChip({ staffId }: { staffId: string }) {
 // ── Certificate chip (fetches one template) ───────────────────────────────────
 
 function CertChip({ certId }: { certId: string }) {
-  const { data } = useGetCertificateTemplateById(certId);
+  const { data, isLoading } = useGetCertificateTemplateById(certId);
+
+  if (isLoading) {
+    return <div className="h-3 w-24 bg-slate-200 animate-pulse rounded mt-1.5" />;
+  }
 
   if (!data) return null;
 
@@ -90,20 +119,23 @@ function CertChip({ certId }: { certId: string }) {
 
 interface BatchGeneralInfoProps {
   batch: ApiBatchDetail | null | undefined;
+  isLoading?: boolean;
 }
 
-export function BatchGeneralInfo({ batch }: BatchGeneralInfoProps) {
-  const { data: lecturer } = useGetLecturerById(batch?.lecturer_id ?? null);
-  const { data: branch } = useGetBranchById(batch?.branch_id ?? null);
+export function BatchGeneralInfo({ batch, isLoading = false }: BatchGeneralInfoProps) {
+  const { data: lecturer, isLoading: isLoadingLecturer } = useGetLecturerById(batch?.lecturer_id ?? null);
+  const { data: branch, isLoading: isLoadingBranch } = useGetBranchById(batch?.branch_id ?? null);
 
   const lecturerName = lecturer
     ? `${lecturer.profile.first_name} ${lecturer.profile.last_name}`
-    : "—";
+    : "-";
 
-  const branchName = branch?.name ?? "—";
-  const assessment = batch?.has_assignment ? "Assignment" : "—";
+  const branchName = branch?.name ?? "-";
+  const assessment = batch?.has_assignment ? "Assignment" : "-";
   const staffIds = batch?.staff_ids ?? [];
   const certIds = batch?.certificate_ids ?? [];
+
+  const isDataLoading = isLoading || !batch;
 
   return (
     <div
@@ -113,10 +145,12 @@ export function BatchGeneralInfo({ batch }: BatchGeneralInfoProps) {
     >
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 w-full">
         {/* Level */}
-        <InfoItem label="Level">{batch?.level ?? "—"}</InfoItem>
+        <InfoItem label="Level" isLoading={isDataLoading}>
+          {toTitleCase(batch?.level)}
+        </InfoItem>
 
         {/* Lecturer */}
-        <InfoItem label="Lecturer">
+        <InfoItem label="Lecturer" isLoading={isDataLoading || isLoadingLecturer}>
           <div className="flex items-center gap-2">
             <Avatar
               src={lecturer?.profile.profile_image_url}
@@ -127,12 +161,14 @@ export function BatchGeneralInfo({ batch }: BatchGeneralInfoProps) {
         </InfoItem>
 
         {/* Language */}
-        <InfoItem label="Language">{batch?.language ?? "—"}</InfoItem>
+        <InfoItem label="Language" isLoading={isDataLoading}>
+          {toTitleCase(batch?.language)}
+        </InfoItem>
 
         {/* Certificates */}
-        <InfoItem label="Certificates">
+        <InfoItem label="Certificates" isLoading={isDataLoading}>
           <div className="flex items-center gap-2 flex-wrap">
-            {certIds.length === 0 && <span className="text-slate-400">—</span>}
+            {certIds.length === 0 && <span className="text-slate-400">-</span>}
             {certIds.length > 0 && <CertChip certId={certIds[0]} />}
             {certIds.length > 1 && (
               <Popover>
@@ -162,26 +198,34 @@ export function BatchGeneralInfo({ batch }: BatchGeneralInfoProps) {
         </InfoItem>
 
         {/* Branch */}
-        <InfoItem label="Branch">{branchName}</InfoItem>
+        <InfoItem label="Branch" isLoading={isDataLoading || isLoadingBranch}>
+          {branchName}
+        </InfoItem>
 
         {/* Batch Type */}
-        <InfoItem label="Batch Type">{batch?.type ?? "—"}</InfoItem>
+        <InfoItem label="Batch Type" isLoading={isDataLoading}>
+          {toTitleCase(batch?.type)}
+        </InfoItem>
 
         {/* Category */}
-        <InfoItem label="Category">{batch?.category ?? "—"}</InfoItem>
+        <InfoItem label="Category" isLoading={isDataLoading}>
+          {toTitleCase(batch?.category)}
+        </InfoItem>
 
         {/* Lesson Duration */}
-        <InfoItem label="Lesson Duration">
-          {batch?.lesson_duration ?? "—"}
+        <InfoItem label="Lesson Duration" isLoading={isDataLoading}>
+          {batch?.lesson_duration ?? "-"}
         </InfoItem>
 
         {/* Assessment */}
-        <InfoItem label="Assessment">{assessment}</InfoItem>
+        <InfoItem label="Assessment" isLoading={isDataLoading}>
+          {assessment}
+        </InfoItem>
 
         {/* Staff Members */}
-        <InfoItem label="Staff Members">
+        <InfoItem label="Staff Members" isLoading={isDataLoading}>
           <div className="flex items-center gap-2 flex-wrap">
-            {staffIds.length === 0 && <span className="text-slate-400">—</span>}
+            {staffIds.length === 0 && <span className="text-slate-400">-</span>}
             {staffIds.length > 0 && <StaffChip staffId={staffIds[0]} />}
             {staffIds.length > 1 && (
               <Popover>

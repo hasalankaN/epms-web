@@ -9,6 +9,7 @@ export type EnrollStatus = "On Going" | "Pending" | "Completed" | "Hold" | "Drop
 export interface EnrollDataType {
   id: string;
   date: string;
+  enrollId: string;
   type: string;
   studentId: string;
   studentName: string;
@@ -36,6 +37,7 @@ export const DUMMY_ENROLL_DATA: EnrollDataType[] = [
   {
     id: "1",
     date: "01/21",
+    enrollId: "#000001",
     type: "Direct",
     studentId: "#000001",
     studentName: "Amali Perera",
@@ -47,6 +49,7 @@ export const DUMMY_ENROLL_DATA: EnrollDataType[] = [
   {
     id: "2",
     date: "01/21",
+    enrollId: "#000001",
     type: "Referral",
     studentId: "#000001",
     studentName: "Amali Perera",
@@ -58,6 +61,7 @@ export const DUMMY_ENROLL_DATA: EnrollDataType[] = [
   {
     id: "3",
     date: "01/21",
+    enrollId: "#000001",
     type: "Direct",
     studentId: "#000001",
     studentName: "Amali Perera",
@@ -69,6 +73,7 @@ export const DUMMY_ENROLL_DATA: EnrollDataType[] = [
   {
     id: "4",
     date: "01/21",
+    enrollId: "#000001",
     type: "Referral",
     studentId: "#000001",
     studentName: "Amali Perera",
@@ -80,6 +85,7 @@ export const DUMMY_ENROLL_DATA: EnrollDataType[] = [
   {
     id: "5",
     date: "01/21",
+    enrollId: "#000001",
     type: "Direct",
     studentId: "#000001",
     studentName: "Amali Perera",
@@ -91,6 +97,7 @@ export const DUMMY_ENROLL_DATA: EnrollDataType[] = [
   {
     id: "6",
     date: "01/21",
+    enrollId: "#000001",
     type: "Direct",
     studentId: "#000001",
     studentName: "Amali Perera",
@@ -102,6 +109,7 @@ export const DUMMY_ENROLL_DATA: EnrollDataType[] = [
   {
     id: "7",
     date: "01/21",
+    enrollId: "#000001",
     type: "Referral",
     studentId: "#000001",
     studentName: "Amali Perera",
@@ -113,6 +121,7 @@ export const DUMMY_ENROLL_DATA: EnrollDataType[] = [
   {
     id: "8",
     date: "01/21",
+    enrollId: "#000001",
     type: "Direct",
     studentId: "#000001",
     studentName: "Amali Perera",
@@ -124,6 +133,7 @@ export const DUMMY_ENROLL_DATA: EnrollDataType[] = [
   {
     id: "9",
     date: "01/21",
+    enrollId: "#000001",
     type: "Direct",
     studentId: "#000001",
     studentName: "Amali Perera",
@@ -135,6 +145,7 @@ export const DUMMY_ENROLL_DATA: EnrollDataType[] = [
   {
     id: "10",
     date: "01/21",
+    enrollId: "#000001",
     type: "Direct",
     studentId: "#000001",
     studentName: "Amali Perera",

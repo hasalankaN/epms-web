@@ -109,6 +109,7 @@ export function transformToGeneralDetails(data: ApiBatchResponse): GeneralDetail
     lessonDuration: data.lessonDuration || "",
     description: data.description || "",
     coverImage: data.coverImage || "",
+    schedules: [{ day: "", time: "" }],
   };
 }
 

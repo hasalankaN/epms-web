@@ -30,7 +30,7 @@ import { useUpdateCourseStatus } from "@/hooks/api/courses/useUpdateCourseStatus
 // ===== STAFF CELL =====
 function StaffCell({ staffMembers }: { staffMembers: ApiCourseStaffMember[] }) {
   if (!staffMembers || staffMembers.length === 0) {
-    return <div className="text-[11px] font-medium text-[#45556C]">—</div>;
+    return <div className="text-[11px] font-medium text-[#45556C]">-</div>;
   }
 
   const displayNames = staffMembers
@@ -89,6 +89,17 @@ interface CourseTableProps {
   totalResults: number;
   onPageChange: (page: number) => void;
 }
+
+// ── Helper ─────────────────────────────────────────────────────────────────────
+const toTitleCase = (str?: string | null) => {
+  if (!str) return "-";
+  
+  return str
+    .toLowerCase()
+    .split(/[_\s]+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+};
 
 export function CourseTable({
   data,
@@ -163,7 +174,7 @@ export function CourseTable({
       ),
     },
     {
-      header: "Category",
+      header: "C.Category",
       accessorKey: "courseCategory",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[110px]",
       cell: (item) => (
@@ -183,22 +194,22 @@ export function CourseTable({
       ),
     },
     {
-      header: "Level",
+      header: "C.Level",
       accessorKey: "courseLevel",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[90px]",
       cell: (item) => (
         <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
-          {item.courseLevel}
+          {toTitleCase(item.courseLevel)}
         </div>
       ),
     },
     {
-      header: "Type",
+      header: "C.Type",
       accessorKey: "courseType",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[80px]",
       cell: (item) => (
         <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
-          {item.courseType}
+          {toTitleCase(item.courseType)}
         </div>
       ),
     },
@@ -208,7 +219,7 @@ export function CourseTable({
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[80px]",
       cell: (item) => (
         <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
-          {item.language}
+          {toTitleCase(item.language)}
         </div>
       ),
     },

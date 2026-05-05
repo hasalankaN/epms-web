@@ -33,22 +33,46 @@ export function BranchBatchDetails({ branchId }: BranchBatchDetailsProps) {
     size: PAGE_SIZE,
   });
 
-  const tableData: BatchDataType[] = useMemo(() =>
-    (data?.results ?? []).map((b) => ({
-      id: b.id,
-      batchId: b.custom_id ?? "—",
-      batchName: b.name ?? "—",
-      category: b.category ?? "—",
-      branch: b.branch_name ?? "—",
-      type: b.type ?? "—",
-      lecturer: "—",
-      studentsCount: 0,
-      payment: "—",
-      startDate: fmtDate(b.start_date),
-      endDate: fmtDate(b.end_date),
-      status: b.status,
-    })),
-  [data]);
+  const tableData: BatchDataType[] = useMemo(() => {
+    if (!data?.results) return [];
+
+    return data.results.map((b) => {
+      // Helper to convert UPPERCASE/SNAKE_CASE to Title Case
+      const toTitleCase = (str?: string) => {
+        if (!str) return "—";
+        
+        return str
+          .toLowerCase()
+          .split(/[_\s]+/)
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(" ");
+      };
+
+      // Map API status (UPPERCASE) to Frontend status (Title Case)
+      let displayStatus: BatchDataType["status"] = "Active";
+      const apiStatus = b.status?.toUpperCase();
+      
+      if (apiStatus === "ACTIVE") displayStatus = "Active";
+      else if (apiStatus === "UPCOMING") displayStatus = "Upcoming";
+      else if (apiStatus === "COMPLETED") displayStatus = "Completed";
+      else if (apiStatus === "INACTIVE") displayStatus = "Inactive";
+
+      return {
+        id: b.id,
+        batchId: b.custom_id ?? "—",
+        batchName: b.name ?? "—",
+        category: toTitleCase(b.category),
+        branch: b.branch_name ?? "—",
+        type: toTitleCase(b.type),
+        lecturer: b.lecturer_name || b.lecturer_email || "—",
+        studentsCount: b.student_count || 0,
+        payment: b.is_paid ? "Paid" : "Free",
+        startDate: fmtDate(b.start_date),
+        endDate: fmtDate(b.end_date),
+        status: displayStatus,
+      };
+    });
+  }, [data]);
 
   const totalPages = data?.totalPages ?? 1;
   const totalResults = data?.totalResults ?? 0;

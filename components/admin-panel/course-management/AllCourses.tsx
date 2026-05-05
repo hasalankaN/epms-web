@@ -27,6 +27,7 @@ export function AllCourses() {
     lecturer_id: searchParams.get("lecturer_id") || undefined,
     staff_id: searchParams.get("staff_id") || undefined,
     language: searchParams.get("language") || undefined,
+    batch_id: searchParams.get("batch_id") || undefined,
   };
 
   // ===== SEARCH DEBOUNCE STATE =====
@@ -126,7 +127,7 @@ export function AllCourses() {
       </div>
 
       {/* Course Table */}
-      <div className="mt-4">
+      <div>
         <CourseTable
           data={courses}
           currentPage={currentPage}

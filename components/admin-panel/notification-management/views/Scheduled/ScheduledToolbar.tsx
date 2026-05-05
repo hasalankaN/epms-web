@@ -1,19 +1,21 @@
 "use client";
 
+import { useCallback, useMemo } from "react";
+
 import { Search, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { AUTH_INPUT, BUTTON_STYLES } from "@/lib/constants/theme";
 import { Input } from "@/components/ui/input";
-import { FilterDropdown } from "@/components/common/dropdowns/FilterDropdown";
-import type { FilterCategory } from "@/components/common/dropdowns/FilterDropdown";
-import { HorizontalScrollContainer } from "@/components/common/HorizontalScrollContainer";
+import type { FilterCategory, FilterSelections } from "@/components/common/filters/FilterModal";
+import { FilterModal, FilterModalTrigger } from "@/components/common/filters/FilterModal";
 
-
-const scheduledOnCategories: FilterCategory[] = [
+const scheduledFilterCategories: FilterCategory[] = [
   {
     key: "scheduledOn",
     label: "Scheduled On",
+    type: "chips",
+    multiSelect: false,
     items: [
       { key: "today", label: "Today" },
       { key: "this-week", label: "This Week" },
@@ -21,12 +23,11 @@ const scheduledOnCategories: FilterCategory[] = [
       { key: "last-month", label: "Last Month" },
     ],
   },
-];
-
-const scheduledForCategories: FilterCategory[] = [
   {
     key: "scheduledFor",
     label: "Scheduled For",
+    type: "chips",
+    multiSelect: false,
     items: [
       { key: "today", label: "Today" },
       { key: "this-week", label: "This Week" },
@@ -34,24 +35,22 @@ const scheduledForCategories: FilterCategory[] = [
       { key: "next-month", label: "Next Month" },
     ],
   },
-];
-
-const channelCategories: FilterCategory[] = [
   {
     key: "channel",
-    label: "All Channels",
+    label: "Channels",
+    type: "chips",
+    multiSelect: true,
     items: [
       { key: "sms", label: "SMS" },
       { key: "email", label: "Email" },
       { key: "push", label: "Push" },
     ],
   },
-];
-
-const recipientCategories: FilterCategory[] = [
   {
     key: "recipient",
-    label: "All Recipients",
+    label: "Recipients",
+    type: "chips",
+    multiSelect: true,
     items: [
       { key: "all-users", label: "All Users" },
       { key: "students", label: "Students" },
@@ -67,25 +66,41 @@ const recipientCategories: FilterCategory[] = [
 interface ScheduledToolbarProps {
   search: string;
   onSearchChange: (value: string) => void;
-  scheduledOnValue: string | null;
-  scheduledForValue: string | null;
-  channelValue: string | null;
-  recipientValue: string | null;
-  onFilterSelect: (key: string, value: string, label: string) => void;
-  onClearFilters?: () => void;
+  isFilterModalOpen: boolean;
+  onFilterModalOpenChange: (open: boolean) => void;
+  activeFilters: FilterSelections;
+  onApplyFilters: (filters: Record<string, string | null>) => void;
+  onClearFilters: () => void;
 }
 
 export function ScheduledToolbar({
   search,
   onSearchChange,
-  scheduledOnValue,
-  scheduledForValue,
-  channelValue,
-  recipientValue,
-  onFilterSelect,
+  isFilterModalOpen,
+  onFilterModalOpenChange,
+  activeFilters,
+  onApplyFilters,
   onClearFilters,
 }: ScheduledToolbarProps) {
-  const hasActiveFilters = !!(scheduledOnValue || scheduledForValue || channelValue || recipientValue);
+  const hasActiveFilters = useMemo(() => {
+    return Object.values(activeFilters).some((v) => {
+      if (Array.isArray(v)) return v.length > 0;
+
+      return v !== null && v !== undefined;
+    });
+  }, [activeFilters]);
+
+  const handleApplyFilters = useCallback((selections: FilterSelections) => {
+    const updates: Record<string, string | null> = {
+      scheduledOn: (selections.scheduledOn as unknown as string) || null,
+      scheduledFor: (selections.scheduledFor as unknown as string) || null,
+      channel: (selections.channel as unknown as string[])?.join(",") || null,
+      recipient: (selections.recipient as unknown as string[])?.join(",") || null,
+    };
+
+    onApplyFilters(updates);
+    onFilterModalOpenChange(false);
+  }, [onApplyFilters, onFilterModalOpenChange]);
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -119,29 +134,10 @@ export function ScheduledToolbar({
               Clear
             </button>
           )}
-          <FilterDropdown
-            categories={scheduledOnCategories}
-            label="Scheduled On"
-            value={scheduledOnValue}
-            onFilterSelect={onFilterSelect}
-          />
-          <FilterDropdown
-            categories={scheduledForCategories}
-            label="Scheduled For"
-            value={scheduledForValue}
-            onFilterSelect={onFilterSelect}
-          />
-          <FilterDropdown
-            categories={channelCategories}
-            label="All Channels"
-            value={channelValue}
-            onFilterSelect={onFilterSelect}
-          />
-          <FilterDropdown
-            categories={recipientCategories}
-            label="All Recipients"
-            value={recipientValue}
-            onFilterSelect={onFilterSelect}
+          <FilterModalTrigger
+            onClick={() => onFilterModalOpenChange(true)}
+            label="Filter Option"
+            className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
           />
         </div>
       </div>
@@ -174,30 +170,11 @@ export function ScheduledToolbar({
             </button>
           )}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <FilterDropdown
-            categories={scheduledOnCategories}
-            label="Scheduled On"
-            value={scheduledOnValue}
-            onFilterSelect={onFilterSelect}
-          />
-          <FilterDropdown
-            categories={scheduledForCategories}
-            label="Scheduled For"
-            value={scheduledForValue}
-            onFilterSelect={onFilterSelect}
-          />
-          <FilterDropdown
-            categories={channelCategories}
-            label="All Channels"
-            value={channelValue}
-            onFilterSelect={onFilterSelect}
-          />
-          <FilterDropdown
-            categories={recipientCategories}
-            label="All Recipients"
-            value={recipientValue}
-            onFilterSelect={onFilterSelect}
+        <div className="flex items-center gap-2">
+          <FilterModalTrigger
+            onClick={() => onFilterModalOpenChange(true)}
+            label="Filter Option"
+            className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
           />
         </div>
       </div>
@@ -219,53 +196,32 @@ export function ScheduledToolbar({
           />
         </div>
 
-        <HorizontalScrollContainer className="w-full pb-2">
-          <div className="flex min-w-max items-center gap-2">
-            {hasActiveFilters && (
-              <button
-                type="button"
-                onClick={onClearFilters}
-                className={cn(BUTTON_STYLES.outline.md, "px-3 border-dashed text-[#64748B] hover:text-[#0F172B] shrink-0")}
-                aria-label="Clear filters"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-            <div className="shrink-0">
-              <FilterDropdown
-                categories={scheduledOnCategories}
-                label="Scheduled On"
-                value={scheduledOnValue}
-                onFilterSelect={onFilterSelect}
-              />
-            </div>
-            <div className="shrink-0">
-              <FilterDropdown
-                categories={scheduledForCategories}
-                label="Scheduled For"
-                value={scheduledForValue}
-                onFilterSelect={onFilterSelect}
-              />
-            </div>
-            <div className="shrink-0">
-              <FilterDropdown
-                categories={channelCategories}
-                label="All Channels"
-                value={channelValue}
-                onFilterSelect={onFilterSelect}
-              />
-            </div>
-            <div className="shrink-0">
-              <FilterDropdown
-                categories={recipientCategories}
-                label="All Recipients"
-                value={recipientValue}
-                onFilterSelect={onFilterSelect}
-              />
-            </div>
-          </div>
-        </HorizontalScrollContainer>
+        <div className="flex items-center gap-2">
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={onClearFilters}
+              className={cn(BUTTON_STYLES.outline.md, "px-3 border-dashed text-[#64748B] hover:text-[#0F172B] shrink-0")}
+              aria-label="Clear filters"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+          <FilterModalTrigger
+            onClick={() => onFilterModalOpenChange(true)}
+            label="Filter"
+            className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
+          />
+        </div>
       </div>
+
+      <FilterModal
+        open={isFilterModalOpen}
+        onOpenChange={onFilterModalOpenChange}
+        categories={scheduledFilterCategories}
+        onApply={handleApplyFilters}
+        initialSelections={activeFilters}
+      />
     </div>
   );
 }

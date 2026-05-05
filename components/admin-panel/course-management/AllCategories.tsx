@@ -88,7 +88,7 @@ export function AllCategories({ onRename }: AllCategoriesProps) {
       />
 
       {/* Category Table */}
-      <div className="mt-4">
+      <div>
         <CategoryTable
           data={categories}
           isLoading={isLoading}

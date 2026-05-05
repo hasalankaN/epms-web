@@ -22,9 +22,19 @@ import {
 import { useUpdateBranchStatus } from "@/hooks/api/branches/useUpdateBranchStatus";
 
 const BRANCH_STATUS_OPTIONS = [
-  { value: "ACTIVE", bg: "#DFFFF0", text: "#16A34A" },
-  { value: "INACTIVE", bg: "#F1F5F9", text: "#000000" },
+  { value: "ACTIVE", label: "Active", bg: "#DFFFF0", text: "#16A34A" },
+  { value: "INACTIVE", label: "Inactive", bg: "#F1F5F9", text: "#000000" },
 ];
+
+const toTitleCase = (str: string) => {
+  if (!str) return "-";
+  
+  return str
+    .toLowerCase()
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
 
 interface BranchTableProps {
   data: BranchRow[];
@@ -114,7 +124,7 @@ export function BranchTable({
       header: "Branch Type",
       accessorKey: "branch_type",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[120px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.branch_type}</div>,
+      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{toTitleCase(item.branch_type)}</div>,
     },
     {
       header: "Manager Name",

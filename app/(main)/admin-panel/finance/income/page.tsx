@@ -34,9 +34,10 @@ export default function IncomePage() {
     : "income-student";
 
   const handleTabChange = (tabValue: IncomeTabType) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams();
     
     params.set("tab", tabValue);
+    params.set("page", "1");
     router.replace(`${pathname}?${params.toString()}`);
   };
 

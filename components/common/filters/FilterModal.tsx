@@ -26,6 +26,9 @@ export interface FilterCategory {
   type: "chips" | "date" | "dateRange";
   items?: FilterItem[];
   multiSelect?: boolean;
+  onShowMore?: (categoryKey: string) => void;
+  hasMore?: boolean;
+  isLoading?: boolean;
 }
 
 export interface FilterItem {
@@ -170,6 +173,14 @@ export function FilterModal({
   }, [categories, globalMultiSelect]);
 
   const handleShowMore = useCallback((categoryKey: string) => {
+    const category = categories.find(c => c.key === categoryKey);
+    
+    if (category?.onShowMore) {
+      category.onShowMore(categoryKey);
+      
+      return;
+    }
+
     setLoadingCategories(prev => ({ ...prev, [categoryKey]: true }));
     
     // Simulate loading
@@ -180,7 +191,7 @@ export function FilterModal({
       }));
       setLoadingCategories(prev => ({ ...prev, [categoryKey]: false }));
     }, 600);
-  }, []);
+  }, [categories]);
 
   const handleDateChange = useCallback((start: Date | null, end: Date | null) => {
     setSelections((prev) => ({
@@ -269,10 +280,10 @@ export function FilterModal({
     if (category.type === "chips" && category.items) {
       const selectedItems = (selections[category.key] as string[]) || [];
       const visibleCount = visibleCounts[category.key] || PAGE_SIZE;
-      const isLoading = loadingCategories[category.key];
+      const isLoading = category.isLoading ?? loadingCategories[category.key];
       
-      const visibleItems = category.items.slice(0, visibleCount);
-      const hasMore = category.items.length > visibleCount;
+      const visibleItems = category.onShowMore ? category.items : category.items.slice(0, visibleCount);
+      const hasMore = category.hasMore ?? (category.items.length > visibleCount);
 
       return (
         <div key={category.key} className="flex flex-col gap-4">

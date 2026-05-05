@@ -69,9 +69,11 @@ const editStaffSchema = z.object({
       { message: "WhatsApp must be exactly 9 digits." }
     ),
   district: z.string().optional(),
-  salary_type: z.enum(["MONTHLY", "COMMISSION_PER_ENROLLMENT", "COMMISSION_PER_ENROLLMENT_BY_BRANCH"], {
+  salary_type: z.enum(["MONTHLY", "PERCENTAGE_FROM_BATCH_DEPOSITS", "BATCH_OR_COURSE_WISE_PAYMENT"], {
     required_error: "Salary type is required.",
   }),
+  salary_due_day: z.string().optional(),
+  salary_due_frequency: z.string().optional(),
   is_branch_manager: z.boolean().default(false),
   branch_id: z.string().optional(),
 });
@@ -104,8 +106,8 @@ const FieldLabel = ({
 // ===== SALARY TYPES =====
 const SALARY_TYPES = [
   { value: "MONTHLY", label: "Monthly Salary" },
-  { value: "COMMISSION_PER_ENROLLMENT", label: "Commission per enrollments" },
-  { value: "COMMISSION_PER_ENROLLMENT_BY_BRANCH", label: "Commission per enrollments by branch" },
+  { value: "PERCENTAGE_FROM_BATCH_DEPOSITS", label: "Percentage from batch deposit" },
+  { value: "BATCH_OR_COURSE_WISE_PAYMENT", label: "Batch or Course Wise Payment" },
 ] as const;
 
 // ===== COMPONENT =====
@@ -146,6 +148,8 @@ export function EditStaffModal({
       salary_type: undefined,
       is_branch_manager: false,
       branch_id: undefined,
+      salary_due_day: undefined,
+      salary_due_frequency: "EVERY_MONTH",
     },
   });
 
@@ -190,6 +194,8 @@ export function EditStaffModal({
         salary_type: profile.salary_type || undefined,
         is_branch_manager: profile.is_branch_manager || false,
         branch_id: profile.branch_id || undefined,
+        salary_due_day: profile.salary_due_day || undefined,
+        salary_due_frequency: profile.salary_due_frequency || "EVERY_MONTH",
       });
     }
   }, [isOpen, staffData, reset]);
@@ -209,6 +215,8 @@ export function EditStaffModal({
         salary_type: values.salary_type,
         is_branch_manager: values.is_branch_manager,
         ...(values.branch_id ? { branch_id: values.branch_id } : {}),
+        ...(values.salary_due_day ? { salary_due_day: values.salary_due_day } : {}),
+        ...(values.salary_due_frequency ? { salary_due_frequency: values.salary_due_frequency } : {}),
       });
 
       onClose();
@@ -248,9 +256,9 @@ export function EditStaffModal({
             variants={itemVariants}
             id="edit-staff-form"
             onSubmit={handleSubmit(onSubmit)}
-            className="flex-1 overflow-y-auto p-4 sm:p-6 sm:pt-4 pt-4 custom-scrollbar"
+            className="flex-1 overflow-y-auto p-4 sm:p-6 sm:pt-0 pt-0 custom-scrollbar"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
               {/* First Name */}
               <div className="space-y-1">
                 <FieldLabel required>First Name</FieldLabel>
@@ -491,6 +499,44 @@ export function EditStaffModal({
                       </label>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Salary Due */}
+              <div className="col-span-1 sm:col-span-2 space-y-1.5">
+                <FieldLabel>Salary Due</FieldLabel>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Day Selector */}
+                  <Select 
+                    value={watch("salary_due_day")}
+                    onValueChange={(val) => setValue("salary_due_day", val, { shouldDirty: true })}
+                  >
+                    <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9]")}>
+                      <SelectValue placeholder="Date" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[99999999] max-h-[200px]">
+                      {Array.from({ length: 31 }, (_, i) => (
+                        <SelectItem key={i + 1} value={(i + 1).toString()}>
+                          {i + 1}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Frequency Selector */}
+                  <Select 
+                    value={watch("salary_due_frequency")}
+                    onValueChange={(val) => setValue("salary_due_frequency", val, { shouldDirty: true })}
+                  >
+                    <SelectTrigger className={cn(AUTH_INPUT.base, "text-[#1D293D]")}>
+                      <SelectValue placeholder="Every Month" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[99999999]">
+                      <SelectItem value="EVERY_MONTH">Every Month</SelectItem>
+                      <SelectItem value="QUARTERLY">Quarterly</SelectItem>
+                      <SelectItem value="YEARLY">Yearly</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>

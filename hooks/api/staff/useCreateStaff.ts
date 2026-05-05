@@ -15,7 +15,9 @@ export interface CreateStaffPayload {
   district?: string;
   gender?: "MALE" | "FEMALE";
   profile_image_url?: string;
-  salary_type: "MONTHLY" | "COMMISSION_PER_ENROLLMENT" | "COMMISSION_PER_ENROLLMENT_BY_BRANCH";
+  salary_type: "MONTHLY" | "PERCENTAGE_FROM_BATCH_DEPOSITS" | "BATCH_OR_COURSE_WISE_PAYMENT";
+  salary_due_day?: string;
+  salary_due_frequency?: string;
   is_branch_manager: boolean;
   branch_id?: string;
   privilege_codes?: string[];

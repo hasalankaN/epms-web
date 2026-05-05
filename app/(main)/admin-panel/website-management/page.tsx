@@ -2,9 +2,11 @@
 
 import React, { Suspense, useState } from "react";
 
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 import { Plus } from "lucide-react";
+
+import { useTabNavigation } from "@/hooks/useTabNavigation";
+
 
 import { cn } from "@/lib/utils";
 import { BUTTON_STYLES } from "@/lib/constants/theme";
@@ -37,27 +39,12 @@ const tabs = [
 ] as const;
 
 function WebsiteManagementContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const currentTab = searchParams.get("tab") as WebsiteManagementTabType;
-
-  const activeTab = tabs.some((t) => t.value === currentTab)
-    ? currentTab
-    : "hero-banner";
+  const { activeTab, handleTabChange } = useTabNavigation<WebsiteManagementTabType>("hero-banner", tabs.map(t => t.value));
 
   const [isAddBannerOpen, setIsAddBannerOpen] = useState(false);
   const [isAddAlbumOpen, setIsAddAlbumOpen] = useState(false);
   const [isAddTestimonialOpen, setIsAddTestimonialOpen] = useState(false);
   const [isAddNewsOpen, setIsAddNewsOpen] = useState(false);
-
-  const handleTabChange = (tabValue: WebsiteManagementTabType) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    params.set("tab", tabValue);
-    router.replace(`${pathname}?${params.toString()}`);
-  };
 
   return (
     <div className="space-y-3 p-4 md:p-6">

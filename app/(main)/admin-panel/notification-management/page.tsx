@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 import { Plus } from "lucide-react";
+
+import { useTabNavigation } from "@/hooks/useTabNavigation";
+
 
 import { cn } from "@/lib/utils";
 import { TAB_STYLES, BUTTON_STYLES } from "@/lib/constants/theme";
@@ -24,21 +26,9 @@ const tabs = [
 ] as const;
 
 export default function NotificationManagementPage() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
   const [isAddPanelOpen, setIsAddPanelOpen] = useState(false);
 
-  const currentTab = searchParams.get("tab") as NotificationTabType;
-
-  const activeTab = tabs.some((t) => t.value === currentTab) ? currentTab : "sent";
-
-  const handleTabChange = (tabValue: NotificationTabType) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    params.set("tab", tabValue);
-    router.replace(`${pathname}?${params.toString()}`);
-  };
+  const { activeTab, handleTabChange } = useTabNavigation<NotificationTabType>("sent", tabs.map(t => t.value));
 
   return (
     <div className="space-y-3 p-4 md:p-6">

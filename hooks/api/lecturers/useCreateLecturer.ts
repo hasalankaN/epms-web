@@ -20,6 +20,8 @@ export interface CreateLecturerPayload {
     | "PERCENTAGE_FROM_BATCH_DEPOSITS"
     | "COURSE_WISE_PAYMENTS"
     | "BATCH_WISE_PAYMENTS";
+  salary_due_day?: string;
+  salary_due_frequency?: string;
   branch_id?: string;
 }
 

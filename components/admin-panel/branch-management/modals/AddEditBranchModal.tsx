@@ -233,9 +233,9 @@ export function AddEditBranchModal({
         <motion.form variants={itemVariants}
           id="branch-form"
           onSubmit={handleSubmit(onSubmit)}
-          className="flex-1 overflow-y-auto p-4 sm:p-6 sm:pt-4 pt-4 custom-scrollbar"
+          className="flex-1 overflow-y-auto p-4 sm:p-6 sm:pt-0 pt-0 custom-scrollbar"
         >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
             {/* Branch Name */}
             <div className="space-y-1">
               <FieldLabel required>Branch Name</FieldLabel>
