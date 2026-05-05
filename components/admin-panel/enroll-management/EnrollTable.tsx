@@ -104,6 +104,12 @@ export function EnrollTable({
       cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.date}</div>,
     },
     {
+      header: "Enroll ID",
+      accessorKey: "enrollId",
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[100px]",
+      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.enrollId}</div>,
+    },
+    {
       header: "Enrollment Type",
       accessorKey: "type",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[130px]",
@@ -180,13 +186,7 @@ export function EnrollTable({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[120px]">
               <DropdownMenuItem onClick={() => handleAction("view", enroll)} className="cursor-pointer focus:bg-[#FDF2F8]">
-                View
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAction("edit", enroll)} className="cursor-pointer focus:bg-[#FDF2F8]">
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAction("delete", enroll)} className="cursor-pointer text-red-600 focus:bg-[#FDF2F8] focus:text-red-600">
-                Delete
+                View Student
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

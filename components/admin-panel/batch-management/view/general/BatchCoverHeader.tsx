@@ -5,8 +5,7 @@ import type { BatchStatus } from "@/types/batch";
 import { BATCH_STATUS_CONFIG } from "@/types/batch";
 import type { ApiBatchDetail } from "@/hooks/api/batches/useGetBatchById";
 
-const DEFAULT_COVER =
-  "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=2070&auto=format&fit=crop";
+const DEFAULT_COVER = "/images/placeholder.jpg";
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -30,10 +29,10 @@ export function BatchCoverHeader({ batch }: BatchCoverHeaderProps) {
   return (
     <div
       className={cn(
-        "relative w-full overflow-hidden rounded-none flex flex-col justify-end items-start",
+        "relative w-full overflow-hidden rounded-none flex flex-col justify-end items-start min-h-[200px]",
         "bg-cover bg-center bg-no-repeat",
         "p-6",
-        "lg:pt-[68px] lg:pr-[611px] lg:pb-[24px] lg:pl-[26px]",
+        "lg:pt-[120px] lg:pr-[611px] lg:pb-[24px] lg:pl-[26px]",
       )}
       style={{
         backgroundImage: `linear-gradient(270deg, rgba(28, 25, 23, 0.00) 0%, rgba(28, 25, 19, 0.80) 100%), url(${coverImage})`,
@@ -46,11 +45,11 @@ export function BatchCoverHeader({ batch }: BatchCoverHeaderProps) {
         </h1>
 
         {/* Batch Type */}
-        <div className="mt-[2px]">
+        {/* <div className="mt-[2px]">
           <span className="font-inter text-[14px] font-normal leading-[20px] text-[#F1F5F9]">
             {batch?.type ?? "—"}
           </span>
-        </div>
+        </div> */}
 
         {/* Status + Date Range */}
         <div className="mt-[10px] flex flex-col items-start gap-[10px]">

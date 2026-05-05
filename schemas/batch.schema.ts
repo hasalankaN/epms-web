@@ -1,6 +1,11 @@
 import * as z from "zod";
 
 // ==================== Step 1: General Details Schema ====================
+export const scheduleItemSchema = z.object({
+  day: z.string().min(1, "Day is required"),
+  time: z.string().min(1, "Time is required"),
+});
+
 export const generalDetailsSchema = z.object({
   batchName: z.string().min(1, "Batch name is required"),
   branch: z.string().min(1, "Branch is required"),
@@ -18,7 +23,8 @@ export const generalDetailsSchema = z.object({
   hierarchy: z.string().min(1, "Hierarchy is required"),
   lessonDuration: z.string().optional(),
   description: z.string().optional(),
-  coverImage: z.string().min(1, "Cover image is required"), 
+  coverImage: z.string().min(1, "Cover image is required"),
+  schedules: z.array(scheduleItemSchema).min(1, "At least one schedule is required"),
 });
 
 export type GeneralDetailsValues = z.infer<typeof generalDetailsSchema>;
@@ -157,6 +163,7 @@ export const defaultGeneralDetailsValues: Partial<GeneralDetailsValues> = {
   description: "",
   coverImage: "",
   certificates: [],
+  schedules: [{ day: "", time: "" }],
 };
 
 export const defaultFeeDetailsValues: Partial<FeeDetailsValues> = {

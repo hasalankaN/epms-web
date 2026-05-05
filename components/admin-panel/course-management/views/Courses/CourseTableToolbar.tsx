@@ -14,56 +14,7 @@ import { FilterModal, FilterModalTrigger } from "@/components/common/filters/Fil
 import { useGetCategories } from "@/hooks/api/course-categories/useGetCategories";
 import { useGetLecturers } from "@/hooks/api/lecturers/useGetLecturers";
 import { useGetStaff } from "@/hooks/api/staff/useGetStaff";
-
-// ===== COURSE-SPECIFIC FILTER DATA (for FilterModal) =====
-
-const courseFilterCategories: FilterCategory[] = [
-  { 
-    key: "category_id", 
-    label: "By Course Category", 
-    type: "chips",
-    multiSelect: false,
-    items: [], // Populated dynamically
-  },
-  { 
-    key: "language", 
-    label: "By Language", 
-    type: "chips",
-    multiSelect: false,
-    items: [
-      { key: "ENGLISH", label: "English" },
-      { key: "SINHALA", label: "Sinhala" },
-      { key: "TAMIL", label: "Tamil" },
-    ],
-  },
-  { 
-    key: "lecturer_id", 
-    label: "By Lecturer", 
-    type: "chips",
-    multiSelect: false,
-    items: [], // Populated dynamically
-  },
-  { 
-    key: "staff_id", 
-    label: "By Staff", 
-    type: "chips",
-    multiSelect: false,
-    items: [], // Populated dynamically
-  },
-  { 
-    key: "status", 
-    label: "By Course Status", 
-    type: "chips",
-    multiSelect: false,
-    items: [
-      { key: "ACTIVE", label: "Active" },
-      { key: "DRAFT", label: "Draft" },
-      { key: "INACTIVE", label: "Inactive" },
-    ],
-  },
-];
-
-// ===== COMPONENT =====
+import { useGetBatches } from "@/hooks/api/batches/useGetBatches";
 
 interface CourseTableToolbarProps {
   search: string;
@@ -76,6 +27,7 @@ interface CourseTableToolbarProps {
     lecturer_id?: string;
     staff_id?: string;
     language?: string;
+    batch_id?: string;
   };
 }
 
@@ -88,55 +40,78 @@ export function CourseTableToolbar({
 }: CourseTableToolbarProps) {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
 
+  // Pagination state for filters
+  const [categorySize, setCategorySize] = useState(10);
+  const [batchSize, setBatchSize] = useState(10);
+  const [lecturerSize, setLecturerSize] = useState(10);
+  const [staffSize, setStaffSize] = useState(10);
+
   // Fetch data dynamically for the filter modal
-  const { data: categoriesData } = useGetCategories({ size: 100 });
-  const { data: lecturersData } = useGetLecturers({ size: 100 });
-  const { data: staffData } = useGetStaff({ size: 100 });
+  const { data: categoriesData } = useGetCategories({ size: categorySize });
+  const { data: lecturersData } = useGetLecturers({ size: lecturerSize });
+  const { data: staffData } = useGetStaff({ size: staffSize });
+  const { data: batchesData } = useGetBatches({ size: batchSize });
 
-  const categories = useMemo(() => {
-    const updatedCategories = [...courseFilterCategories];
-    
-    // Update Course Categories
-    const catCategoryIndex = updatedCategories.findIndex(c => c.key === "category_id");
-
-    if (catCategoryIndex !== -1 && categoriesData?.results) {
-      updatedCategories[catCategoryIndex] = {
-        ...updatedCategories[catCategoryIndex],
-        items: categoriesData.results.map(c => ({
-          key: c.id,
-          label: c.name,
-        })),
-      };
-    }
-
-    // Update lecturers
-    const lecturerCategoryIndex = updatedCategories.findIndex(c => c.key === "lecturer_id");
-
-    if (lecturerCategoryIndex !== -1 && lecturersData?.results) {
-      updatedCategories[lecturerCategoryIndex] = {
-        ...updatedCategories[lecturerCategoryIndex],
-        items: lecturersData.results.map(l => ({
-          key: l.user_id,
-          label: `${l.first_name} ${l.last_name}`,
-        })),
-      };
-    }
-
-    // Update staff
-    const staffCategoryIndex = updatedCategories.findIndex(c => c.key === "staff_id");
-
-    if (staffCategoryIndex !== -1 && staffData?.results) {
-      updatedCategories[staffCategoryIndex] = {
-        ...updatedCategories[staffCategoryIndex],
-        items: staffData.results.map(s => ({
-          key: s.userId,
-          label: `${s.firstName || ''} ${s.lastName || ''}`.trim() || 'Unknown Staff',
-        })),
-      };
-    }
-    
-    return updatedCategories;
-  }, [categoriesData, lecturersData, staffData]);
+  const categories = useMemo<FilterCategory[]>(() => [
+    { 
+      key: "category_id", 
+      label: "By Course Category", 
+      type: "chips",
+      multiSelect: false,
+      items: categoriesData?.results.map(c => ({ key: c.id, label: c.name })) || [],
+      onShowMore: () => setCategorySize(prev => prev + 10),
+      hasMore: categoriesData ? !categoriesData.isLastPage : false,
+    },
+    { 
+      key: "language", 
+      label: "By Language", 
+      type: "chips",
+      multiSelect: false,
+      items: [
+        { key: "ENGLISH", label: "English" },
+        { key: "SINHALA", label: "Sinhala" },
+        { key: "TAMIL", label: "Tamil" },
+      ],
+    },
+    { 
+      key: "batch_id", 
+      label: "By Batch", 
+      type: "chips",
+      multiSelect: false,
+      items: batchesData?.results.map(b => ({ key: b.id, label: b.name })) || [],
+      onShowMore: () => setBatchSize(prev => prev + 10),
+      hasMore: batchesData ? !batchesData.isLastPage : false,
+    },
+    { 
+      key: "lecturer_id", 
+      label: "By Lecturer", 
+      type: "chips",
+      multiSelect: false,
+      items: lecturersData?.results.map(l => ({ key: l.user_id, label: `${l.first_name} ${l.last_name}` })) || [],
+      onShowMore: () => setLecturerSize(prev => prev + 10),
+      hasMore: lecturersData ? !lecturersData.isLastPage : false,
+    },
+    { 
+      key: "staff_id", 
+      label: "By Staff", 
+      type: "chips",
+      multiSelect: false,
+      items: staffData?.results.map(s => ({ key: s.userId, label: `${s.firstName || ''} ${s.lastName || ''}`.trim() || 'Unknown Staff' })) || [],
+      onShowMore: () => setStaffSize(prev => prev + 10),
+      hasMore: staffData ? !staffData.isLastPage : false,
+    },
+    { 
+      key: "status", 
+      label: "By Course Status", 
+      type: "chips",
+      multiSelect: false,
+      items: [
+        { key: "ACTIVE", label: "Active" },
+        { key: "DRAFT", label: "Draft" },
+        { key: "INACTIVE", label: "Inactive" },
+      ],
+    },
+  ], [categoriesData, batchesData, lecturersData, staffData]);
 
   const initialSelections = useMemo(() => {
     const selections: FilterSelections = {};
@@ -146,6 +121,7 @@ export function CourseTableToolbar({
     if (activeUrlFilters.language) selections.language = activeUrlFilters.language.split(",");
     if (activeUrlFilters.lecturer_id) selections.lecturer_id = activeUrlFilters.lecturer_id.split(",");
     if (activeUrlFilters.staff_id) selections.staff_id = activeUrlFilters.staff_id.split(",");
+    if (activeUrlFilters.batch_id) selections.batch_id = activeUrlFilters.batch_id.split(",");
 
     return selections;
   }, [activeUrlFilters]);
@@ -160,6 +136,7 @@ export function CourseTableToolbar({
       language: null,
       lecturer_id: null,
       staff_id: null,
+      batch_id: null,
     };
 
     if (selections.category_id && Array.isArray(selections.category_id) && selections.category_id.length > 0) updates.category_id = selections.category_id.join(",");
@@ -167,6 +144,7 @@ export function CourseTableToolbar({
     if (selections.language && Array.isArray(selections.language) && selections.language.length > 0) updates.language = selections.language.join(",");
     if (selections.lecturer_id && Array.isArray(selections.lecturer_id) && selections.lecturer_id.length > 0) updates.lecturer_id = selections.lecturer_id.join(",");
     if (selections.staff_id && Array.isArray(selections.staff_id) && selections.staff_id.length > 0) updates.staff_id = selections.staff_id.join(",");
+    if (selections.batch_id && Array.isArray(selections.batch_id) && selections.batch_id.length > 0) updates.batch_id = selections.batch_id.join(",");
 
     onApplyFilters(updates);
   }, [onApplyFilters]);

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 
 import { Search, MoreHorizontal, CheckSquare2, X } from "lucide-react";
 
@@ -117,26 +117,53 @@ export function StaffTableToolbar({
 }: StaffTableToolbarProps) {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
 
-  // Fetch branches dynamically for the filter modal
-  const { data: branchesData } = useGetBranches({ size: 100 });
+  // Pagination for branches list (filter modal)
+  const [branchPage, setBranchPage] = useState(1);
+  const [allBranches, setAllBranches] = useState<any[]>([]);
+
+  const { data: branchesData, isFetching: isFetchingBranches } = useGetBranches({ 
+    page: branchPage, 
+    size: 20 
+  });
+
+  // Accumulate branches when new pages are fetched
+  useEffect(() => {
+    if (branchesData?.results) {
+      setAllBranches(prev => {
+        const existingIds = new Set(prev.map(b => b.id));
+        const newUnique = branchesData.results.filter(b => !existingIds.has(b.id));
+        
+        return [...prev, ...newUnique];
+      });
+    }
+  }, [branchesData]);
+
+  const handleShowMoreBranches = useCallback(() => {
+    if (branchesData && !branchesData.isLastPage) {
+      setBranchPage(prev => prev + 1);
+    }
+  }, [branchesData]);
 
   // Update categories with dynamic branches
   const categories = useMemo(() => {
     const updatedCategories = [...staffFilterCategories];
     const branchCategoryIndex = updatedCategories.findIndex(c => c.key === "branches");
     
-    if (branchCategoryIndex !== -1 && branchesData?.results) {
+    if (branchCategoryIndex !== -1) {
       updatedCategories[branchCategoryIndex] = {
         ...updatedCategories[branchCategoryIndex],
-        items: branchesData.results.map(b => ({
+        items: allBranches.map(b => ({
           key: b.id,
           label: b.name,
         })),
+        onShowMore: handleShowMoreBranches,
+        hasMore: branchesData ? !branchesData.isLastPage : false,
+        isLoading: isFetchingBranches,
       };
     }
     
     return updatedCategories;
-  }, [branchesData]);
+  }, [allBranches, handleShowMoreBranches, branchesData, isFetchingBranches]);
 
   // Create an initialSelections object based on activeUrlFilters
   const initialSelections = useMemo(() => {

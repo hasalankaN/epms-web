@@ -171,6 +171,7 @@ export default function Sidebar({ filteredSidebarData }: SidebarProps) {
                     level="main"
                     icon={item.icon}
                     active={isLinkActive(item.url)}
+                    count={item.count}
                   >
                   {item.title}
                 </SidebarMenuButton>
@@ -195,7 +196,7 @@ export default function Sidebar({ filteredSidebarData }: SidebarProps) {
   };
 
   return (
-    <div className="hidden w-64 shrink-0 border-r bg-white dark:bg-slate-950 lg:block">
+    <div className="hidden w-[268px] shrink-0 border-r bg-white dark:bg-slate-950 lg:block">
       <div className="flex h-full max-h-screen flex-col">
         <div className="flex h-16 items-center border-b border-slate-200 bg-white px-6 py-[11px] shadow-[0_4px_12px_8px_rgba(0,0,0,0.05)] dark:bg-slate-950">
           <div className="w-full">
@@ -218,17 +219,8 @@ export default function Sidebar({ filteredSidebarData }: SidebarProps) {
           </SidebarMenu>
         </ScrollArea>
         <div className="mt-auto border-t border-[#E2E8F0] bg-white p-4 flex flex-col gap-[6px] shadow-[0_-1px_2px_0_rgba(16,24,40,0.05)]">
-          {/* Notification Item */}
-          <div className="flex w-full items-center gap-3 rounded-md px-2 py-1.5 h-8 hover:bg-[#FDF2F8] transition-colors cursor-pointer">
-            <i className="notification-bell-icon h-4 w-4 shrink-0 text-[#0F172B]" />
-            <span className="flex-1 truncate font-[Inter] text-sm font-medium leading-5 text-[#0F172B]">
-              Notification
-            </span>
-            <span className="ml-auto text-sm font-medium text-[#64748B]">12</span>
-          </div>
-
           {/* User Profile Item */}
-          <div className="flex w-[224px] items-center justify-between rounded-[6px] border border-[#E2E8F0] bg-[#F1F5F9] pt-[6px] pr-[7px] pb-[6px] pl-0 cursor-pointer">
+          <div className="flex w-full items-center justify-between rounded-[6px] border border-[#E2E8F0] bg-[#F1F5F9] pt-[6px] pr-[7px] pb-[6px] pl-0 cursor-pointer">
             <div className="flex items-center gap-2 pl-1 overflow-hidden flex-1">
               <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white">
                 <CircleUser className="h-4 w-4 text-[#0F172B]" strokeWidth={1.5} />

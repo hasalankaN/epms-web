@@ -17,6 +17,8 @@ export interface LecturerProfile {
   gender: "MALE" | "FEMALE" | null;
   profile_image_url: string | null;
   salary_type: "MONTHLY" | "PERCENTAGE_FROM_BATCH_DEPOSITS" | "COURSE_WISE_PAYMENTS" | "BATCH_WISE_PAYMENTS";
+  salary_due_day?: string | null;
+  salary_due_frequency?: string | null;
   status: "ACTIVE" | "INACTIVE";
   branch_id: string | null;
   branch_name: string | null;

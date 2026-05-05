@@ -56,20 +56,42 @@ export default function BatchManagementPage() {
   const data = useMemo(() => {
     if (!apiData?.results) return [];
 
-    return apiData.results.map((item) => ({
-      id: item.id,
-      batchName: item.name,
-      batchId: item.custom_id,
-      type: item.type,
-      status: item.status,
-      category: item.category,
-      payment: item.is_paid ? "Paid" : "Free",
-      branch: item.branch_name || "-",
-      lecturer: item.lecturer_name || item.lecturer_email || "-",
-      startDate: item.start_date,
-      endDate: item.end_date,
-      studentsCount: item.student_count,
-    })) as BatchDataType[];
+    return apiData.results.map((item) => {
+      // Helper to convert UPPERCASE/SNAKE_CASE to Title Case
+      const toTitleCase = (str?: string) => {
+        if (!str) return "-";
+        
+        return str
+          .toLowerCase()
+          .split(/[_\s]+/)
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(" ");
+      };
+
+      // Map API status (UPPERCASE) to Frontend status (Title Case)
+      let displayStatus: BatchDataType["status"] = "Active";
+      const apiStatus = item.status?.toUpperCase();
+      
+      if (apiStatus === "ACTIVE") displayStatus = "Active";
+      else if (apiStatus === "UPCOMING") displayStatus = "Upcoming";
+      else if (apiStatus === "COMPLETED") displayStatus = "Completed";
+      else if (apiStatus === "INACTIVE") displayStatus = "Inactive";
+
+      return {
+        id: item.id,
+        batchName: item.name,
+        batchId: item.custom_id,
+        type: toTitleCase(item.type),
+        status: displayStatus,
+        category: toTitleCase(item.category),
+        payment: item.is_paid ? "Paid" : "Free",
+        branch: item.branch_name || "-",
+        lecturer: item.lecturer_name || item.lecturer_email || "-",
+        startDate: item.start_date,
+        endDate: item.end_date,
+        studentsCount: item.student_count,
+      };
+    }) as BatchDataType[];
   }, [apiData]);
 
   // ===== SHARED STATE =====
@@ -237,7 +259,7 @@ export default function BatchManagementPage() {
         </div>
 
         {/* Batch Table (16px below toolbar) */}
-        <div className="mt-4">
+        <div>
           <BatchTable
             data={data}
             isLoading={isLoading}

@@ -303,9 +303,6 @@ export function LecturerTable({
               <DropdownMenuItem onClick={() => handleAction("payment-history", lecturer)} className="cursor-pointer focus:bg-[#FDF2F8]">
                 Payment History
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAction("lecturer-report", lecturer)} className="cursor-pointer focus:bg-[#FDF2F8]">
-                Lecturer Report
-              </DropdownMenuItem>
               {lecturer.status === "ACTIVE" ? (
                 <DropdownMenuItem
                   onClick={() => handleAction("deactivate", lecturer)}

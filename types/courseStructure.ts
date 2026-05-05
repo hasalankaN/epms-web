@@ -6,6 +6,7 @@ export interface LessonMaterial {
   title: string;
   type: "Link" | "File";
   format: "Youtube" | "PPTX" | "DOC" | "CSV" | "PDF" | "MP4";
+  url?: string;
 }
 
 export interface Lesson {

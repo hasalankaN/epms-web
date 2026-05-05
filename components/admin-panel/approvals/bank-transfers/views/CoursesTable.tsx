@@ -136,24 +136,20 @@ export function CoursesTable({
       ),
       accessorKey: "whatsApp",
       className: "px-2 py-2 w-[150px]",
-      cell: (item) => {
-        if (item.whatsApp === "—") {
-          return <span className="text-[12px] font-medium text-[#45556C]">—</span>;
-        }
-
-        const cleaned = item.whatsApp.replace(/\D/g, "");
-
-        return (
+      cell: (item) => (
+        item.whatsApp && item.whatsApp !== "—" ? (
           <a
-            href={`https://wa.me/${cleaned}`}
+            href={`https://wa.me/${item.whatsApp.replace(/\D/g, "")}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[12px] font-medium text-[#25D366] hover:underline transition-colors"
+            className="text-[11px] font-medium text-[#45556C] transition-colors hover:text-[#E60076]"
           >
             {item.whatsApp}
           </a>
-        );
-      },
+        ) : (
+          <span className="text-[11px] font-medium text-[#45556C]">{item.whatsApp || "—"}</span>
+        )
+      ),
     },
     {
       header: "Amount",

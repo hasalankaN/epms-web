@@ -55,7 +55,7 @@ export function CertificateToBeIssued() {
     const params = new URLSearchParams(searchParams.toString());
 
     params.set("page", page.toString());
-    router.push(`${pathname}?${params.toString()}`);
+    router.replace(`${pathname}?${params.toString()}`);
   };
 
   const handleExportPDF = async () => {

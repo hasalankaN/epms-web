@@ -55,6 +55,18 @@ export default function DynamicBreadcrumb({ sidebarData }: { sidebarData: Sideba
       (label) => label && !IGNORED_LABELS.includes(label)
     );
 
+    // Remove "View" if it's the last item and there are other segments
+    // BUT only if there are at least 3 segments (e.g. Course Management > View > View)
+    // OR if it's a double view
+    if (labels.length > 1) {
+      const lastIsView = labels[labels.length - 1] === "View";
+      const secondLastIsView = labels[labels.length - 2] === "View";
+
+      if (lastIsView && (labels.length >= 3 || secondLastIsView)) {
+        labels.pop();
+      }
+    }
+
     return (
       <Breadcrumb className="hidden lg:flex">
         <BreadcrumbList>
@@ -94,6 +106,20 @@ export default function DynamicBreadcrumb({ sidebarData }: { sidebarData: Sideba
   const displayedSegments = allSegments.filter(
     (item) => !IGNORED_LABELS.includes(item.formatted)
   );
+
+  const filteredSegments = displayedSegments;
+
+  // Remove "View" if it's the last item and there are other segments
+  // BUT only if there are at least 3 segments (e.g. Course Management > View > View or Course Management > Edit > View)
+  // OR if it's a double view
+  if (filteredSegments.length > 1) {
+    const lastIsView = filteredSegments[filteredSegments.length - 1].formatted === "View";
+    const secondLastIsView = filteredSegments[filteredSegments.length - 2].formatted === "View";
+    
+    if (lastIsView && (filteredSegments.length >= 3 || secondLastIsView)) {
+      filteredSegments.pop();
+    }
+  }
 
   return (
     <Breadcrumb className="hidden lg:flex">

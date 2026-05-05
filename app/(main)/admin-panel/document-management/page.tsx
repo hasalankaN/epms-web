@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 import { Plus } from "lucide-react";
 
@@ -12,6 +11,7 @@ import { TAB_STYLES, BUTTON_STYLES } from "@/lib/constants/theme";
 import { AllTemplates } from "@/components/admin-panel/document-management/AllTemplates";
 import { IssuedDocuments } from "@/components/admin-panel/document-management/IssuedDocuments";
 import { AddDocumentPanel } from "@/components/admin-panel/document-management/modals/AddDocumentPanel";
+import { useTabNavigation } from "@/hooks/useTabNavigation";
 
 export type DocumentTabType = "all-template" | "issued-documents";
 
@@ -21,24 +21,14 @@ const tabs = [
 ] as const;
 
 export default function DocumentManagementPage() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
 
-  const currentTab = searchParams.get("tab") as DocumentTabType;
-
-  const activeTab = tabs.some((t) => t.value === currentTab)
-    ? currentTab
-    : "all-template";
+  const { activeTab, handleTabChange } = useTabNavigation(
+    "all-template",
+    tabs.map((t) => t.value)
+  );
 
   const [isAddDocumentOpen, setIsAddDocumentOpen] = useState(false);
 
-  const handleTabChange = (tabValue: DocumentTabType) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    params.set("tab", tabValue);
-    router.replace(`${pathname}?${params.toString()}`);
-  };
 
   return (
     <div className="space-y-4 p-4 md:p-6">

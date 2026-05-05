@@ -41,7 +41,7 @@ export function BatchDetailsView({ batchId }: { batchId: string }) {
 
       {/* General Info */}
       <div className="mt-4 w-full px-4 md:px-6">
-        <BatchGeneralInfo batch={batch} />
+        <BatchGeneralInfo batch={batch} isLoading={isLoading} />
       </div>
 
       {/* Enrollment Statistics */}

@@ -325,9 +325,6 @@ export function StaffTable({
               <DropdownMenuItem onClick={() => handleAction("edit", staff)} className="cursor-pointer focus:bg-[#FDF2F8]">
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAction("staff-report", staff)} className="cursor-pointer focus:bg-[#FDF2F8]">
-                Staff Report
-              </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => handleAction("deactivate", staff)} 
                 className={cn(

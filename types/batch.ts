@@ -12,7 +12,7 @@ export interface ApiBatchRow {
   name: string;
   category: string;
   type: string;
-  status: BatchStatus;
+  status: string; // Keep as string here since it might be uppercase from API
   branch_id: string;
   branch_name: string;
   start_date: string;

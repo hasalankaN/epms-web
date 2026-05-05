@@ -2,6 +2,8 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+
 import { useGetCertificateTemplates } from "@/hooks/api/certificates/useGetCertificateTemplates";
 import type { CertificateTemplateStatus } from "@/types/certificate";
 import { AllTemplateToolbar } from "@/components/admin-panel/certificate-management/views/AllTemplate/AllTemplateToolbar";
@@ -11,23 +13,41 @@ import { useBulkDeleteCertificateTemplates } from "@/hooks/api/certificates/useB
 const PAGE_SIZE = 10;
 
 export function AllTemplates() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
-  const [currentPage, setCurrentPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [localSearch, setLocalSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<CertificateTemplateStatus | undefined>(undefined);
+  
+  // URL-based state
+  const currentPage = Number(searchParams.get("page")) || 1;
+  const search = searchParams.get("search") || "";
+  const statusFilter = searchParams.get("status") as CertificateTemplateStatus | undefined;
+
+  const [localSearch, setLocalSearch] = useState(search);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const { mutate: bulkDeleteTemplates, isPending: isDeleting } = useBulkDeleteCertificateTemplates();
 
-  // Debounce localSearch to search
+  // Debounce localSearch to URL
   useEffect(() => {
     const timer = setTimeout(() => {
-      setSearch(localSearch);
+      if (localSearch !== search) {
+        const params = new URLSearchParams(searchParams.toString());
+
+        if (localSearch) {
+          params.set("search", localSearch);
+        } else {
+          params.delete("search");
+        }
+        
+        params.set("page", "1");
+        router.replace(`${pathname}?${params.toString()}`);
+      }
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [localSearch]);
+  }, [localSearch, router, pathname, searchParams, search]);
 
   const { data, isLoading, isError } = useGetCertificateTemplates({
     page: currentPage,
@@ -43,21 +63,31 @@ export function AllTemplates() {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
 
   const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
+    const params = new URLSearchParams(searchParams.toString());
+    
+    params.set("page", page.toString());
+    router.replace(`${pathname}?${params.toString()}`);
     setRowSelection({});
-  }, []);
+  }, [router, pathname, searchParams]);
 
   const handleSearchChange = useCallback((value: string) => {
     setLocalSearch(value);
-    setCurrentPage(1);
     setRowSelection({});
   }, []);
 
   const handleStatusFilterChange = useCallback((status: CertificateTemplateStatus | undefined) => {
-    setStatusFilter(status);
-    setCurrentPage(1);
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (status) {
+      params.set("status", status);
+    } else {
+      params.delete("status");
+    }
+
+    params.set("page", "1");
+    router.replace(`${pathname}?${params.toString()}`);
     setRowSelection({});
-  }, []);
+  }, [router, pathname, searchParams]);
 
   return (
     <div className="flex flex-col gap-4">

@@ -7,13 +7,9 @@ import { MoreVertical } from "lucide-react";
 import { DataTable } from "@/components/common/table/DataTable";
 import type { Column } from "@/components/common/table/DataTable";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ExpenseTrackerSheetModal } from "../modals/ExpenseTrackerSheetModal";
+import { AgentProfileModal } from "../../referral-listing/modals/AgentProfileModal";
 
 import type { PendingRequestDataType } from "../PendingTab";
 
@@ -31,11 +27,20 @@ export function PendingTable({
   totalResults,
 }: PendingTableProps) {
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [isAgentProfileOpen, setIsAgentProfileOpen] = useState(false);
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
 
   const itemsPerPage = 10;
   const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
 
   const handleAction = (action: string, item: PendingRequestDataType) => {
+    if (action === "view") {
+      setSelectedAgentId(item.memberId);
+      setIsAgentProfileOpen(true);
+
+      return;
+    }
+
     if (action === "whatsapp") {
       window.open(`https://wa.me/94711234567`, "_blank");
 
@@ -148,6 +153,12 @@ export function PendingTable({
     <ExpenseTrackerSheetModal
       isOpen={isPayModalOpen}
       onClose={() => setIsPayModalOpen(false)}
+    />
+
+    <AgentProfileModal
+      isOpen={isAgentProfileOpen}
+      onClose={() => setIsAgentProfileOpen(false)}
+      memberId={selectedAgentId}
     />
     </>
   );

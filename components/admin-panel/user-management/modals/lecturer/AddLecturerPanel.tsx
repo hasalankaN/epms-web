@@ -74,6 +74,8 @@ const lecturerSchema = z.object({
     }
   ),
   branch_id: z.string().optional(),
+  salary_due_day: z.string().optional(),
+  salary_due_frequency: z.string().optional(),
 });
 
 type LecturerFormValues = z.infer<typeof lecturerSchema>;
@@ -176,6 +178,8 @@ export function AddLecturerPanel({ isOpen, onClose }: AddLecturerPanelProps) {
       district: undefined,
       salary_type: undefined,
       branch_id: undefined,
+      salary_due_day: undefined,
+      salary_due_frequency: "EVERY_MONTH",
     },
   });
 
@@ -220,6 +224,8 @@ export function AddLecturerPanel({ isOpen, onClose }: AddLecturerPanelProps) {
         ...(values.gender ? { gender: values.gender } : {}),
         salary_type: values.salary_type,
         ...(values.branch_id ? { branch_id: values.branch_id } : {}),
+        ...(values.salary_due_day ? { salary_due_day: values.salary_due_day } : {}),
+        ...(values.salary_due_frequency ? { salary_due_frequency: values.salary_due_frequency } : {}),
       };
 
       await createLecturer(payload);
@@ -530,6 +536,41 @@ export function AddLecturerPanel({ isOpen, onClose }: AddLecturerPanelProps) {
                             </label>
                           </div>
                         ))}
+                      </div>
+                    </div>
+
+                    {/* Salary Due */}
+                    <div className="space-y-1.5">
+                      <FieldLabel>Salary Due</FieldLabel>
+                      <div className="grid grid-cols-2 gap-3">
+                        {/* Day Selector */}
+                        <Select onValueChange={(val) => setValue("salary_due_day", val, { shouldDirty: true })}>
+                          <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9]")}>
+                            <SelectValue placeholder="Date" />
+                          </SelectTrigger>
+                          <SelectContent className="z-[99999999] max-h-[200px]">
+                            {Array.from({ length: 31 }, (_, i) => (
+                              <SelectItem key={i + 1} value={(i + 1).toString()}>
+                                {i + 1}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        {/* Frequency Selector */}
+                        <Select 
+                          defaultValue="EVERY_MONTH"
+                          onValueChange={(val) => setValue("salary_due_frequency", val, { shouldDirty: true })}
+                        >
+                          <SelectTrigger className={cn(AUTH_INPUT.base, "text-[#1D293D]")}>
+                            <SelectValue placeholder="Every Month" />
+                          </SelectTrigger>
+                          <SelectContent className="z-[99999999]">
+                            <SelectItem value="EVERY_MONTH">Every Month</SelectItem>
+                            <SelectItem value="QUARTERLY">Quarterly</SelectItem>
+                            <SelectItem value="YEARLY">Yearly</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                     </div>

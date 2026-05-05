@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 
 import { Search, MoreHorizontal, X } from "lucide-react";
 
@@ -18,6 +18,9 @@ import type { ExportItem } from "@/components/common/dropdowns/ExportDropdown";
 import { ExportDropdown } from "@/components/common/dropdowns/ExportDropdown";
 import type { FilterCategory, FilterSelections } from "@/components/common/filters/FilterModal";
 import { FilterModal, FilterModalTrigger } from "@/components/common/filters/FilterModal";
+import { DISTRICTS } from "@/lib/constants/districts";
+import { useGetBatches } from "@/hooks/api/batches/useGetBatches";
+import { useGetCourses } from "@/hooks/api/courses/useGetCourses";
 
 const buttonTextStyles = "text-[14px] font-semibold leading-[20px] text-[#0F172B]";
 
@@ -27,47 +30,136 @@ const enrollExportItems: ExportItem[] = [
   { key: "csv", label: "Export CSV", icon: (() => <i className="file-csv h-4 w-4" />) as any, onClick: () => console.log("Export CSV") },
 ];
 
-const enrollFilterCategories: FilterCategory[] = [
-  { 
-    key: "date", 
-    label: "By Date", 
-    type: "dateRange",
-  },
-  { 
-    key: "type", 
-    label: "Enrollment Type", 
-    type: "chips",
-    items: [
-      { key: "direct", label: "Direct" },
-      { key: "referral", label: "Referral" },
-    ],
-  },
-  { 
-    key: "status", 
-    label: "Status", 
-    type: "chips",
-    items: [
-      { key: "onGoing", label: "On Going" },
-      { key: "pending", label: "Pending" },
-      { key: "completed", label: "Completed" },
-      { key: "hold", label: "Hold" },
-      { key: "dropped", label: "Dropped" },
-    ],
-  },
-  { 
-    key: "scope", 
-    label: "Batch or Course", 
-    type: "chips",
-    items: [
-      { key: "course", label: "Course" },
-      { key: "batch", label: "Batch" },
-    ],
-  },
-];
-
 export function EnrollTableToolbar() {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<FilterSelections>({});
+
+  // Pagination state for filters
+  const [batchPage, setBatchPage] = useState(1);
+  const [allBatches, setAllBatches] = useState<any[]>([]);
+  const [coursePage, setCoursePage] = useState(1);
+  const [allCourses, setAllCourses] = useState<any[]>([]);
+
+  // Fetch batches and courses for filtering
+  const { data: batchesData, isFetching: isFetchingBatches } = useGetBatches({ page: batchPage, size: 20 });
+  const { data: coursesData, isFetching: isFetchingCourses } = useGetCourses({ page: coursePage, size: 20 });
+
+  // Accumulate results
+  useEffect(() => {
+    if (batchesData?.results) {
+      setAllBatches(prev => {
+        const existingIds = new Set(prev.map(b => b.id));
+        const newUnique = batchesData.results.filter(b => !existingIds.has(b.id));
+        
+        return [...prev, ...newUnique];
+      });
+    }
+  }, [batchesData]);
+
+  useEffect(() => {
+    if (coursesData?.results) {
+      setAllCourses(prev => {
+        const existingIds = new Set(prev.map(c => c.id));
+        const newUnique = coursesData.results.filter(c => !existingIds.has(c.id));
+        
+        return [...prev, ...newUnique];
+      });
+    }
+  }, [coursesData]);
+
+  const handleBatchShowMore = useCallback(() => {
+    if (batchesData && !batchesData.isLastPage) {
+      setBatchPage(prev => prev + 1);
+    }
+  }, [batchesData]);
+
+  const handleCourseShowMore = useCallback(() => {
+    if (coursesData && !coursesData.isLastPage) {
+      setCoursePage(prev => prev + 1);
+    }
+  }, [coursesData]);
+
+  const enrollFilterCategories: FilterCategory[] = [
+    { 
+      key: "date", 
+      label: "By Date", 
+      type: "dateRange",
+    },
+    { 
+      key: "type", 
+      label: "Enrollment Type", 
+      type: "chips",
+      items: [
+        { key: "direct", label: "Direct" },
+        { key: "referral", label: "Referral" },
+      ],
+    },
+    { 
+      key: "district", 
+      label: "By District", 
+      type: "chips",
+      items: DISTRICTS.map(d => ({ key: d.toLowerCase(), label: d })),
+    },
+    { 
+      key: "gender", 
+      label: "By Gender", 
+      type: "chips",
+      items: [
+        { key: "male", label: "Male" },
+        { key: "female", label: "Female" },
+      ],
+    },
+    { 
+      key: "batch", 
+      label: "By Batch", 
+      type: "chips",
+      items: allBatches.map(b => ({ key: b.id, label: b.name })),
+      onShowMore: handleBatchShowMore,
+      hasMore: batchesData ? !batchesData.isLastPage : false,
+      isLoading: isFetchingBatches,
+    },
+    { 
+      key: "course", 
+      label: "By Course", 
+      type: "chips",
+      items: allCourses.map(c => ({ key: c.id, label: c.name })),
+      onShowMore: handleCourseShowMore,
+      hasMore: coursesData ? !coursesData.isLastPage : false,
+      isLoading: isFetchingCourses,
+    },
+    { 
+      key: "student_status", 
+      label: "By Student Status", 
+      type: "chips",
+      items: [
+        { key: "active", label: "Active" },
+        { key: "inactive", label: "Inactive" },
+        { key: "dropped", label: "Dropped" },
+        { key: "hold", label: "Hold" },
+      ],
+    },
+    { 
+      key: "status", 
+      label: "Enroll Status", 
+      type: "chips",
+      items: [
+        { key: "onGoing", label: "On Going" },
+        { key: "pending", label: "Pending" },
+        { key: "completed", label: "Completed" },
+        { key: "hold", label: "Hold" },
+        { key: "dropped", label: "Dropped" },
+      ],
+    },
+    { 
+      key: "scope", 
+      label: "Batch or Course Type", 
+      type: "chips",
+      items: [
+        { key: "course", label: "Course" },
+        { key: "batch", label: "Batch" },
+      ],
+    },
+  ];
 
   const hasActiveFilters = Object.keys(activeFilters).length > 0;
 
