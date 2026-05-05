@@ -8,6 +8,10 @@ import { EarningsSummaryCard } from "@/components/lecturer-panel/dashboard/Earni
 import { ZoomClassesCard } from "@/components/lecturer-panel/dashboard/ZoomClassesCard";
 import { itemVariants } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
+
+import React, { useState } from "react";
+import { useGetLecturerDashboard } from "@/hooks/api/lecturers/useGetLecturerDashboard";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -20,6 +24,51 @@ const containerVariants = {
 };
 
 export default function LecturerDashboardPage() {
+  const { data: dashboardData, isLoading } = useGetLecturerDashboard();
+  const [currentCourseIndex, setCurrentCourseIndex] = useState(0);
+  const [currentBatchIndex, setCurrentBatchIndex] = useState(0);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 pt-6 pl-6 pr-8 pb-8">
+        <Skeleton className="h-10 w-48" />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-40 w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  const courses = dashboardData?.courses || [];
+  const batches = dashboardData?.batches || [];
+  
+  const course = courses[currentCourseIndex];
+  const batch = batches[currentBatchIndex];
+  
+  const assignmentSummary = dashboardData?.assignmentSummary;
+  const financialSummary = dashboardData?.financialSummary;
+
+  const handleNextCourse = () => {
+    setCurrentCourseIndex((prev) => (prev + 1) % courses.length);
+  };
+
+  const handlePrevCourse = () => {
+    setCurrentCourseIndex((prev) => (prev - 1 + courses.length) % courses.length);
+  };
+
+  const handleNextBatch = () => {
+    setCurrentBatchIndex((prev) => (prev + 1) % batches.length);
+  };
+
+  const handlePrevBatch = () => {
+    setCurrentBatchIndex((prev) => (prev - 1 + batches.length) % batches.length);
+  };
+
   return (
     <motion.div 
       initial="hidden" 
@@ -40,23 +89,26 @@ export default function LecturerDashboardPage() {
       {/* Top Section: Progress Cards */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ProgressCard 
-          title="Course Name"
-          progress={47}
+          title={course?.name || "No Course Active"}
+          progress={course?.completionPercentage || 0}
           progressColor="#E60076"
+          onNext={courses.length > 1 ? handleNextCourse : undefined}
+          onPrev={courses.length > 1 ? handlePrevCourse : undefined}
           details={[
-            { label: "Course Category", value: "Category Name" },
-            { label: "Started Date", value: "2026.02.22" },
-            { label: "No. of Enrollments:", value: "XXXX" },
+            { label: "Course Category", value: course?.categoryName || "N/A" },
+            { label: "Started Date", value: course ? new Date(course.startDate).toLocaleDateString() : "N/A" },
+            { label: "No. of Enrollments:", value: course?.enrollmentCount?.toString() || "0" },
           ]}
         />
         <ProgressCard 
-          title="Batch Name"
-          progress={47}
+          title={batch?.name || "No Batch Active"}
+          progress={batch?.completionPercentage || 0}
           progressColor="#8B5CF6"
+          onNext={batches.length > 1 ? handleNextBatch : undefined}
+          onPrev={batches.length > 1 ? handlePrevBatch : undefined}
           details={[
-            { label: "Batch Number", value: "XX" },
-            { label: "Started Date", value: "2026.02.22" },
-            { label: "No. of Enrollments:", value: "XXXX" },
+            { label: "Started Date", value: batch ? new Date(batch.startDate).toLocaleDateString() : "N/A" },
+            { label: "No. of Enrollments:", value: batch?.enrollmentCount?.toString() || "0" },
           ]}
         />
       </motion.div>
@@ -65,15 +117,15 @@ export default function LecturerDashboardPage() {
       <motion.div variants={itemVariants} className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ReviewSummaryCard 
           stats={[
-            { label: "Assignments from Courses", value: "XX" },
-            { label: "Assignments from Batches", value: "XX" },
+            { label: "Assignments from Courses", value: assignmentSummary?.courseAssignments?.toString() || "0" },
+            { label: "Assignments from Batches", value: assignmentSummary?.batchAssignments?.toString() || "0" },
           ]}
         />
         <EarningsSummaryCard 
           stats={[
-            { label: "Estimated Total", value: "XXXX.00" },
-            { label: "Accumulated Total", value: "XXXX.00" },
-            { label: "Pending Total", value: "XXXX.00", color: "#FB2C36" },
+            { label: "Estimated Total", value: financialSummary?.estimated || "0.00" },
+            { label: "Accumulated Total", value: financialSummary?.accumulated || "0.00" },
+            { label: "Pending Total", value: financialSummary?.pending || "0.00", color: "#FB2C36" },
           ]}
         />
       </motion.div>
@@ -82,18 +134,11 @@ export default function LecturerDashboardPage() {
       <motion.div variants={itemVariants} className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ZoomClassesCard 
           title="Zoom Classes - Today"
-          classes={[
-            { id: "1", batchName: "Batch Name", batchNumber: "Batch Number", dateTime: "Date and Time" },
-            { id: "2", batchName: "Batch Name", batchNumber: "Batch Number", dateTime: "Date and Time" },
-          ]}
+          classes={dashboardData?.zoomToday || []}
         />
         <ZoomClassesCard 
           title="Zoom Classes - Upcoming"
-          classes={[
-            { id: "1", batchName: "Batch Name", batchNumber: "Batch Number", dateTime: "Date and Time" },
-            { id: "2", batchName: "Batch Name", batchNumber: "Batch Number", dateTime: "Date and Time" },
-            { id: "3", batchName: "Batch Name", batchNumber: "Batch Number", dateTime: "Date and Time" },
-          ]}
+          classes={dashboardData?.zoomUpcoming || []}
         />
       </motion.div>
     </motion.div>

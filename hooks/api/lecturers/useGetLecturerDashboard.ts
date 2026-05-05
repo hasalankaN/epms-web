@@ -14,7 +14,17 @@ export interface DashboardCourseOrBatch {
 export interface LecturerDashboardData {
   courses: DashboardCourseOrBatch[];
   batches: DashboardCourseOrBatch[];
-  // Include other fields if needed, like pendingAssignments, financialSummary, etc.
+  assignmentSummary: {
+    courseAssignments: number;
+    batchAssignments: number;
+  };
+  financialSummary: {
+    estimated: string;
+    accumulated: string;
+    pending: string;
+  };
+  zoomToday: any[];
+  zoomUpcoming: any[];
 }
 
 export const useGetLecturerDashboard = () => {

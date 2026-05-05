@@ -16,6 +16,8 @@ interface ProgressCardProps {
   progress: number;
   progressColor?: string;
   className?: string;
+  onPrev?: () => void;
+  onNext?: () => void;
 }
 
 export function ProgressCard({
@@ -24,6 +26,8 @@ export function ProgressCard({
   progress,
   progressColor,
   className,
+  onPrev,
+  onNext,
 }: ProgressCardProps) {
   return (
     <div className={cn(
@@ -60,10 +64,20 @@ export function ProgressCard({
         </div>
 
         <div className="flex items-center justify-end gap-4 mt-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-[#F1F5F9] text-[#1D293D] shadow-sm hover:bg-[#E2E8F0]">
+          <Button 
+            onClick={onPrev}
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 rounded-full bg-[#F1F5F9] text-[#1D293D] shadow-sm hover:bg-[#E2E8F0]"
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-[#F1F5F9] text-[#1D293D] shadow-sm hover:bg-[#E2E8F0]">
+          <Button 
+            onClick={onNext}
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 rounded-full bg-[#F1F5F9] text-[#1D293D] shadow-sm hover:bg-[#E2E8F0]"
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

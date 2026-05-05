@@ -100,7 +100,7 @@ export function ViewAssessmentModal({
             <div className="flex flex-col divide-y divide-[#E7E5E4]">
               {[
                 { label: "Pending Submission", value: "Number", action: "View" },
-                { label: "Pending Submission", value: "Number", action: "View" },
+                { label: "Completed Submission", value: "Number", action: "View" },
                 { label: "Due Date", value: data.dueDate },
                 { label: "Time remaining", value: data.timeRemaining },
                 { label: "Last Modified", value: data.lastModified },

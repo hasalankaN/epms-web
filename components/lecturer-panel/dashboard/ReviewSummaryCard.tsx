@@ -20,7 +20,7 @@ export function ReviewSummaryCard({ stats, className }: ReviewSummaryCardProps) 
     )}>
       <div className="flex items-center justify-between">
         <h3 className="font-sans text-[18px] font-semibold leading-7 text-[#1D293D]">
-          Assignment Review Summary
+          Assignments to be Reviewed
         </h3>
         <Button size="sm" className="h-8 rounded-[6px] bg-[#E60076] px-4 text-xs font-semibold text-white hover:bg-[#F6339A]">
           View

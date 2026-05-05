@@ -306,7 +306,6 @@ function TierItem({ tier, level, maxTierCount, levelNames, expandedIds, onToggle
         <div className="flex items-center justify-between">
           <span className="text-[20px] font-bold text-[#0F172B]">{tier.title}</span>
           <button 
-            onClick={() => onAddSubTier(tier.id, level)}
             className="flex items-center gap-1.5 text-[14px] font-semibold text-[#0F172B] bg-[#F8FAFC] border border-[#E2E8F0] rounded-[6px] px-4 h-9 hover:bg-[#F1F5F9] transition-all shadow-sm"
           >
             <Plus className="h-4 w-4" /> Add New
@@ -452,7 +451,6 @@ function TierItem({ tier, level, maxTierCount, levelNames, expandedIds, onToggle
           {/* Add New Button at bottom right of children list */}
           <div className="flex justify-end mt-2 mr-3">
             <Button
-              onClick={() => onAddSubTier(tier.id, level)}
               variant="outline"
               className="flex items-center gap-2 border-[#FCCEE8] bg-[#FFF1F8] hover:bg-[#FDF2F8] text-[#E60076] font-semibold h-9 px-4 rounded-[8px]"
             >
