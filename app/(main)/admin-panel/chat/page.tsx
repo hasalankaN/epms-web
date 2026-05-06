@@ -247,6 +247,8 @@ function ChatContent() {
 
   const handleSendMessage = useCallback(
     (text: string, attachment?: any[]) => {
+      console.log("[ChatPage] handleSendMessage called:", { text, selectedId, currentUserId, isConnected });
+
       if (!selectedId || !currentUserId) return;
 
       if (!isConnected) {
@@ -262,6 +264,7 @@ function ChatContent() {
         fileSize: att.size ? parseFloat(att.size) * 1024 : undefined,
       }));
 
+      console.log("[ChatPage] Sending message via socket:", { roomId: selectedId, text, attachments });
       sendMessage(selectedId, text, attachments?.length ? "FILE" : "TEXT", attachments);
 
       // Optimistically add message to local state
@@ -296,6 +299,8 @@ function ChatContent() {
         const existing = prev[selectedId] ?? [];
         const groupIndex = existing.findIndex((g) => g.date === dateKey);
 
+        let next;
+
         if (groupIndex >= 0) {
           const updated = [...existing];
 
@@ -304,13 +309,17 @@ function ChatContent() {
             messages: [...updated[groupIndex].messages, newMsg],
           };
 
-          return { ...prev, [selectedId]: updated };
+          next = { ...prev, [selectedId]: updated };
+        } else {
+          next = {
+            ...prev,
+            [selectedId]: [...existing, { date: dateKey, messages: [newMsg] }],
+          };
         }
 
-        return {
-          ...prev,
-          [selectedId]: [...existing, { date: dateKey, messages: [newMsg] }],
-        };
+        console.log("[ChatPage] Optimistic update applied:", next[selectedId]);
+
+        return next;
       });
     },
     [selectedId, currentUserId, sendMessage, isConnected]
@@ -352,6 +361,7 @@ function ChatContent() {
   // When API messages load, reset local messages for that room
   useEffect(() => {
     if (selectedId && messagesData?.data) {
+      console.log("[ChatPage] Resetting localMessages for room:", selectedId, "messages count:", messagesData.data.length);
       setLocalMessages((prev) => {
         const next = { ...prev };
 

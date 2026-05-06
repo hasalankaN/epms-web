@@ -93,6 +93,11 @@ export function useChatSocket(options: UseChatSocketOptions) {
       setIsConnected(false);
     });
 
+    socket.on("exception", (err: any) => {
+      console.error("Socket exception from server:", err);
+      toast.error(err?.message || "Chat server error");
+    });
+
     socket.on("disconnect", (reason) => {
       console.log("Socket disconnected:", reason);
       setIsConnected(false);
@@ -124,18 +129,27 @@ export function useChatSocket(options: UseChatSocketOptions) {
       messageType?: "TEXT" | "FILE" | "IMAGE",
       attachments?: Array<{ url: string; type: string; fileName?: string; fileSize?: number }>
     ) => {
+      console.log("[useChatSocket] sendMessage called:", { roomId, content, connected: socketRef.current?.connected, socketId: socketRef.current?.id });
+
       if (!socketRef.current?.connected) {
         toast.error("Not connected to chat server. Please wait or refresh the page.");
 
         return;
       }
 
-      socketRef.current.emit("send_message", {
+      const payload: any = {
         roomId,
         content,
         messageType: messageType || "TEXT",
-        attachments,
-      });
+      };
+
+      if (attachments && attachments.length > 0) {
+        payload.attachments = attachments;
+      }
+
+      socketRef.current.emit("send_message", payload);
+
+      console.log("[useChatSocket] send_message emitted to socket:", socketRef.current?.id);
     },
     []
   );

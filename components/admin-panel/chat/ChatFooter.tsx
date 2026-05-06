@@ -183,6 +183,8 @@ export function ChatFooter({ onSendMessage, isMuted, onToggleMute, onTyping }: C
   };
 
   const handleSend = () => {
+    console.log("[ChatFooter] handleSend called:", { inputText, attachedFilesCount: attachedFiles.length, uploadingFilesCount: uploadingFiles.length });
+
     if ((inputText.trim() || attachedFiles.length > 0) && uploadingFiles.length === 0) {
       // Stop recording before sending
       if (isListening) {
