@@ -6,16 +6,17 @@ import { toast } from "sonner";
 import { Paperclip, X, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { useUploadFile } from "@/hooks/api/files/useUploadFile";
+import { useUploadChatFile } from "@/hooks/api/chat/useUploadChatFile";
 import { Progress } from "@/components/ui/progress";
 
 interface ChatFooterProps {
   onSendMessage: (text: string, attachment?: any) => void;
   isMuted?: boolean;
   onToggleMute?: () => void;
+  onTyping?: (isTyping: boolean) => void;
 }
 
-export function ChatFooter({ onSendMessage, isMuted, onToggleMute }: ChatFooterProps) {
+export function ChatFooter({ onSendMessage, isMuted, onToggleMute, onTyping }: ChatFooterProps) {
   const [inputText, setInputText] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<any[]>([]);
@@ -26,7 +27,8 @@ export function ChatFooter({ onSendMessage, isMuted, onToggleMute }: ChatFooterP
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isChrome, setIsChrome] = useState(false);
-  const { mutateAsync: uploadFile } = useUploadFile();
+  const { mutateAsync: uploadFile } = useUploadChatFile();
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // Detect Chrome (excluding Edge and Brave)
@@ -187,6 +189,8 @@ export function ChatFooter({ onSendMessage, isMuted, onToggleMute }: ChatFooterP
         stopListening();
       }
 
+      onTyping?.(false);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       onSendMessage(inputText, attachedFiles);
       setInputText("");
       setAttachedFiles([]);
@@ -273,7 +277,14 @@ export function ChatFooter({ onSendMessage, isMuted, onToggleMute }: ChatFooterP
           placeholder="Write messages..."
           className="flex-1 bg-transparent py-2 font-inter text-[15px] font-normal leading-normal text-[#0F172B] outline-none placeholder:text-[#90A1B9]"
           value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
+          onChange={(e) => {
+            setInputText(e.target.value);
+            onTyping?.(true);
+            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+            typingTimeoutRef.current = setTimeout(() => {
+              onTyping?.(false);
+            }, 1500);
+          }}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
         />
 

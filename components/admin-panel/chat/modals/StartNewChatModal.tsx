@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 import { X, UserPlus } from "lucide-react";
 
@@ -14,6 +14,10 @@ import { Label } from "@/components/ui/label";
 import { SearchableSelect, type SearchableSelectOption } from "@/components/ui/searchable-select";
 import { cn } from "@/lib/utils";
 import { AUTH_TYPOGRAPHY, BUTTON_STYLES } from "@/lib/constants/theme";
+import { useGetStudents } from "@/hooks/api/user-management/useGetStudents";
+import { useGetStaff } from "@/hooks/api/staff/useGetStaff";
+import { useGetLecturers } from "@/hooks/api/lecturers/useGetLecturers";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface StartNewChatModalProps {
   isOpen: boolean;
@@ -30,25 +34,75 @@ export function StartNewChatModal({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPersonId, setSelectedPersonId] = useState("");
 
-  // Mock data for people based on role
-  // In a real app, you'd fetch this from your hooks
-  const mockOptions: Record<string, SearchableSelectOption[]> = {
-    student: [
-      { value: "s1", label: "Student Name", avatarInitials: "SN" },
-      { value: "s2", label: "Student Name", avatarInitials: "SN" },
-      { value: "s3", label: "Student Name", avatarInitials: "SN" },
-      { value: "s4", label: "Student Name", avatarInitials: "SN" },
-      { value: "s5", label: "Student Name", avatarInitials: "SN" },
-    ],
-    staff: [
-      { value: "st1", label: "Staff Name", avatarInitials: "ST" },
-    ],
-    lecturer: [
-      { value: "l1", label: "Lecturer Name", avatarInitials: "LN" },
-    ],
-  };
+  const debouncedSearch = useDebounce(searchTerm, 400);
 
-  const personOptions = mockOptions[role] || [];
+  const studentsQuery = useGetStudents({
+    page: 1,
+    size: 100,
+    search: role === "student" && debouncedSearch ? debouncedSearch : undefined,
+    student_status: "ACTIVE",
+  });
+
+  const staffQuery = useGetStaff({
+    page: 1,
+    size: 100,
+    search: role === "staff" && debouncedSearch ? debouncedSearch : undefined,
+    status: "ACTIVE",
+  });
+
+  const lecturersQuery = useGetLecturers({
+    page: 1,
+    size: 100,
+    search: role === "lecturer" && debouncedSearch ? debouncedSearch : undefined,
+    status: "ACTIVE",
+  });
+
+  const personOptions: SearchableSelectOption[] = useMemo(() => {
+    if (role === "student") {
+      return (
+        studentsQuery.data?.results.map((s) => ({
+          value: s.user_id,
+          label: s.full_name || s.email,
+          subLabel: s.email || s.mobile_number,
+          avatarInitials: s.full_name
+            ?.split(" ")
+            .map((n) => n[0])
+            .join("")
+            .slice(0, 2)
+            .toUpperCase() || "ST",
+        })) ?? []
+      );
+    }
+
+    if (role === "staff") {
+      return (
+        staffQuery.data?.results.map((s) => ({
+          value: s.userId,
+          label: `${s.firstName} ${s.lastName}`.trim() || s.email,
+          subLabel: s.email || s.mobile,
+          avatarInitials: `${s.firstName?.[0] ?? ""}${s.lastName?.[0] ?? ""}`.toUpperCase() || "ST",
+        })) ?? []
+      );
+    }
+
+    if (role === "lecturer") {
+      return (
+        lecturersQuery.data?.results.map((l) => ({
+          value: l.user_id,
+          label: `${l.first_name} ${l.last_name}`.trim() || l.email,
+          subLabel: l.email || l.mobile_number,
+          avatarInitials: `${l.first_name?.[0] ?? ""}${l.last_name?.[0] ?? ""}`.toUpperCase() || "LE",
+        })) ?? []
+      );
+    }
+
+    return [];
+  }, [role, studentsQuery.data, staffQuery.data, lecturersQuery.data]);
+
+  const isLoading =
+    (role === "student" && studentsQuery.isLoading) ||
+    (role === "staff" && staffQuery.isLoading) ||
+    (role === "lecturer" && lecturersQuery.isLoading);
 
   // Reset local state when modal opens
   useEffect(() => {
@@ -58,6 +112,12 @@ export function StartNewChatModal({
       setRole("student");
     }
   }, [isOpen]);
+
+  // Reset selected person when role changes
+  useEffect(() => {
+    setSelectedPersonId("");
+    setSearchTerm("");
+  }, [role]);
 
   const handleStartChat = () => {
     if (!selectedPersonId) return;
@@ -152,6 +212,7 @@ export function StartNewChatModal({
               searchPlaceholder="Search here by name.."
               icon={<UserPlus className="h-4 w-4 text-[#90A1B9]" />}
               className="h-[44px]"
+              isLoading={isLoading}
             />
           </div>
 

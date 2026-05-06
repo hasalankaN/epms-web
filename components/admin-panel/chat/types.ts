@@ -19,6 +19,7 @@ export interface ChatMessage {
     date: string;
     size: string;
     fileType: "pdf" | "image" | "doc" | "other";
+    url?: string;
   };
 }
 
