@@ -1,7 +1,9 @@
 "use client";
 
 import React from "react";
-import { ReferralPieCard, PieData } from "./ReferralPieCard";
+
+import type { PieData } from "./ReferralPieCard";
+import { ReferralPieCard } from "./ReferralPieCard";
 
 const courseData: PieData[] = [
   { name: "Course 1", value: 35, color: "#16A34A" },

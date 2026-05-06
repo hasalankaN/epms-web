@@ -17,4 +17,12 @@ export const referralSidebarData: SidebarNavItem[] = [
     icon: "student",
     value: "my-student",
   },
+  {
+    id: 3,
+    type: "link",
+    title: "My Commissions",
+    url: "/referral-panel/my-commissions",
+    icon: "money-wavy",
+    value: "my-commissions",
+  },
 ];
