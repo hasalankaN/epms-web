@@ -132,27 +132,38 @@ export function SentBubble({
               {msg.text}
             </span>
           )}
-          <div className="flex w-full items-center gap-[8px] rounded-[5px] bg-white p-[8px]">
-            <FileIcon type={msg.attachment.fileType} />
-            <div className="flex flex-1 flex-col min-w-0">
-              <span className="self-stretch truncate font-inter text-[12px] font-normal leading-[20px] text-[#475569]">
-                {msg.attachment.name}
-              </span>
-              <span className="font-poppins text-[10px] font-normal leading-[16px] text-[#94A3B8]">
-                {msg.attachment.date} • {msg.attachment.size}
-              </span>
-            </div>
-            <button
-              aria-label="Download"
-              className="flex shrink-0 cursor-pointer items-center justify-center"
-              onClick={() => console.log("Download")}
-            >
-              <Download
-                className="text-[#0A2689]"
-                style={{ width: 20, height: 20, strokeWidth: 2 }}
+          {msg.attachment.fileType === "image" && msg.attachment.url ? (
+            <div className="relative w-full overflow-hidden rounded-[5px]">
+              <img
+                src={msg.attachment.url}
+                alt={msg.attachment.name}
+                className="w-full max-h-[200px] object-cover rounded-[5px]"
+                loading="lazy"
               />
-            </button>
-          </div>
+            </div>
+          ) : (
+            <div className="flex w-full items-center gap-[8px] rounded-[5px] bg-white p-[8px]">
+              <FileIcon type={msg.attachment.fileType} />
+              <div className="flex flex-1 flex-col min-w-0">
+                <span className="self-stretch truncate font-inter text-[12px] font-normal leading-[20px] text-[#475569]">
+                  {msg.attachment.name}
+                </span>
+                <span className="font-poppins text-[10px] font-normal leading-[16px] text-[#94A3B8]">
+                  {msg.attachment.date} • {msg.attachment.size}
+                </span>
+              </div>
+              <button
+                aria-label="Download"
+                className="flex shrink-0 cursor-pointer items-center justify-center"
+                onClick={() => console.log("Download")}
+              >
+                <Download
+                  className="text-[#0A2689]"
+                  style={{ width: 20, height: 20, strokeWidth: 2 }}
+                />
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

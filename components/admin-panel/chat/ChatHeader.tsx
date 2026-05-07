@@ -11,9 +11,10 @@ import type { ChatContact } from "./types";
 interface ChatHeaderProps {
   contact: ChatContact;
   onBack?: () => void;
+  role?: string;
 }
 
-export function ChatHeader({ contact, onBack }: ChatHeaderProps) {
+export function ChatHeader({ contact, onBack, role = "Student" }: ChatHeaderProps) {
   return (
     <div className="flex h-[80px] md:h-[96px] shrink-0 items-center justify-between border-b border-[#E2E8F0] px-4 md:px-[24px] py-[16px]">
       <AnimatePresence mode="wait">
@@ -55,7 +56,7 @@ export function ChatHeader({ contact, onBack }: ChatHeaderProps) {
               </span>
               <div className="flex items-center gap-2">
                 <span className="font-inter text-[11px] md:text-[12px] font-normal leading-tight md:leading-[16px] text-[#62748E]">
-                  Student
+                  {role}
                 </span>
                 <span className="md:hidden font-inter text-[10px] text-[#90A1B9] before:content-['•'] before:mr-2">
                   Last seen recently

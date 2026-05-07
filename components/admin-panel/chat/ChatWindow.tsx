@@ -19,9 +19,12 @@ interface ChatWindowProps {
   onBack?: () => void;
   onSendMessage?: (text: string, attachment?: any) => void;
   onToggleMute?: (id: string) => void;
+  participantRole?: string;
+  isTyping?: boolean;
+  onTyping?: (isTyping: boolean) => void;
 }
 
-export function ChatWindow({ contact, groups, onBack, onSendMessage, onToggleMute }: ChatWindowProps) {
+export function ChatWindow({ contact, groups, onBack, onSendMessage, onToggleMute, participantRole, isTyping, onTyping }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -56,7 +59,8 @@ export function ChatWindow({ contact, groups, onBack, onSendMessage, onToggleMut
     <div className="flex flex-1 flex-col overflow-hidden rounded-r-[8px] bg-white">
       <ChatHeader 
         contact={contact} 
-        onBack={onBack} 
+        onBack={onBack}
+        role={participantRole}
       />
 
       {/* ===== MESSAGE AREA ===== */}
@@ -124,6 +128,23 @@ export function ChatWindow({ contact, groups, onBack, onSendMessage, onToggleMut
             ))}
           </motion.div>
         </AnimatePresence>
+        {isTyping && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="flex items-center gap-2"
+          >
+            <div className="flex h-[24px] w-[24px] items-center justify-center rounded-full border border-[#D4D4D4] bg-[#F1F5F9] overflow-hidden">
+              <i className="user-icon h-3.5 w-3.5 text-[#90A1B9]" />
+            </div>
+            <div className="flex gap-1 rounded-[12px] bg-[#EFEFEF] px-[12px] py-[6px]">
+              <span className="h-[6px] w-[6px] animate-bounce rounded-full bg-[#90A1B9]" style={{ animationDelay: "0ms" }} />
+              <span className="h-[6px] w-[6px] animate-bounce rounded-full bg-[#90A1B9]" style={{ animationDelay: "150ms" }} />
+              <span className="h-[6px] w-[6px] animate-bounce rounded-full bg-[#90A1B9]" style={{ animationDelay: "300ms" }} />
+            </div>
+          </motion.div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -131,6 +152,7 @@ export function ChatWindow({ contact, groups, onBack, onSendMessage, onToggleMut
         onSendMessage={onSendMessage ?? (() => {})} 
         isMuted={contact.isMuted}
         onToggleMute={() => onToggleMute?.(contact.id)}
+        onTyping={onTyping}
       />
     </div>
   );

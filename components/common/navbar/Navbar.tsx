@@ -16,6 +16,7 @@ import type { SidebarNavItem } from "@/data/sidebar";
 import DynamicBreadcrumb from "../DynamicBreadcrumb";
 import { FilterDropdown, type FilterCategory } from "../dropdowns/FilterDropdown";
 import { useGetBranches } from "@/hooks/api/branches/useGetBranches";
+import { useGetChatUnreadCount } from "@/hooks/api/chat/useGetChatUnreadCount";
 
 
 export interface NavbarProps {
@@ -67,6 +68,8 @@ const Navbar: React.FC<NavbarProps> = ({ filteredSidebarData }) => {
     setBranchSearch(""); // Reset search on select
   };
   
+  const { data: unreadCountData } = useGetChatUnreadCount();
+
   // Mock counts for now
   const orderCount = 3;
   const taskCount = 5;
@@ -224,9 +227,11 @@ const Navbar: React.FC<NavbarProps> = ({ filteredSidebarData }) => {
             "message-icon h-5 w-5 shrink-0",
             isChatActive ? "brightness-0 invert" : "text-[#0F172B]"
           )} />
-          <span className="absolute -right-1.5 -top-1.5 inline-flex h-4 min-w-[16px] max-w-[34px] items-center justify-center rounded-full bg-[#FB2C36] px-1 text-[11px] font-medium leading-4 tracking-[0.5px] text-white" style={{ fontFamily: 'Roboto, sans-serif' }}>
-            3
-          </span>
+          {unreadCountData && unreadCountData.total > 0 && (
+            <span className="absolute -right-1.5 -top-1.5 inline-flex h-4 min-w-[16px] max-w-[34px] items-center justify-center rounded-full bg-[#FB2C36] px-1 text-[11px] font-medium leading-4 tracking-[0.5px] text-white" style={{ fontFamily: 'Roboto, sans-serif' }}>
+              {unreadCountData.total > 99 ? "99+" : unreadCountData.total}
+            </span>
+          )}
         </Link>
       </div>
     </header>

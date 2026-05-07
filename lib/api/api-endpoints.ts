@@ -241,4 +241,14 @@ export const API_ENDPOINTS = {
     DELETE_SCHEDULED: (id: string) => `/api/v1/admin/notifications/scheduled/${id}`,
     GET_RESPONSE_LOGS: `/api/v1/admin/notifications/response-tracking`,
   },
+  chat: {
+    GET_ROOMS: `/api/v1/chat/rooms`,
+    CREATE_DIRECT_ROOM: `/api/v1/chat/rooms/direct`,
+    GET_MESSAGES: (roomId: string) => `/api/v1/chat/rooms/${roomId}/messages`,
+    MARK_AS_READ: (roomId: string) => `/api/v1/chat/rooms/${roomId}/read`,
+    DELETE_MESSAGE: (messageId: string) => `/api/v1/chat/messages/${messageId}`,
+    GET_UNREAD_COUNT: `/api/v1/chat/unread-count`,
+    UPLOAD_FILE: `/api/v1/chat/upload`,
+    GET_PARTICIPANTS: (roomId: string) => `/api/v1/chat/rooms/${roomId}/participants`,
+  },
 };

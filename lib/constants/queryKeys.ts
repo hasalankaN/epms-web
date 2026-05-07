@@ -61,4 +61,9 @@ export const queryKeys = {
   notificationsSent: "notificationsSent",
   notificationsScheduled: "notificationsScheduled",
   notificationsResponseLogs: "notificationsResponseLogs",
+
+  // Chat
+  chatRooms: "chatRooms",
+  chatMessages: "chatMessages",
+  chatUnreadCount: "chatUnreadCount",
 };
