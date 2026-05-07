@@ -33,4 +33,12 @@ export const referralSidebarData: SidebarNavItem[] = [
     icon: "users-three",
     value: "my-teams",
   },
+  {
+    id: 5,
+    type: "link",
+    title: "My Payments",
+    url: "/referral-panel/my-payments",
+    icon: "invoice",
+    value: "my-payments",
+  },
 ];
