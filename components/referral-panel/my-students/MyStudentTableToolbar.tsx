@@ -19,7 +19,6 @@ import { BulkActionDropdown } from "@/components/common/dropdowns/BulkActionDrop
 import type { FilterCategory, FilterSelections } from "@/components/common/filters/FilterModal";
 import { FilterModal, FilterModalTrigger } from "@/components/common/filters/FilterModal";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
-import { EnrollStudentModal } from "./modals/EnrollStudentModal";
 
 const buttonTextStyles = "text-[14px] font-semibold leading-[20px] text-[#0F172B]";
 
@@ -78,7 +77,6 @@ export function MyStudentTableToolbar({
 }: MyStudentTableToolbarProps) {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [enrollModalOpen, setEnrollModalOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<FilterSelections>({});
 
   const hasActiveFilters = Object.keys(activeFilters).length > 0;
@@ -171,10 +169,7 @@ export function MyStudentTableToolbar({
               Export CSV
             </button>
             <button
-              onClick={() => {
-                setEnrollModalOpen(true);
-                onAddStudent?.();
-              }}
+              onClick={onAddStudent}
               className={cn(BUTTON_STYLES.primary.md, "whitespace-nowrap", buttonTextStyles, "text-white")}
             >
               <Plus className="h-4 w-4" />
@@ -238,10 +233,7 @@ export function MyStudentTableToolbar({
               </DropdownMenuContent>
             </DropdownMenu>
             <button
-              onClick={() => {
-                setEnrollModalOpen(true);
-                onAddStudent?.();
-              }}
+              onClick={onAddStudent}
               className={cn(BUTTON_STYLES.primary.md, "whitespace-nowrap", buttonTextStyles, "text-white")}
             >
               <Plus className="h-4 w-4" />
@@ -310,10 +302,7 @@ export function MyStudentTableToolbar({
             </div>
 
             <button
-              onClick={() => {
-                setEnrollModalOpen(true);
-                onAddStudent?.();
-              }}
+              onClick={onAddStudent}
               title="Add Student"
               className={cn(BUTTON_STYLES.primary.md, "text-white flex items-center gap-2 h-10 px-3 sm:px-4")}
             >
@@ -343,11 +332,6 @@ export function MyStudentTableToolbar({
         }}
         title="Confirm Bulk Deletion"
         description={`Are you sure you want to delete ${selectedCount} selected student(s)? This action cannot be undone.`}
-      />
-      {/* Enroll Student Modal */}
-      <EnrollStudentModal
-        isOpen={enrollModalOpen}
-        onClose={() => setEnrollModalOpen(false)}
       />
     </>
   );

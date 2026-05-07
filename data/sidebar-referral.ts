@@ -25,4 +25,12 @@ export const referralSidebarData: SidebarNavItem[] = [
     icon: "money-wavy",
     value: "my-commissions",
   },
+  {
+    id: 4,
+    type: "link",
+    title: "My Teams",
+    url: "/referral-panel/my-teams",
+    icon: "users-three",
+    value: "my-teams",
+  },
 ];
