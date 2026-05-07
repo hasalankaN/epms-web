@@ -26,47 +26,75 @@ import {
 } from "@/lib/constants/theme";
 import ImageUpload from "@/components/common/ImageUpload";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
+import {
+  useCreateBanner,
+  type BannerType,
+} from "@/hooks/api/website/useBanners";
 
-const bannerSchema = z.object({
-  title: z.string().optional(),
-  subTitle: z.string().optional(),
-  paragraph: z.string().optional(),
-  enableButtons: z.boolean(),
-  numberOfButtons: z.number().min(1).max(2),
-  button1Text: z.string().optional(),
-  button1Link: z.string().optional(),
-  button2Text: z.string().optional(),
-  button2Link: z.string().optional(),
-}).superRefine((data, ctx) => {
-  if (data.enableButtons) {
-    if (!data.button1Text) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Button text is required.", path: ["button1Text"] });
-    }
-
-    if (!data.button1Link) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Button link is required.", path: ["button1Link"] });
-    }
-
-    if (data.numberOfButtons === 2) {
-      if (!data.button2Text) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Button text is required.", path: ["button2Text"] });
+const bannerSchema = z
+  .object({
+    title: z.string().optional(),
+    subTitle: z.string().optional(),
+    paragraph: z.string().optional(),
+    enableButtons: z.boolean(),
+    numberOfButtons: z.number().min(1).max(2),
+    button1Text: z.string().optional(),
+    button1Link: z.string().optional(),
+    button2Text: z.string().optional(),
+    button2Link: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.enableButtons) {
+      if (!data.button1Text) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Button text is required.",
+          path: ["button1Text"],
+        });
       }
 
-      if (!data.button2Link) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Button link is required.", path: ["button2Link"] });
+      if (!data.button1Link) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Button link is required.",
+          path: ["button1Link"],
+        });
+      }
+
+      if (data.numberOfButtons === 2) {
+        if (!data.button2Text) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Button text is required.",
+            path: ["button2Text"],
+          });
+        }
+
+        if (!data.button2Link) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Button link is required.",
+            path: ["button2Link"],
+          });
+        }
       }
     }
-  }
-});
+  });
 
 type BannerFormValues = z.infer<typeof bannerSchema>;
 
 interface AddBannerModalProps {
   isOpen: boolean;
   onClose: () => void;
+  type?: BannerType;
 }
 
-export function AddBannerModal({ isOpen, onClose }: AddBannerModalProps) {
+export function AddBannerModal({
+  isOpen,
+  onClose,
+  type = "HERO",
+}: AddBannerModalProps) {
+  const createBanner = useCreateBanner();
   const [desktopImageUrl, setDesktopImageUrl] = useState("");
   const [mobileImageUrl, setMobileImageUrl] = useState("");
   const [showDiscardModal, setShowDiscardModal] = useState(false);
@@ -96,7 +124,8 @@ export function AddBannerModal({ isOpen, onClose }: AddBannerModalProps) {
   const enableButtons = watch("enableButtons");
   const numberOfButtons = watch("numberOfButtons");
 
-  const isDirty = formIsDirty || desktopImageUrl !== "" || mobileImageUrl !== "";
+  const isDirty =
+    formIsDirty || desktopImageUrl !== "" || mobileImageUrl !== "";
 
   useEffect(() => {
     if (isOpen) {
@@ -118,8 +147,23 @@ export function AddBannerModal({ isOpen, onClose }: AddBannerModalProps) {
 
   const onSubmit = (values: BannerFormValues) => {
     if (!desktopImageUrl || !mobileImageUrl) return;
-    console.log("Saving banner:", { ...values, desktopImageUrl, mobileImageUrl });
-    onClose();
+    createBanner.mutate(
+      {
+        type,
+        title: values.title,
+        subTitle: values.subTitle,
+        paragraph: values.paragraph,
+        enableButtons: values.enableButtons,
+        numberOfButtons: values.numberOfButtons,
+        button1Text: values.button1Text,
+        button1Link: values.button1Link,
+        button2Text: values.button2Text,
+        button2Link: values.button2Link,
+        desktopImageUrl,
+        mobileImageUrl,
+      },
+      { onSuccess: onClose },
+    );
   };
 
   const handleClearAll = () => {
@@ -148,13 +192,19 @@ export function AddBannerModal({ isOpen, onClose }: AddBannerModalProps) {
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={(open) => !open && handleCloseAttempt()}>
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open) => !open && handleCloseAttempt()}
+      >
         <DialogContent
           animateChildren={true}
           className="flex max-h-[90vh] w-[95%] max-w-[704px] flex-col gap-0 overflow-hidden rounded-xl border border-[#E2E8F0] bg-white p-0 shadow-[0_4px_6px_-4px_rgba(16,24,40,0.10),0_10px_15px_-3px_rgba(0,0,0,0.10)] [&>button]:hidden"
         >
           {/* Header */}
-          <motion.div variants={itemVariants} className="flex items-center justify-between p-6 pb-4 shrink-0">
+          <motion.div
+            variants={itemVariants}
+            className="flex items-center justify-between p-6 pb-4 shrink-0"
+          >
             <DialogTitle className="font-inter text-lg font-semibold leading-[30px] text-[#0F172B]">
               Add New Banner
             </DialogTitle>
@@ -205,7 +255,7 @@ export function AddBannerModal({ isOpen, onClose }: AddBannerModalProps) {
                   rows={4}
                   className={cn(
                     "resize-y rounded-md border border-gray-300 text-sm focus-visible:ring-[#E60076]",
-                    AUTH_INPUT.placeholder
+                    AUTH_INPUT.placeholder,
                   )}
                 />
               </div>
@@ -237,36 +287,58 @@ export function AddBannerModal({ isOpen, onClose }: AddBannerModalProps) {
               {/* Buttons Configuration */}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="flex flex-col gap-2">
-                  <Label className={AUTH_TYPOGRAPHY.label}>Enable Buttons</Label>
+                  <Label className={AUTH_TYPOGRAPHY.label}>
+                    Enable Buttons
+                  </Label>
                   <div className="flex items-center gap-4">
                     {["Yes", "No"].map((opt) => (
-                      <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
+                      <label
+                        key={opt}
+                        className="flex items-center gap-1.5 cursor-pointer"
+                      >
                         <input
                           type="radio"
                           name="add-modal-enable-buttons"
                           checked={enableButtons === (opt === "Yes")}
-                          onChange={() => setValue("enableButtons", opt === "Yes", { shouldDirty: true })}
+                          onChange={() =>
+                            setValue("enableButtons", opt === "Yes", {
+                              shouldDirty: true,
+                            })
+                          }
                           className="h-4 w-4 cursor-pointer accent-[#0F172B]"
                         />
-                        <span className="text-sm font-medium text-[#45556C]">{opt}</span>
+                        <span className="text-sm font-medium text-[#45556C]">
+                          {opt}
+                        </span>
                       </label>
                     ))}
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <Label className={AUTH_TYPOGRAPHY.label}>No. of Buttons</Label>
+                  <Label className={AUTH_TYPOGRAPHY.label}>
+                    No. of Buttons
+                  </Label>
                   <div className="flex items-center gap-4">
                     {([1, 2] as const).map((num) => (
-                      <label key={num} className="flex items-center gap-1.5 cursor-pointer">
+                      <label
+                        key={num}
+                        className="flex items-center gap-1.5 cursor-pointer"
+                      >
                         <input
                           type="radio"
                           name="add-modal-no-of-buttons"
                           checked={numberOfButtons === num}
-                          onChange={() => setValue("numberOfButtons", num, { shouldDirty: true })}
+                          onChange={() =>
+                            setValue("numberOfButtons", num, {
+                              shouldDirty: true,
+                            })
+                          }
                           className="h-4 w-4 cursor-pointer accent-[#0F172B]"
                         />
-                        <span className="text-sm font-medium text-[#45556C]">{num}</span>
+                        <span className="text-sm font-medium text-[#45556C]">
+                          {num}
+                        </span>
                       </label>
                     ))}
                   </div>
@@ -286,21 +358,29 @@ export function AddBannerModal({ isOpen, onClose }: AddBannerModalProps) {
                         {...register("button1Text")}
                         placeholder="Enter button text"
                         className={cn(
-                          AUTH_INPUT.base, 
+                          AUTH_INPUT.base,
                           AUTH_INPUT.placeholder,
-                          errors.button1Text && "border-red-500 focus-visible:ring-red-500"
+                          errors.button1Text &&
+                            "border-red-500 focus-visible:ring-red-500",
                         )}
                       />
-                      {errors.button1Text && <p className="text-xs text-red-500">{errors.button1Text.message}</p>}
+                      {errors.button1Text && (
+                        <p className="text-xs text-red-500">
+                          {errors.button1Text.message}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <Label className={AUTH_TYPOGRAPHY.label}>
                         Button 1 Link <span className="text-red-500">*</span>
                       </Label>
-                      <div className={cn(
-                        "flex h-10 items-center rounded-md border border-gray-300 bg-white focus-within:ring-2 focus-within:ring-[#E60076] transition-all overflow-hidden",
-                        errors.button1Link && "border-red-500 focus-within:ring-red-500"
-                      )}>
+                      <div
+                        className={cn(
+                          "flex h-10 items-center rounded-md border border-gray-300 bg-white focus-within:ring-2 focus-within:ring-[#E60076] transition-all overflow-hidden",
+                          errors.button1Link &&
+                            "border-red-500 focus-within:ring-red-500",
+                        )}
+                      >
                         <span className="border-r border-gray-300 px-3 text-sm font-medium text-[#64748B] h-full flex items-center bg-[#F8FAFC]">
                           https://
                         </span>
@@ -310,7 +390,11 @@ export function AddBannerModal({ isOpen, onClose }: AddBannerModalProps) {
                           className="flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-[#90A1B9] placeholder:italic w-full"
                         />
                       </div>
-                      {errors.button1Link && <p className="text-xs text-red-500">{errors.button1Link.message}</p>}
+                      {errors.button1Link && (
+                        <p className="text-xs text-red-500">
+                          {errors.button1Link.message}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -325,21 +409,29 @@ export function AddBannerModal({ isOpen, onClose }: AddBannerModalProps) {
                           {...register("button2Text")}
                           placeholder="Enter button text"
                           className={cn(
-                            AUTH_INPUT.base, 
+                            AUTH_INPUT.base,
                             AUTH_INPUT.placeholder,
-                            errors.button2Text && "border-red-500 focus-visible:ring-red-500"
+                            errors.button2Text &&
+                              "border-red-500 focus-visible:ring-red-500",
                           )}
                         />
-                        {errors.button2Text && <p className="text-xs text-red-500">{errors.button2Text.message}</p>}
+                        {errors.button2Text && (
+                          <p className="text-xs text-red-500">
+                            {errors.button2Text.message}
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-1.5">
                         <Label className={AUTH_TYPOGRAPHY.label}>
                           Button 2 Link <span className="text-red-500">*</span>
                         </Label>
-                        <div className={cn(
-                          "flex h-10 items-center rounded-md border border-gray-300 bg-white focus-within:ring-2 focus-within:ring-[#E60076] transition-all overflow-hidden",
-                          errors.button2Link && "border-red-500 focus-within:ring-red-500"
-                        )}>
+                        <div
+                          className={cn(
+                            "flex h-10 items-center rounded-md border border-gray-300 bg-white focus-within:ring-2 focus-within:ring-[#E60076] transition-all overflow-hidden",
+                            errors.button2Link &&
+                              "border-red-500 focus-within:ring-red-500",
+                          )}
+                        >
                           <span className="border-r border-gray-300 px-3 text-sm font-medium text-[#64748B] h-full flex items-center bg-[#F8FAFC]">
                             https://
                           </span>
@@ -349,7 +441,11 @@ export function AddBannerModal({ isOpen, onClose }: AddBannerModalProps) {
                             className="flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-[#90A1B9] placeholder:italic w-full"
                           />
                         </div>
-                        {errors.button2Link && <p className="text-xs text-red-500">{errors.button2Link.message}</p>}
+                        {errors.button2Link && (
+                          <p className="text-xs text-red-500">
+                            {errors.button2Link.message}
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}
@@ -369,7 +465,7 @@ export function AddBannerModal({ isOpen, onClose }: AddBannerModalProps) {
               onClick={handleClearAll}
               className={cn(
                 BUTTON_STYLES.secondary.md,
-                "font-inter text-[14px] font-semibold text-[#0F172B] hover:bg-slate-100 bg-[#F1F5F9]"
+                "font-inter text-[14px] font-semibold text-[#0F172B] hover:bg-slate-100 bg-[#F1F5F9]",
               )}
             >
               Clear All
@@ -380,7 +476,7 @@ export function AddBannerModal({ isOpen, onClose }: AddBannerModalProps) {
               disabled={!isDirty || !desktopImageUrl || !mobileImageUrl}
               className={cn(
                 BUTTON_STYLES.primary.md,
-                "font-inter text-[14px] font-semibold text-white leading-5 px-6"
+                "font-inter text-[14px] font-semibold text-white leading-5 px-6",
               )}
             >
               Create Banner

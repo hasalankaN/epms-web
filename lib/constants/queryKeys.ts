@@ -66,4 +66,11 @@ export const queryKeys = {
   chatRooms: "chatRooms",
   chatMessages: "chatMessages",
   chatUnreadCount: "chatUnreadCount",
+
+  // Website Management
+  websiteBanners: "websiteBanners",
+  websiteGallery: "websiteGallery",
+  websiteTestimonials: "websiteTestimonials",
+  websiteNewsPosts: "websiteNewsPosts",
+  websiteTerms: "websiteTerms",
 };
