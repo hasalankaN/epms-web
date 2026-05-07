@@ -41,4 +41,12 @@ export const referralSidebarData: SidebarNavItem[] = [
     icon: "invoice",
     value: "my-payments",
   },
+  {
+    id: 6,
+    type: "link",
+    title: "Courses and Batches",
+    url: "/referral-panel/courses-and-batches",
+    icon: "book-open-text",
+    value: "courses-and-batches",
+  },
 ];

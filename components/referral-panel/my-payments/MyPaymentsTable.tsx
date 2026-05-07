@@ -6,7 +6,6 @@ import type { Column } from "@/components/common/table/DataTable";
 import { DataTable  } from "@/components/common/table/DataTable";
 import { StatusPopover } from "@/components/common/StatusPopover";
 import { ViewSlipModal } from "@/components/admin-panel/approvals/bank-transfers/modals/ViewSlipModal";
-import { Checkbox } from "@/components/ui/checkbox";
 
 import type { PaymentDataType} from "@/types/payment";
 import { PAYMENT_STATUS_CONFIG } from "@/types/payment";
@@ -30,11 +29,9 @@ export function MyPaymentsTable({
 }: MyPaymentsTableProps) {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedSlipUrl, setSelectedSlipUrl] = useState<string | undefined>(undefined);
-  const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
 
   const itemsPerPage = 10;
   const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
-  const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -42,46 +39,12 @@ export function MyPaymentsTable({
     return data.slice(startIndex, startIndex + itemsPerPage);
   }, [data, currentPage]);
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      const newSelection = Object.fromEntries(paginatedData.map((item) => [item.id, true]));
-
-      setRowSelection(newSelection);
-    } else {
-      setRowSelection({});
-    }
-  };
-
-  const handleSelectRow = (id: string, checked: boolean) => {
-    setRowSelection((prev) => ({ ...prev, [id]: checked }));
-  };
-
   const handleViewSlip = (url?: string | null) => {
     setSelectedSlipUrl(url ?? undefined);
     setIsViewModalOpen(true);
   };
 
   const columns: Column<PaymentDataType>[] = [
-    {
-      id: "select",
-      header: () => (
-        <Checkbox
-          checked={selectedRowCount === paginatedData.length && paginatedData.length > 0}
-          onCheckedChange={(checked) => handleSelectAll(!!checked)}
-          className="data-[state=checked]:bg-[#E60076] data-[state=checked]:border-[#E60076]"
-          aria-label="Select all"
-        />
-      ),
-      cell: (item) => (
-        <Checkbox
-          checked={!!rowSelection[item.id]}
-          onCheckedChange={(checked) => handleSelectRow(item.id, !!checked)}
-          className="data-[state=checked]:bg-[#E60076] data-[state=checked]:border-[#E60076]"
-          aria-label="Select row"
-        />
-      ),
-      className: "w-12 px-4",
-    },
     {
       header: "Requested Date",
       accessorKey: "requestedDate",
@@ -153,7 +116,7 @@ export function MyPaymentsTable({
         columns={columns}
         isLoading={isLoading}
         isError={isError}
-        showCheckboxes={true}
+        showCheckboxes={false}
         keyExtractor={(item) => item.id}
         pagination={{
           variant: "simple",
@@ -161,10 +124,9 @@ export function MyPaymentsTable({
           currentPage,
           totalPages,
           onPageChange,
-          selectedRowCount,
           itemsPerPage,
         }}
-        rowClassName={(item) => (rowSelection[item.id] ? "selected" : "")}
+        rowClassName={() => ""}
       />
 
       <ViewSlipModal
