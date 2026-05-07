@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 
-import { X, Loader2 } from "lucide-react";
+import { X } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -177,11 +177,11 @@ export function EnrollStudentModal({ isOpen, onClose }: EnrollStudentModalProps)
       <Dialog open={isOpen} onOpenChange={(open) => !open && handleCloseAttempt()}>
         <DialogContent
           animateChildren={true}
-          className="flex h-[704px] w-[95%] max-w-[720px] flex-col gap-4 overflow-hidden rounded-xl border border-[#E2E8F0] bg-white p-6 shadow-[0_4px_6px_-4px_rgba(16,24,40,0.10),0_10px_15px_-3px_rgba(0,0,0,0.10)] [&>button]:hidden"
+          className="flex max-h-[90vh] w-[95%] max-w-[720px] flex-col gap-0 overflow-hidden rounded-lg sm:rounded-xl border border-[#E2E8F0] bg-white p-0 shadow-[0_4px_6px_-4px_rgba(16,24,40,0.10),0_10px_15px_-3px_rgba(0,0,0,0.10)] [&>button]:hidden"
         >
           {/* Header */}
-          <motion.div variants={itemVariants} className="flex flex-col gap-4 shrink-0">
-            <div className="flex items-center justify-between">
+          <motion.div variants={itemVariants} className="flex flex-col p-4 sm:p-6 pb-0 shrink-0">
+            <div className="flex items-center justify-between mb-4">
               <DialogTitle className="font-inter text-lg font-semibold leading-[30px] text-[#0F172B]">
                 Enroll New Student
               </DialogTitle>
@@ -200,9 +200,9 @@ export function EnrollStudentModal({ isOpen, onClose }: EnrollStudentModalProps)
             variants={itemVariants}
             id="enroll-student-form"
             onSubmit={handleSubmit(onSubmit)}
-            className="flex-1 overflow-y-auto pt-[16px] custom-scrollbar pr-2 -mr-2"
+            className="flex-1 overflow-y-auto p-4 sm:p-6 sm:pt-0 pt-0 custom-scrollbar"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
               {/* First Name */}
               <div className="space-y-1">
                 <FieldLabel required>First Name</FieldLabel>
@@ -520,24 +520,31 @@ export function EnrollStudentModal({ isOpen, onClose }: EnrollStudentModalProps)
           </motion.form>
 
           {/* Footer */}
-          <motion.div variants={itemVariants} className="flex items-center justify-end pt-2 shrink-0 mt-auto">
+          <motion.div
+            variants={itemVariants}
+            className="flex items-center justify-end gap-3 p-4 sm:p-6 pt-4 border-t border-[#E2E8F0] shrink-0 mt-auto"
+          >
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => reset()}
+              className={cn(
+                BUTTON_STYLES.secondary.md,
+                "font-inter text-[14px] font-semibold text-[#0F172B] hover:bg-slate-100 bg-[#F1F5F9]"
+              )}
+            >
+              Clear All
+            </Button>
             <Button
               type="submit"
               form="enroll-student-form"
               disabled={isPending}
               className={cn(
                 BUTTON_STYLES.primary.md,
-                "font-inter text-[14px] font-semibold text-white leading-5 px-10 h-10 bg-[#E60076] hover:bg-[#F6339A]"
+                "font-inter text-[14px] font-semibold text-white leading-5 px-10 bg-[#E60076] hover:bg-[#D0006B]"
               )}
             >
-              {isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save"
-              )}
+              {isPending ? "Saving..." : "Save"}
             </Button>
           </motion.div>
         </DialogContent>

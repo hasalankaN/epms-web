@@ -48,6 +48,34 @@ export default function DynamicBreadcrumb({ sidebarData }: { sidebarData: Sideba
   const exactMatch = findLinkWithParent(pathname);
   const IGNORED_LABELS = ["Admin Panel", "Lecturer Panel", "Referral Panel"];
 
+  // Special case for commission student detail
+  if (pathname.includes("/referral-panel/my-commissions/student/")) {
+    const labels = ["My Commissions", "View Student"];
+
+    return (
+      <Breadcrumb className="hidden lg:flex">
+        <BreadcrumbList>
+          {labels.map((label, index) => {
+            const isLast = index === labels.length - 1;
+
+            return (
+              <React.Fragment key={`${index}-${label}`}>
+                {index > 0 && <BreadcrumbSeparator />}
+                <BreadcrumbItem>
+                  {isLast ? (
+                    <BreadcrumbPage className="text-sm font-normal text-gray-900">{label}</BreadcrumbPage>
+                  ) : (
+                    <span className="text-sm font-normal text-gray-500">{label}</span>
+                  )}
+                </BreadcrumbItem>
+              </React.Fragment>
+            );
+          })}
+        </BreadcrumbList>
+      </Breadcrumb>
+    );
+  }
+
   if (exactMatch) {
     const { parentTitle, linkTitle } = exactMatch;
     
@@ -95,19 +123,23 @@ export default function DynamicBreadcrumb({ sidebarData }: { sidebarData: Sideba
   // Fallback: Generate breadcrumbs from path segments
   const allSegments = pathSegments.map((segment, index) => {
     const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(segment);
+    const isNumericId = /^\d+$/.test(segment);
+    const isID = isUUID || isNumericId;
     
     return {
       segment,
       href: "/" + pathSegments.slice(0, index + 1).join("/"),
-      formatted: isUUID ? "View" : formatBreadcrumbSegment(segment)
+      formatted: isID ? "View" : formatBreadcrumbSegment(segment)
     };
   });
 
+  const CUSTOM_IGNORED_LABELS = [...IGNORED_LABELS, "Student"];
+
   const displayedSegments = allSegments.filter(
-    (item) => !IGNORED_LABELS.includes(item.formatted)
+    (item) => !CUSTOM_IGNORED_LABELS.includes(item.formatted)
   );
 
-  const filteredSegments = displayedSegments;
+  const filteredSegments = [...displayedSegments];
 
   // Remove "View" if it's the last item and there are other segments
   // BUT only if there are at least 3 segments (e.g. Course Management > View > View or Course Management > Edit > View)
