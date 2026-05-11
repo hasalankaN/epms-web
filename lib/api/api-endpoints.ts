@@ -237,9 +237,31 @@ export const API_ENDPOINTS = {
     CREATE: `/api/v1/admin/notifications`,
     GET_SENT: `/api/v1/admin/notifications/sent`,
     GET_SCHEDULED: `/api/v1/admin/notifications/scheduled`,
-    UPDATE_SCHEDULED: (id: string) => `/api/v1/admin/notifications/scheduled/${id}`,
-    DELETE_SCHEDULED: (id: string) => `/api/v1/admin/notifications/scheduled/${id}`,
+    UPDATE_SCHEDULED: (id: string) =>
+      `/api/v1/admin/notifications/scheduled/${id}`,
+    DELETE_SCHEDULED: (id: string) =>
+      `/api/v1/admin/notifications/scheduled/${id}`,
     GET_RESPONSE_LOGS: `/api/v1/admin/notifications/response-tracking`,
+  },
+  website: {
+    BANNERS: `/api/v1/website/banners`,
+    BANNER: (id: string) => `/api/v1/website/banners/${id}`,
+    BANNERS_REORDER: `/api/v1/website/banners/bulk/reorder`,
+    GALLERY: `/api/v1/website/gallery`,
+    ALBUM: (id: string) => `/api/v1/website/gallery/${id}`,
+    ALBUM_IMAGES: (albumId: string) =>
+      `/api/v1/website/gallery/${albumId}/images`,
+    ALBUM_IMAGE: (albumId: string, imageId: string) =>
+      `/api/v1/website/gallery/${albumId}/images/${imageId}`,
+    TESTIMONIALS: `/api/v1/website/testimonials`,
+    TESTIMONIAL: (id: string) => `/api/v1/website/testimonials/${id}`,
+    TESTIMONIALS_REORDER: `/api/v1/website/testimonials/bulk/reorder`,
+    TESTIMONIAL_VISIBILITY: (id: string) =>
+      `/api/v1/website/testimonials/${id}/visibility`,
+    NEWS_POSTS: `/api/v1/website/news-posts`,
+    NEWS_POST: (id: string) => `/api/v1/website/news-posts/${id}`,
+    NEWS_POST_STATUS: (id: string) => `/api/v1/website/news-posts/${id}/status`,
+    TERMS: `/api/v1/website/terms`,
   },
   chat: {
     GET_ROOMS: `/api/v1/chat/rooms`,
@@ -249,6 +271,7 @@ export const API_ENDPOINTS = {
     DELETE_MESSAGE: (messageId: string) => `/api/v1/chat/messages/${messageId}`,
     GET_UNREAD_COUNT: `/api/v1/chat/unread-count`,
     UPLOAD_FILE: `/api/v1/chat/upload`,
-    GET_PARTICIPANTS: (roomId: string) => `/api/v1/chat/rooms/${roomId}/participants`,
+    GET_PARTICIPANTS: (roomId: string) =>
+      `/api/v1/chat/rooms/${roomId}/participants`,
   },
 };

@@ -10,13 +10,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { AUTH_INPUT, AUTH_TYPOGRAPHY, BUTTON_STYLES } from "@/lib/constants/theme";
+import {
+  AUTH_INPUT,
+  AUTH_TYPOGRAPHY,
+  BUTTON_STYLES,
+} from "@/lib/constants/theme";
 import ImageUpload from "@/components/common/ImageUpload";
 import type { BannerItem } from "@/types/website-management";
 import { motion, itemVariants } from "@/components/ui/dialog";
+import { useUpdateBanner } from "@/hooks/api/website/useBanners";
 
 interface BannerAccordionItemProps {
-  banner: BannerItem;
+  banner: BannerItem & { bannerId: string };
   index: number;
   isExpanded: boolean;
   onToggle: () => void;
@@ -30,10 +35,40 @@ export function BannerAccordionItem({
   onToggle,
   onDelete,
 }: BannerAccordionItemProps) {
+  const updateBanner = useUpdateBanner();
+
+  const [title, setTitle] = useState(banner.title ?? "");
+  const [subTitle, setSubTitle] = useState(banner.subTitle ?? "");
+  const [paragraph, setParagraph] = useState(banner.paragraph ?? "");
   const [enableButtons, setEnableButtons] = useState(banner.enableButtons);
-  const [numberOfButtons, setNumberOfButtons] = useState<1 | 2>(banner.numberOfButtons);
+
+  const [numberOfButtons, setNumberOfButtons] = useState<1 | 2>(
+    banner.numberOfButtons,
+  );
+
+  const [button1Text, setButton1Text] = useState(banner.button1Text ?? "");
+  const [button1Link, setButton1Link] = useState(banner.button1Link ?? "");
+  const [button2Text, setButton2Text] = useState(banner.button2Text ?? "");
+  const [button2Link, setButton2Link] = useState(banner.button2Link ?? "");
   const [desktopImageUrl, setDesktopImageUrl] = useState<string>("");
   const [mobileImageUrl, setMobileImageUrl] = useState<string>("");
+
+  const handleUpdate = () => {
+    updateBanner.mutate({
+      id: banner.bannerId,
+      title,
+      subTitle,
+      paragraph,
+      enableButtons,
+      numberOfButtons,
+      button1Text,
+      button1Link,
+      button2Text,
+      button2Link,
+      ...(desktopImageUrl && { desktopImageUrl }),
+      ...(mobileImageUrl && { mobileImageUrl }),
+    });
+  };
 
   return (
     <motion.div variants={itemVariants} className="flex flex-col w-full">
@@ -41,7 +76,9 @@ export function BannerAccordionItem({
       <div
         className={cn(
           "flex px-2 py-[20px] items-center justify-between gap-[12px] self-stretch rounded-lg border border-[#E2E8F0] transition-all cursor-pointer",
-          isExpanded ? "bg-[#F8FAFC] shadow-none" : "bg-white shadow-[0_1px_2px_0_rgba(16,24,40,0.05)]"
+          isExpanded
+            ? "bg-[#F8FAFC] shadow-none"
+            : "bg-white shadow-[0_1px_2px_0_rgba(16,24,40,0.05)]",
         )}
         onClick={onToggle}
       >
@@ -105,7 +142,8 @@ export function BannerAccordionItem({
                     <div className="space-y-1.5">
                       <Label className={AUTH_TYPOGRAPHY.label}>Title</Label>
                       <Input
-                        defaultValue={banner.title}
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
                         placeholder="Enter title"
                         className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder)}
                       />
@@ -113,7 +151,8 @@ export function BannerAccordionItem({
                     <div className="space-y-1.5">
                       <Label className={AUTH_TYPOGRAPHY.label}>Sub Title</Label>
                       <Input
-                        defaultValue={banner.subTitle}
+                        value={subTitle}
+                        onChange={(e) => setSubTitle(e.target.value)}
                         placeholder="Enter sub title"
                         className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder)}
                       />
@@ -124,12 +163,13 @@ export function BannerAccordionItem({
                   <div className="space-y-1.5">
                     <Label className={AUTH_TYPOGRAPHY.label}>Paragraph</Label>
                     <Textarea
-                      defaultValue={banner.paragraph}
+                      value={paragraph}
+                      onChange={(e) => setParagraph(e.target.value)}
                       placeholder="Enter paragraph text"
                       rows={4}
                       className={cn(
                         "resize-y rounded-md border border-gray-300 text-sm focus-visible:ring-[#E60076]",
-                        AUTH_INPUT.placeholder
+                        AUTH_INPUT.placeholder,
                       )}
                     />
                   </div>
@@ -167,36 +207,50 @@ export function BannerAccordionItem({
                   {/* Enable Buttons */}
                   <div className="grid grid-cols-1 gap-[32px] md:gap-4 md:grid-cols-2">
                     <div className="flex flex-col gap-2">
-                      <Label className={AUTH_TYPOGRAPHY.label}>Enable Buttons</Label>
+                      <Label className={AUTH_TYPOGRAPHY.label}>
+                        Enable Buttons
+                      </Label>
                       <div className="flex items-center gap-4">
                         {["Yes", "No"].map((opt) => (
-                          <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
+                          <label
+                            key={opt}
+                            className="flex items-center gap-1.5 cursor-pointer"
+                          >
                             <input
                               type="radio"
-                              name={`enable-buttons-${banner.id}`}
+                              name={`enable-buttons-${banner.bannerId}`}
                               checked={enableButtons === (opt === "Yes")}
                               onChange={() => setEnableButtons(opt === "Yes")}
                               className="h-4 w-4 cursor-pointer accent-[#0F172B]"
                             />
-                            <span className="text-sm font-medium text-[#45556C]">{opt}</span>
+                            <span className="text-sm font-medium text-[#45556C]">
+                              {opt}
+                            </span>
                           </label>
                         ))}
                       </div>
                     </div>
 
                     <div className="flex flex-col gap-2">
-                      <Label className={AUTH_TYPOGRAPHY.label}>No. of Buttons</Label>
+                      <Label className={AUTH_TYPOGRAPHY.label}>
+                        No. of Buttons
+                      </Label>
                       <div className="flex items-center gap-4">
                         {([1, 2] as const).map((num) => (
-                          <label key={num} className="flex items-center gap-1.5 cursor-pointer">
+                          <label
+                            key={num}
+                            className="flex items-center gap-1.5 cursor-pointer"
+                          >
                             <input
                               type="radio"
-                              name={`no-of-buttons-${banner.id}`}
+                              name={`no-of-buttons-${banner.bannerId}`}
                               checked={numberOfButtons === num}
                               onChange={() => setNumberOfButtons(num)}
                               className="h-4 w-4 cursor-pointer accent-[#0F172B]"
                             />
-                            <span className="text-sm font-medium text-[#45556C]">{num}</span>
+                            <span className="text-sm font-medium text-[#45556C]">
+                              {num}
+                            </span>
                           </label>
                         ))}
                       </div>
@@ -209,21 +263,30 @@ export function BannerAccordionItem({
                       {/* Button 1 */}
                       <div className="grid grid-cols-1 gap-[32px] md:gap-4 md:grid-cols-2">
                         <div className="space-y-1.5">
-                          <Label className={AUTH_TYPOGRAPHY.label}>Button 1 Text</Label>
+                          <Label className={AUTH_TYPOGRAPHY.label}>
+                            Button 1 Text
+                          </Label>
                           <Input
-                            defaultValue={banner.button1Text}
+                            value={button1Text}
+                            onChange={(e) => setButton1Text(e.target.value)}
                             placeholder="Enter button text"
-                            className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder)}
+                            className={cn(
+                              AUTH_INPUT.base,
+                              AUTH_INPUT.placeholder,
+                            )}
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className={AUTH_TYPOGRAPHY.label}>Button 1 Link</Label>
+                          <Label className={AUTH_TYPOGRAPHY.label}>
+                            Button 1 Link
+                          </Label>
                           <div className="flex h-10 items-center rounded-md border border-gray-300 bg-white focus-within:ring-2 focus-within:ring-[#E60076] transition-all overflow-hidden">
                             <span className="border-r border-gray-300 px-3 text-sm font-medium text-[#64748B] h-full flex items-center bg-[#F8FAFC]">
                               https://
                             </span>
                             <input
-                              defaultValue={banner.button1Link}
+                              value={button1Link}
+                              onChange={(e) => setButton1Link(e.target.value)}
                               placeholder="your-url.com/path"
                               className="flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-[#90A1B9] placeholder:italic w-full"
                             />
@@ -235,21 +298,30 @@ export function BannerAccordionItem({
                       {numberOfButtons === 2 && (
                         <div className="grid grid-cols-1 gap-[32px] md:gap-4 md:grid-cols-2">
                           <div className="space-y-1.5">
-                            <Label className={AUTH_TYPOGRAPHY.label}>Button 2 Text</Label>
+                            <Label className={AUTH_TYPOGRAPHY.label}>
+                              Button 2 Text
+                            </Label>
                             <Input
-                              defaultValue={banner.button2Text}
+                              value={button2Text}
+                              onChange={(e) => setButton2Text(e.target.value)}
                               placeholder="Enter button text"
-                              className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder)}
+                              className={cn(
+                                AUTH_INPUT.base,
+                                AUTH_INPUT.placeholder,
+                              )}
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <Label className={AUTH_TYPOGRAPHY.label}>Button 2 Link</Label>
+                            <Label className={AUTH_TYPOGRAPHY.label}>
+                              Button 2 Link
+                            </Label>
                             <div className="flex h-10 items-center rounded-md border border-gray-300 bg-white focus-within:ring-2 focus-within:ring-[#E60076] transition-all overflow-hidden">
                               <span className="border-r border-gray-300 px-3 text-sm font-medium text-[#64748B] h-full flex items-center bg-[#F8FAFC]">
                                 https://
                               </span>
                               <input
-                                defaultValue={banner.button2Link}
+                                value={button2Link}
+                                onChange={(e) => setButton2Link(e.target.value)}
                                 placeholder="your-url.com/path"
                                 className="flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-[#90A1B9] placeholder:italic w-full"
                               />
@@ -263,12 +335,14 @@ export function BannerAccordionItem({
                   {/* Update Button */}
                   <div className="flex justify-end">
                     <Button
+                      onClick={handleUpdate}
+                      disabled={updateBanner.isPending}
                       className={cn(
                         BUTTON_STYLES.secondary.md,
-                        "font-inter text-[14px] font-semibold text-[#0F172B]"
+                        "font-inter text-[14px] font-semibold text-[#0F172B]",
                       )}
                     >
-                      Update Details
+                      {updateBanner.isPending ? "Saving..." : "Update Details"}
                     </Button>
                   </div>
                 </div>

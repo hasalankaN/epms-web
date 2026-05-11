@@ -2,11 +2,9 @@
 
 import React, { Suspense, useState } from "react";
 
-
 import { Plus } from "lucide-react";
 
 import { useTabNavigation } from "@/hooks/useTabNavigation";
-
 
 import { cn } from "@/lib/utils";
 import { BUTTON_STYLES } from "@/lib/constants/theme";
@@ -20,6 +18,8 @@ import { TermsAndConditionsTab } from "@/components/admin-panel/website-manageme
 import { AddBannerModal } from "@/components/admin-panel/website-management/modals/AddBannerModal";
 import { AddAlbumModal } from "@/components/admin-panel/website-management/modals/AddAlbumModal";
 import { AddEditNewsPosterModal } from "@/components/admin-panel/website-management/modals/AddEditNewsPosterModal";
+import { useCreateAlbum } from "@/hooks/api/website/useGallery";
+import { useCreateNewsPost } from "@/hooks/api/website/useNewsPosts";
 
 export type WebsiteManagementTabType =
   | "hero-banner"
@@ -39,12 +39,19 @@ const tabs = [
 ] as const;
 
 function WebsiteManagementContent() {
-  const { activeTab, handleTabChange } = useTabNavigation<WebsiteManagementTabType>("hero-banner", tabs.map(t => t.value));
+  const { activeTab, handleTabChange } =
+    useTabNavigation<WebsiteManagementTabType>(
+      "hero-banner",
+      tabs.map((t) => t.value),
+    );
 
   const [isAddBannerOpen, setIsAddBannerOpen] = useState(false);
   const [isAddAlbumOpen, setIsAddAlbumOpen] = useState(false);
   const [isAddTestimonialOpen, setIsAddTestimonialOpen] = useState(false);
   const [isAddNewsOpen, setIsAddNewsOpen] = useState(false);
+
+  const createAlbum = useCreateAlbum();
+  const createNewsPost = useCreateNewsPost();
 
   return (
     <div className="space-y-3 p-4 md:p-6">
@@ -64,7 +71,7 @@ function WebsiteManagementContent() {
                         "font-inter text-[14px] leading-[20px]",
                         activeTab === tab.value
                           ? "text-[#F6339A] font-medium"
-                          : "text-[#45556C] font-normal hover:text-[#0F172B]"
+                          : "text-[#45556C] font-normal hover:text-[#0F172B]",
                       )}
                     >
                       {tab.label}
@@ -84,7 +91,7 @@ function WebsiteManagementContent() {
               onClick={() => setIsAddBannerOpen(true)}
               className={cn(
                 BUTTON_STYLES.primary.md,
-                "text-sm font-semibold text-white px-3 md:px-4 shrink-0"
+                "text-sm font-semibold text-white px-3 md:px-4 shrink-0",
               )}
             >
               <Plus className="h-5 w-5 md:hidden" />
@@ -98,7 +105,7 @@ function WebsiteManagementContent() {
               onClick={() => setIsAddAlbumOpen(true)}
               className={cn(
                 BUTTON_STYLES.primary.md,
-                "text-sm font-semibold text-white px-3 md:px-4 shrink-0"
+                "text-sm font-semibold text-white px-3 md:px-4 shrink-0",
               )}
             >
               <Plus className="h-5 w-5 md:hidden" />
@@ -112,7 +119,7 @@ function WebsiteManagementContent() {
               onClick={() => setIsAddTestimonialOpen(true)}
               className={cn(
                 BUTTON_STYLES.primary.md,
-                "text-sm font-semibold text-white px-3 md:px-4 shrink-0"
+                "text-sm font-semibold text-white px-3 md:px-4 shrink-0",
               )}
             >
               <Plus className="h-5 w-5 md:hidden" />
@@ -126,7 +133,7 @@ function WebsiteManagementContent() {
               onClick={() => setIsAddNewsOpen(true)}
               className={cn(
                 BUTTON_STYLES.primary.md,
-                "text-sm font-semibold text-white px-3 md:px-4 shrink-0"
+                "text-sm font-semibold text-white px-3 md:px-4 shrink-0",
               )}
             >
               <Plus className="h-5 w-5 md:hidden" />
@@ -141,15 +148,15 @@ function WebsiteManagementContent() {
       {activeTab === "section-banners" && <BannerManagementTab />}
       {activeTab === "gallery-management" && <GalleryManagementTab />}
       {activeTab === "testimonials" && (
-        <TestimonialsTab 
-          isAddOpen={isAddTestimonialOpen} 
-          onAddClose={() => setIsAddTestimonialOpen(false)} 
+        <TestimonialsTab
+          isAddOpen={isAddTestimonialOpen}
+          onAddClose={() => setIsAddTestimonialOpen(false)}
         />
       )}
       {activeTab === "news-posters" && (
-        <NewsPostersTab 
-          isAddOpen={isAddNewsOpen} 
-          onAddClose={() => setIsAddNewsOpen(false)} 
+        <NewsPostersTab
+          isAddOpen={isAddNewsOpen}
+          onAddClose={() => setIsAddNewsOpen(false)}
         />
       )}
       {activeTab === "terms-and-conditions" && <TermsAndConditionsTab />}
@@ -158,23 +165,33 @@ function WebsiteManagementContent() {
       <AddBannerModal
         isOpen={isAddBannerOpen}
         onClose={() => setIsAddBannerOpen(false)}
+        type={activeTab === "section-banners" ? "SECTION" : "HERO"}
       />
       <AddAlbumModal
         isOpen={isAddAlbumOpen}
         onClose={() => setIsAddAlbumOpen(false)}
         onCreate={(name, thumbnail) => {
-          console.log("Creating album:", { name, thumbnail });
-
-          // Handle creation logic here
+          createAlbum.mutate(
+            { name, thumbnailUrl: thumbnail },
+            { onSuccess: () => setIsAddAlbumOpen(false) },
+          );
         }}
       />
       <AddEditNewsPosterModal
         isOpen={isAddNewsOpen}
         onClose={() => setIsAddNewsOpen(false)}
         onSave={(data) => {
-          console.log("Saving news/poster from page level:", data);
-          setIsAddNewsOpen(false);
+          createNewsPost.mutate(
+            {
+              title: data.title,
+              content: data.content,
+              thumbnailUrl: data.thumbnailUrl,
+              imageUrls: data.gallery?.filter(Boolean) ?? [],
+            },
+            { onSuccess: () => setIsAddNewsOpen(false) },
+          );
         }}
+        isSubmitting={createNewsPost.isPending}
       />
     </div>
   );
