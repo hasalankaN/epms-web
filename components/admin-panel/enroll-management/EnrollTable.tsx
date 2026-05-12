@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React from "react";
+
+import { useRouter } from "next/navigation";
 
 import { MoreVertical } from "lucide-react";
 
@@ -27,6 +29,7 @@ interface EnrollTableProps {
   isError?: boolean;
   currentPage: number;
   onPageChange: (page: number) => void;
+  totalCount: number;
 }
 
 export function EnrollTable({
@@ -37,18 +40,12 @@ export function EnrollTable({
   isError = false,
   currentPage,
   onPageChange,
+  totalCount,
 }: EnrollTableProps) {
+  const router = useRouter();
   const itemsPerPage = 10;
-
-  const totalCount = data.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-
-    return data.slice(startIndex, startIndex + itemsPerPage);
-  }, [data, currentPage, itemsPerPage]);
 
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
@@ -65,9 +62,9 @@ export function EnrollTable({
   };
 
   const handleAction = (action: string, enroll: EnrollDataType) => {
-    console.log(`Action: ${action}`, enroll);
-
-    // Add logic here when actual modals are required
+    if (action === "view") {
+      router.push(`/admin-panel/enroll-management/student/${enroll.studentUserId}`);
+    }
   };
 
   const columns: Column<EnrollDataType>[] = [
@@ -135,7 +132,18 @@ export function EnrollTable({
       ),
       accessorKey: "phone",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.phone}</div>,
+      cell: (item) => (
+        item.phone && item.phone !== "-" ? (
+          <a
+            href={`tel:${item.phone}`}
+            className="text-[11px] font-medium text-[#45556C] transition-colors hover:text-[#E60076]"
+          >
+            {item.phone}
+          </a>
+        ) : (
+          <span className="text-[11px] font-medium text-[#45556C]">{item.phone || "-"}</span>
+        )
+      ),
     },
     {
       header: () => (
@@ -145,13 +153,35 @@ export function EnrollTable({
       ),
       accessorKey: "whatsapp",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.whatsapp}</div>,
+      cell: (item) => (
+        item.whatsapp && item.whatsapp !== "-" ? (
+          <a
+            href={`https://wa.me/${item.whatsapp.replace(/\s+/g, "")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] font-medium text-[#45556C] transition-colors hover:text-[#E60076]"
+          >
+            {item.whatsapp}
+          </a>
+        ) : (
+          <span className="text-[11px] font-medium text-[#45556C]">{item.whatsapp || "-"}</span>
+        )
+      ),
     },
     {
       header: "Batch or Course",
       accessorKey: "scope",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[120px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.scope}</div>,
+      cell: (item) => (
+        <div className="flex flex-col">
+          <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
+            {item.scope}
+          </div>
+          <div className="text-[9px] font-normal text-[#94A3B8] capitalize">
+            {item.targetType.toLowerCase()}
+          </div>
+        </div>
+      ),
     },
     {
       header: "Status",
@@ -198,7 +228,7 @@ export function EnrollTable({
   return (
     <>
       <DataTable
-        data={paginatedData}
+        data={data}
         columns={columns}
         keyExtractor={(item) => item.id}
         isLoading={isLoading}
