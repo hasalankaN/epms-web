@@ -40,6 +40,7 @@ export function StudentReferralsTable({
   isLoading,
 }: StudentReferralsTableProps) {
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
+  
   const [selectedItem, setSelectedItem] =
     useState<StudentReferralDataType | null>(null);
 
@@ -47,6 +48,7 @@ export function StudentReferralsTable({
     useToggleReferralStudentStatus();
 
   const itemsPerPage = 10;
+
   const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
 
   const handleAction = (action: string, item: StudentReferralDataType) => {
@@ -123,6 +125,7 @@ export function StudentReferralsTable({
             : item.status === "Active"
               ? "ACTIVE"
               : "INACTIVE";
+
         const options = Object.entries(STATUS_CONFIG).map(
           ([status, config]) => ({
             value: status,

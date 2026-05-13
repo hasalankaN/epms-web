@@ -25,21 +25,27 @@ export function AgentTeamInfoTable({ memberId }: AgentTeamInfoTableProps) {
 
   const tableData: AgentTeamInfoDataType[] = useMemo(() => {
     if (!data?.results) return [];
+
     return data.results.map((item) => ({
       id: item.id,
       createdDate: item.created_at
-        ? new Date(item.created_at).toLocaleDateString("en-GB", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-          }).replace(/\//g, "/")
+        ? new Date(item.created_at)
+            .toLocaleDateString("en-GB", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            })
+            .replace(/\//g, "/")
         : "—",
       memberName: item.name || "—",
       memberId: item.member_code || "—",
-      comReceived: Number(item.total_commissions_received || 0).toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
+      comReceived: Number(item.total_commissions_received || 0).toLocaleString(
+        "en-US",
+        {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        },
+      ),
     }));
   }, [data]);
 
@@ -47,41 +53,54 @@ export function AgentTeamInfoTable({ memberId }: AgentTeamInfoTableProps) {
     {
       header: "Created Date",
       accessorKey: "createdDate",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[120px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[120px]",
       cell: (item) => (
-        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{item.createdDate}</div>
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.createdDate}
+        </div>
       ),
     },
     {
       header: "Member Name",
       accessorKey: "memberName",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[150px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[150px]",
       cell: (item) => (
-        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{item.memberName}</div>
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.memberName}
+        </div>
       ),
     },
     {
       header: "Member ID",
       accessorKey: "memberId",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[120px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[120px]",
       cell: (item) => (
-        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{item.memberId}</div>
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.memberId}
+        </div>
       ),
     },
     {
       header: "Com. Received",
       accessorKey: "comReceived",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[150px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[150px]",
       cell: (item) => (
-        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{item.comReceived}</div>
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.comReceived}
+        </div>
       ),
     },
     {
       header: "Action",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[80px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[80px]",
       cell: (item) => (
         <button
-          onClick={() => console.log('View team member', item.id)}
+          onClick={() => console.log("View team member", item.id)}
           className="text-[11px] font-semibold text-[#F6339A] hover:underline"
         >
           View
@@ -93,7 +112,9 @@ export function AgentTeamInfoTable({ memberId }: AgentTeamInfoTableProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-3">
-        <h3 className="text-[14px] font-medium leading-[20px] text-[#1D293D] font-inter">Team Info</h3>
+        <h3 className="text-[14px] font-medium leading-[20px] text-[#1D293D] font-inter">
+          Team Info
+        </h3>
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-8 w-full" />
@@ -105,7 +126,9 @@ export function AgentTeamInfoTable({ memberId }: AgentTeamInfoTableProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      <h3 className="text-[14px] font-medium leading-[20px] text-[#1D293D] font-inter">Team Info</h3>
+      <h3 className="text-[14px] font-medium leading-[20px] text-[#1D293D] font-inter">
+        Team Info
+      </h3>
       <DataTable
         data={tableData}
         columns={columns}

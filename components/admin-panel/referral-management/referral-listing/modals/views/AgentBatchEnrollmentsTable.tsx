@@ -42,9 +42,11 @@ export function AgentBatchEnrollmentsTable({
   memberId,
 }: AgentBatchEnrollmentsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
+
   const [dateRange, setDateRange] = useState<
     { from?: Date; to?: Date } | undefined
   >();
+
   const [batchFilterLabel, setBatchFilterLabel] = useState<string | null>(null);
 
   const { data, isLoading } = useGetReferralAgentBatches(
@@ -82,8 +84,11 @@ export function AgentBatchEnrollmentsTable({
   }, [data]);
 
   const totalResults = data?.totalResults ?? 0;
+
   const totalPages = data?.totalPages ?? 1;
+
   const totalCommissions = data?.filtered_total_commissions ?? 0;
+
   const formattedTotal = Number(totalCommissions).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,

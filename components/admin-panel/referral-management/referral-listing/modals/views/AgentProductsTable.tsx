@@ -40,9 +40,11 @@ interface AgentProductsTableProps {
 
 export function AgentProductsTable({ memberId }: AgentProductsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
+
   const [dateRange, setDateRange] = useState<
     { from?: Date; to?: Date } | undefined
   >();
+
   const [productFilterLabel, setProductFilterLabel] = useState<string | null>(
     null,
   );
@@ -82,8 +84,11 @@ export function AgentProductsTable({ memberId }: AgentProductsTableProps) {
   }, [data]);
 
   const totalResults = data?.totalResults ?? 0;
+
   const totalPages = data?.totalPages ?? 1;
+
   const totalCommissions = data?.filtered_total_commissions ?? 0;
+
   const formattedTotal = Number(totalCommissions).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
