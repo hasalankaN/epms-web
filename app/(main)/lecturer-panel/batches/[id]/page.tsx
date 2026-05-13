@@ -106,18 +106,6 @@ export default function BatchDetailPage() {
     setIsMaterialModalOpen(false);
   };
 
-  const handleSaveSchedule = async (data: { title: string; zoom_link: string; zoom_start_time: string; zoom_duration: number }) => {
-    if (!activeTierId) return;
-    await createMaterialMutation.mutateAsync({
-      tier_id: activeTierId,
-      material_type: "ZOOM",
-      title: data.title,
-      zoom_link: data.zoom_link,
-      zoom_start_time: data.zoom_start_time,
-      zoom_duration: data.zoom_duration
-    });
-    setIsScheduleModalOpen(false);
-  };
 
   if (isLoading || isTiersLoading) {
     return (
@@ -263,8 +251,11 @@ export default function BatchDetailPage() {
       <ScheduleClassModal
         isOpen={isScheduleModalOpen}
         onClose={() => setIsScheduleModalOpen(false)}
-        onSave={handleSaveSchedule}
-        isLoading={createMaterialMutation.isPending}
+        tierId={activeTierId || ""}
+        onSuccess={() => {
+          // You can add a query invalidation here if needed, 
+          // though the modal's hook already handles common ones.
+        }}
       />
       <CreateTierModal
         isOpen={isTierModalOpen}

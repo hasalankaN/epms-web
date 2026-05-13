@@ -7,6 +7,7 @@ export interface DashboardCourseOrBatch {
   name: string;
   categoryName?: string;
   startDate: string;
+  endDate?: string;
   enrollmentCount: number;
   completionPercentage?: number;
 }

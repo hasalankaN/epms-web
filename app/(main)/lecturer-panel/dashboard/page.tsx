@@ -1,17 +1,18 @@
 "use client";
 
+import React, { useState } from "react";
+
 import { motion } from "framer-motion";
+
+import { useGetLecturerDashboard } from "@/hooks/api/lecturers/useGetLecturerDashboard";
 
 import { ProgressCard } from "@/components/lecturer-panel/dashboard/ProgressCard";
 import { ReviewSummaryCard } from "@/components/lecturer-panel/dashboard/ReviewSummaryCard";
 import { EarningsSummaryCard } from "@/components/lecturer-panel/dashboard/EarningsSummaryCard";
 import { ZoomClassesCard } from "@/components/lecturer-panel/dashboard/ZoomClassesCard";
 import { itemVariants } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-
-import React, { useState } from "react";
-import { useGetLecturerDashboard } from "@/hooks/api/lecturers/useGetLecturerDashboard";
+import { cn } from "@/lib/utils";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -108,6 +109,7 @@ export default function LecturerDashboardPage() {
           onPrev={batches.length > 1 ? handlePrevBatch : undefined}
           details={[
             { label: "Started Date", value: batch ? new Date(batch.startDate).toLocaleDateString() : "N/A" },
+            { label: "End Date", value: batch?.endDate ? new Date(batch.endDate).toLocaleDateString() : "N/A" },
             { label: "No. of Enrollments:", value: batch?.enrollmentCount?.toString() || "0" },
           ]}
         />
