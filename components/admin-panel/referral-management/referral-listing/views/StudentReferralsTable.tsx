@@ -40,9 +40,11 @@ export function StudentReferralsTable({
   isLoading,
 }: StudentReferralsTableProps) {
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<StudentReferralDataType | null>(null);
+  const [selectedItem, setSelectedItem] =
+    useState<StudentReferralDataType | null>(null);
 
-  const { mutate: toggleStatus, isPending: isTogglingStatus } = useToggleReferralStudentStatus();
+  const { mutate: toggleStatus, isPending: isTogglingStatus } =
+    useToggleReferralStudentStatus();
 
   const itemsPerPage = 10;
   const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
@@ -68,61 +70,74 @@ export function StudentReferralsTable({
     {
       header: "Student Name",
       accessorKey: "studentName",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[180px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[180px]",
       cell: (item) => (
-        <div className="text-[11px] font-medium text-[#0F172B] whitespace-nowrap">{item.studentName}</div>
+        <div className="text-[11px] font-medium text-[#0F172B] whitespace-nowrap">
+          {item.studentName}
+        </div>
       ),
     },
     {
       header: "No.of Students",
       accessorKey: "noOfStudents",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[130px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[130px]",
       cell: (item) => (
-        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{item.noOfStudents}</div>
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.noOfStudents}
+        </div>
       ),
     },
     {
       header: "No.of Products",
       accessorKey: "noOfProducts",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[130px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[130px]",
       cell: (item) => (
-        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{item.noOfProducts}</div>
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.noOfProducts}
+        </div>
       ),
     },
     {
       header: "Com. Total",
       accessorKey: "comTotal",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[120px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[120px]",
       cell: (item) => (
-        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{item.comTotal}</div>
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.comTotal}
+        </div>
       ),
     },
     {
       header: "Status",
       accessorKey: "status",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[100px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[100px]",
       cell: (item) => {
-        const statusKey = item.status === "ACTIVE" || item.status === "INACTIVE"
-          ? item.status
-          : item.status === "Active" ? "ACTIVE" : "INACTIVE";
-        const options = Object.entries(STATUS_CONFIG).map(([status, config]) => ({
-          value: status,
-          bg: config.bg,
-          text: config.text,
-        }));
-
-        return (
-          <StatusPopover
-            value={statusKey}
-            options={options}
-            readOnly
-          />
+        const statusKey =
+          item.status === "ACTIVE" || item.status === "INACTIVE"
+            ? item.status
+            : item.status === "Active"
+              ? "ACTIVE"
+              : "INACTIVE";
+        const options = Object.entries(STATUS_CONFIG).map(
+          ([status, config]) => ({
+            value: status,
+            bg: config.bg,
+            text: config.text,
+          }),
         );
+
+        return <StatusPopover value={statusKey} options={options} readOnly />;
       },
     },
     {
       header: "Action",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap text-right w-[80px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap text-right w-[80px]",
       cell: (item) => (
         <div className="text-right">
           <DropdownMenu>
@@ -147,7 +162,7 @@ export function StudentReferralsTable({
               <DropdownMenuItem
                 onClick={() => handleAction("deactivate", item)}
                 className="cursor-pointer focus:bg-[#FDF2F8]"
-              >           
+              >
                 {item.status === "ACTIVE" ? "Deactivate" : "Activate"}
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -185,14 +200,24 @@ export function StudentReferralsTable({
             });
           }
         }}
-        title={selectedItem?.status === "ACTIVE" ? "Confirm Deactivation" : "Confirm Activation"}
+        title={
+          selectedItem?.status === "ACTIVE"
+            ? "Confirm Deactivation"
+            : "Confirm Activation"
+        }
         description={
           selectedItem?.status === "ACTIVE"
             ? `Are you sure you want to deactivate [${selectedItem?.studentName}]?`
             : `Are you sure you want to activate [${selectedItem?.studentName}]?`
         }
-        confirmText={selectedItem?.status === "ACTIVE" ? "Confirm Deactivation" : "Confirm Activation"}
-        confirmVariant={selectedItem?.status === "ACTIVE" ? "destructive" : "primary"}
+        confirmText={
+          selectedItem?.status === "ACTIVE"
+            ? "Confirm Deactivation"
+            : "Confirm Activation"
+        }
+        confirmVariant={
+          selectedItem?.status === "ACTIVE" ? "destructive" : "primary"
+        }
         isDeleting={isTogglingStatus}
       />
     </>

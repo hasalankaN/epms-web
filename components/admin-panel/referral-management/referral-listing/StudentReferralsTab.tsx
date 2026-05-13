@@ -76,17 +76,19 @@ export function StudentReferralsTab() {
     search: search || undefined,
   });
 
-  const tableData: StudentReferralDataType[] = (data?.results ?? []).map((row) => ({
-    id: row.id,
-    studentName: row.student_name || "—",
-    noOfStudents: String(row.students_referred ?? 0),
-    noOfProducts: String(row.products ?? 0),
-    comTotal: Number(row.commission_total || 0).toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+  const tableData: StudentReferralDataType[] = (data?.results ?? []).map(
+    (row) => ({
+      id: row.id,
+      studentName: row.student_name || "—",
+      noOfStudents: String(row.students_referred ?? 0),
+      noOfProducts: String(row.products ?? 0),
+      comTotal: Number(row.commission_total || 0).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+      status: row.status,
     }),
-    status: row.status,
-  }));
+  );
 
   return (
     <div className="flex flex-col gap-4">
