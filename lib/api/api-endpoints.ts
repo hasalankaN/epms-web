@@ -126,6 +126,10 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/api/v1/admin/referrals/agents/${id}`,
     UPDATE_STATUS: (id: string) =>
       `/api/v1/admin/referrals/agents/${id}/status`,
+    GET_PAYMENT_REQUESTS_PENDING: `/api/v1/admin/referrals/payment-requests/pending`,
+    GET_PAYMENT_REQUESTS_COMPLETED: `/api/v1/admin/referrals/payment-requests/completed`,
+    PROCESS_PAYMENT: (id: string) =>
+      `/api/v1/admin/referrals/payment-requests/${id}/pay`,
   },
   enquiries: {
     GET_ALL: `/api/v1/admin/enquiries`,

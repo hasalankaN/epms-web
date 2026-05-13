@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 import { PendingToolbar } from "./views/PendingToolbar";
 import { PendingTable } from "./views/PendingTable";
-
-// ===== MOCK DATA =====
+import { useGetReferralPaymentRequests } from "@/hooks/api/referrals/useGetReferralPaymentRequests";
 
 export interface PendingRequestDataType {
   id: string;
@@ -16,16 +15,11 @@ export interface PendingRequestDataType {
   memberName: string;
   requestedAmount: string;
   requestedFor: string;
-}
 
-const mockPendingRequests: PendingRequestDataType[] = Array.from({ length: 45 }, (_, i) => ({
-  id: `PR-${i + 1}`,
-  requestedDate: "2026/01/21",
-  memberId: `#12345`,
-  memberName: "name",
-  requestedAmount: "XXXX.00",
-  requestedFor: "-",
-}));
+  // Hidden fields used for payment processing (not displayed in table)
+  sourceType: string;
+  sourceId: string;
+}
 
 export function PendingTab() {
   const router = useRouter();
@@ -65,31 +59,37 @@ export function PendingTab() {
     return () => clearTimeout(timer);
   }, [localSearch, search, searchParams, pathname, router]);
 
-  const handlePageChange = useCallback((page: number) => {
-    const params = new URLSearchParams(searchParams.toString());
+  const handlePageChange = useCallback(
+    (page: number) => {
+      const params = new URLSearchParams(searchParams.toString());
 
-    params.set("page", page.toString());
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [searchParams, pathname, router]);
+      params.set("page", page.toString());
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, pathname, router],
+  );
 
-  const handleApplyFilters = useCallback((filters: Record<string, any>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    
-    if (filters.date?.start) {
-      params.set("dateFrom", filters.date.start.toISOString());
-    } else {
-      params.delete("dateFrom");
-    }
+  const handleApplyFilters = useCallback(
+    (filters: Record<string, any>) => {
+      const params = new URLSearchParams(searchParams.toString());
 
-    if (filters.date?.end) {
-      params.set("dateTo", filters.date.end.toISOString());
-    } else {
-      params.delete("dateTo");
-    }
+      if (filters.date?.start) {
+        params.set("dateFrom", filters.date.start.toISOString());
+      } else {
+        params.delete("dateFrom");
+      }
 
-    params.set("page", "1");
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [searchParams, pathname, router]);
+      if (filters.date?.end) {
+        params.set("dateTo", filters.date.end.toISOString());
+      } else {
+        params.delete("dateTo");
+      }
+
+      params.set("page", "1");
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, pathname, router],
+  );
 
   const handleClearFilters = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -102,25 +102,30 @@ export function PendingTab() {
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, pathname, router]);
 
-  // ===== FILTERING =====
-  const filteredData = useMemo(() => {
-    return mockPendingRequests.filter((item) => {
-      const matchesSearch = !search || 
-        item.memberName.toLowerCase().includes(search.toLowerCase()) || 
-        item.memberId.toLowerCase().includes(search.toLowerCase());
-      
-      return matchesSearch;
-    });
-  }, [search]);
+  // ===== API =====
+  const { data, isLoading } = useGetReferralPaymentRequests("PENDING", {
+    page: currentPage,
+    size: 10,
+    search: search || undefined,
+    requested_date: dateFrom,
+  });
 
-  const itemsPerPage = 10;
-  const totalResults = filteredData.length;
-  
-  const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
+  const tableData: PendingRequestDataType[] = (data?.results ?? []).map(
+    (row) => ({
+      id: row.id,
+      requestedDate: row.requested_date
+        ? new Date(row.requested_date).toLocaleDateString("en-CA")
+        : "-",
+      memberId: row.member_code,
+      memberName: row.member_name,
+      requestedAmount: row.requested_amount,
+      requestedFor: row.requested_for_type ?? "-",
+      sourceType: row.requested_for_type,
+      sourceId: row.requested_for_id,
+    }),
+  );
 
-    return filteredData.slice(start, start + itemsPerPage);
-  }, [filteredData, currentPage]);
+  const totalResults = data?.totalResults ?? 0;
 
   return (
     <div className="flex flex-col gap-4">
@@ -132,10 +137,11 @@ export function PendingTab() {
         activeUrlFilters={{ dateFrom, dateTo }}
       />
       <PendingTable
-        data={paginatedData}
+        data={tableData}
         currentPage={currentPage}
         onPageChange={handlePageChange}
         totalResults={totalResults}
+        isLoading={isLoading}
       />
     </div>
   );
