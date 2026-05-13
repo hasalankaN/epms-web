@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 import { useSession } from "@/components/providers/SessionProvider";
 import { useGetLecturerProfile } from "@/hooks/api/lecturers/useGetLecturerProfile";
 import { useGetLecturerDashboard } from "@/hooks/api/lecturers/useGetLecturerDashboard";
+import { useGetLecturerSalary } from "@/hooks/api/lecturers/useGetLecturerSalary";
+import { useGetLecturerPayments } from "@/hooks/api/lecturers/useGetLecturerPayments";
 
 // Profile Components
 import { AccountDetailsSection } from "@/components/lecturer-panel/profile/AccountDetailsSection";
@@ -23,6 +25,8 @@ export default function ProfilePage() {
   
   const { data: lecturerProfile } = useGetLecturerProfile();
   const { data: dashboardData, isLoading: isAssignmentsLoading } = useGetLecturerDashboard();
+  const { data: salaryData } = useGetLecturerSalary();
+  const { data: paymentsData } = useGetLecturerPayments(1, 20);
 
   // Map real API data to component format
   const assignedCourses = dashboardData?.courses.map(course => ({
@@ -35,12 +39,19 @@ export default function ProfilePage() {
     category: batch.categoryName || ""
   })) || [];
 
-  const salaryRecords = [
-    { id: "1", paidDate: "2026/01/21", description: "November Salary", status: "Pending" as const, amount: "XXXX.00" },
-    { id: "2", paidDate: "2026/01/21", description: "October Salary", status: "Paid" as const, amount: "XXXX.00" },
-    { id: "3", paidDate: "2026/01/21", description: "September Salary", status: "Paid" as const, amount: "XXXX.00" },
-    { id: "4", paidDate: "2026/01/21", description: "August Salary", status: "Paid" as const, amount: "XXXX.00" },
-  ];
+  const salaryRecords = paymentsData?.payments.map((payment) => ({
+    id: payment.id,
+    paidDate: payment.paidDate
+      ? new Date(payment.paidDate).toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }).replace(/\//g, "/")
+      : "-",
+    description: payment.description || payment.period || "Salary Payment",
+    status: (payment.status === "PAID" ? "Paid" : "Pending") as "Paid" | "Pending",
+    amount: payment.amount || "0.00",
+  })) || [];
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-white px-6 py-4 lg:px-8">
@@ -106,7 +117,8 @@ export default function ProfilePage() {
 
         <TabsContent value="salary">
           <SalaryHistorySection 
-            salaryType="Monthly Salary"
+            salaryType={salaryData?.salaryType || "Monthly Salary"}
+            amount={salaryData?.amount || "0.00"}
             salaryRecords={salaryRecords}
           />
         </TabsContent>

@@ -19,14 +19,12 @@ import { AddVideoModal } from "@/components/lecturer-panel/batches/AddVideoModal
 import { AddMaterialModal } from "@/components/lecturer-panel/batches/AddMaterialModal";
 import { AddTierModal } from "@/components/lecturer-panel/courses/AddTierModal";
 import { useCreateTier } from "@/hooks/api/courses/useCreateTier";
+import { useGetCourseTiers } from "@/hooks/api/courses/useGetCourseTiers";
 import type { TierNode } from "@/hooks/api/courses/useGetCourseTiers";
-
-// import { useGetCourseTiers } from "@/hooks/api/courses/useGetCourseTiers";
 import { useCreateMaterial } from "@/hooks/api/courses/useCreateMaterial";
 import { useDeleteTier } from "@/hooks/api/courses/useDeleteTier";
+import { useGetTierMaterials } from "@/hooks/api/courses/useGetTierMaterials";
 import type { Material } from "@/hooks/api/courses/useGetTierMaterials";
-
-// import { useGetTierMaterials } from "@/hooks/api/courses/useGetTierMaterials";
 import { useDeleteMaterial } from "@/hooks/api/courses/useDeleteMaterial";
 import { useUpdateTier } from "@/hooks/api/courses/useUpdateTier";
 import { Switch } from "@/components/ui/Switch";
@@ -56,115 +54,7 @@ export default function CourseDetailsPage() {
   const [activeParentTier, setActiveParentTier] = useState<{ id: string | null; title: string | null } | null>(null);
   const [activeTierForContent, setActiveTierForContent] = useState<string | null>(null);
 
-  // const { data: realStructure, isLoading: isLoadingStructure } = useGetCourseTiers(id);
-  const isLoadingStructure = false;
-  
-  const realStructure: TierNode[] = [
-    {
-      id: "week-1",
-      title: "Week 01",
-      description: "",
-      level: 2,
-      is_enabled: true,
-      children: [
-        {
-          id: "lesson-1",
-          title: "Lesson 01: Introduction to Marketing",
-          description: "",
-          level: 3,
-          is_enabled: true,
-          children: [],
-          course_id: id,
-          batch_id: null,
-          parent_tier_id: "week-1",
-          display_order: 1,
-          created_by_user_id: "user-1",
-          created_at: "2026-01-20T00:00:00Z",
-          updated_at: "2026-01-20T00:00:00Z",
-          deleted_at: null,
-          unlock_after_installment: null
-        }
-      ],
-      course_id: id,
-      batch_id: null,
-      parent_tier_id: null,
-      display_order: 1,
-      created_by_user_id: "user-1",
-      created_at: "2026-01-20T00:00:00Z",
-      updated_at: "2026-01-20T00:00:00Z",
-      deleted_at: null,
-      unlock_after_installment: null
-    },
-    {
-      id: "week-2",
-      title: "Week 02",
-      description: "",
-      level: 2,
-      is_enabled: true,
-      children: [
-        {
-          id: "lesson-01",
-          title: "Lesson 01: Market Research",
-          description: "",
-          level: 3,
-          is_enabled: true,
-          children: [],
-          course_id: id,
-          batch_id: null,
-          parent_tier_id: "week-2",
-          display_order: 1,
-          created_by_user_id: "user-1",
-          created_at: "2026-01-20T00:00:00Z",
-          updated_at: "2026-01-20T00:00:00Z",
-          deleted_at: null,
-          unlock_after_installment: null
-        },
-        {
-          id: "lesson-02",
-          title: "Lesson 02: Lesson Name",
-          description: "",
-          level: 3,
-          is_enabled: true,
-          children: [],
-          course_id: id,
-          batch_id: null,
-          parent_tier_id: "week-2",
-          display_order: 2,
-          created_by_user_id: "user-1",
-          created_at: "2026-01-20T00:00:00Z",
-          updated_at: "2026-01-20T00:00:00Z",
-          deleted_at: null,
-          unlock_after_installment: null
-        },
-        {
-          id: "lesson-04",
-          title: "Lesson 01: Market Research",
-          description: "",
-          level: 3,
-          is_enabled: true,
-          children: [],
-          course_id: id,
-          batch_id: null,
-          parent_tier_id: "week-2",
-          display_order: 3,
-          created_by_user_id: "user-1",
-          created_at: "2026-01-20T00:00:00Z",
-          updated_at: "2026-01-20T00:00:00Z",
-          deleted_at: null,
-          unlock_after_installment: null
-        }
-      ],
-      course_id: id,
-      batch_id: null,
-      parent_tier_id: null,
-      display_order: 2,
-      created_by_user_id: "user-1",
-      created_at: "2026-01-20T00:00:00Z",
-      updated_at: "2026-01-20T00:00:00Z",
-      deleted_at: null,
-      unlock_after_installment: null
-    }
-  ];
+  const { data: realStructure, isLoading: isLoadingStructure } = useGetCourseTiers(id);
 
   const { mutate: createTier, isPending: isCreatingTier } = useCreateTier();
   const { mutate: createMaterial, isPending: isCreatingMaterial } = useCreateMaterial();
@@ -348,6 +238,7 @@ export default function CourseDetailsPage() {
                 <div className="flex items-center justify-between">
                     <h3 className="text-lg font-bold text-[#0F172B]">Course Structure</h3>
                     <Button 
+                        onClick={() => handleOpenAddTier(null, null)}
                         className="bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#0F172B] font-semibold h-9 px-4 rounded-[6px] gap-2"
                     >
                         <Plus className="h-4 w-4" />
@@ -437,100 +328,10 @@ function RecursiveSection({
     const isSection = item.level < 3;
 
     // Call hook at top level, but enabled only for lessons (level 3)
-    // const { data: materials = [], isLoading: isLoadingMaterials } = useGetTierMaterials(
-    //     item.id, 
-    //     !isSection && isExpanded
-    // );
-    const isLoadingMaterials = false;
-    
-    const allMockMaterials: Record<string, Material[]> = {
-        "lesson-1": [
-            {
-                id: "mat-1",
-                tier_id: "lesson-1",
-                material_type: "VIDEO",
-                title: "Intro Video.mp4",
-                content_url: "https://www.youtube.com/...",
-                created_at: "2026-01-20T00:00:00Z",
-                updated_at: "2026-01-20T00:00:00Z",
-                file_name: "Intro Video.mp4",
-                file_format: "Youtube",
-            } as any
-        ],
-        "lesson-01": [
-            {
-                id: "mat-2",
-                tier_id: "lesson-01",
-                material_type: "FILE",
-                title: "Research Basics.pdf",
-                content_url: "#",
-                created_at: "2026-01-20T00:00:00Z",
-                updated_at: "2026-01-20T00:00:00Z",
-                file_name: "Research Basics.pdf",
-                file_format: "PDF",
-            } as any
-        ],
-        "lesson-02": [
-            {
-                id: "mat-3",
-                tier_id: "lesson-02",
-                material_type: "VIDEO",
-                title: "Lesson 2 Explanation.mp4",
-                content_url: "https://www.youtube.com/...",
-                created_at: "2026-01-20T10:00:00Z",
-                updated_at: "2026-01-20T10:00:00Z",
-                file_name: "Lesson 2 Explanation.mp4",
-                file_format: "Youtube",
-            } as any,
-            {
-                id: "mat-4",
-                tier_id: "lesson-02",
-                material_type: "FILE",
-                title: "Lecture note.ppts",
-                content_url: "#",
-                created_at: "2026-01-20T10:05:00Z",
-                updated_at: "2026-01-20T10:05:00Z",
-                file_name: "Lecture note.ppts",
-                file_format: "PPTX",
-            } as any,
-            {
-                id: "mat-5",
-                tier_id: "lesson-02",
-                material_type: "FILE",
-                title: "Tute Question.doc",
-                content_url: "#",
-                created_at: "2026-01-20T10:10:00Z",
-                updated_at: "2026-01-20T10:10:00Z",
-                file_name: "Tute Question.doc",
-                file_format: "DOC",
-            } as any,
-            {
-                id: "mat-6",
-                tier_id: "lesson-02",
-                material_type: "FILE",
-                title: "Data.csv",
-                content_url: "#",
-                created_at: "2026-01-20T10:15:00Z",
-                updated_at: "2026-01-20T10:15:00Z",
-                file_name: "Data.csv",
-                file_format: "CSV",
-            } as any,
-            {
-                id: "mat-7",
-                tier_id: "lesson-02",
-                material_type: "FILE",
-                title: "Tute answer.pdf",
-                content_url: "#",
-                created_at: "2026-01-20T10:20:00Z",
-                updated_at: "2026-01-20T10:20:00Z",
-                file_name: "Tute answer.pdf",
-                file_format: "PDF",
-            } as any
-        ],
-        "lesson-04": []
-    };
-    
-    const materials: Material[] = allMockMaterials[item.id] || [];
+    const { data: materials = [], isLoading: isLoadingMaterials } = useGetTierMaterials(
+        item.id,
+        !isSection && isExpanded
+    );
 
     const { mutate: updateTier } = useUpdateTier();
 
@@ -614,10 +415,10 @@ function RecursiveSection({
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-semibold text-[#45556C]">Lesson Materials</span>
                             <div className="flex items-center gap-6 text-[12px] font-bold text-[#E60076]">
-                                <button className="flex items-center gap-2 hover:opacity-80">
+                                <button onClick={() => onOpenVideo(item.id)} className="flex items-center gap-2 hover:opacity-80">
                                     <Plus className="h-4 w-4" /> Add New Video
                                 </button>
-                                <button className="flex items-center gap-2 hover:opacity-80">
+                                <button onClick={() => onOpenMaterial(item.id)} className="flex items-center gap-2 hover:opacity-80">
                                     <Plus className="h-4 w-4" /> Add New Material
                                 </button>
                             </div>
@@ -727,6 +528,7 @@ function RecursiveSection({
                     {item.level < 3 && (
                         <div className="flex justify-end pt-2">
                             <button 
+                                onClick={() => onOpenAddSubTier(item.id, item.title)}
                                 className="flex items-center justify-center gap-2 w-[122px] h-[40px] bg-[#FDF2F8] border border-[#FCCEE8] shadow-sm rounded-[6px] transition-all hover:opacity-80 mt-2"
                             >
                                 <Plus className="h-5 w-5 text-[#0F172B]" />
@@ -759,7 +561,13 @@ function MaterialRow({ material }: { material: Material }) {
         Youtube: <i className="youtube-logo h-5 w-5 text-[#45556C]" />,
     };
 
-    const formattedDate = "20/01/2026"; // Mocking date as per screenshot
+    const formattedDate = material.created_at
+        ? new Date(material.created_at).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+          }).replace(/\//g, "/")
+        : "-";
 
     return (
         <tr className="border-t border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors">
