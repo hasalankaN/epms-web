@@ -1,45 +1,19 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 
 import Image from "next/image";
 
 import { X } from "lucide-react";
 
 import { Dialog, DialogContent, DialogTitle, motion, itemVariants } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useGetReferralAgentSummary } from "@/hooks/api/referrals/useGetReferralAgentSummary";
 
 import { AgentTeamInfoTable } from "./views/AgentTeamInfoTable";
 import { AgentCourseEnrollmentsTable } from "./views/AgentCourseEnrollmentsTable";
 import { AgentBatchEnrollmentsTable } from "./views/AgentBatchEnrollmentsTable";
 import { AgentProductsTable } from "./views/AgentProductsTable";
-
-export interface AgentProfile {
-  id: string;
-  name: string;
-  ref: string;
-  memberId: string;
-  email: string;
-  phone: string;
-  whatsapp: string;
-  status: "Active" | "Inactive";
-  isTeamLeader: boolean;
-  totalCommission: string;
-
-  // Metrics
-  commissionFromTeam: string;
-  directCommission: string;
-  estimatedCommission: string;
-  pendingCommission: string;
-  commissionWithdrawals: string;
-  pendingWithdrawal: string;
-
-  // Leader Specific
-  teamMembersAssigned?: number;
-
-  // Member Specific
-  teamLeaderName?: string;
-  assignedDate?: string;
-}
 
 interface AgentProfileModalProps {
   isOpen: boolean;
@@ -47,48 +21,21 @@ interface AgentProfileModalProps {
   memberId: string | null;
 }
 
-
 export function AgentProfileModal({ isOpen, onClose, memberId }: AgentProfileModalProps) {
-  const [profile, setProfile] = useState<AgentProfile | null>(null);
+  const { data: summary, isLoading } = useGetReferralAgentSummary(memberId);
 
-  useEffect(() => {
-    if (isOpen && memberId) {
-      setTimeout(() => {
-        setProfile({
-          id: memberId,
-          name: "Agent Name",
-          ref: "Ref#12345",
-          memberId: "Member Id",
-          email: "User@gmail.com",
-          phone: "(+94) 70 493 4587",
-          whatsapp: "(+94) 70 493 4587",
-          status: "Active",
-          isTeamLeader: memberId.includes("leader"), 
-          totalCommission: "XXXX.00",
+  const profile = summary?.profile;
+  const cards = summary?.summary_cards;
 
-          commissionFromTeam: "XXXX.00",
-          directCommission: "XXXX.00",
-          estimatedCommission: "XXXX.00",
-          pendingCommission: "XXXX.00",
-          commissionWithdrawals: "XXXX.00",
-          pendingWithdrawal: "XXXX.00",
-
-          teamMembersAssigned: 5,
-          teamLeaderName: "Team Leader Name",
-          assignedDate: "2026/01/21",
-        });
-      }, 300);
-    } else {
-      setProfile(null);
-    }
-  }, [isOpen, memberId]);
-
-
+  const formatAmount = (value: number | undefined) => {
+    if (value === undefined || value === null) return "0.00";
+    return value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        isLoading={!profile}
+        isLoading={isLoading}
         animateChildren={true}
         className="flex max-h-[90vh] w-[95vw] flex-col gap-0 overflow-hidden bg-white p-0 sm:h-[640px] sm:max-w-[704px] sm:rounded-[12px] border-[#E2E8F0] shadow-[0_4px_6px_-4px_rgba(16,24,40,0.10),0_10px_15px_-3px_rgba(0,0,0,0.10)] [&>button]:hidden"
       >
@@ -112,7 +59,7 @@ export function AgentProfileModal({ isOpen, onClose, memberId }: AgentProfileMod
         {/* Scrollable Body */}
         <motion.div variants={itemVariants} className="flex-1 overflow-y-auto px-6 pt-4 pb-6 flex flex-col gap-4 sm:gap-[16px] custom-scrollbar bg-white w-full">
           
-          {/* Profile Quick Info Section - Unified Grid for all breakpoints using Order classes */}
+          {/* Profile Quick Info Section */}
           <div className="flex gap-8 items-start w-full border-b border-[#F1F5F9] pb-6">
             
             {/* Avatar Section */}
@@ -123,7 +70,7 @@ export function AgentProfileModal({ isOpen, onClose, memberId }: AgentProfileMod
                 fill
                 className="rounded-full object-cover"
               />
-              {profile?.status === "Active" && (
+              {profile?.status === "ACTIVE" && (
                 <div 
                   className="absolute z-10 flex items-center justify-center px-2 py-[2px] bg-[#DFFFF0] text-[#16A34A] text-[12px] font-medium leading-[16px] rounded-[32px] shadow-[0_1px_2px_0_rgba(16,24,40,0.05)] whitespace-nowrap"
                   style={{ left: "32px", bottom: "-4px" }}
@@ -133,50 +80,61 @@ export function AgentProfileModal({ isOpen, onClose, memberId }: AgentProfileMod
               )}
             </div>
 
-            {/* Responsive Grid Section: Stacks vertically on mobile, 2-col on tablet, 3-col on desktop */}
+            {/* Responsive Grid Section */}
             <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_178.6px] gap-x-6 gap-y-4 pt-0">
               
-              {/* 1. Agent Details: Mobile Order 1, Tablet Order 1, Desktop Order 1 */}
+              {/* 1. Agent Details */}
               <div className="flex flex-col items-start text-left order-1 sm:order-1 lg:order-1">
-                <h2 className="text-[16px] font-semibold leading-[24px] text-[#1D293D] whitespace-nowrap">{profile?.name || "Agent Name"}</h2>
-                <div className="text-[12px] font-normal leading-[16px] text-[#62748E] mt-1">{profile?.ref || "Ref#12345"}</div>
-                <div className="text-[12px] font-normal leading-[16px] text-[#45556C] mt-[4px]">{profile?.memberId || "Member Id"}</div>
+                {isLoading ? (
+                  <>
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-4 w-24 mt-1" />
+                    <Skeleton className="h-4 w-20 mt-1" />
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-[16px] font-semibold leading-[24px] text-[#1D293D] whitespace-nowrap">{profile?.name || "—"}</h2>
+                    <div className="text-[12px] font-normal leading-[16px] text-[#62748E] mt-1">{profile?.member_code || "—"}</div>
+                    <div className="text-[12px] font-normal leading-[16px] text-[#45556C] mt-[4px]">{profile?.role || "—"}</div>
+                  </>
+                )}
               </div>
 
-              {/* 2. Email Info: Mobile Order 2, Tablet Order 3, Desktop Order 4 */}
+              {/* 2. Email Info */}
               <div className="flex items-center gap-2 text-[12px] font-normal text-[#45556C] order-2 sm:order-3 lg:order-4">
                 <i className="email-icon h-4 w-4 text-[#64748B]" />
-                <span className="truncate max-w-[200px]">{profile?.email}</span>
+                <span className="truncate max-w-[200px]">{isLoading ? <Skeleton className="h-4 w-32" /> : profile?.email || "—"}</span>
               </div>
 
-              {/* 3. Phone Info: Mobile Order 3, Tablet Order 4, Desktop Order 5 */}
+              {/* 3. Phone Info */}
               <div className="flex items-center gap-2 text-[12px] font-normal text-[#45556C] order-3 sm:order-4 lg:order-5">
                 <i className="phone h-4 w-4 text-[#64748B]" />
-                <span>{profile?.phone}</span>
+                <span>{isLoading ? <Skeleton className="h-4 w-28" /> : profile?.phone || "—"}</span>
               </div>
 
-              {/* 4. WhatsApp Info: Mobile Order 4, Tablet Order 5, Desktop Order 6 */}
+              {/* 4. WhatsApp Info */}
               <div className="flex items-center gap-2 text-[12px] font-normal text-[#45556C] order-4 sm:order-5 lg:order-6">
                 <i className="whatsapp-logo h-4 w-4 text-[#64748B]" />
-                <span>{profile?.whatsapp}</span>
+                <span>{isLoading ? <Skeleton className="h-4 w-28" /> : profile?.whatsapp || "—"}</span>
               </div>
 
-              {/* 5. Team Leader Details: Mobile Order 5, Tablet Order 2, Desktop Order 2 */}
+              {/* 5. Team Leader Details */}
               <div className="flex flex-col items-start order-5 sm:order-2 lg:order-2">
-                {profile?.isTeamLeader ? (
+                {isLoading ? (
+                  <Skeleton className="h-4 w-24" />
+                ) : profile?.role === "LEADER" ? (
                   <>
                     <div className="text-[12px] font-medium leading-[16px] text-[#F6339A]">Team Leader</div>
                     <div className="text-[12px] font-normal leading-[16px] text-[#45556C] mt-1">+ Team Members Assigned</div>
                   </>
                 ) : (
                   <>
-                    <div className="text-[12px] font-medium leading-[16px] text-[#1D293D] truncate">{profile?.teamLeaderName || "Team Leader Name"}</div>
-                    <div className="text-[12px] font-normal leading-[16px] text-[#45556C] mt-1 truncate">Assigned Date: {profile?.assignedDate || "Assigned Date"}</div>
+                    <div className="text-[12px] font-medium leading-[16px] text-[#1D293D] truncate">Team Member</div>
                   </>
                 )}
               </div>
 
-              {/* 6. Pink Commission Card: Mobile Order 6, Tablet Order 6, Desktop Order 3 */}
+              {/* 6. Pink Commission Card */}
               <div className="flex justify-start w-auto order-6 sm:order-6 lg:order-3">
                 <div 
                   className="flex flex-col justify-center items-start gap-2 rounded-[8px] border border-[#E2E8F0] px-3 py-[6px] min-w-[178.6px] w-fit"
@@ -186,38 +144,40 @@ export function AgentProfileModal({ isOpen, onClose, memberId }: AgentProfileMod
                   }}
                 >
                   <span className="text-[12px] font-normal leading-[16px] text-[#45556C]">Total Commission</span>
-                  <span className="text-[16px] font-semibold leading-[24px] text-[#1D293D]">{profile?.totalCommission || "XXXX.00"}</span>
+                  <span className="text-[16px] font-semibold leading-[24px] text-[#1D293D]">
+                    {isLoading ? <Skeleton className="h-6 w-20" /> : formatAmount(cards?.total_commissions)}
+                  </span>
                 </div>
               </div>
 
             </div>
           </div>
 
-          {/* 6 Metrics Grid - Fully responsive stacking */}
+          {/* 6 Metrics Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full">
-            <MetricCard title="Commission from Team" value={profile?.commissionFromTeam || ""} />
-            <MetricCard title="Direct Commission" value={profile?.directCommission || ""} />
-            <MetricCard title="Estimated Commission" value={profile?.estimatedCommission || ""} />
-            <MetricCard title="Pending Commission" value={profile?.pendingCommission || ""} />
-            <MetricCard title="Commission Withdraws" value={profile?.commissionWithdrawals || ""} />
-            <MetricCard title="Pending Withdrawal" value={profile?.pendingWithdrawal || ""} />
+            <MetricCard title="Commission from Team" value={formatAmount(cards?.commissions_from_teams)} isLoading={isLoading} />
+            <MetricCard title="Direct Commission" value={formatAmount(cards?.direct_commissions)} isLoading={isLoading} />
+            <MetricCard title="Estimated Commission" value={formatAmount(cards?.estimated_commissions)} isLoading={isLoading} />
+            <MetricCard title="Pending Commission" value={formatAmount(cards?.pending_commissions)} isLoading={isLoading} />
+            <MetricCard title="Commission Withdraws" value={formatAmount(cards?.commission_withdrawn)} isLoading={isLoading} />
+            <MetricCard title="Pending Withdrawal" value={formatAmount(cards?.pending_withdrawals)} isLoading={isLoading} />
           </div>
 
-          {/* Tables Section - Reusing subcomponents */}
+          {/* Tables Section */}
           <div className="flex flex-col w-full pt-2">
-            {profile?.isTeamLeader && (
+            {profile?.role === "LEADER" && (
               <>
-                <AgentTeamInfoTable />
+                <AgentTeamInfoTable memberId={memberId} />
                 <div className="h-[1px] w-full bg-[#E2E8F0] my-4" />
               </>
             )}
-            <AgentCourseEnrollmentsTable />
+            <AgentCourseEnrollmentsTable memberId={memberId} />
             <div className="h-[1px] w-full bg-[#E2E8F0] my-4" />
             
-            <AgentBatchEnrollmentsTable />
+            <AgentBatchEnrollmentsTable memberId={memberId} />
             <div className="h-[1px] w-full bg-[#E2E8F0] my-4" />
             
-            <AgentProductsTable />
+            <AgentProductsTable memberId={memberId} />
           </div>
 
         </motion.div>
@@ -226,11 +186,13 @@ export function AgentProfileModal({ isOpen, onClose, memberId }: AgentProfileMod
   );
 }
 
-function MetricCard({ title, value }: { title: string; value: string }) {
+function MetricCard({ title, value, isLoading }: { title: string; value: string; isLoading?: boolean }) {
   return (
     <div className="flex flex-col justify-center border border-[#E2E8F0] shadow-[0_1px_2px_0_rgba(16,24,40,0.10)] rounded-[8px] p-[16px] w-full bg-white h-[76px]">
       <span className="text-[14px] font-normal leading-[20px] text-[#45556C] font-inter mb-1">{title}</span>
-      <span className="text-[14px] font-medium leading-[20px] text-[#1D293D] font-inter">{value}</span>
+      <span className="text-[14px] font-medium leading-[20px] text-[#1D293D] font-inter">
+        {isLoading ? <Skeleton className="h-5 w-24" /> : value}
+      </span>
     </div>
   );
 }

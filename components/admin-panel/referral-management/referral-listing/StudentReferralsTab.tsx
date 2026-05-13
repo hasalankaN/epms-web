@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 import { StudentReferralsToolbar } from "./views/StudentReferralsToolbar";
 import { StudentReferralsTable } from "./views/StudentReferralsTable";
-
-// ===== MOCK DATA =====
+import { useGetReferralStudents } from "@/hooks/api/referrals/useGetReferralStudents";
 
 export interface StudentReferralDataType {
   id: string;
@@ -15,17 +14,8 @@ export interface StudentReferralDataType {
   noOfStudents: string;
   noOfProducts: string;
   comTotal: string;
-  status: "Active" | "Inactive";
+  status: "ACTIVE" | "INACTIVE" | string;
 }
-
-const mockStudentReferrals: StudentReferralDataType[] = Array.from({ length: 45 }, (_, i) => ({
-  id: `SR-${i + 1}`,
-  studentName: "name",
-  noOfStudents: "XXX",
-  noOfProducts: "XXX",
-  comTotal: "XXXX.00",
-  status: i % 6 === 1 || i % 6 === 5 ? "Inactive" : "Active",
-}));
 
 export function StudentReferralsTab() {
   const router = useRouter();
@@ -61,12 +51,15 @@ export function StudentReferralsTab() {
     return () => clearTimeout(timer);
   }, [localSearch, search, searchParams, pathname, router]);
 
-  const handlePageChange = useCallback((page: number) => {
-    const params = new URLSearchParams(searchParams.toString());
+  const handlePageChange = useCallback(
+    (page: number) => {
+      const params = new URLSearchParams(searchParams.toString());
 
-    params.set("page", page.toString());
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [searchParams, pathname, router]);
+      params.set("page", page.toString());
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, pathname, router],
+  );
 
   const handleClearFilters = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -77,20 +70,23 @@ export function StudentReferralsTab() {
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, pathname, router]);
 
-  const filteredData = useMemo(() => {
-    return mockStudentReferrals.filter((item) => {
-      return !search || item.studentName.toLowerCase().includes(search.toLowerCase());
-    });
-  }, [search]);
+  const { data, isLoading } = useGetReferralStudents({
+    page: currentPage,
+    size: 10,
+    search: search || undefined,
+  });
 
-  const itemsPerPage = 10;
-  const totalResults = filteredData.length;
-
-  const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-
-    return filteredData.slice(start, start + itemsPerPage);
-  }, [filteredData, currentPage]);
+  const tableData: StudentReferralDataType[] = (data?.results ?? []).map((row) => ({
+    id: row.id,
+    studentName: row.student_name || "—",
+    noOfStudents: String(row.students_referred ?? 0),
+    noOfProducts: String(row.products ?? 0),
+    comTotal: Number(row.commission_total || 0).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }),
+    status: row.status,
+  }));
 
   return (
     <div className="flex flex-col gap-4">
@@ -100,10 +96,11 @@ export function StudentReferralsTab() {
         onClearFilters={handleClearFilters}
       />
       <StudentReferralsTable
-        data={paginatedData}
+        data={tableData}
         currentPage={currentPage}
         onPageChange={handlePageChange}
-        totalResults={totalResults}
+        totalResults={data?.totalResults ?? 0}
+        isLoading={isLoading}
       />
     </div>
   );

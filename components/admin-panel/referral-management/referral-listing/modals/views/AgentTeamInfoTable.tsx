@@ -4,6 +4,8 @@ import React, { useMemo, useState } from "react";
 
 import { DataTable } from "@/components/common/table/DataTable";
 import type { Column } from "@/components/common/table/DataTable";
+import { useGetReferralAgentTeam } from "@/hooks/api/referrals/useGetReferralAgentTeam";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export interface AgentTeamInfoDataType {
   id: string;
@@ -13,21 +15,33 @@ export interface AgentTeamInfoDataType {
   comReceived: string;
 }
 
-const mockTeamInfo: AgentTeamInfoDataType[] = Array.from({ length: 4 }, (_, i) => ({
-  id: `TI-${i + 1}`,
-  createdDate: "2026/01/21",
-  memberName: "Name",
-  memberId: "#12345",
-  comReceived: "XXXX.00",
-}));
+interface AgentTeamInfoTableProps {
+  memberId: string | null;
+}
 
-export function AgentTeamInfoTable() {
-  const [data] = useState<AgentTeamInfoDataType[]>(mockTeamInfo);
+export function AgentTeamInfoTable({ memberId }: AgentTeamInfoTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const { data, isLoading } = useGetReferralAgentTeam(memberId, currentPage, 5);
 
-  const totalResults = data.length;
-  const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
+  const tableData: AgentTeamInfoDataType[] = useMemo(() => {
+    if (!data?.results) return [];
+    return data.results.map((item) => ({
+      id: item.id,
+      createdDate: item.created_at
+        ? new Date(item.created_at).toLocaleDateString("en-GB", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }).replace(/\//g, "/")
+        : "—",
+      memberName: item.name || "—",
+      memberId: item.member_code || "—",
+      comReceived: Number(item.total_commissions_received || 0).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    }));
+  }, [data]);
 
   const columns: Column<AgentTeamInfoDataType>[] = [
     {
@@ -76,26 +90,33 @@ export function AgentTeamInfoTable() {
     },
   ];
 
-  const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-
-    return data.slice(start, start + itemsPerPage);
-  }, [data, currentPage]);
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-3">
+        <h3 className="text-[14px] font-medium leading-[20px] text-[#1D293D] font-inter">Team Info</h3>
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-8 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3">
       <h3 className="text-[14px] font-medium leading-[20px] text-[#1D293D] font-inter">Team Info</h3>
       <DataTable
-        data={paginatedData}
+        data={tableData}
         columns={columns}
         keyExtractor={(item) => item.id}
         showCheckboxes={false}
         tableContainerClassName="h-auto"
         pagination={{
           variant: "simple",
-          totalCount: totalResults,
+          totalCount: data?.totalResults || 0,
           currentPage,
-          totalPages,
+          totalPages: data?.totalPages || 1,
           onPageChange: setCurrentPage,
         }}
       />

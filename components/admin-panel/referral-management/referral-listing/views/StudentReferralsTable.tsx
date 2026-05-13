@@ -15,12 +15,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
+import { useToggleReferralStudentStatus } from "@/hooks/api/referrals/useToggleReferralStudentStatus";
 
 import type { StudentReferralDataType } from "../StudentReferralsTab";
 
 const STATUS_CONFIG = {
-  Active: { bg: "#D9E9FF", text: "#2563EB" },
-  Inactive: { bg: "#F1F5F9", text: "#000000" },
+  ACTIVE: { bg: "#D9E9FF", text: "#2563EB" },
+  INACTIVE: { bg: "#F1F5F9", text: "#000000" },
 };
 
 interface StudentReferralsTableProps {
@@ -28,6 +29,7 @@ interface StudentReferralsTableProps {
   currentPage: number;
   onPageChange: (page: number) => void;
   totalResults: number;
+  isLoading?: boolean;
 }
 
 export function StudentReferralsTable({
@@ -35,9 +37,12 @@ export function StudentReferralsTable({
   currentPage,
   onPageChange,
   totalResults,
+  isLoading,
 }: StudentReferralsTableProps) {
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<StudentReferralDataType | null>(null);
+
+  const { mutate: toggleStatus, isPending: isTogglingStatus } = useToggleReferralStudentStatus();
 
   const itemsPerPage = 10;
   const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
@@ -97,6 +102,9 @@ export function StudentReferralsTable({
       accessorKey: "status",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[100px]",
       cell: (item) => {
+        const statusKey = item.status === "ACTIVE" || item.status === "INACTIVE"
+          ? item.status
+          : item.status === "Active" ? "ACTIVE" : "INACTIVE";
         const options = Object.entries(STATUS_CONFIG).map(([status, config]) => ({
           value: status,
           bg: config.bg,
@@ -105,7 +113,7 @@ export function StudentReferralsTable({
 
         return (
           <StatusPopover
-            value={item.status}
+            value={statusKey}
             options={options}
             readOnly
           />
@@ -139,8 +147,8 @@ export function StudentReferralsTable({
               <DropdownMenuItem
                 onClick={() => handleAction("deactivate", item)}
                 className="cursor-pointer focus:bg-[#FDF2F8]"
-              >
-                {item.status === "Active" ? "Deactivate" : "Activate"}
+              >           
+                {item.status === "ACTIVE" ? "Deactivate" : "Activate"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -156,6 +164,7 @@ export function StudentReferralsTable({
       <DataTable
         data={filteredData}
         columns={columns}
+        isLoading={isLoading}
         keyExtractor={(item) => item.id}
         pagination={{
           variant: "simple",
@@ -170,17 +179,21 @@ export function StudentReferralsTable({
         isOpen={isDeactivateModalOpen}
         onClose={() => setIsDeactivateModalOpen(false)}
         onConfirm={() => {
-          setIsDeactivateModalOpen(false);
+          if (selectedItem) {
+            toggleStatus(selectedItem.id, {
+              onSuccess: () => setIsDeactivateModalOpen(false),
+            });
+          }
         }}
-        title={selectedItem?.status === "Active" ? "Confirm Deactivation" : "Confirm Activation"}
+        title={selectedItem?.status === "ACTIVE" ? "Confirm Deactivation" : "Confirm Activation"}
         description={
-          selectedItem?.status === "Active"
+          selectedItem?.status === "ACTIVE"
             ? `Are you sure you want to deactivate [${selectedItem?.studentName}]?`
             : `Are you sure you want to activate [${selectedItem?.studentName}]?`
         }
-        confirmText={selectedItem?.status === "Active" ? "Confirm Deactivation" : "Confirm Activation"}
-        confirmVariant={selectedItem?.status === "Active" ? "destructive" : "primary"}
-        isDeleting={false}
+        confirmText={selectedItem?.status === "ACTIVE" ? "Confirm Deactivation" : "Confirm Activation"}
+        confirmVariant={selectedItem?.status === "ACTIVE" ? "destructive" : "primary"}
+        isDeleting={isTogglingStatus}
       />
     </>
   );
