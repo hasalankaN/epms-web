@@ -69,6 +69,7 @@ function mapToBatchRow(item: CommissionsApiItem): CommissionBatchRow {
     studentName: item.student_full_name ?? "—",
     amount: formatAmount(item.payment_amount),
     referralMember: item.referral_member_name ?? "—",
+    commissionType: item.commission_type,
     commissionRate: formatRate(item.commission_rate),
     commissionAccumulated: formatAmount(item.commission_amount),
   };
@@ -82,6 +83,7 @@ function mapToCourseRow(item: CommissionsApiItem): CommissionCourseRow {
     studentName: item.student_full_name ?? "—",
     amount: formatAmount(item.payment_amount),
     referralMember: item.referral_member_name ?? "—",
+    commissionType: item.commission_type,
     commissionRate: formatRate(item.commission_rate),
     commissionAccumulated: formatAmount(item.commission_amount),
   };
@@ -95,6 +97,7 @@ function mapToProductRow(item: CommissionsApiItem): CommissionProductRow {
     studentName: item.student_full_name ?? "—",
     amount: formatAmount(item.payment_amount),
     referralMember: item.referral_member_name ?? "—",
+    commissionType: item.commission_type,
     commissionRate: formatRate(item.commission_rate),
     commissionAccumulated: formatAmount(item.commission_amount),
   };
@@ -115,6 +118,7 @@ function mapToRejectedRow(item: CommissionsApiItem): CommissionRejectedRow {
     studentName: item.student_full_name ?? "—",
     amount: formatAmount(item.payment_amount),
     referralMember: item.referral_member_name ?? "—",
+    commissionType: item.commission_type,
     comRate: formatRate(item.commission_rate),
     comAccumulated: formatAmount(item.commission_amount),
     rejectedReason: item.rejection_reason ?? "—",

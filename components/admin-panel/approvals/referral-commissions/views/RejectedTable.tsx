@@ -117,12 +117,12 @@ export function RejectedTable({
   ];
 
   const getRowClassName = (item: CommissionRejectedRow) => {
-    if (item.referralMember.startsWith("Student Referral")) {
-      return "border-b border-[#E7E5E4] bg-[#D9E9FF] hover:bg-[#D9E9FF]";
+    if (item.commissionType === "REFERRAL") {
+      return "border-b border-[#E7E5E4] bg-[#FFF7D7] hover:bg-[#FFF7D7]";
     }
 
-    if (item.referralMember.startsWith("Agent Referral")) {
-      return "border-b border-[#E7E5E4] bg-[#FFF7D7] hover:bg-[#FFF7D7]";
+    if (item.commissionType === "LECTURER") {
+      return "border-b border-[#E7E5E4] bg-[#D9E9FF] hover:bg-[#D9E9FF]";
     }
 
     return "border-b border-[#E7E5E4] bg-white hover:bg-[#FFF9FC]";

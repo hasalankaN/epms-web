@@ -19,6 +19,7 @@ export const mockCommissionBatchesData: CommissionBatchRow[] = Array.from({
       : i % 3 === 1
         ? "Student Referral-Student Name"
         : "Agent Referral-Agent Name",
+  commissionType: (i % 3 === 0 ? "STAFF" : i % 3 === 1 ? "LECTURER" : "REFERRAL") as "REFERRAL" | "LECTURER" | "STAFF",
   commissionRate: "#%",
   commissionAccumulated: "XXX.00",
 }));
@@ -37,6 +38,7 @@ export const mockCommissionCoursesData: CommissionCourseRow[] = Array.from({
       : i % 3 === 1
         ? "Student Referral-Student Name"
         : "Agent Referral-Agent Name",
+  commissionType: (i % 3 === 0 ? "STAFF" : i % 3 === 1 ? "LECTURER" : "REFERRAL") as "REFERRAL" | "LECTURER" | "STAFF",
   commissionRate: "#%",
   commissionAccumulated: "XXX.00",
 }));
@@ -55,6 +57,7 @@ export const mockCommissionProductsData: CommissionProductRow[] = Array.from({
       : i % 3 === 1
         ? "Student Referral-Student Name"
         : "Agent Referral-Agent Name",
+  commissionType: (i % 3 === 0 ? "STAFF" : i % 3 === 1 ? "LECTURER" : "REFERRAL") as "REFERRAL" | "LECTURER" | "STAFF",
   commissionRate: "#%",
   commissionAccumulated: "XXX.00",
 }));
@@ -77,6 +80,7 @@ export const mockCommissionRejectedData: CommissionRejectedRow[] = Array.from({
         : i % 3 === 1
           ? "Student Referral-Student Name"
           : "Agent Referral-Agent Name",
+    commissionType: (i % 3 === 0 ? "STAFF" : i % 3 === 1 ? "LECTURER" : "REFERRAL") as "REFERRAL" | "LECTURER" | "STAFF",
     comRate: "#%",
     comAccumulated: "XXX.00",
     rejectedReason: "Reason here",

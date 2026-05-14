@@ -121,6 +121,7 @@ export interface CommissionBatchRow {
   studentName: string;
   amount: string;
   referralMember: string;
+  commissionType: "REFERRAL" | "LECTURER" | "STAFF";
   commissionRate: string;
   commissionAccumulated: string;
 }
@@ -132,6 +133,7 @@ export interface CommissionCourseRow {
   studentName: string;
   amount: string;
   referralMember: string;
+  commissionType: "REFERRAL" | "LECTURER" | "STAFF";
   commissionRate: string;
   commissionAccumulated: string;
 }
@@ -143,6 +145,7 @@ export interface CommissionProductRow {
   studentName: string;
   amount: string;
   referralMember: string;
+  commissionType: "REFERRAL" | "LECTURER" | "STAFF";
   commissionRate: string;
   commissionAccumulated: string;
 }
@@ -155,6 +158,7 @@ export interface CommissionRejectedRow {
   studentName: string;
   amount: string;
   referralMember: string;
+  commissionType: "REFERRAL" | "LECTURER" | "STAFF";
   comRate: string;
   comAccumulated: string;
   rejectedReason: string;
@@ -167,6 +171,7 @@ export interface CommissionRejectedRow {
 export interface CommissionsApiItem {
   id: string;
   source_type: "BATCH" | "COURSE" | "PRODUCT";
+  commission_type: "REFERRAL" | "LECTURER" | "STAFF";
   transaction_date: string;
   source_name: string | null;
   student_full_name: string | null;
