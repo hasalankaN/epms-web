@@ -40,7 +40,7 @@ export function StudentReferralsTable({
   isLoading,
 }: StudentReferralsTableProps) {
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
-  
+
   const [selectedItem, setSelectedItem] =
     useState<StudentReferralDataType | null>(null);
 

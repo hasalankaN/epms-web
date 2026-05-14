@@ -130,6 +130,8 @@ export const API_ENDPOINTS = {
     GET_PAYMENT_REQUESTS_COMPLETED: `/api/v1/admin/referrals/payment-requests/completed`,
     PROCESS_PAYMENT: (id: string) =>
       `/api/v1/admin/referrals/payment-requests/${id}/pay`,
+    GET_PAYMENT_HISTORY: (id: string) =>
+      `/api/v1/admin/referrals/agents/${id}/payment-history`,
   },
   enquiries: {
     GET_ALL: `/api/v1/admin/enquiries`,

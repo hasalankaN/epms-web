@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
 import { AgentProfileModal } from "../modals/AgentProfileModal";
-import { PaymentHistoryModal, type PaymentHistoryGroup } from "../modals/PaymentHistoryModal";
+import { PaymentHistoryModal } from "../modals/PaymentHistoryModal";
 import { EditReferralMemberModal } from "../modals/EditReferralMemberModal";
 import { useUpdateReferralAgentStatus } from "@/hooks/api/referrals/useUpdateReferralAgentStatus";
 
@@ -46,7 +46,7 @@ export function ReferralStaffTable({
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
 
   const [isPaymentHistoryOpen, setIsPaymentHistoryOpen] = useState(false);
-  const [paymentHistoryData, setPaymentHistoryData] = useState<PaymentHistoryGroup[] | null>(null);
+  const [paymentHistoryAgentId, setPaymentHistoryAgentId] = useState<string | null>(null);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedMemberToEdit, setSelectedMemberToEdit] = useState<ReferralAgentDataType | null>(null);
@@ -60,7 +60,7 @@ export function ReferralStaffTable({
 
   const handleAction = (action: string, item: ReferralAgentDataType) => {
     if (action === "view") {
-      setSelectedAgentId(item.isTeamLeader ? `${item.id}-leader` : item.id);
+      setSelectedAgentId(item.id);
       setIsAgentProfileOpen(true);
 
       return;
@@ -81,38 +81,18 @@ export function ReferralStaffTable({
     }
 
     if (action === "payment-history") {
-      // Mocked payment history data based on Figma design
-      const mockHistory: PaymentHistoryGroup[] = [
-        {
-          monthYear: "December, 2025",
-          transactions: [
-            {
-              id: "tx-1",
-              description: "Referral commission for something",
-              courseBatch: "Course A",
-              amount: "XXXX.00",
-              status: "Pending",
-            },
-            {
-              id: "tx-2",
-              description: "Referral commission for something",
-              courseBatch: "Course B",
-              amount: "XXXX.00",
-              status: "Paid",
-              paidDate: "2025.12.23",
-            },
-          ],
-        },
-      ];
-
-      setPaymentHistoryData(mockHistory);
+      setPaymentHistoryAgentId(item.id);
       setIsPaymentHistoryOpen(true);
 
       return;
     }
 
     if (action === "whatsapp") {
-      window.open(`https://wa.me/94711234567`, "_blank");
+      const number = (item.whatsApp || item.phone || "").replace(/\D/g, "");
+      
+      if (number) {
+        window.open(`https://wa.me/${number}`, "_blank");
+      }
 
       return;
     }
@@ -302,8 +282,11 @@ export function ReferralStaffTable({
 
       <PaymentHistoryModal
         isOpen={isPaymentHistoryOpen}
-        onClose={() => setIsPaymentHistoryOpen(false)}
-        historyGroups={paymentHistoryData}
+        onClose={() => {
+          setIsPaymentHistoryOpen(false);
+          setPaymentHistoryAgentId(null);
+        }}
+        agentId={paymentHistoryAgentId}
       />
 
       <EditReferralMemberModal

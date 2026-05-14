@@ -42,7 +42,7 @@ export function AgentCourseEnrollmentsTable({
   memberId,
 }: AgentCourseEnrollmentsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   const [dateRange, setDateRange] = useState<
     { from?: Date; to?: Date } | undefined
   >();

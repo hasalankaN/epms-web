@@ -49,7 +49,7 @@ export function MyTeamsTable({
 
   const handleAction = (action: string, item: ReferralAgentDataType) => {
     if (action === "view") {
-      setSelectedAgentId(item.isTeamLeader ? `${item.id}-leader` : item.id);
+      setSelectedAgentId(item.id);
       setIsAgentProfileOpen(true);
 
       return;

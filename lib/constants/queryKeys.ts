@@ -39,6 +39,7 @@ export const queryKeys = {
   // Referrals
   referrals: "referrals",
   referralPaymentRequests: "referralPaymentRequests",
+  referralAgentPaymentHistory: "referralAgentPaymentHistory",
 
   // Enquiries
   enquiries: "enquiries",
