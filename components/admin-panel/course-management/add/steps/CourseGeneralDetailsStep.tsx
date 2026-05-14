@@ -452,6 +452,33 @@ export function CourseGeneralDetailsStep({ onNext }: CourseGeneralDetailsStepPro
               />
             </div>
 
+            <div className="space-y-1">
+              <FieldLabel required>Allow lecture to manage material</FieldLabel>
+              <div className="flex items-center gap-6 h-10">
+                 <div className="flex items-center gap-2">
+                    <input 
+                      type="radio" 
+                      id="allow-lecturer-yes" 
+                      value="Allow" 
+                      {...register("allowLecturerToManage")} 
+                      className="accent-[#0F172B] w-4 h-4 cursor-pointer" 
+                    />
+                    <label htmlFor="allow-lecturer-yes" className="text-sm text-[#45556C] cursor-pointer">Allow</label>
+                 </div>
+                 <div className="flex items-center gap-2">
+                    <input 
+                      type="radio" 
+                      id="allow-lecturer-no" 
+                      value="Not Allow" 
+                      {...register("allowLecturerToManage")} 
+                      className="accent-[#0F172B] w-4 h-4 cursor-pointer" 
+                    />
+                    <label htmlFor="allow-lecturer-no" className="text-sm text-[#45556C] cursor-pointer">Not Allow</label>
+                 </div>
+              </div>
+              <FieldError message={errors.allowLecturerToManage?.message} />
+            </div>
+
             {/* Row 5: Hierarchy */}
             <div className="col-span-1 md:col-span-2 lg:col-span-3 space-y-1">
               <FieldLabel required>Select Hierarchy</FieldLabel>

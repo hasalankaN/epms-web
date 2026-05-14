@@ -9,6 +9,8 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,20 +26,47 @@ import {
 } from "@/components/ui/select";
 
 import { cn } from "@/lib/utils";
-import { AUTH_TYPOGRAPHY, AUTH_INPUT, BUTTON_STYLES } from "@/lib/constants/theme";
+import {
+  AUTH_TYPOGRAPHY,
+  AUTH_INPUT,
+  BUTTON_STYLES,
+} from "@/lib/constants/theme";
 import { useGetBranches } from "@/hooks/api/branches/useGetBranches";
+import { useGetBatches } from "@/hooks/api/batches/useGetBatches";
+import { useGetCourses } from "@/hooks/api/courses/useGetCourses";
+import { useCreateExpense } from "@/hooks/api/finances/useGetExpenses";
+import type { ExpenseEntityType } from "@/hooks/api/finances/useGetExpenses";
 
 // ===== SCHEMA =====
 
-const expenseSchema = z.object({
-  expense_type: z.enum(["bcp", "general"], { required_error: "Type is required." }),
-  expense_description: z.string().min(1, "Description is required."),
-  amount: z.string().min(1, "Amount is required."),
-  transaction_via: z.string().min(1, "Transaction via is required."),
-  branch_id: z.string().min(1, "Branch is required."),
-  evidence: z.string().min(1, "Evidence is required."),
-  notes: z.string().optional(),
-});
+const expenseSchema = z
+  .object({
+    expense_type: z.enum(["bcp", "general"], {
+      required_error: "Type is required.",
+    }),
+    source_type: z.enum(["BATCH", "COURSE", "PRODUCT"]).optional(),
+    source_id: z.string().optional(),
+    expense_description: z.string().min(1, "Description is required."),
+    amount: z.string().min(1, "Amount is required."),
+    transaction_via: z.string().min(1, "Transaction via is required."),
+    branch_id: z.string().min(1, "Branch is required."),
+    expense_date: z.string().min(1, "Date is required."),
+    evidence: z.string().optional(),
+    notes: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.expense_type === "bcp") {
+        return !!data.source_type && !!data.source_id;
+      }
+
+      return true;
+    },
+    {
+      message: "Please select a specific batch, course, or product",
+      path: ["source_id"],
+    },
+  );
 
 type ExpenseFormValues = z.infer<typeof expenseSchema>;
 
@@ -71,7 +100,13 @@ const FieldLabel = ({
   required?: boolean;
   className?: string;
 }) => (
-  <Label className={cn(AUTH_TYPOGRAPHY.label, "mb-1.5 block text-[#1D293D] font-medium text-sm", className)}>
+  <Label
+    className={cn(
+      AUTH_TYPOGRAPHY.label,
+      "mb-1.5 block text-[#1D293D] font-medium text-sm",
+      className,
+    )}
+  >
     {children}
     {required && <span className="ml-0.5 text-[#E60076]">*</span>}
   </Label>
@@ -101,53 +136,71 @@ const itemVariants = {
 
 // ===== MAIN COMPONENT =====
 
-export function AddExpensePanel({ isOpen, onClose, activeTab }: AddExpensePanelProps) {
+export function AddExpensePanel({
+  isOpen,
+  onClose,
+  activeTab,
+}: AddExpensePanelProps) {
   const { data: branchesData } = useGetBranches({ size: 100 });
   const branches = branchesData?.results || [];
+  const { data: batchesData } = useGetBatches({ size: 100 });
+  const batches = batchesData?.results || [];
+  const { data: coursesData } = useGetCourses({ size: 100 });
+  const courses = coursesData?.results || [];
+  const { mutateAsync: createExpense } = useCreateExpense();
 
   const [showDiscardModal, setShowDiscardModal] = useState(false);
-  const [evidenceUrl, setEvidenceUrl] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const today = new Date().toISOString().split("T")[0];
 
   const {
     register,
     handleSubmit,
     control,
     reset,
-    formState: { errors, isDirty },
+    watch,
+    formState: { errors, isDirty, isSubmitting },
   } = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseSchema),
     mode: "onChange",
     defaultValues: {
       expense_type: activeTab === "bcp-expense" ? "bcp" : "general",
+      source_type: "BATCH",
+      source_id: "",
       expense_description: "",
       amount: "",
       transaction_via: "",
       branch_id: "",
+      expense_date: today,
       evidence: "",
       notes: "",
     },
   });
+
+  const expenseType = watch("expense_type");
+  const sourceType = watch("source_type");
 
   // Reset on open
   useEffect(() => {
     if (isOpen) {
       reset({
         expense_type: activeTab === "bcp-expense" ? "bcp" : "general",
+        source_type: "BATCH",
+        source_id: "",
         expense_description: "",
         amount: "",
         transaction_via: "",
         branch_id: "",
+        expense_date: today,
         evidence: "",
         notes: "",
       });
       setShowDiscardModal(false);
-      setEvidenceUrl("");
     }
-  }, [isOpen, reset, activeTab]);
+  }, [isOpen, reset, activeTab, today]);
 
   const handleCloseAttempt = () => {
-    if (isDirty || evidenceUrl) {
+    if (isDirty) {
       setShowDiscardModal(true);
     } else {
       onClose();
@@ -161,19 +214,38 @@ export function AddExpensePanel({ isOpen, onClose, activeTab }: AddExpensePanelP
   };
 
   const onSubmit = async (values: ExpenseFormValues) => {
-    setIsSubmitting(true);
-
     try {
-      console.log("Submitting Expense:", { ...values, evidence: evidenceUrl });
+      const relatedEntityType: ExpenseEntityType =
+        values.expense_type === "general"
+          ? "GENERAL"
+          : (values.source_type ?? "BATCH");
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Map display values to backend enum values
+      const transactionViaMap: Record<string, string> = {
+        BOC: "BOC",
+        Peoples: "PEOPLES_BANK",
+        "Peoples Bank": "PEOPLES_BANK",
+        Cash: "CASH",
+      };
+
+      await createExpense({
+        related_entity_type: relatedEntityType,
+        description: values.expense_description,
+        amount: parseFloat(values.amount.replace(/,/g, "")),
+        date: values.expense_date,
+        transaction_via:
+          transactionViaMap[values.transaction_via] ?? values.transaction_via,
+        branch_id: values.branch_id,
+        related_entity_id:
+          values.expense_type === "bcp" ? values.source_id : undefined,
+        notes: values.notes || undefined,
+      });
+
+      toast.success("Expense added successfully.");
       reset();
       onClose();
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsSubmitting(false);
+    } catch {
+      toast.error("Failed to add expense. Please try again.");
     }
   };
 
@@ -204,7 +276,8 @@ export function AddExpensePanel({ isOpen, onClose, activeTab }: AddExpensePanelP
                 style={{
                   borderLeft: "1px solid #E2E8F0",
                   borderRadius: "8px 0 0 8px",
-                  boxShadow: "0 4px 6px -4px rgba(16, 24, 40, 0.10), 0 10px 15px -3px rgba(0, 0, 0, 0.10)",
+                  boxShadow:
+                    "0 4px 6px -4px rgba(16, 24, 40, 0.10), 0 10px 15px -3px rgba(0, 0, 0, 0.10)",
                 }}
               >
                 {/* Header */}
@@ -236,7 +309,6 @@ export function AddExpensePanel({ isOpen, onClose, activeTab }: AddExpensePanelP
                     className="px-6 py-6 custom-scrollbar"
                   >
                     <div className="flex flex-col gap-6">
-
                       {/* Select Type */}
                       <div className="space-y-1">
                         <FieldLabel>Select Type</FieldLabel>
@@ -254,7 +326,10 @@ export function AddExpensePanel({ isOpen, onClose, activeTab }: AddExpensePanelP
                                   onChange={() => field.onChange("bcp")}
                                   className="accent-[#0F172B] w-4 h-4 cursor-pointer"
                                 />
-                                <label htmlFor="type-bcp" className="text-sm text-[#45556C] cursor-pointer">
+                                <label
+                                  htmlFor="type-bcp"
+                                  className="text-sm text-[#45556C] cursor-pointer"
+                                >
                                   Batch/Course/Product
                                 </label>
                               </div>
@@ -267,29 +342,159 @@ export function AddExpensePanel({ isOpen, onClose, activeTab }: AddExpensePanelP
                                   onChange={() => field.onChange("general")}
                                   className="accent-[#0F172B] w-4 h-4 cursor-pointer"
                                 />
-                                <label htmlFor="type-general" className="text-sm text-[#45556C] cursor-pointer">
+                                <label
+                                  htmlFor="type-general"
+                                  className="text-sm text-[#45556C] cursor-pointer"
+                                >
                                   General
                                 </label>
                               </div>
                             </div>
                           )}
                         />
-                        {errors.expense_type && <p className="text-xs text-red-500">{errors.expense_type.message}</p>}
+                        {errors.expense_type && (
+                          <p className="text-xs text-red-500">
+                            {errors.expense_type.message}
+                          </p>
+                        )}
                       </div>
+
+                      {/* Source Type (BCP only) */}
+                      {expenseType === "bcp" && (
+                        <div className="space-y-1">
+                          <FieldLabel>Select</FieldLabel>
+                          <Controller
+                            control={control}
+                            name="source_type"
+                            render={({ field }) => (
+                              <div className="flex items-center gap-6 h-10">
+                                {(["BATCH", "COURSE", "PRODUCT"] as const).map(
+                                  (type) => (
+                                    <div
+                                      key={type}
+                                      className="flex items-center gap-2"
+                                    >
+                                      <input
+                                        type="radio"
+                                        id={`src-${type}`}
+                                        value={type}
+                                        checked={field.value === type}
+                                        onChange={() => field.onChange(type)}
+                                        className="accent-[#0F172B] w-4 h-4 cursor-pointer"
+                                      />
+                                      <label
+                                        htmlFor={`src-${type}`}
+                                        className="text-sm text-[#45556C] cursor-pointer"
+                                      >
+                                        {type.charAt(0) +
+                                          type.slice(1).toLowerCase()}
+                                      </label>
+                                    </div>
+                                  ),
+                                )}
+                              </div>
+                            )}
+                          />
+                        </div>
+                      )}
+
+                      {/* Select Specific Batch/Course/Product */}
+                      {expenseType === "bcp" && sourceType && (
+                        <div className="space-y-1">
+                          <FieldLabel required>
+                            Select{" "}
+                            {sourceType === "BATCH"
+                              ? "Batch"
+                              : sourceType === "COURSE"
+                                ? "Course"
+                                : "Product"}
+                          </FieldLabel>
+                          <Controller
+                            control={control}
+                            name="source_id"
+                            render={({ field }) => (
+                              <Select
+                                value={field.value || ""}
+                                onValueChange={field.onChange}
+                              >
+                                <SelectTrigger
+                                  className={cn(
+                                    AUTH_INPUT.base,
+                                    AUTH_INPUT.placeholder,
+                                  )}
+                                >
+                                  <SelectValue
+                                    placeholder={`Select a ${sourceType === "BATCH" ? "batch" : sourceType === "COURSE" ? "course" : "product"}`}
+                                  />
+                                </SelectTrigger>
+                                <SelectContent className="z-[999999]">
+                                  {sourceType === "BATCH" &&
+                                    batches.length === 0 && (
+                                      <div className="px-3 py-2 text-sm text-[#90A1B9]">
+                                        No batches found
+                                      </div>
+                                    )}
+                                  {sourceType === "BATCH" &&
+                                    batches.map((batch) => (
+                                      <SelectItem
+                                        key={batch.id}
+                                        value={batch.id}
+                                      >
+                                        {batch.name}
+                                      </SelectItem>
+                                    ))}
+                                  {sourceType === "COURSE" &&
+                                    courses.length === 0 && (
+                                      <div className="px-3 py-2 text-sm text-[#90A1B9]">
+                                        No courses found
+                                      </div>
+                                    )}
+                                  {sourceType === "COURSE" &&
+                                    courses.map((course) => (
+                                      <SelectItem
+                                        key={course.id}
+                                        value={course.id}
+                                      >
+                                        {course.name}
+                                      </SelectItem>
+                                    ))}
+                                  {sourceType === "PRODUCT" && (
+                                    <div className="px-3 py-2 text-sm text-[#90A1B9]">
+                                      No products found
+                                    </div>
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                          {errors.source_id && (
+                            <p className="text-xs text-red-500">
+                              {errors.source_id.message}
+                            </p>
+                          )}
+                        </div>
+                      )}
 
                       {/* Transaction Description */}
                       <div className="space-y-1">
-                        <FieldLabel required>Transaction Description</FieldLabel>
+                        <FieldLabel required>
+                          Transaction Description
+                        </FieldLabel>
                         <Input
                           {...register("expense_description")}
                           className={cn(
                             AUTH_INPUT.base,
                             AUTH_INPUT.placeholder,
-                            errors.expense_description && "border-red-500 focus-visible:ring-red-500"
+                            errors.expense_description &&
+                              "border-red-500 focus-visible:ring-red-500",
                           )}
                           placeholder="lorem ipsum"
                         />
-                        {errors.expense_description && <p className="text-xs text-red-500">{errors.expense_description.message}</p>}
+                        {errors.expense_description && (
+                          <p className="text-xs text-red-500">
+                            {errors.expense_description.message}
+                          </p>
+                        )}
                       </div>
 
                       {/* Amount */}
@@ -305,16 +510,23 @@ export function AddExpensePanel({ isOpen, onClose, activeTab }: AddExpensePanelP
                               AUTH_INPUT.base,
                               AUTH_INPUT.placeholder,
                               "pr-14",
-                              errors.amount && "border-red-500 focus-visible:ring-red-500"
+                              errors.amount &&
+                                "border-red-500 focus-visible:ring-red-500",
                             )}
                             placeholder="eg: 15,000.00"
                           />
                           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                            <span className="text-sm font-semibold text-[#1D293D]">LKR</span>
+                            <span className="text-sm font-semibold text-[#1D293D]">
+                              LKR
+                            </span>
                             <ChevronDown className="h-3 w-3 text-[#0F172B]" />
                           </div>
                         </div>
-                        {errors.amount && <p className="text-xs text-red-500">{errors.amount.message}</p>}
+                        {errors.amount && (
+                          <p className="text-xs text-red-500">
+                            {errors.amount.message}
+                          </p>
+                        )}
                       </div>
 
                       {/* Transaction Via */}
@@ -332,21 +544,30 @@ export function AddExpensePanel({ isOpen, onClose, activeTab }: AddExpensePanelP
                                 className={cn(
                                   AUTH_INPUT.base,
                                   "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic",
-                                  errors.transaction_via && "border-red-500 focus:ring-red-500"
+                                  errors.transaction_via &&
+                                    "border-red-500 focus:ring-red-500",
                                 )}
                               >
                                 <SelectValue placeholder="Select" />
                               </SelectTrigger>
                               <SelectContent className="z-[99999999]">
                                 <SelectItem value="BOC">BOC</SelectItem>
-                                <SelectItem value="Peoples">Peoples Bank</SelectItem>
+                                <SelectItem value="Peoples">
+                                  Peoples Bank
+                                </SelectItem>
                                 <SelectItem value="Cash">Cash</SelectItem>
-                                <SelectItem value="Online Transfer">Online Transfer</SelectItem>
+                                <SelectItem value="Online Transfer">
+                                  Online Transfer
+                                </SelectItem>
                               </SelectContent>
                             </Select>
                           )}
                         />
-                        {errors.transaction_via && <p className="text-xs text-red-500">{errors.transaction_via.message}</p>}
+                        {errors.transaction_via && (
+                          <p className="text-xs text-red-500">
+                            {errors.transaction_via.message}
+                          </p>
+                        )}
                       </div>
 
                       {/* Branch */}
@@ -364,46 +585,85 @@ export function AddExpensePanel({ isOpen, onClose, activeTab }: AddExpensePanelP
                                 className={cn(
                                   AUTH_INPUT.base,
                                   "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic",
-                                  errors.branch_id && "border-red-500 focus:ring-red-500"
+                                  errors.branch_id &&
+                                    "border-red-500 focus:ring-red-500",
                                 )}
                               >
                                 <SelectValue placeholder="Select" />
                               </SelectTrigger>
                               <SelectContent className="z-[99999999]">
-                                {branches.map((branch: { id: string; name: string }) => (
-                                  <SelectItem key={branch.id} value={branch.id}>
-                                    {branch.name}
-                                  </SelectItem>
-                                ))}
+                                {branches.map(
+                                  (branch: { id: string; name: string }) => (
+                                    <SelectItem
+                                      key={branch.id}
+                                      value={branch.id}
+                                    >
+                                      {branch.name}
+                                    </SelectItem>
+                                  ),
+                                )}
                                 {branches.length === 0 && (
-                                  <SelectItem value="dummy" disabled>No branches found</SelectItem>
+                                  <SelectItem value="dummy" disabled>
+                                    No branches found
+                                  </SelectItem>
                                 )}
                               </SelectContent>
                             </Select>
                           )}
                         />
-                        {errors.branch_id && <p className="text-xs text-red-500">{errors.branch_id.message}</p>}
+                        {errors.branch_id && (
+                          <p className="text-xs text-red-500">
+                            {errors.branch_id.message}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Expense Date */}
+                      <div className="space-y-1">
+                        <FieldLabel required>Expense Date</FieldLabel>
+                        <Input
+                          type="date"
+                          {...register("expense_date")}
+                          max={today}
+                          className={cn(
+                            AUTH_INPUT.base,
+                            errors.expense_date &&
+                              "border-red-500 focus-visible:ring-red-500",
+                          )}
+                        />
+                        {errors.expense_date && (
+                          <p className="text-xs text-red-500">
+                            {errors.expense_date.message}
+                          </p>
+                        )}
                       </div>
 
                       {/* Evidence */}
                       <div className="space-y-1">
-                        <FieldLabel required>Evidence</FieldLabel>
+                        <FieldLabel>Evidence</FieldLabel>
                         <Controller
                           control={control}
                           name="evidence"
                           render={({ field }) => (
                             <div className="w-full">
                               <ImageUpload
-                                imageUrl={field.value}
+                                imageUrl={field.value ?? ""}
                                 setImage={(url) => field.onChange(url)}
                                 removeImage={() => field.onChange("")}
                                 placeholder="Upload Here or drag and drop here"
-                                className={cn("h-[140px]", errors.evidence && "border-red-500")}
+                                className={cn(
+                                  "h-[140px]",
+                                  errors.evidence && "border-red-500",
+                                )}
                               />
                             </div>
                           )}
                         />
-                        {errors.evidence && <p className="text-xs text-red-500">{errors.evidence.message}</p>}
+                        {errors.evidence && (
+                          <p className="text-xs text-red-500">
+                            {errors.evidence.message}
+                          </p>
+                        )}
                       </div>
 
                       {/* Notes */}
@@ -415,13 +675,17 @@ export function AddExpensePanel({ isOpen, onClose, activeTab }: AddExpensePanelP
                             "min-h-[100px] resize-none text-[14px] font-medium",
                             AUTH_INPUT.base,
                             AUTH_INPUT.placeholder,
-                            errors.notes && "border-red-500 focus-visible:ring-red-500"
+                            errors.notes &&
+                              "border-red-500 focus-visible:ring-red-500",
                           )}
                           placeholder="eg: Type your notes here"
                         />
-                        {errors.notes && <p className="text-xs text-red-500">{errors.notes.message}</p>}
+                        {errors.notes && (
+                          <p className="text-xs text-red-500">
+                            {errors.notes.message}
+                          </p>
+                        )}
                       </div>
-
                     </div>
                   </form>
                 </motion.div>
@@ -437,7 +701,7 @@ export function AddExpensePanel({ isOpen, onClose, activeTab }: AddExpensePanelP
                     onClick={() => reset()}
                     className={cn(
                       BUTTON_STYLES.secondary.md,
-                      "font-inter text-[14px] font-semibold text-[#0F172B]"
+                      "font-inter text-[14px] font-semibold text-[#0F172B]",
                     )}
                   >
                     Clear All
@@ -446,12 +710,14 @@ export function AddExpensePanel({ isOpen, onClose, activeTab }: AddExpensePanelP
                     type="submit"
                     form="add-expense-form"
                     disabled={isSubmitting}
-                    className={cn(BUTTON_STYLES.primary.md, "w-auto min-w-[100px] px-6 text-sm font-semibold text-white")}
+                    className={cn(
+                      BUTTON_STYLES.primary.md,
+                      "w-auto min-w-[100px] px-6 text-sm font-semibold text-white",
+                    )}
                   >
                     {isSubmitting ? "Creating..." : "Create"}
                   </Button>
                 </motion.div>
-
               </motion.div>
             </>
           )}

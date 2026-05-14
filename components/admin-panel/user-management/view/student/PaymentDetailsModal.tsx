@@ -8,6 +8,7 @@ import { StatusPopover } from "@/components/common/StatusPopover";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { BUTTON_STYLES } from "@/lib/constants/theme";
+import { useEmailEnrollmentInvoice } from "@/hooks/api/user-management/useEmailEnrollmentInvoice";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -16,6 +17,7 @@ interface OneTimeTransaction {
   paymentType: "One-Time";
   paymentMethod: string;
   bank: string;
+  accountInfo?: string; // added
   viewSlip?: boolean;
   status: string;
   paidAmount: string;
@@ -32,17 +34,19 @@ interface InstallmentSummary {
 }
 
 interface InstallmentTransaction {
+  id: string; // added
   transactionNote: string;
   paymentType: string;
   paymentMethod: string;
   bank: string;
+  accountInfo?: string; // added
   status: string;
   paidAmount: string;
 }
 
 export type PaymentDetails =
-  | { mode: "one-time"; title: string; transactions: OneTimeTransaction[] }
-  | { mode: "installment"; title: string; summary: InstallmentSummary };
+  | { mode: "one-time"; title: string; enrollmentId: string; transactions: OneTimeTransaction[] }
+  | { mode: "installment"; title: string; enrollmentId: string; summary: InstallmentSummary };
 
 interface PaymentDetailsModalProps {
   isOpen: boolean;
@@ -68,8 +72,9 @@ const CardField = ({ label, value }: { label: string; value?: string }) => (
   </div>
 );
 
-const TransactionCard = ({ tx }: { tx: OneTimeTransaction | InstallmentTransaction }) => {
-  const isPending = tx.status === "Pending";
+const TransactionCard = ({ tx, enrollmentId }: { tx: OneTimeTransaction | InstallmentTransaction; enrollmentId: string }) => {
+  const isPending = tx.status === "Pending" || tx.status === "PAYMENT_PENDING";
+  const { mutate: emailInvoice, isPending: isEmailing } = useEmailEnrollmentInvoice();
 
   return (
     <div
@@ -131,6 +136,13 @@ const TransactionCard = ({ tx }: { tx: OneTimeTransaction | InstallmentTransacti
             <span className={labelClass}>Bank</span>
             <span className={valueClass}>{tx.bank}</span>
           </div>
+          {/* Account Info */}
+          {"accountInfo" in tx && tx.accountInfo && (
+            <div className="flex flex-col gap-0.5">
+              <span className={labelClass}>Account Info</span>
+              <span className={valueClass}>{tx.accountInfo}</span>
+            </div>
+          )}
           {/* Status */}
           <div className="flex flex-col gap-0.5">
             <span className={labelClass}>Status</span>
@@ -149,9 +161,10 @@ const TransactionCard = ({ tx }: { tx: OneTimeTransaction | InstallmentTransacti
       {/* View Invoice — on all cards */}
       <Button
         className={cn(BUTTON_STYLES.outline.md, "text-sm font-medium text-[#0F172B]")}
-        onClick={() => console.log("View Invoice")}
+        onClick={() => emailInvoice({ enrollmentId })}
+        disabled={isEmailing}
       >
-        View Invoice
+        {isEmailing ? "Sending..." : "Email Invoice"}
       </Button>
     </div>
   );
@@ -204,7 +217,7 @@ export function PaymentDetailsModal({
         <div className="flex flex-col gap-4 overflow-y-auto flex-1 pr-1">
           {details.mode === "one-time" &&
             details.transactions.map((tx, i) => (
-              <TransactionCard key={i} tx={tx} />
+              <TransactionCard key={i} tx={tx} enrollmentId={details.enrollmentId} />
             ))}
 
           {details.mode === "installment" && (
@@ -221,7 +234,7 @@ export function PaymentDetailsModal({
 
               {/* Per-installment cards */}
               {details.summary.installments.map((tx, i) => (
-                <TransactionCard key={i} tx={tx} />
+                <TransactionCard key={i} tx={tx} enrollmentId={details.enrollmentId} />
               ))}
             </>
           )}

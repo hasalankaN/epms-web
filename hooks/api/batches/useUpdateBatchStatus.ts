@@ -4,8 +4,7 @@ import { toast } from "sonner";
 import api from "@/lib/axios";
 import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 import { queryKeys } from "@/lib/constants/queryKeys";
-
-export type BatchStatus = "Active" | "Upcoming" | "Completed" | "Inactive";
+import type { BatchStatus } from "@/types/batch";
 
 export interface UpdateBatchStatusPayload {
   status: BatchStatus;

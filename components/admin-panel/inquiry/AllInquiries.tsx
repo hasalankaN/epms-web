@@ -17,6 +17,8 @@ import { AllInquiryTable } from "./views/AllInquiries/AllInquiryTable";
 
 import { useGetEnquiries } from "@/hooks/api/enquiries/useGetEnquiries";
 import { useBulkDeleteEnquiries } from "@/hooks/api/enquiries/useBulkDeleteEnquiries";
+import { useBulkUpdateEnquiryStatus } from "@/hooks/api/enquiries/useBulkUpdateEnquiryStatus";
+import { useBulkUpdateEnquiryPriority } from "@/hooks/api/enquiries/useBulkUpdateEnquiryPriority";
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "-";
@@ -50,6 +52,7 @@ export function AllInquiries() {
   const follow_up_to = searchParams.get("follow_up_to") || undefined;
   const date_from = searchParams.get("date_from") || undefined;
   const date_to = searchParams.get("date_to") || undefined;
+  const priority_status = (searchParams.get("priority_status") as "HOT" | "COLD") || undefined;
   const orderBy = searchParams.get("orderBy") || undefined;
   const order = (searchParams.get("order") as "asc" | "desc") || undefined;
 
@@ -69,6 +72,7 @@ export function AllInquiries() {
     follow_up_to,
     date_from,
     date_to,
+    priority_status,
     orderBy,
     order,
   });
@@ -85,6 +89,7 @@ export function AllInquiries() {
       if (apiStatus === "IN_PROGRESS" || apiStatus === "IN PROGRESS") normalizedStatus = "In Progress";
       else if (apiStatus === "COMPLETED") normalizedStatus = "Completed";
       else if (apiStatus === "NO_RESPONSE" || apiStatus === "NO RESPONSE") normalizedStatus = "No Response";
+      else if (apiStatus === "PENDING") normalizedStatus = "Pending";
 
       return {
         id: apiRow.id,
@@ -99,6 +104,7 @@ export function AllInquiries() {
         interest: apiRow.batch_name || apiRow.course_name || "-",
         branch: apiRow.branch_name || "-",
         status: normalizedStatus,
+        priority: apiRow.priority_status || null,
         followUp: formatDate(apiRow.next_follow_up_at),
       };
     });
@@ -118,6 +124,8 @@ export function AllInquiries() {
   );
   
   const { mutateAsync: bulkDeleteEnquiries, isPending: isBulkDeleting } = useBulkDeleteEnquiries();
+  const { mutateAsync: bulkUpdateStatus } = useBulkUpdateEnquiryStatus();
+  const { mutateAsync: bulkUpdatePriority } = useBulkUpdateEnquiryPriority();
 
   // ===== BULK ACTION HANDLERS =====
   const handlePageChange = useCallback((page: number) => {
@@ -184,6 +192,71 @@ export function AllInquiries() {
     }
   }, [selectedIds, bulkDeleteEnquiries]);
 
+  const handleMarkCompleted = useCallback(async () => {
+    if (selectedIds.length === 0) {
+      toast.warning("Please select at least one inquiry");
+
+      return;
+    }
+
+    try {
+      await bulkUpdateStatus({ ids: selectedIds, status: "COMPLETED" });
+      setRowSelection({});
+    } catch {}
+  }, [selectedIds, bulkUpdateStatus]);
+
+  const handleMarkInProgress = useCallback(async () => {
+    if (selectedIds.length === 0) {
+      toast.warning("Please select at least one inquiry");
+
+      return;
+    }
+
+    try {
+      await bulkUpdateStatus({ ids: selectedIds, status: "IN_PROGRESS" });
+      setRowSelection({});
+    } catch {}
+  }, [selectedIds, bulkUpdateStatus]);
+
+  const handleMarkNoResponse = useCallback(async () => {
+    if (selectedIds.length === 0) {
+      toast.warning("Please select at least one inquiry");
+
+      return;
+    }
+
+    try {
+      await bulkUpdateStatus({ ids: selectedIds, status: "NO_RESPONSE" });
+      setRowSelection({});
+    } catch {}
+  }, [selectedIds, bulkUpdateStatus]);
+
+  const handleMarkHot = useCallback(async () => {
+    if (selectedIds.length === 0) {
+      toast.warning("Please select at least one inquiry");
+
+      return;
+    }
+
+    try {
+      await bulkUpdatePriority({ ids: selectedIds, priority_status: "HOT" });
+      setRowSelection({});
+    } catch {}
+  }, [selectedIds, bulkUpdatePriority]);
+
+  const handleMarkCold = useCallback(async () => {
+    if (selectedIds.length === 0) {
+      toast.warning("Please select at least one inquiry");
+      
+      return;
+    }
+
+    try {
+      await bulkUpdatePriority({ ids: selectedIds, priority_status: "COLD" });
+      setRowSelection({});
+    } catch {}
+  }, [selectedIds, bulkUpdatePriority]);
+
   const handleExportCSV = useCallback(async () => {
     setIsExportingCSV(true);
 
@@ -199,6 +272,7 @@ export function AllInquiries() {
         date_to,
         follow_up_from,
         follow_up_to,
+        priority_status,
         tab: "all",
       });
       toast.success("CSV exported successfully");
@@ -207,7 +281,7 @@ export function AllInquiries() {
     } finally {
       setIsExportingCSV(false);
     }
-  }, [search, district, branch_id, assignee_user_id, interest_id, source, date_from, date_to, follow_up_from, follow_up_to]);
+  }, [search, district, branch_id, assignee_user_id, interest_id, source, date_from, date_to, follow_up_from, follow_up_to, priority_status]);
 
   const handleExportPDF = useCallback(async () => {
     setIsExportingPDF(true);
@@ -224,6 +298,7 @@ export function AllInquiries() {
         date_to,
         follow_up_from,
         follow_up_to,
+        priority_status,
         tab: "all",
       });
       toast.success("PDF exported successfully");
@@ -232,7 +307,7 @@ export function AllInquiries() {
     } finally {
       setIsExportingPDF(false);
     }
-  }, [search, district, branch_id, assignee_user_id, interest_id, source, date_from, date_to, follow_up_from, follow_up_to]);
+  }, [search, district, branch_id, assignee_user_id, interest_id, source, date_from, date_to, follow_up_from, follow_up_to, priority_status]);
 
   // ===== BULK ACTIONS CONFIG =====
   const bulkActions = useMemo(
@@ -243,8 +318,25 @@ export function AllInquiries() {
       onSendWhatsapp: handleSendWhatsapp,
       onSendEmail: handleSendEmail,
       onDelete: handleDelete,
+      onMarkCompleted: handleMarkCompleted,
+      onMarkInProgress: handleMarkInProgress,
+      onMarkNoResponse: handleMarkNoResponse,
+      onMarkHot: handleMarkHot,
+      onMarkCold: handleMarkCold,
     }),
-    [handleSelectAll, handleClearSelection, handleSendSMS, handleSendWhatsapp, handleSendEmail, handleDelete]
+    [
+      handleSelectAll, 
+      handleClearSelection, 
+      handleSendSMS, 
+      handleSendWhatsapp, 
+      handleSendEmail, 
+      handleDelete,
+      handleMarkCompleted,
+      handleMarkInProgress,
+      handleMarkNoResponse,
+      handleMarkHot,
+      handleMarkCold
+    ]
   );
 
   return (
@@ -253,7 +345,7 @@ export function AllInquiries() {
       <AllInquiryStatsRow />
       
       {/* Separator Line (24px below) */}
-      <div className="mt-4 h-[1px] w-full bg-[#E2E8F0]" />
+      <div className="h-[1px] w-full bg-[#E2E8F0]" />
 
       {/* Table Toolbar (24px below separator) */}
       <div className="mt-4">
@@ -270,7 +362,7 @@ export function AllInquiries() {
       </div>
 
       {/* Inquiry Table (16px below toolbar) */}
-      <div className="mt-4">
+      <div>
         <AllInquiryTable
           data={data}
           currentPage={currentPage}

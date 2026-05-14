@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, X } from "lucide-react";
 import { format } from "date-fns";
 
 import { cn } from "@/lib/utils";
@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/popover";
 import { DateRangeCalendar } from "@/components/common/filters/DateRangeCalendar";
 import ImageUpload from "@/components/common/ImageUpload";
-import { AUTH_TYPOGRAPHY, AUTH_INPUT } from "@/lib/constants/theme";
+import { AUTH_TYPOGRAPHY, AUTH_INPUT, BUTTON_STYLES } from "@/lib/constants/theme";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useGetStaff } from "@/hooks/api/staff/useGetStaff";
@@ -102,6 +102,11 @@ export function GeneralDetailsStep({ onNext }: GeneralDetailsStepProps) {
     watch,
     formState: { errors },
   } = form;
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "schedules",
+  });
 
   // Watch all form values and save to store on change
   useEffect(() => {
@@ -484,6 +489,55 @@ export function GeneralDetailsStep({ onNext }: GeneralDetailsStepProps) {
                 className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder)}
                 placeholder="eg: 2"
               />
+            </div>
+
+            {/* Row 6: Schedule Section */}
+            <div className="col-span-1 md:col-span-2 lg:col-span-2 space-y-4">
+              <FieldLabel required>Schedule</FieldLabel>
+              <div className="space-y-3">
+                {fields.map((field, index) => (
+                  <div key={field.id} className="flex flex-col md:flex-row gap-4 items-start">
+                    <div className="flex-1 w-full space-y-1">
+                      <Input
+                        {...register(`schedules.${index}.day` as const)}
+                        className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, errors.schedules?.[index]?.day && AUTH_INPUT.error)}
+                        placeholder="Day ( Monday, Tuesday...)"
+                      />
+                      <FieldError message={errors.schedules?.[index]?.day?.message} />
+                    </div>
+                    <div className="flex-1 w-full flex items-start gap-2">
+                      <div className="flex-1 space-y-1">
+                        <Input
+                          {...register(`schedules.${index}.time` as const)}
+                          className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, errors.schedules?.[index]?.time && AUTH_INPUT.error)}
+                          placeholder="Time ( 8.00 am)"
+                        />
+                        <FieldError message={errors.schedules?.[index]?.time?.message} />
+                      </div>
+                      {fields.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => remove(index)}
+                          className="mt-2 flex h-6 w-6 items-center justify-center rounded-full text-[#90A1B9] hover:bg-slate-100 transition-colors"
+                          title="Remove schedule"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => append({ day: "", time: "" })}
+                className={cn(
+                  BUTTON_STYLES.secondary.md, 
+                  "mt-2 w-fit font-semibold text-sm leading-5 text-[#0F172B] font-inter"
+                )}
+              >
+                Add Another date
+              </button>
             </div>
 
             {/* Row 6: Description */}

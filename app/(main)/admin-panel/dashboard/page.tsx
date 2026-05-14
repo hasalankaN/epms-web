@@ -1,17 +1,27 @@
 "use client";
 
+import React, { useState } from "react";
+
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 import { motion } from "framer-motion";
-import { FileText } from "lucide-react";
+import { FileText, Plus, Zap } from "lucide-react";
 
 import { OverviewSection } from "@/components/admin-panel/dashboard/OverviewSection";
 import { ReferralSection } from "@/components/admin-panel/dashboard/ReferralSection";
 import { AnalyticsSection } from "@/components/admin-panel/dashboard/AnalyticsSection";
 
+// Modals
+import { AddInquiryPanel } from "@/components/admin-panel/inquiry/modals/AddInquiryPanel";
+import { AddComplaintPanel } from "@/components/admin-panel/complaint-management/modals/AddComplaintPanel";
+import { AddIncomePanel } from "@/components/admin-panel/finance/income/OtherIncome/modals/AddIncomePanel";
+import { AddExpensePanel } from "@/components/admin-panel/finance/expenses/modals/AddExpensePanel";
+
 import { itemVariants } from "@/components/ui/dialog";
 import { TAB_STYLES, BUTTON_STYLES } from "@/lib/constants/theme";
 import { cn } from "@/lib/utils";
+import { FilterDropdown, type FilterCategory } from "@/components/common/dropdowns/FilterDropdown";
+
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -36,6 +46,12 @@ export default function DashboardPage() {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Modal States
+  const [isInquiryOpen, setIsInquiryOpen] = useState(false);
+  const [isComplaintOpen, setIsComplaintOpen] = useState(false);
+  const [isIncomeOpen, setIsIncomeOpen] = useState(false);
+  const [isExpenseOpen, setIsExpenseOpen] = useState(false);
+
   const currentTab = searchParams.get("tab") as DashboardTabType;
 
   const activeTab = tabs.some((t) => t.value === currentTab)
@@ -43,10 +59,31 @@ export default function DashboardPage() {
     : "overview";
 
   const handleTabChange = (tabValue: DashboardTabType) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams();
 
     params.set("tab", tabValue);
+    params.set("page", "1");
     router.replace(`${pathname}?${params.toString()}`);
+  };
+
+  const quickActionCategories: FilterCategory[] = [
+    {
+      key: "quick-actions",
+      label: "Quick Actions",
+      items: [
+        { key: "add-inquiry", label: "Add Inquiry" },
+        { key: "add-complaint", label: "Add Complaint" },
+        { key: "add-income", label: "Add Income" },
+        { key: "add-expense", label: "Add Expense" },
+      ],
+    },
+  ];
+
+  const handleQuickAction = (_categoryKey: string, itemKey: string) => {
+    if (itemKey === "add-inquiry") setIsInquiryOpen(true);
+    if (itemKey === "add-complaint") setIsComplaintOpen(true);
+    if (itemKey === "add-income") setIsIncomeOpen(true);
+    if (itemKey === "add-expense") setIsExpenseOpen(true);
   };
 
   return (
@@ -58,16 +95,30 @@ export default function DashboardPage() {
     >
       {/* Header Section */}
       <motion.div variants={itemVariants} className="flex items-center justify-between gap-4">
-        <h1 className="group cursor-default text-left font-sans text-2xl font-semibold leading-[38px] text-[#0F172B]">
+        <h1 className="group cursor-default text-left font-sans text-xl sm:text-2xl font-semibold leading-tight sm:leading-[38px] text-[#0F172B] whitespace-nowrap">
           Welcome Back!{" "}
           <span className="wave-on-hover wave-once">
             👋
           </span>
         </h1>
-        <button className={BUTTON_STYLES.primary.responsive}>
-          <FileText className="h-5 w-5 sm:hidden" />
-          <span className="hidden sm:inline">Generate Report</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <FilterDropdown
+            label="Quick Action"
+            categories={quickActionCategories}
+            triggerIcon={Zap}
+            onFilterSelect={handleQuickAction}
+            responsive={true}
+            className="h-9 sm:h-10"
+          />
+          <button className={cn(BUTTON_STYLES.secondary.md, "h-9 sm:h-10 px-3 sm:px-4 text-sm font-semibold")}>
+            <Plus className="h-5 w-5" />
+            <span className="hidden sm:inline">Add New Student</span>
+          </button>
+          <button className={BUTTON_STYLES.primary.responsive}>
+            <FileText className="h-5 w-5 sm:hidden" />
+            <span className="hidden sm:inline">Generate Report</span>
+          </button>
+        </div>
       </motion.div>
 
       {/* Tabs Section */}
@@ -104,6 +155,25 @@ export default function DashboardPage() {
         {activeTab === "referral" && <ReferralSection />}
         {activeTab === "analytics" && <AnalyticsSection />}
       </motion.div>
+
+      {/* Modals */}
+      <AddInquiryPanel 
+        isOpen={isInquiryOpen} 
+        onClose={() => setIsInquiryOpen(false)} 
+      />
+      <AddComplaintPanel 
+        isOpen={isComplaintOpen} 
+        onClose={() => setIsComplaintOpen(false)} 
+      />
+      <AddIncomePanel 
+        isOpen={isIncomeOpen} 
+        onClose={() => setIsIncomeOpen(false)} 
+      />
+      <AddExpensePanel 
+        isOpen={isExpenseOpen} 
+        onClose={() => setIsExpenseOpen(false)} 
+        activeTab="general-expense"
+      />
     </motion.div>
   );
 }

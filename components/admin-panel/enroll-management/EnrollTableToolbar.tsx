@@ -1,7 +1,10 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+
+import { format } from "date-fns";
 import { Search, MoreHorizontal, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -14,70 +17,271 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Input } from "@/components/ui/input";
-import type { ExportItem } from "@/components/common/dropdowns/ExportDropdown";
 import { ExportDropdown } from "@/components/common/dropdowns/ExportDropdown";
 import type { FilterCategory, FilterSelections } from "@/components/common/filters/FilterModal";
 import { FilterModal, FilterModalTrigger } from "@/components/common/filters/FilterModal";
+import { DISTRICTS } from "@/lib/constants/districts";
+import { useGetBatches } from "@/hooks/api/batches/useGetBatches";
+import { useGetCourses } from "@/hooks/api/courses/useGetCourses";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const buttonTextStyles = "text-[14px] font-semibold leading-[20px] text-[#0F172B]";
 
-// ===== ENROLL-SPECIFIC FILTER DATA =====
+interface EnrollTableToolbarProps {
+  totalCount: number;
+  onExportCSV: () => Promise<void>;
+  isExportingCSV?: boolean;
+}
 
-const enrollExportItems: ExportItem[] = [
-  { key: "csv", label: "Export CSV", icon: (() => <i className="file-csv h-4 w-4" />) as any, onClick: () => console.log("Export CSV") },
-];
+export function EnrollTableToolbar({ onExportCSV, isExportingCSV = false }: EnrollTableToolbarProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
 
-const enrollFilterCategories: FilterCategory[] = [
-  { 
-    key: "date", 
-    label: "By Date", 
-    type: "dateRange",
-  },
-  { 
-    key: "type", 
-    label: "Enrollment Type", 
-    type: "chips",
-    items: [
-      { key: "direct", label: "Direct" },
-      { key: "referral", label: "Referral" },
-    ],
-  },
-  { 
-    key: "status", 
-    label: "Status", 
-    type: "chips",
-    items: [
-      { key: "onGoing", label: "On Going" },
-      { key: "pending", label: "Pending" },
-      { key: "completed", label: "Completed" },
-      { key: "hold", label: "Hold" },
-      { key: "dropped", label: "Dropped" },
-    ],
-  },
-  { 
-    key: "scope", 
-    label: "Batch or Course", 
-    type: "chips",
-    items: [
-      { key: "course", label: "Course" },
-      { key: "batch", label: "Batch" },
-    ],
-  },
-];
+  const currentSearch = searchParams.get("search") || "";
+  const [searchTerm, setSearchTerm] = useState(currentSearch);
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-export function EnrollTableToolbar() {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<FilterSelections>({});
+
+  // Initialize active filters from URL
+  const [activeFilters, setActiveFilters] = useState<FilterSelections>(() => {
+    const filters: FilterSelections = {};
+
+    const getParam = (key: string, targetKey: string) => {
+      const val = searchParams.get(key);
+
+      if (val) filters[targetKey] = val.split(",");
+    };
+
+    getParam("enrollment_type", "type");
+    getParam("district", "district");
+    getParam("gender", "gender");
+    getParam("batch_or_course_id", "batch_or_course");
+    getParam("lifecycle_status", "status");
+    getParam("enrollment_target", "scope");
+
+    const dateFrom = searchParams.get("date_from");
+    const dateTo = searchParams.get("date_to");
+
+    if (dateFrom && dateTo) {
+      filters["date"] = { start: new Date(dateFrom), end: new Date(dateTo) };
+    }
+
+    return filters;
+  });
+
+  // Sync search input with URL
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (debouncedSearchTerm) {
+      params.set("search", debouncedSearchTerm);
+    } else {
+      params.delete("search");
+    }
+
+    if (searchParams.get("search") !== (debouncedSearchTerm || null)) {
+      params.set("page", "1");
+      router.push(`${pathname}?${params.toString()}`);
+    }
+  }, [debouncedSearchTerm, router, pathname, searchParams]);
+
+  // Sync internal state with URL filters when URL changes
+  useEffect(() => {
+    const filters: FilterSelections = {};
+
+    const getParam = (key: string, targetKey: string) => {
+      const val = searchParams.get(key);
+
+      if (val) filters[targetKey] = val.split(",");
+    };
+
+    getParam("enrollment_type", "type");
+    getParam("district", "district");
+    getParam("gender", "gender");
+    getParam("batch_or_course_id", "batch_or_course");
+    getParam("lifecycle_status", "status");
+    getParam("enrollment_target", "scope");
+
+    const dateFrom = searchParams.get("date_from");
+    const dateTo = searchParams.get("date_to");
+
+    if (dateFrom && dateTo) {
+      filters["date"] = { start: new Date(dateFrom), end: new Date(dateTo) };
+    }
+
+    setActiveFilters(filters);
+  }, [searchParams]);
+
+  // Pagination state for filters
+  const [batchPage, setBatchPage] = useState(1);
+  const [allBatches, setAllBatches] = useState<any[]>([]);
+  const [coursePage, setCoursePage] = useState(1);
+  const [allCourses, setAllCourses] = useState<any[]>([]);
+
+  // Fetch batches and courses for filtering
+  const { data: batchesData, isFetching: isFetchingBatches } = useGetBatches({ page: batchPage, size: 20 });
+  const { data: coursesData, isFetching: isFetchingCourses } = useGetCourses({ page: coursePage, size: 20 });
+
+  // Accumulate results
+  useEffect(() => {
+    if (batchesData?.results) {
+      setAllBatches(prev => {
+        const existingIds = new Set(prev.map(b => b.id));
+        const newUnique = batchesData.results.filter(b => !existingIds.has(b.id));
+        
+        return [...prev, ...newUnique];
+      });
+    }
+  }, [batchesData]);
+
+  useEffect(() => {
+    if (coursesData?.results) {
+      setAllCourses(prev => {
+        const existingIds = new Set(prev.map(c => c.id));
+        const newUnique = coursesData.results.filter(c => !existingIds.has(c.id));
+        
+        return [...prev, ...newUnique];
+      });
+    }
+  }, [coursesData]);
+
+  const handleBatchShowMore = useCallback(() => {
+    if (batchesData && !batchesData.isLastPage) {
+      setBatchPage(prev => prev + 1);
+    }
+  }, [batchesData]);
+
+  const handleCourseShowMore = useCallback(() => {
+    if (coursesData && !coursesData.isLastPage) {
+      setCoursePage(prev => prev + 1);
+    }
+  }, [coursesData]);
+
+  const enrollFilterCategories: FilterCategory[] = [
+    { 
+      key: "date", 
+      label: "By Date", 
+      type: "dateRange",
+    },
+    { 
+      key: "type", 
+      label: "Enrollment Type", 
+      type: "chips",
+      items: [
+        { key: "DIRECT", label: "Direct" },
+        { key: "REFERRAL", label: "Referral" },
+      ],
+    },
+    { 
+      key: "district", 
+      label: "By District", 
+      type: "chips",
+      items: DISTRICTS.map(d => ({ key: d.toLowerCase(), label: d })),
+    },
+    { 
+      key: "gender", 
+      label: "By Gender", 
+      type: "chips",
+      items: [
+        { key: "MALE", label: "Male" },
+        { key: "FEMALE", label: "Female" },
+      ],
+    },
+    { 
+      key: "batch_or_course", 
+      label: "By Batch or Course", 
+      type: "chips",
+      items: [
+        ...allBatches.map(b => ({ key: b.id, label: b.name })),
+        ...allCourses.map(c => ({ key: c.id, label: c.name })),
+      ],
+      onShowMore: () => {
+        handleBatchShowMore();
+        handleCourseShowMore();
+      },
+      hasMore: (batchesData ? !batchesData.isLastPage : false) || (coursesData ? !coursesData.isLastPage : false),
+      isLoading: isFetchingBatches || isFetchingCourses,
+    },
+    { 
+      key: "status", 
+      label: "Enroll Status", 
+      type: "chips",
+      items: [
+        { key: "ONGOING", label: "On Going" },
+        { key: "PENDING", label: "Pending" },
+        { key: "COMPLETED", label: "Completed" },
+        { key: "HOLD", label: "Hold" },
+        { key: "DROPPED", label: "Dropped" },
+      ],
+    },
+    { 
+      key: "scope", 
+      label: "Batch or Course Type", 
+      type: "chips",
+      items: [
+        { key: "COURSE", label: "Course" },
+        { key: "BATCH", label: "Batch" },
+      ],
+    },
+  ];
 
   const hasActiveFilters = Object.keys(activeFilters).length > 0;
 
   const handleApplyFilters = useCallback((selections: FilterSelections) => {
     setActiveFilters(selections);
-  }, []);
+    
+    const params = new URLSearchParams(searchParams.toString());
+    
+    const setOrDelete = (selKey: string, paramKey: string) => {
+      const val = selections[selKey];
+
+      if (Array.isArray(val) && val.length > 0) {
+        params.set(paramKey, val.join(","));
+      } else {
+        params.delete(paramKey);
+      }
+    };
+
+    setOrDelete("type", "enrollment_type");
+    setOrDelete("district", "district");
+    setOrDelete("gender", "gender");
+    setOrDelete("batch_or_course", "batch_or_course_id");
+    setOrDelete("status", "lifecycle_status");
+    setOrDelete("scope", "enrollment_target");
+
+    const dateVal = selections["date"] as { start: Date | null; end: Date | null };
+
+    if (dateVal && dateVal.start) {
+      params.set("date_from", format(dateVal.start, "yyyy-MM-dd"));
+      params.set("date_to", format(dateVal.end || dateVal.start, "yyyy-MM-dd"));
+    } else {
+      params.delete("date_from");
+      params.delete("date_to");
+    }
+
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
+  }, [router, pathname, searchParams]);
 
   const handleClearFilters = useCallback(() => {
     setActiveFilters({});
-  }, []);
+    
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.delete("enrollment_type");
+    params.delete("district");
+    params.delete("gender");
+    params.delete("batch_or_course_id");
+    params.delete("lifecycle_status");
+    params.delete("enrollment_target");
+    params.delete("date_from");
+    params.delete("date_to");
+
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
+  }, [router, pathname, searchParams]);
 
   return (
     <>
@@ -90,7 +294,9 @@ export function EnrollTableToolbar() {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#90A1B9]" />
               <Input
                 type="text"
-                placeholder="Search by Name, NIC, Phone Number"
+                placeholder="Search by Name, ID, Phone Number"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className={cn(
                   AUTH_INPUT.base,
                   AUTH_INPUT.placeholder,
@@ -117,9 +323,13 @@ export function EnrollTableToolbar() {
               label="Filter Option"
               className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
             />
-            <button className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}>
+            <button
+              className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}
+              onClick={onExportCSV}
+              disabled={isExportingCSV}
+            >
               <i className="file-csv h-4 w-4" />
-              Export CSV
+              {isExportingCSV ? "Exporting..." : "Export CSV"}
             </button>
           </div>
         </div>
@@ -133,6 +343,8 @@ export function EnrollTableToolbar() {
               <Input
                 type="text"
                 placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className={cn(
                   AUTH_INPUT.base,
                   AUTH_INPUT.placeholder,
@@ -159,7 +371,11 @@ export function EnrollTableToolbar() {
               label="Filter"
               className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
             />
-            <ExportDropdown items={enrollExportItems} />
+            <ExportDropdown
+              items={[
+                { key: "csv", label: isExportingCSV ? "Exporting..." : "Export CSV", icon: (() => <i className="file-csv h-4 w-4" />) as any, onClick: onExportCSV },
+              ]}
+            />
           </div>
         </div>
 
@@ -171,6 +387,8 @@ export function EnrollTableToolbar() {
             <Input
               type="text"
               placeholder="Search by Student Name, ID, Phone"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className={cn(
                 AUTH_INPUT.base,
                 AUTH_INPUT.placeholder,
@@ -206,9 +424,13 @@ export function EnrollTableToolbar() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[160px]">
-                <DropdownMenuItem onClick={() => console.log("Export CSV")} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
+                <DropdownMenuItem
+                  onClick={onExportCSV}
+                  disabled={isExportingCSV}
+                  className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]"
+                >
                   <i className="file-csv mr-2 h-4 w-4" />
-                  Export CSV
+                  {isExportingCSV ? "Exporting..." : "Export CSV"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

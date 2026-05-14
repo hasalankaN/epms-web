@@ -319,7 +319,7 @@ export function FeeDetailsStep({ onNext }: FeeDetailsStepProps) {
       <div className="rounded-xl border border-[#E2E8F0] bg-white">
         <div className="flex items-center justify-between px-4 py-3 border-b border-[#E5E7EB]">
             <div className="space-y-1">
-              <h3 className="text-sm font-semibold text-[#0F172B] leading-5 font-inter">Course Fee</h3>
+              <h3 className="text-sm font-semibold text-[#0F172B] leading-5 font-inter">Base Course Fee</h3>
               <p className={AUTH_TYPOGRAPHY.description}>
                 This is the standard fee for the course before installments or add-on charges.
               </p>

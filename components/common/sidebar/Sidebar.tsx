@@ -264,4 +264,4 @@ export default function Sidebar({ filteredSidebarData }: SidebarProps) {
       </div>
     </div>
   );
-}
+}

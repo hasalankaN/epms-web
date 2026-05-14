@@ -18,8 +18,8 @@ import { AddCategoryModal } from "@/components/admin-panel/course-management/mod
 export type CourseTabType = "course" | "category";
 
 const tabs = [
-  { value: "course", label: "Course", mobileLabel: "Course", icon: "book-open-text" },
-  { value: "category", label: "Category", mobileLabel: "Category", icon: "shapes" },
+  { value: "course", label: "Course", mobileLabel: "Course" },
+  { value: "category", label: "Category", mobileLabel: "Category" },
 ] as const;
 
 export default function CourseManagementPage() {
@@ -47,9 +47,10 @@ export default function CourseManagementPage() {
     : "course";
 
   const handleTabChange = (tabValue: CourseTabType) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams();
 
     params.set("tab", tabValue);
+    params.set("page", "1");
     router.replace(`${pathname}?${params.toString()}`);
   };
 
@@ -71,7 +72,6 @@ export default function CourseManagementPage() {
                   : TAB_STYLES.inactive
               )}
             >
-              <span className={cn(tab.icon, "h-4 w-4")} />
               <span className="hidden md:inline">{tab.label}</span>
               <span className="md:hidden">{tab.mobileLabel}</span>
             </button>

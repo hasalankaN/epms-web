@@ -7,6 +7,7 @@ import type {
 
 export const mockBatchesData: BankTransferBatchRow[] = Array.from({ length: 15 }).map((_, i) => ({
   id: `B${i + 1}`,
+  source: "BATCH",
   transactionDate: "11/02/2026",
   batchName: "Batch Name",
   studentName: "Amali Perera",
@@ -14,11 +15,12 @@ export const mockBatchesData: BankTransferBatchRow[] = Array.from({ length: 15 }
   whatsApp: "+9470 492 2345",
   amount: "XXXX.00",
   refNo: "Ref no",
-  bankReceipt: "View",
+  receiptUrl: "https://images.unsplash.com/photo-1554151228-14d9def656e4?w=400&h=600&auto=format&fit=crop",
 }));
 
 export const mockCoursesData: BankTransferCourseRow[] = Array.from({ length: 15 }).map((_, i) => ({
   id: `C${i + 1}`,
+  source: "COURSE",
   transactionDate: "11/02/2026",
   courseName: "Course Name",
   studentName: "Amali Perera",
@@ -26,11 +28,12 @@ export const mockCoursesData: BankTransferCourseRow[] = Array.from({ length: 15 
   whatsApp: "+9470 492 2345",
   amount: "XXIX.00",
   refNo: "Ref no",
-  bankReceipt: "View",
+  receiptUrl: "https://images.unsplash.com/photo-1554151228-14d9def656e4?w=400&h=600&auto=format&fit=crop",
 }));
 
 export const mockProductsData: BankTransferProductRow[] = Array.from({ length: 15 }).map((_, i) => ({
   id: `P${i + 1}`,
+  source: "PRODUCT",
   transactionDate: "11/02/2026",
   productName: "Products Name",
   studentName: "Amali Perera",
@@ -38,11 +41,12 @@ export const mockProductsData: BankTransferProductRow[] = Array.from({ length: 1
   whatsApp: "+9470 492 2345",
   amount: "XXXX.00",
   refNo: "Ref no",
-  bankReceipt: "View",
+  receiptUrl: "https://images.unsplash.com/photo-1554151228-14d9def656e4?w=400&h=600&auto=format&fit=crop",
 }));
 
 export const mockRejectedData: BankTransferRejectedRow[] = Array.from({ length: 15 }).map((_, i) => ({
   id: `R${i + 1}`,
+  source: i % 3 === 0 ? "PRODUCT" : i % 3 === 1 ? "BATCH" : "COURSE",
   date: "11/02/2026",
   transactionFor: i % 3 === 0 ? "Product Name" : i % 3 === 1 ? "Batch Name" : "Course Name",
   type: i % 3 === 0 ? "Products" : i % 3 === 1 ? "Batch" : "Course",
@@ -52,5 +56,5 @@ export const mockRejectedData: BankTransferRejectedRow[] = Array.from({ length: 
   amount: "XXXX.00",
   refNo: "Ref no",
   rejectedReason: "Reason here",
-  bankReceipt: "View",
+  receiptUrl: "https://images.unsplash.com/photo-1554151228-14d9def656e4?w=400&h=600&auto=format&fit=crop",
 }));

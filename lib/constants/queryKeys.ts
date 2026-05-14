@@ -9,6 +9,9 @@ export const queryKeys = {
   // Products
   products: "products",
 
+  // Product Categories
+  productCategories: "productCategories",
+
   // Lecturers
   lecturers: "lecturers",
 
@@ -23,7 +26,7 @@ export const queryKeys = {
 
   // Staff
   staff: "staff",
-  
+
   // Complaints
   complaints: "complaints",
 
@@ -32,14 +35,50 @@ export const queryKeys = {
 
   // Courses
   courses: "courses",
-  
+
   // Referrals
   referrals: "referrals",
+  referralPaymentRequests: "referralPaymentRequests",
+  referralAgentPaymentHistory: "referralAgentPaymentHistory",
 
   // Enquiries
   enquiries: "enquiries",
 
   // Certificate Requests
   certificateRequests: "certificateRequests",
+
+  // Students
+  students: "students",
+
+  // Orders
+  orders: "orders",
+
+  // Approvals / Bank Transfers
+  approvals: "approvals",
+
+  // Referral Commissions
+  commissions: "commissions",
+
+  // Enrollments
+  enrollments: "enrollments",
+
+  // Notifications
+  notificationsSent: "notificationsSent",
+  notificationsScheduled: "notificationsScheduled",
+  notificationsResponseLogs: "notificationsResponseLogs",
+
+  // Chat
+  chatRooms: "chatRooms",
+  chatMessages: "chatMessages",
+  chatUnreadCount: "chatUnreadCount",
+
+  // Website Management
+  websiteBanners: "websiteBanners",
+  websiteGallery: "websiteGallery",
+  websiteTestimonials: "websiteTestimonials",
+  websiteNewsPosts: "websiteNewsPosts",
+  websiteTerms: "websiteTerms",
+
+  // Lecturer
   lecturer: "lecturer",
 };

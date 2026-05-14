@@ -20,6 +20,7 @@ export interface GetCoursesParams {
   type?: string;
   price_filter?: string;
   sort_by?: string;
+  batch_id?: string;
 }
 
 export interface GetCoursesResponse {
@@ -99,6 +100,7 @@ export function useGetCourses(params: GetCoursesParams) {
       if (params.type) apiParams.type = params.type;
       if (params.price_filter) apiParams.price_filter = params.price_filter;
       if (params.sort_by) apiParams.sort_by = params.sort_by;
+      if (params.batch_id) apiParams.batch_id = params.batch_id;
 
       const response = await api.get(API_ENDPOINTS.courses.GET_ALL, {
         params: apiParams,

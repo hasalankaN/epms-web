@@ -17,6 +17,7 @@ export const adminSidebarData: SidebarNavItem[] = [
     icon: "question",
     value: "inquiry",
     url: "/admin-panel/inquiry",
+    count: 8,
   },
 
   {
@@ -53,6 +54,7 @@ export const adminSidebarData: SidebarNavItem[] = [
     icon: "package",
     value: "product-management",
     url: "/admin-panel/product-management",
+    count: 5,
   },
 
   {
@@ -71,6 +73,7 @@ export const adminSidebarData: SidebarNavItem[] = [
     icon: "warning-circle",
     value: "complaint-management",
     url: "/admin-panel/complaint-management",
+    count: 2,
   },
 
   {
@@ -85,6 +88,7 @@ export const adminSidebarData: SidebarNavItem[] = [
         title: "Bank Transfers",
         url: "/admin-panel/approvals/bank-transfers",
         value: "bank-transfers",
+        count: 4,
       },
       {
         id: 92,
@@ -92,6 +96,7 @@ export const adminSidebarData: SidebarNavItem[] = [
         title: "Referral Commissions",
         url: "/admin-panel/approvals/referral-commissions",
         value: "referral-commissions",
+        count: 3,
       },
     ],
   },
@@ -99,14 +104,24 @@ export const adminSidebarData: SidebarNavItem[] = [
   {
     id: 10,
     type: "link",
-    title: "Task Management",
-    icon: "list-checks",
-    value: "task-management",
-    url: "/admin-panel/task-management",
+    title: "Website Management",
+    icon: "globe",
+    value: "website-management",
+    url: "/admin-panel/website-management",
   },
 
   {
     id: 11,
+    type: "link",
+    title: "Task Management",
+    icon: "list-checks",
+    value: "task-management",
+    url: "/admin-panel/task-management",
+    count: 12,
+  },
+
+  {
+    id: 12,
     type: "link",
     title: "Certificate Management",
     icon: "certificate",
@@ -115,7 +130,7 @@ export const adminSidebarData: SidebarNavItem[] = [
   },
 
   {
-    id: 12,
+    id: 13,
     type: "link",
     title: "Document Management",
     icon: "files",
@@ -124,7 +139,30 @@ export const adminSidebarData: SidebarNavItem[] = [
   },
 
   {
-    id: 13,
+    id: 14,
+    type: "sub",
+    title: "Referral Management",
+    icon: "handshake",
+    children: [
+      {
+        id: 141,
+        type: "link",
+        title: "Referral Listing",
+        url: "/admin-panel/referral-management/referral-listing",
+        value: "referral-listing",
+      },
+      {
+        id: 142,
+        type: "link",
+        title: "Referral Request",
+        url: "/admin-panel/referral-management/referral-request",
+        value: "referral-request",
+      },
+    ],
+  },
+
+  {
+    id: 15,
     type: "link",
     title: "Branch Management",
     icon: "building",
@@ -133,41 +171,41 @@ export const adminSidebarData: SidebarNavItem[] = [
   },
 
   {
-    id: 14,
+    id: 16,
     type: "sub",
     title: "Finance",
     icon: "invoice",
     children: [
       {
-        id: 141,
+        id: 161,
         type: "link",
         title: "Income",
         url: "/admin-panel/finance/income",
         value: "income",
       },
       {
-        id: 142,
+        id: 162,
         type: "link",
-        title: "Finance",
+        title: "General Finance",
         url: "/admin-panel/finance/finance",
         value: "finance-sub",
       },
       {
-        id: 143,
+        id: 163,
         type: "link",
         title: "Profit & Loss",
         url: "/admin-panel/finance/profit-and-loss",
         value: "profit-and-loss",
       },
       {
-        id: 144,
+        id: 164,
         type: "link",
         title: "Expenses",
         url: "/admin-panel/finance/expenses",
         value: "expenses",
       },
       {
-        id: 145,
+        id: 165,
         type: "link",
         title: "Source Wise Report",
         url: "/admin-panel/finance/source-wise-report",
@@ -177,24 +215,61 @@ export const adminSidebarData: SidebarNavItem[] = [
   },
 
   {
-    id: 15,
+    id: 17,
+    type: "link",
+    title: "Notification Management",
+    icon: "notification-bell-icon",
+    value: "notification-management",
+    url: "/admin-panel/notification-management",
+  },
+
+  {
+    id: 18,
     type: "sub",
-    title: "Referral Management",
-    icon: "handshake",
+    title: "Report & Analytics",
+    icon: "chart-bar",
     children: [
       {
-        id: 151,
+        id: 181,
         type: "link",
-        title: "Referral Listing",
-        url: "/admin-panel/referral-management/referral-listing",
-        value: "referral-listing",
+        title: "Report by Batches",
+        url: "/admin-panel/report-and-analytics/report-by-batches",
+        value: "report-by-batches",
       },
       {
-        id: 152,
+        id: 182,
         type: "link",
-        title: "Referral Request",
-        url: "/admin-panel/referral-management/referral-request",
-        value: "referral-request",
+        title: "Report by Courses",
+        url: "/admin-panel/report-and-analytics/report-by-courses",
+        value: "report-by-courses",
+      },
+      {
+        id: 183,
+        type: "link",
+        title: "Report by Products",
+        url: "/admin-panel/report-and-analytics/report-by-products",
+        value: "report-by-products",
+      },
+      {
+        id: 184,
+        type: "link",
+        title: "All Batches Analytics",
+        url: "/admin-panel/report-and-analytics/all-batches-analytics",
+        value: "all-batches-analytics",
+      },
+      {
+        id: 185,
+        type: "link",
+        title: "All Courses Analytics",
+        url: "/admin-panel/report-and-analytics/all-courses-analytics",
+        value: "all-courses-analytics",
+      },
+      {
+        id: 186,
+        type: "link",
+        title: "Sales by Items",
+        url: "/admin-panel/report-and-analytics/sales-by-items",
+        value: "sales-by-items",
       },
     ],
   },

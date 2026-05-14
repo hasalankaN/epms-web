@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 import { Plus } from "lucide-react";
 
@@ -12,6 +11,7 @@ import { TAB_STYLES, BUTTON_STYLES } from "@/lib/constants/theme";
 import { AllTemplates } from "@/components/admin-panel/certificate-management/AllTemplates";
 import { CertificateToBeIssued } from "@/components/admin-panel/certificate-management/CertificateToBeIssued";
 import { AddCertificatePanel } from "@/components/admin-panel/certificate-management/modals/AddCertificatePanel";
+import { useTabNavigation } from "@/hooks/useTabNavigation";
 
 export type CertificateTabType = "all-template" | "certificate-to-be-issued";
 
@@ -21,24 +21,14 @@ const tabs = [
 ] as const;
 
 export default function CertificateManagementPage() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
 
-  const currentTab = searchParams.get("tab") as CertificateTabType;
-
-  const activeTab = tabs.some((t) => t.value === currentTab)
-    ? currentTab
-    : "all-template";
+  const { activeTab, handleTabChange } = useTabNavigation(
+    "all-template",
+    tabs.map((t) => t.value)
+  );
 
   const [isAddCertificateOpen, setIsAddCertificateOpen] = useState(false);
 
-  const handleTabChange = (tabValue: CertificateTabType) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    params.set("tab", tabValue);
-    router.replace(`${pathname}?${params.toString()}`);
-  };
 
   return (
     <div className="space-y-4 p-4 md:p-6">

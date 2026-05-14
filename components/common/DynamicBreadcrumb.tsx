@@ -48,12 +48,9 @@ export default function DynamicBreadcrumb({ sidebarData }: { sidebarData: Sideba
   const exactMatch = findLinkWithParent(pathname);
   const IGNORED_LABELS = ["Admin Panel", "Lecturer Panel", "Referral Panel"];
 
-  if (exactMatch) {
-    const { parentTitle, linkTitle } = exactMatch;
-    
-    const labels = (parentTitle ? [parentTitle, linkTitle] : [linkTitle]).filter(
-      (label) => label && !IGNORED_LABELS.includes(label)
-    );
+  // Special case for commission student detail
+  if (pathname.includes("/referral-panel/my-commissions/student/")) {
+    const labels = ["My Commissions", "View Student"];
 
     return (
       <Breadcrumb className="hidden lg:flex">
@@ -62,7 +59,50 @@ export default function DynamicBreadcrumb({ sidebarData }: { sidebarData: Sideba
             const isLast = index === labels.length - 1;
 
             return (
-              <React.Fragment key={label}>
+              <React.Fragment key={`${index}-${label}`}>
+                {index > 0 && <BreadcrumbSeparator />}
+                <BreadcrumbItem>
+                  {isLast ? (
+                    <BreadcrumbPage className="text-sm font-normal text-gray-900">{label}</BreadcrumbPage>
+                  ) : (
+                    <span className="text-sm font-normal text-gray-500">{label}</span>
+                  )}
+                </BreadcrumbItem>
+              </React.Fragment>
+            );
+          })}
+        </BreadcrumbList>
+      </Breadcrumb>
+    );
+  }
+
+  if (exactMatch) {
+    const { parentTitle, linkTitle } = exactMatch;
+    
+    const labels = (parentTitle ? [parentTitle, linkTitle] : [linkTitle]).filter(
+      (label) => label && !IGNORED_LABELS.includes(label)
+    );
+
+    // Remove "View" if it's the last item and there are other segments
+    // BUT only if there are at least 3 segments (e.g. Course Management > View > View)
+    // OR if it's a double view
+    if (labels.length > 1) {
+      const lastIsView = labels[labels.length - 1] === "View";
+      const secondLastIsView = labels[labels.length - 2] === "View";
+
+      if (lastIsView && (labels.length >= 3 || secondLastIsView)) {
+        labels.pop();
+      }
+    }
+
+    return (
+      <Breadcrumb className="hidden lg:flex">
+        <BreadcrumbList>
+          {labels.map((label, index) => {
+            const isLast = index === labels.length - 1;
+
+            return (
+              <React.Fragment key={`${index}-${label}`}>
                 {index > 0 && <BreadcrumbSeparator />}
 
                 <BreadcrumbItem>
@@ -101,9 +141,25 @@ export default function DynamicBreadcrumb({ sidebarData }: { sidebarData: Sideba
     };
   });
 
+  const CUSTOM_IGNORED_LABELS = [...IGNORED_LABELS, "Student"];
+
   const displayedSegments = allSegments.filter(
-    (item) => !IGNORED_LABELS.includes(item.formatted)
+    (item) => !CUSTOM_IGNORED_LABELS.includes(item.formatted)
   );
+
+  const filteredSegments = [...displayedSegments];
+
+  // Remove "View" if it's the last item and there are other segments
+  // BUT only if there are at least 3 segments (e.g. Course Management > View > View or Course Management > Edit > View)
+  // OR if it's a double view
+  if (filteredSegments.length > 1) {
+    const lastIsView = filteredSegments[filteredSegments.length - 1].formatted === "View";
+    const secondLastIsView = filteredSegments[filteredSegments.length - 2].formatted === "View";
+    
+    if (lastIsView && (filteredSegments.length >= 3 || secondLastIsView)) {
+      filteredSegments.pop();
+    }
+  }
 
   return (
     <Breadcrumb className="hidden lg:flex">

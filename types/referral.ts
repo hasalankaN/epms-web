@@ -90,3 +90,57 @@ export interface UpdateReferralAgentPayload {
   district?: string;
   role?: "LEADER" | "MEMBER";
 }
+
+// ── Payment Requests ──
+
+export type PaymentRequestStatus = "PENDING" | "COMPLETED";
+export type CommissionSourceType = "COURSE" | "BATCH" | "PRODUCT";
+export type TransactionVia =
+  | "BOC"
+  | "PEOPLES_BANK"
+  | "COMMERCIAL_BANK"
+  | "HNB"
+  | "ONLINE"
+  | "CASH";
+
+export interface ApiPaymentRequestRow {
+  id: string;
+  requested_date: string;
+  member_id: string;
+  member_code: string;
+  member_name: string;
+  requested_amount: string;
+  requested_for_type: CommissionSourceType;
+  requested_for_id: string;
+  // Only present when COMPLETED
+  paid_date?: string | null;
+  bank_slip?: string | null;
+}
+
+export interface GetPaymentRequestsParams {
+  page?: number;
+  size?: number;
+  search?: string;
+  requested_date?: string;
+}
+
+export interface GetPaymentRequestsResponse {
+  results: ApiPaymentRequestRow[];
+  totalResults: number;
+  page: number;
+  size: number;
+  totalPages: number;
+  isFirstPage: boolean;
+  isLastPage: boolean;
+}
+
+export interface ProcessPaymentPayload {
+  description: string;
+  amount: number;
+  date: Date;
+  transaction_via: TransactionVia;
+  source_type: CommissionSourceType;
+  source_id: string;
+  receipt_url: string;
+  notes?: string;
+}

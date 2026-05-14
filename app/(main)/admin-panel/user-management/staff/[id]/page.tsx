@@ -88,13 +88,18 @@ export default function ViewStaffPage() {
         {renderGeneralDetails()}
         
         <div className="mt-6">
-          <StaffAssignedCourses />
+          <StaffAssignedCourses staffId={id} />
         </div>
         <div className="mt-6">
-          <StaffAssignedBatches />
+          <StaffAssignedBatches staffId={id} />
         </div>
         <div className="mt-6">
-          <StaffReferralDetails />
+          <StaffReferralDetails
+            commissions={(staffData?.commissionHistory as any[]) ?? []}
+            commissionsSummary={staffData?.commissionsSummary}
+            enquiries={(staffData?.enquiries as any[]) ?? []}
+            isLoading={isLoading}
+          />
         </div>
       </div>
     </div>

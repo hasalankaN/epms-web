@@ -35,6 +35,7 @@ interface OtherIncomeToolbarProps {
   setTransactionVia: (value: string) => void;
   dateRange: { start: Date | null; end: Date | null };
   setDateRange: (range: { start: Date | null; end: Date | null }) => void;
+  onExportCsv?: () => void;
 }
 
 export function OtherIncomeToolbar({
@@ -42,6 +43,7 @@ export function OtherIncomeToolbar({
   setTransactionVia,
   dateRange,
   setDateRange,
+  onExportCsv,
 }: OtherIncomeToolbarProps) {
 
   const handleDateApply = (start: Date | null, end: Date | null) => {
@@ -89,7 +91,7 @@ export function OtherIncomeToolbar({
               Clear
             </button>
           )}
-          <button className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}>
+          <button onClick={onExportCsv} className={cn(BUTTON_STYLES.outline.md, "whitespace-nowrap", buttonTextStyles)}>
             <i className="file-csv h-4 w-4" />
             Export CSV
           </button>
@@ -169,7 +171,7 @@ export function OtherIncomeToolbar({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[160px]">
-              <DropdownMenuItem onClick={() => console.log("Export CSV")} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
+              <DropdownMenuItem onClick={onExportCsv} className="cursor-pointer hover:bg-[#FDF2F8] focus:bg-[#FDF2F8]">
                 <i className="file-csv mr-2 h-4 w-4" />
                 Export CSV
               </DropdownMenuItem>

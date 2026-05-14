@@ -81,6 +81,8 @@ const editLecturerSchema = z.object({
     }
   ),
   branch_id: z.string().optional(),
+  salary_due_day: z.string().optional(),
+  salary_due_frequency: z.string().optional(),
 });
 
 type EditLecturerFormValues = z.infer<typeof editLecturerSchema>;
@@ -125,9 +127,11 @@ export function EditLecturerModal({
   onClose,
   lecturerId,
 }: EditLecturerModalProps) {
-  const { data: lecturer, isLoading: isLoadingLecturer } = useGetLecturerById(
+  const { data: lecturerDetail, isLoading: isLoadingLecturer } = useGetLecturerById(
     isOpen ? lecturerId : null
   );
+
+  const lecturer = lecturerDetail?.profile;
 
   const { mutateAsync: updateLecturer, isPending: isUpdating } = useUpdateLecturer(
     lecturerId || ""
@@ -156,6 +160,8 @@ export function EditLecturerModal({
       district: undefined,
       salary_type: undefined as any,
       branch_id: undefined,
+      salary_due_day: undefined,
+      salary_due_frequency: "EVERY_MONTH",
     },
   });
 
@@ -197,6 +203,8 @@ export function EditLecturerModal({
         district: lecturer.district || undefined,
         salary_type: lecturer.salary_type || undefined,
         branch_id: lecturer.branch_id || undefined,
+        salary_due_day: lecturer.salary_due_day || undefined,
+        salary_due_frequency: lecturer.salary_due_frequency || "EVERY_MONTH",
       });
     }
   }, [isOpen, lecturer, reset]);
@@ -215,6 +223,8 @@ export function EditLecturerModal({
         ...(values.gender ? { gender: values.gender } : {}),
         salary_type: values.salary_type,
         ...(values.branch_id ? { branch_id: values.branch_id } : {}),
+        ...(values.salary_due_day ? { salary_due_day: values.salary_due_day } : {}),
+        ...(values.salary_due_frequency ? { salary_due_frequency: values.salary_due_frequency } : {}),
       });
 
       onClose();
@@ -254,9 +264,9 @@ export function EditLecturerModal({
           variants={itemVariants}
           id="edit-lecturer-form"
           onSubmit={handleSubmit(onSubmit)}
-          className="flex-1 overflow-y-auto p-4 sm:p-6 sm:pt-4 pt-4 custom-scrollbar"
+          className="flex-1 overflow-y-auto p-4 sm:p-6 sm:pt-0 pt-0 custom-scrollbar"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
             {/* First Name */}
             <div className="space-y-1">
               <FieldLabel required>First Name</FieldLabel>
@@ -491,6 +501,44 @@ export function EditLecturerModal({
                     </label>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Salary Due */}
+            <div className="col-span-1 sm:col-span-2 space-y-1.5">
+              <FieldLabel>Salary Due</FieldLabel>
+              <div className="grid grid-cols-2 gap-3">
+                {/* Day Selector */}
+                <Select 
+                  value={watch("salary_due_day")}
+                  onValueChange={(val) => setValue("salary_due_day", val, { shouldDirty: true })}
+                >
+                  <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9]")}>
+                    <SelectValue placeholder="Date" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[99999999] max-h-[200px]">
+                    {Array.from({ length: 31 }, (_, i) => (
+                      <SelectItem key={i + 1} value={(i + 1).toString()}>
+                        {i + 1}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Frequency Selector */}
+                <Select 
+                  value={watch("salary_due_frequency")}
+                  onValueChange={(val) => setValue("salary_due_frequency", val, { shouldDirty: true })}
+                >
+                  <SelectTrigger className={cn(AUTH_INPUT.base, "text-[#1D293D]")}>
+                    <SelectValue placeholder="Every Month" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[99999999]">
+                    <SelectItem value="EVERY_MONTH">Every Month</SelectItem>
+                    <SelectItem value="QUARTERLY">Quarterly</SelectItem>
+                    <SelectItem value="YEARLY">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>

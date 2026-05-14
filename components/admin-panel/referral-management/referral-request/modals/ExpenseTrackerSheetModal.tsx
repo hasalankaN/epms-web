@@ -36,7 +36,13 @@ import ImageUpload from "@/components/common/ImageUpload";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
 
 import { cn } from "@/lib/utils";
-import { AUTH_TYPOGRAPHY, AUTH_INPUT, BUTTON_STYLES } from "@/lib/constants/theme";
+import {
+  AUTH_TYPOGRAPHY,
+  AUTH_INPUT,
+  BUTTON_STYLES,
+} from "@/lib/constants/theme";
+import { useProcessReferralPayment } from "@/hooks/api/referrals/useProcessReferralPayment";
+import type { TransactionVia, CommissionSourceType } from "@/types/referral";
 
 // ===== SCHEMA =====
 
@@ -56,6 +62,10 @@ type ExpenseTrackerFormValues = z.infer<typeof expenseTrackerSchema>;
 interface ExpenseTrackerSheetModalProps {
   isOpen: boolean;
   onClose: () => void;
+  requestId?: string;
+  sourceType?: string;
+  sourceId?: string;
+  requestedAmount?: string;
 }
 
 // ===== FIELD LABEL =====
@@ -77,9 +87,17 @@ const FieldLabel = ({
 
 // ===== COMPONENT =====
 
-export function ExpenseTrackerSheetModal({ isOpen, onClose }: ExpenseTrackerSheetModalProps) {
+export function ExpenseTrackerSheetModal({
+  isOpen,
+  onClose,
+  requestId,
+  sourceType,
+  sourceId,
+  requestedAmount,
+}: ExpenseTrackerSheetModalProps) {
   const [showDiscardModal, setShowDiscardModal] = useState(false);
-  const [isPending, setIsPending] = useState(false);
+  const mutation = useProcessReferralPayment();
+  const isPending = mutation.isPending;
 
   const {
     register,
@@ -108,7 +126,7 @@ export function ExpenseTrackerSheetModal({ isOpen, onClose }: ExpenseTrackerShee
       reset({
         expenses_note: "",
         date: undefined,
-        amount: "",
+        amount: requestedAmount ?? "",
         transaction_via: "",
         receipt_url: "",
         internal_note: "",
@@ -116,7 +134,7 @@ export function ExpenseTrackerSheetModal({ isOpen, onClose }: ExpenseTrackerShee
 
       setShowDiscardModal(false);
     }
-  }, [isOpen, reset]);
+  }, [isOpen, reset, requestedAmount]);
 
   const handleCloseAttempt = () => {
     if (isDirty) {
@@ -127,28 +145,44 @@ export function ExpenseTrackerSheetModal({ isOpen, onClose }: ExpenseTrackerShee
   };
 
   const onSubmit = async (values: ExpenseTrackerFormValues) => {
-    try {
-      setIsPending(true);
+    if (!requestId || !sourceType || !sourceId) return;
 
-      // TODO: API integration
-      console.log("Pay Request:", values);
+    try {
+      await mutation.mutateAsync({
+        requestId,
+        payload: {
+          description: values.expenses_note,
+          amount: parseFloat(values.amount.replace(/,/g, "")),
+          date: values.date,
+          transaction_via: values.transaction_via as TransactionVia,
+          source_type: sourceType as CommissionSourceType,
+          source_id: sourceId,
+          receipt_url: values.receipt_url,
+          notes: values.internal_note,
+        },
+      });
+
       onClose();
     } catch (error) {
       console.error(error);
-    } finally {
-      setIsPending(false);
     }
   };
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={(open) => !open && handleCloseAttempt()}>
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open) => !open && handleCloseAttempt()}
+      >
         <DialogContent
           animateChildren={true}
           className="flex max-h-[95vh] w-[95%] max-w-[720px] flex-col gap-0 overflow-hidden rounded-lg sm:rounded-xl border border-[#E2E8F0] bg-white p-0 shadow-[0_4px_6px_-4px_rgba(16,24,40,0.10),0_10px_15px_-3px_rgba(0,0,0,0.10)] [&>button]:hidden"
         >
           {/* Header */}
-          <motion.div variants={itemVariants} className="flex flex-col gap-4 p-6 pb-0 shrink-0">
+          <motion.div
+            variants={itemVariants}
+            className="flex flex-col gap-4 p-6 pb-0 shrink-0"
+          >
             <div className="flex items-center justify-between">
               <DialogTitle className="flex-1 font-inter text-lg font-semibold leading-[30px] text-[#0F172B]">
                 Expense Tracker Sheet
@@ -179,12 +213,15 @@ export function ExpenseTrackerSheetModal({ isOpen, onClose }: ExpenseTrackerShee
                   className={cn(
                     AUTH_INPUT.base,
                     AUTH_INPUT.placeholder,
-                    errors.expenses_note && "border-red-500 focus-visible:ring-red-500"
+                    errors.expenses_note &&
+                      "border-red-500 focus-visible:ring-red-500",
                   )}
                   placeholder="December Salary"
                 />
                 {errors.expenses_note && (
-                  <p className="mt-1 text-xs text-red-500">{errors.expenses_note.message}</p>
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.expenses_note.message}
+                  </p>
                 )}
               </div>
 
@@ -200,23 +237,30 @@ export function ExpenseTrackerSheetModal({ isOpen, onClose }: ExpenseTrackerShee
                         <div
                           className={cn(
                             "flex h-10 w-full cursor-pointer items-center rounded-md border border-gray-300 bg-white transition-all hover:bg-slate-50",
-                            errors.date && "border-red-500 ring-red-500"
+                            errors.date && "border-red-500 ring-red-500",
                           )}
                         >
                           <div className="flex h-full items-center justify-center border-r border-slate-200 px-3">
                             <CalendarIcon className="h-4 w-4 text-[#64748B]" />
                           </div>
                           <input
-                            value={watchedDate ? format(watchedDate, "dd/MM/yyyy") : ""}
+                            value={
+                              watchedDate
+                                ? format(watchedDate, "dd/MM/yyyy")
+                                : ""
+                            }
                             readOnly
                             placeholder="Pick a date"
                             className={cn(
-                              "flex-1 cursor-pointer bg-transparent px-3 py-2 text-sm outline-none placeholder:text-[#90A1B9] placeholder:italic pointer-events-none"
+                              "flex-1 cursor-pointer bg-transparent px-3 py-2 text-sm outline-none placeholder:text-[#90A1B9] placeholder:italic pointer-events-none",
                             )}
                           />
                         </div>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 z-[99999999]" align="start">
+                      <PopoverContent
+                        className="w-auto p-0 z-[99999999]"
+                        align="start"
+                      >
                         <DateRangeCalendar
                           mode="single"
                           startDate={field.value || null}
@@ -230,7 +274,9 @@ export function ExpenseTrackerSheetModal({ isOpen, onClose }: ExpenseTrackerShee
                   )}
                 />
                 {errors.date && (
-                  <p className="mt-1 text-xs text-red-500">{errors.date.message}</p>
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.date.message}
+                  </p>
                 )}
               </div>
 
@@ -244,7 +290,8 @@ export function ExpenseTrackerSheetModal({ isOpen, onClose }: ExpenseTrackerShee
                       AUTH_INPUT.base,
                       AUTH_INPUT.placeholder,
                       "pr-12",
-                      errors.amount && "border-red-500 focus-visible:ring-red-500"
+                      errors.amount &&
+                        "border-red-500 focus-visible:ring-red-500",
                     )}
                     placeholder="eg: 1,000.00"
                   />
@@ -253,7 +300,9 @@ export function ExpenseTrackerSheetModal({ isOpen, onClose }: ExpenseTrackerShee
                   </div>
                 </div>
                 {errors.amount && (
-                  <p className="mt-1 text-xs text-red-500">{errors.amount.message}</p>
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.amount.message}
+                  </p>
                 )}
               </div>
 
@@ -269,22 +318,33 @@ export function ExpenseTrackerSheetModal({ isOpen, onClose }: ExpenseTrackerShee
                         className={cn(
                           AUTH_INPUT.base,
                           "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic",
-                          errors.transaction_via && "border-red-500 focus-visible:ring-red-500"
+                          errors.transaction_via &&
+                            "border-red-500 focus-visible:ring-red-500",
                         )}
                       >
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
                       <SelectContent className="z-[99999999]">
-                        <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
-                        <SelectItem value="CASH">Cash</SelectItem>
-                        <SelectItem value="CHEQUE">Cheque</SelectItem>
+                        <SelectItem value="BOC">
+                          Bank of Ceylon (BOC)
+                        </SelectItem>
+                        <SelectItem value="PEOPLES_BANK">
+                          People&apos;s Bank
+                        </SelectItem>
+                        <SelectItem value="COMMERCIAL_BANK">
+                          Commercial Bank
+                        </SelectItem>
+                        <SelectItem value="HNB">HNB</SelectItem>
                         <SelectItem value="ONLINE">Online Payment</SelectItem>
+                        <SelectItem value="CASH">Cash</SelectItem>
                       </SelectContent>
                     </Select>
                   )}
                 />
                 {errors.transaction_via && (
-                  <p className="mt-1 text-xs text-red-500">{errors.transaction_via.message}</p>
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.transaction_via.message}
+                  </p>
                 )}
               </div>
 
@@ -296,7 +356,7 @@ export function ExpenseTrackerSheetModal({ isOpen, onClose }: ExpenseTrackerShee
                   control={control}
                   render={({ field }) => (
                     <div className="h-[160px] w-full">
-                       <ImageUpload
+                      <ImageUpload
                         imageUrl={field.value}
                         setImage={field.onChange}
                         removeImage={() => field.onChange("")}
@@ -304,14 +364,16 @@ export function ExpenseTrackerSheetModal({ isOpen, onClose }: ExpenseTrackerShee
                         className="h-full w-full"
                         dropzoneClassName={cn(
                           "!h-full !border-dashed !border-[#E2E8F0] !bg-transparent !p-0 !rounded-lg",
-                          errors.receipt_url && "!border-red-500"
+                          errors.receipt_url && "!border-red-500",
                         )}
                       />
                     </div>
                   )}
                 />
                 {errors.receipt_url && (
-                  <p className="mt-1 text-xs text-red-500">{errors.receipt_url.message}</p>
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.receipt_url.message}
+                  </p>
                 )}
               </div>
 
@@ -323,26 +385,32 @@ export function ExpenseTrackerSheetModal({ isOpen, onClose }: ExpenseTrackerShee
                   className={cn(
                     "h-[160px] resize-none",
                     AUTH_INPUT.placeholder,
-                    errors.internal_note && "border-red-500 focus-visible:ring-red-500"
+                    errors.internal_note &&
+                      "border-red-500 focus-visible:ring-red-500",
                   )}
                   placeholder="eg: Type your message here"
                 />
                 {errors.internal_note && (
-                  <p className="mt-1 text-xs text-red-500">{errors.internal_note.message}</p>
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.internal_note.message}
+                  </p>
                 )}
               </div>
             </div>
           </motion.form>
 
           {/* Footer */}
-          <motion.div variants={itemVariants} className="flex items-center justify-end p-6 pt-4 border-t border-[#E2E8F0] shrink-0 mt-auto">
+          <motion.div
+            variants={itemVariants}
+            className="flex items-center justify-end p-6 pt-4 border-t border-[#E2E8F0] shrink-0 mt-auto"
+          >
             <Button
               type="submit"
               form="expense-tracker-form"
               disabled={isPending}
               className={cn(
                 BUTTON_STYLES.primary.md,
-                "font-inter text-[14px] font-semibold text-white leading-5 px-10 h-10 bg-[#E60076] hover:bg-[#F6339A]"
+                "font-inter text-[14px] font-semibold text-white leading-5 px-10 h-10 bg-[#E60076] hover:bg-[#F6339A]",
               )}
             >
               {isPending ? (

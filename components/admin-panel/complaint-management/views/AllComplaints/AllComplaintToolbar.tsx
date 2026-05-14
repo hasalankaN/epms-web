@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 
 import { Search, CheckSquare2, X } from "lucide-react";
 
@@ -74,15 +74,39 @@ export function AllComplaintToolbar({
 }: AllComplaintToolbarProps) {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
 
-  // Fetch staff list for assignee filter
-  const { data: staffData } = useGetStaff({ page: 1, size: 100 });
+  // Pagination for staff list (assignee filter)
+  const [staffPage, setStaffPage] = useState(1);
+  const [allStaff, setAllStaff] = useState<any[]>([]);
+
+  const { data: staffData, isFetching: isFetchingStaff } = useGetStaff({ 
+    page: staffPage, 
+    size: 20 
+  });
+
+  // Accumulate staff results when new pages are fetched
+  useEffect(() => {
+    if (staffData?.results) {
+      setAllStaff(prev => {
+        const existingIds = new Set(prev.map(s => s.userId));
+        const newUnique = staffData.results.filter(s => !existingIds.has(s.userId));
+        
+        return [...prev, ...newUnique];
+      });
+    }
+  }, [staffData]);
+
+  const handleShowMoreStaff = useCallback(() => {
+    if (staffData && !staffData.isLastPage) {
+      setStaffPage(prev => prev + 1);
+    }
+  }, [staffData]);
 
   const staffItems = useMemo(() => {
-    return (staffData?.results || []).map((staff) => ({
+    return allStaff.map((staff) => ({
       key: staff.userId,
       label: `${staff.firstName} ${staff.lastName}`,
     }));
-  }, [staffData]);
+  }, [allStaff]);
 
   const modalCategories = useMemo((): FilterCategory[] => {
     return [
@@ -107,9 +131,12 @@ export function AllComplaintToolbar({
         type: "chips",
         multiSelect: false,
         items: staffItems,
+        onShowMore: handleShowMoreStaff,
+        hasMore: staffData ? !staffData.isLastPage : false,
+        isLoading: isFetchingStaff,
       },
     ];
-  }, [staffItems]);
+  }, [staffItems, handleShowMoreStaff, staffData, isFetchingStaff]);
 
   const initialSelections = useMemo(() => {
     const selections: FilterSelections = {};

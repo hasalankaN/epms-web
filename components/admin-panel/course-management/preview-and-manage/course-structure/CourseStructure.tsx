@@ -119,7 +119,7 @@ export function CourseStructure({
               ...week.lessons,
               {
                 id: `lesson-${Date.now()}`,
-                title: "New Lesson",
+                title: "New",
                 isActive: true,
                 videoCount: 0,
                 materialCount: 0,
@@ -134,6 +134,65 @@ export function CourseStructure({
     );
   };
 
+  const handleUpdateLesson = (weekId: string, lessonId: string, updates: Partial<Week['lessons'][0]>) => {
+    setWeeksData(currentWeeks => 
+      currentWeeks.map(week => {
+        if (week.id === weekId) {
+          return {
+            ...week,
+            lessons: week.lessons.map(lesson => 
+              lesson.id === lessonId ? { ...lesson, ...updates } : lesson
+            )
+          };
+        }
+
+        return week;
+      })
+    );
+  };
+
+  const handleDeleteWeek = (weekId: string) => {
+    setWeeksData(prev => prev.filter(w => w.id !== weekId));
+    if (expandedWeek === weekId) setExpandedWeek(null);
+  };
+
+  const handleDeleteLesson = (weekId: string, lessonId: string) => {
+    setWeeksData(currentWeeks => 
+      currentWeeks.map(week => {
+        if (week.id === weekId) {
+          return {
+            ...week,
+            lessons: week.lessons.filter(lesson => lesson.id !== lessonId)
+          };
+        }
+        
+        return week;
+      })
+    );
+  };
+
+  const handleUpdateWeek = (weekId: string, updates: Partial<Week>) => {
+    setWeeksData(currentWeeks =>
+      currentWeeks.map(week => 
+        week.id === weekId ? { ...week, ...updates } : week
+      )
+    );
+  };
+
+  const handleAddWeek = () => {
+    const newWeekId = `week-${Date.now()}`;
+
+    const newWeek: Week = {
+      id: newWeekId,
+      title: "New",
+      lessons: [],
+    };
+
+    setWeeksData((prev) => [...prev, newWeek]);
+    setExpandedWeek(newWeekId);
+    onAddWeek?.();
+  };
+
   return (
     <div className="flex flex-col p-3 sm:p-4 md:p-6 gap-4 rounded-lg border border-[#E2E8F0] bg-transparent shadow-[0_1px_2px_0_rgba(16,24,40,0.05)]">
       {/* Header */}
@@ -146,10 +205,10 @@ export function CourseStructure({
             BUTTON_STYLES.secondary.md,
             "w-full sm:w-auto font-inter text-[14px] font-semibold leading-[20px]"
           )}
-          onClick={onAddWeek}
+          onClick={handleAddWeek}
         >
           <Plus className="h-4 w-4" />
-          Add New Week
+          Add New
         </Button>
       </div>
 
@@ -161,7 +220,11 @@ export function CourseStructure({
             week={week}
             isExpanded={expandedWeek === week.id}
             onToggle={() => setExpandedWeek(expandedWeek === week.id ? null : week.id)}
+            onDelete={() => handleDeleteWeek(week.id)}
+            onUpdateWeek={(updates) => handleUpdateWeek(week.id, updates)}
             onAddLesson={() => handleAddLesson(week.id)}
+            onUpdateLesson={(lessonId, updates) => handleUpdateLesson(week.id, lessonId, updates)}
+            onDeleteLesson={(lessonId) => handleDeleteLesson(week.id, lessonId)}
           />
         ))}
       </div>

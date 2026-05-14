@@ -39,9 +39,10 @@ export default function ComplaintManagementPage() {
   const pendingCount = pendingData?.meta?.total || 0;
 
   const handleTabChange = (tabValue: ComplaintTabType) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams();
 
     params.set("tab", tabValue);
+    params.set("page", "1");
     router.replace(`${pathname}?${params.toString()}`);
   };
 

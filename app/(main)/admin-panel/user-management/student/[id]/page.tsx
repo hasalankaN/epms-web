@@ -10,10 +10,16 @@ import { StudentEnrolledCourses } from "@/components/admin-panel/user-management
 import { StudentEnrolledBatches } from "@/components/admin-panel/user-management/view/student/StudentEnrolledBatches";
 import { StudentProductPurchases } from "@/components/admin-panel/user-management/view/student/StudentProductPurchases";
 import { StudentReferralDetails } from "@/components/admin-panel/user-management/view/student/StudentReferralDetails";
+import { useGetStudentById } from "@/hooks/api/user-management/useGetStudentById";
+
 
 export default function ViewStudentPage() {
   const params = useParams();
   const id = params.id as string;
+
+  const { data, isLoading } = useGetStudentById(id);
+
+  const profile = data?.profile;
 
   return (
     <div className="space-y-6">
@@ -27,32 +33,55 @@ export default function ViewStudentPage() {
 
       <div className="px-4 md:px-6 pb-10 mt-4">
         <StudentGeneralDetails
-          name="Dilshan Perera"
-          studentId={`#${id}`}
-          enrolledDate="2025/01/01"
-          address="no: XX/1, Schol Lane, City, Post office, Postal code"
-          mobileNumber="+70 XXX XXXX"
-          whatsAppNumber="+70 XXX XXXX"
-          gender="Male"
-          emailAddress="user@gmail.com"
-          progressPercent={70}
-          paymentPending="5,000.00"
-          paymentPaid="5,000.00"
-          profileImageUrl="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&auto=format&fit=crop"
+          isLoading={isLoading}
+          name={profile?.full_name}
+          studentId={profile?.public_id ? `#${profile.public_id}` : undefined}
+          enrolledDate={profile?.created_at}
+          address={profile?.address ?? undefined}
+          mobileNumber={profile?.mobile_number}
+          whatsAppNumber={profile?.whatsapp_number ?? undefined}
+          gender={profile?.gender ?? undefined}
+          emailAddress={profile?.email}
+          progressPercent={profile?.overall_progress_percentage}
+          paymentPending={profile?.total_pending_amount}
+          paymentPaid={profile?.total_paid_amount}
+          profileImageUrl={profile?.profile_image_url ?? undefined}
         />
+        
         <div className="mt-6">
-          <StudentEnrolledCourses />
+          <StudentEnrolledCourses 
+            data={data?.enrolledCourses.data} 
+            total={data?.enrolledCourses.total}
+            isLoading={isLoading}
+          />
         </div>
+        
         <div className="mt-4">
-          <StudentEnrolledBatches />
+          <StudentEnrolledBatches 
+            data={data?.enrolledBatches.data}
+            total={data?.enrolledBatches.total}
+            isLoading={isLoading}
+          />
         </div>
+        
         <div className="mt-4">
-          <StudentProductPurchases />
+          <StudentProductPurchases 
+            data={data?.productPurchases.data}
+            total={data?.productPurchases.total}
+            isLoading={isLoading}
+          />
         </div>
+        
         <div className="mt-4">
-          <StudentReferralDetails />
+          <StudentReferralDetails 
+            profile={profile}
+            commissions={data?.referralCommissions.data}
+            totalCommissions={data?.referralCommissions.total}
+            isLoading={isLoading}
+          />
         </div>
       </div>
     </div>
   );
 }
+

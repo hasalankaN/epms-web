@@ -46,6 +46,7 @@ export type CertificateTemplateStatus = "ACTIVE" | "INACTIVE";
 export interface CertificateTemplateItem {
   id: string;
   name: string;
+  pricing_type: "FREE" | "PAID";
   price: string;
   template_file_url: string;
   file_type: string;
@@ -89,6 +90,9 @@ export interface CertificateRequestItem {
   certificate_type: CertificateRequestType;
   payment_required: boolean;
   status: CertificateRequestStatus;
+  effective_status: CertificateRequestStatus | "ISSUED";
+  verification_no: string | null;
+  issued_at: string | null;
   student: {
     id: string;
     full_name: string;

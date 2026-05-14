@@ -1,5 +1,6 @@
 "use client";
 
+import type { Dispatch, SetStateAction } from "react";
 import React, { useState } from "react";
 
 import { MoreVertical } from "lucide-react";
@@ -24,12 +25,13 @@ import { ViewProductModal } from "@/components/admin-panel/product-management/mo
 import { useArchiveProduct } from "@/hooks/api/products/useArchiveProduct";
 import { useDeleteProduct } from "@/hooks/api/products/useDeleteProduct";
 
+
 interface ProductListTableProps {
   data: ProductDataType[];
   isLoading?: boolean;
   isError?: boolean;
   rowSelection: { [key: string]: boolean };
-  setRowSelection: React.Dispatch<React.SetStateAction<{ [key: string]: boolean }>>;
+  setRowSelection: Dispatch<SetStateAction<{ [key: string]: boolean }>>;
   currentPage: number;
   totalResults: number;
   onPageChange: (page: number) => void;
@@ -146,7 +148,21 @@ export function ProductListTable({
       header: "Product Name",
       accessorKey: "productName",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[180px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#0F172B] whitespace-nowrap overflow-hidden text-ellipsis">{item.productName}</div>,
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#0F172B] whitespace-nowrap overflow-hidden text-ellipsis">
+          {item.productName || "-"}
+        </div>
+      ),
+    },
+    {
+      header: "Category",
+      accessorKey: "category",
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[120px]",
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
+          {item.category?.name || "-"}
+        </div>
+      ),
     },
     {
       header: "Product Type",
@@ -168,13 +184,13 @@ export function ProductListTable({
       header: "Barcode/SKU",
       accessorKey: "barcodeSku",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[180px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.barcodeSku}</div>,
+      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.barcodeSku || "-"}</div>,
     },
     {
       header: "Price",
       accessorKey: "price",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[100px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.price.toFixed(2)}</div>,
+      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.price ? item.price.toFixed(2) : "-"}</div>,
     },
     {
       header: "Stock Status",
@@ -196,6 +212,7 @@ export function ProductListTable({
         );
       },
     },
+
     {
       header: "Action",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap text-right w-[80px]",
@@ -243,7 +260,7 @@ export function ProductListTable({
           totalPages,
           onPageChange: onPageChange,
         }}
-        rowClassName={(item) => (rowSelection[item.id] ? "selected" : "")}
+        rowClassName={(item) => (rowSelection[item.id] ? "selected" : item.status === "DRAFT" ? "bg-slate-100 opacity-80 grayscale-[20%]" : "")}
       />
 
       {/* Archive Modal — uses primary (pink) confirm button */}

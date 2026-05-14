@@ -10,6 +10,7 @@ import type { StudentDataType, StudentStatus, PaymentStatus, CertificateStatus }
 
 import { MyStudentTableToolbar } from "@/components/referral-panel/my-students/MyStudentTableToolbar";
 import { MyStudentTable } from "@/components/referral-panel/my-students/MyStudentTable";
+import { EnrollStudentModal } from "@/components/referral-panel/my-students/modals/EnrollStudentModal";
 
 // ===== MOCK DATA =====
 const mockStudents: StudentDataType[] = Array.from({ length: 15 }, (_, i) => ({
@@ -21,9 +22,11 @@ const mockStudents: StudentDataType[] = Array.from({ length: 15 }, (_, i) => ({
   phone: "+9470 492 2345",
   whatsApp: "+9470 492 2345",
   paymentStatus: (["Pending", "Completed"] as PaymentStatus[])[i % 2],
+  paymentPendingAmount: i % 2 === 0 ? "5,000.00" : "0.00",
   certificateStatus: (["Pending", "Completed"] as CertificateStatus[])[i % 2],
+  pendingCertificates: i % 2 === 0 ? 1 : 0,
   commissions: "XXXX.00",
-  studentStatus: (["active", "inactive", "dropped", "completed"] as StudentStatus[])[i % 4],
+  studentStatus: (["ACTIVE", "INACTIVE", "DROPPED", "COMPLETED"] as StudentStatus[])[i % 4],
 }));
 
 export default function MyStudentsPage() {
@@ -38,6 +41,7 @@ export default function MyStudentsPage() {
   // ===== SHARED STATE =====
   const [data] = useState<StudentDataType[]>(mockStudents);
   const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
+  const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
 
   // ===== DERIVED VALUES =====
   const selectedIds = useMemo(
@@ -115,7 +119,7 @@ export default function MyStudentsPage() {
   }, [selectedIds]);
 
   const handleAddStudent = useCallback(() => {
-    toast.info("Add Student coming soon");
+    setIsEnrollModalOpen(true);
   }, []);
 
   // ===== BULK ACTIONS CONFIG =====
@@ -148,6 +152,11 @@ export default function MyStudentsPage() {
         onPageChange={handlePageChange}
         rowSelection={rowSelection}
         setRowSelection={setRowSelection}
+      />
+
+      <EnrollStudentModal
+        isOpen={isEnrollModalOpen}
+        onClose={() => setIsEnrollModalOpen(false)}
       />
     </div>
   );

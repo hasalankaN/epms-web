@@ -5,6 +5,8 @@ import React from "react";
 import { X } from "lucide-react";
 
 import { StatusPopover } from "@/components/common/StatusPopover";
+import { useGetReferralAgentPaymentHistory } from "@/hooks/api/referrals/useGetReferralAgentPaymentHistory";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export interface PaymentHistoryTransaction {
   id: string;
@@ -13,6 +15,7 @@ export interface PaymentHistoryTransaction {
   amount: string;
   status: string;
   paidDate?: string;
+  receiptUrl?: string;
 }
 
 export interface PaymentHistoryGroup {
@@ -23,7 +26,7 @@ export interface PaymentHistoryGroup {
 interface PaymentHistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  historyGroups: PaymentHistoryGroup[] | null;
+  agentId: string | null;
 }
 
 const STATUS_OPTIONS = [
@@ -34,7 +37,9 @@ const STATUS_OPTIONS = [
 const labelClass = "text-[#0F172B] font-inter text-[16px] font-semibold leading-[24px]";
 const valueClass = "text-[#90A1B9] font-inter text-[14px] font-normal leading-[20px]";
 
-export function PaymentHistoryModal({ isOpen, onClose, historyGroups }: PaymentHistoryModalProps) {
+export function PaymentHistoryModal({ isOpen, onClose, agentId }: PaymentHistoryModalProps) {
+  const { data: historyGroups, isLoading } = useGetReferralAgentPaymentHistory(agentId);
+
   if (!isOpen) return null;
 
   return (
@@ -70,62 +75,84 @@ export function PaymentHistoryModal({ isOpen, onClose, historyGroups }: PaymentH
 
         {/* Scrollable body */}
         <div className="flex flex-col gap-6 overflow-y-auto flex-1 p-6 pt-5">
-          {historyGroups?.map((group, gIdx) => (
-            <div key={gIdx} className="flex flex-col gap-3">
-              <h3 className="text-[14px] font-semibold leading-[20px] text-[#314158] font-inter mb-0.5">
-                {group.monthYear}
-              </h3>
-              
-              <div className="flex flex-col gap-3">
-                {group.transactions.map((tx, tIdx) => (
-                  <div
-                    key={tIdx}
-                    className="flex flex-col gap-3 p-4 rounded-[8px]"
-                    style={{
-                      border: "1px solid #E2E8F0",
-                      background: "#FAFAFA",
-                    }}
-                  >
-                    <div className="flex flex-col gap-0.5">
-                      <span className={labelClass}>Payment Description</span>
-                      <span className={valueClass}>{tx.description}</span>
-                    </div>
-                    
-                    <div className="flex flex-col gap-0.5">
-                      <span className={labelClass}>Course/ Batch</span>
-                      <span className={valueClass}>{tx.courseBatch}</span>
-                    </div>
-                    
-                    <div className="flex flex-col gap-0.5">
-                      <span className={labelClass}>Amount</span>
-                      <span className={valueClass}>{tx.amount}</span>
-                    </div>
-                    
-                    <div className="flex flex-col gap-0.5">
-                      <span className={labelClass}>Payment Status</span>
-                      <div className="inline-flex mt-0.5">
-                        <StatusPopover value={tx.status} options={STATUS_OPTIONS} readOnly />
-                      </div>
-                    </div>
-                    
-                    {tx.status === "Paid" && (
-                      <div className="flex flex-col gap-3 pt-1">
-                        <div className="flex flex-col gap-0.5">
-                          <span className={labelClass}>Paid Date</span>
-                          <span className={valueClass}>{tx.paidDate}</span>
-                        </div>
-                        <div className="flex justify-end">
-                          <button className="text-[14px] font-semibold leading-[20px] text-[#0F172B] font-inter transition-colors hover:text-[#E60076]">
-                            View Receipt
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+          {isLoading ? (
+            <div className="flex flex-col gap-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex flex-col gap-3 p-4 rounded-[8px] border border-[#E2E8F0] bg-[#FAFAFA]">
+                  <Skeleton className="h-5 w-40" />
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              ))}
             </div>
-          ))}
+          ) : !historyGroups || historyGroups.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-[14px] font-medium text-[#64748B]">No payment history found.</p>
+            </div>
+          ) : (
+            historyGroups.map((group, gIdx) => (
+              <div key={gIdx} className="flex flex-col gap-3">
+                <h3 className="text-[14px] font-semibold leading-[20px] text-[#314158] font-inter mb-0.5">
+                  {group.monthYear}
+                </h3>
+                
+                <div className="flex flex-col gap-3">
+                  {group.transactions.map((tx, tIdx) => (
+                    <div
+                      key={tIdx}
+                      className="flex flex-col gap-3 p-4 rounded-[8px]"
+                      style={{
+                        border: "1px solid #E2E8F0",
+                        background: "#FAFAFA",
+                      }}
+                    >
+                      <div className="flex flex-col gap-0.5">
+                        <span className={labelClass}>Payment Description</span>
+                        <span className={valueClass}>{tx.description}</span>
+                      </div>
+                      
+                      <div className="flex flex-col gap-0.5">
+                        <span className={labelClass}>Course/ Batch</span>
+                        <span className={valueClass}>{tx.courseBatch}</span>
+                      </div>
+                      
+                      <div className="flex flex-col gap-0.5">
+                        <span className={labelClass}>Amount</span>
+                        <span className={valueClass}>{tx.amount}</span>
+                      </div>
+                      
+                      <div className="flex flex-col gap-0.5">
+                        <span className={labelClass}>Payment Status</span>
+                        <div className="inline-flex mt-0.5">
+                          <StatusPopover value={tx.status} options={STATUS_OPTIONS} readOnly />
+                        </div>
+                      </div>
+                      
+                      {tx.status === "Paid" && (
+                        <div className="flex flex-col gap-3 pt-1">
+                          <div className="flex flex-col gap-0.5">
+                            <span className={labelClass}>Paid Date</span>
+                            <span className={valueClass}>{tx.paidDate}</span>
+                          </div>
+                          {tx.receiptUrl && (
+                            <div className="flex justify-end">
+                              <button
+                                onClick={() => window.open(tx.receiptUrl, "_blank")}
+                                className="text-[14px] font-semibold leading-[20px] text-[#0F172B] font-inter transition-colors hover:text-[#E60076]"
+                              >
+                                View Receipt
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

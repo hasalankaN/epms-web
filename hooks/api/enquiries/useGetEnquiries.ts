@@ -22,6 +22,7 @@ export interface GetEnquiriesParams {
   follow_up_from?: string;
   follow_up_to?: string;
   tab?: "assignment_pending" | "all";
+  priority_status?: "HOT" | "COLD";
 }
 
 export interface GetEnquiriesResponse {
@@ -63,6 +64,7 @@ export function useGetEnquiries(params: GetEnquiriesParams) {
       if (params.date_to) apiParams.date_to = params.date_to;
       if (params.follow_up_from) apiParams.follow_up_from = params.follow_up_from;
       if (params.follow_up_to) apiParams.follow_up_to = params.follow_up_to;
+      if (params.priority_status) apiParams.priority_status = params.priority_status;
 
       const response = await api.get(API_ENDPOINTS.enquiries.GET_ALL, {
         params: apiParams,

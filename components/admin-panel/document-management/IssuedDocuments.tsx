@@ -2,14 +2,22 @@
 
 import React, { useState } from "react";
 
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+
 import { mockIssuedDocumentsData, TOTAL_ISSUED_DOCUMENTS_COUNT } from "@/components/admin-panel/document-management/mockData";
 import { IssuedStatsCard } from "@/components/admin-panel/document-management/views/IssuedDocuments/IssuedStatsCard";
 import { IssuedToolbar } from "@/components/admin-panel/document-management/views/IssuedDocuments/IssuedToolbar";
 import { IssuedTable } from "@/components/admin-panel/document-management/views/IssuedDocuments/IssuedTable";
 
 export function IssuedDocuments() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
-  const [currentPage, setCurrentPage] = useState(1);
+  
+  // URL-based state
+  const currentPage = Number(searchParams.get("page")) || 1;
 
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
 
@@ -45,7 +53,13 @@ export function IssuedDocuments() {
         rowSelection={rowSelection}
         setRowSelection={setRowSelection}
         currentPage={currentPage}
-        onPageChange={setCurrentPage}
+        onPageChange={(page) => {
+          const params = new URLSearchParams(searchParams.toString());
+
+          params.set("page", page.toString());
+          router.replace(`${pathname}?${params.toString()}`);
+          setRowSelection({});
+        }}
       />
     </div>
   );

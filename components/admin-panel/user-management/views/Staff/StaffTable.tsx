@@ -26,10 +26,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  StaffPaymentHistoryModal,
-  type StaffPaymentHistoryData,
-} from "@/components/admin-panel/user-management/modals/staff/StaffPaymentHistoryModal";
+import { StaffPaymentHistoryModal } from "@/components/admin-panel/user-management/modals/staff/StaffPaymentHistoryModal";
 import { EditStaffModal } from "@/components/admin-panel/user-management/modals/staff/EditStaffModal";
 import { StaffPrivilegesModal } from "@/components/admin-panel/user-management/modals/staff/StaffPrivilegesModal";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
@@ -57,7 +54,8 @@ export function StaffTable({
 }: StaffTableProps) {
   const router = useRouter();
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [paymentModalData, setPaymentModalData] = useState<StaffPaymentHistoryData | null>(null);
+  const [paymentModalStaffId, setPaymentModalStaffId] = useState<string | null>(null);
+  const [paymentModalStaffName, setPaymentModalStaffName] = useState<string | undefined>();
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [staffToEdit, setStaffToEdit] = useState<StaffDataType | null>(null);
@@ -94,37 +92,8 @@ export function StaffTable({
 
       return;
     } else if (action === "payment-history") {
-      setPaymentModalData({
-        staffName: staff.name,
-        groups: [
-          {
-            monthLabel: "December, 2025",
-            payments: [
-              {
-                status: "Pending",
-                expensesDescription: "December Salary",
-              },
-              {
-                status: "Pending",
-                expensesDescription: "Travel Cost",
-              },
-            ],
-          },
-          {
-            monthLabel: "November, 2025",
-            payments: [
-              {
-                status: "Paid",
-                expensesNote: "November Salary",
-                paymentMethod: "Bank Transfer",
-                note: "Lorem Ipsum",
-                paidAmount: "XXXX.00",
-                paidDate: "2025/12/01",
-              },
-            ],
-          },
-        ],
-      });
+      setPaymentModalStaffId(staff.id);
+      setPaymentModalStaffName(staff.name);
       setPaymentModalOpen(true);
 
       return;
@@ -356,9 +325,6 @@ export function StaffTable({
               <DropdownMenuItem onClick={() => handleAction("edit", staff)} className="cursor-pointer focus:bg-[#FDF2F8]">
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAction("staff-report", staff)} className="cursor-pointer focus:bg-[#FDF2F8]">
-                Staff Report
-              </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => handleAction("deactivate", staff)} 
                 className={cn(
@@ -396,7 +362,8 @@ export function StaffTable({
       <StaffPaymentHistoryModal
         isOpen={paymentModalOpen}
         onClose={() => setPaymentModalOpen(false)}
-        data={paymentModalData}
+        staffId={paymentModalStaffId}
+        staffName={paymentModalStaffName}
       />
 
       {/* Edit Staff Modal */}

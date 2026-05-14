@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { format, addMonths, subMonths, startOfMonth, startOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isWithinInterval, isToday } from "date-fns";
+import { format, addMonths, subMonths, startOfMonth, startOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isWithinInterval, isToday, setYear } from "date-fns";
 
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface DateRangeCalendarProps {
   startDate: Date | null;
@@ -21,6 +22,14 @@ export function DateRangeCalendar({ startDate, endDate, onDateChange, className,
   const [rightMonth, setRightMonth] = useState(() => addMonths(startDate || new Date(), 1));
   const [selectingEnd, setSelectingEnd] = useState(false);
 
+  const years = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const startYear = currentYear - 100;
+    const endYear = currentYear + 100;
+
+    return Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
+  }, []);
+
   const handlePrevLeft = () => {
     setLeftMonth((prev) => subMonths(prev, 1));
     setRightMonth((prev) => subMonths(prev, 1));
@@ -29,6 +38,18 @@ export function DateRangeCalendar({ startDate, endDate, onDateChange, className,
   const handleNextRight = () => {
     setLeftMonth((prev) => addMonths(prev, 1));
     setRightMonth((prev) => addMonths(prev, 1));
+  };
+
+  const handleYearChange = (yearStr: string) => {
+    const year = parseInt(yearStr);
+
+    setLeftMonth((prev) => {
+        const newDate = setYear(prev, year);
+
+        setRightMonth(addMonths(newDate, 1));
+        
+        return newDate;
+    });
   };
 
   const handleDayClick = (day: Date) => {
@@ -79,9 +100,26 @@ export function DateRangeCalendar({ startDate, endDate, onDateChange, className,
           ) : (
             <div className="w-8" />
           )}
-          <span className="text-sm font-medium leading-5 text-[#1D293D]">
-            {format(currentMonth, "MMMM")}
-          </span>
+          <div className="flex items-center gap-1">
+            <span className="text-sm font-medium leading-5 text-[#1D293D]">
+              {format(currentMonth, "MMMM")}
+            </span>
+            <Select 
+              value={currentMonth.getFullYear().toString()} 
+              onValueChange={handleYearChange}
+            >
+              <SelectTrigger className="h-7 w-fit border-none bg-transparent p-0 text-sm font-medium text-[#1D293D] shadow-none hover:bg-slate-50 focus:ring-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-[200px] z-[99999999]">
+                {years.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           {showNext ? (
             <button
               title="Next month"

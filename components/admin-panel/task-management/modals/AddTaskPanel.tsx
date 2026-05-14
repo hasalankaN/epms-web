@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,15 +14,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
 import ImageUpload from "@/components/common/ImageUpload";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DateRangeCalendar } from "@/components/common/filters/DateRangeCalendar";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import { useGetStaff } from "@/hooks/api/staff/useGetStaff";
+import { useGetBatches } from "@/hooks/api/batches/useGetBatches";
+import { useDebounce } from "@/hooks/useDebounce";
 
 import { cn } from "@/lib/utils";
 import { AUTH_TYPOGRAPHY, AUTH_INPUT, BUTTON_STYLES } from "@/lib/constants/theme";
@@ -64,6 +61,42 @@ export function AddTaskPanel({ isOpen, onClose }: AddTaskPanelProps) {
   const [assignType, setAssignType] = useState<"Staff" | "Batch">("Staff");
   const [materialImage, setMaterialImage] = useState("");
 
+  // Search and selection states
+  const [staffSearch, setStaffSearch] = useState("");
+  const [batchSearch, setBatchSearch] = useState("");
+  const [selectedStaff, setSelectedStaff] = useState("");
+  const [selectedBatch, setSelectedBatch] = useState("");
+
+  const debouncedStaffSearch = useDebounce(staffSearch);
+  const debouncedBatchSearch = useDebounce(batchSearch);
+
+  // Fetch real data
+  const { data: staffData, isLoading: isLoadingStaff } = useGetStaff({
+    search: debouncedStaffSearch,
+    size: 20,
+  });
+
+  const { data: batchesData, isLoading: isLoadingBatches } = useGetBatches({
+    search: debouncedBatchSearch,
+    size: 20,
+  });
+
+  const staffOptions = useMemo(() => {
+    return (staffData?.results || []).map((s) => ({
+      value: s.userId,
+      label: `${s.firstName} ${s.lastName}`,
+      subLabel: s.email,
+    }));
+  }, [staffData]);
+
+  const batchOptions = useMemo(() => {
+    return (batchesData?.results || []).map((b) => ({
+      value: b.id,
+      label: b.name,
+      subLabel: b.category,
+    }));
+  }, [batchesData]);
+
   // Reset state on open
   useEffect(() => {
     if (isOpen) {
@@ -72,6 +105,10 @@ export function AddTaskPanel({ isOpen, onClose }: AddTaskPanelProps) {
       setDueDate(undefined);
       setAssignType("Staff");
       setMaterialImage("");
+      setSelectedStaff("");
+      setSelectedBatch("");
+      setStaffSearch("");
+      setBatchSearch("");
     }
   }, [isOpen]);
 
@@ -249,46 +286,35 @@ export function AddTaskPanel({ isOpen, onClose }: AddTaskPanelProps) {
                     {/* Select Staff / Batch */}
                     <div className="space-y-1">
                       <FieldLabel required>Select {assignType === "Staff" ? "Staff" : "Batch"}</FieldLabel>
-                      <Select onValueChange={handleInputChange}>
-                        <SelectTrigger
-                          className={cn(
-                            AUTH_INPUT.base,
-                            "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic"
-                          )}
-                        >
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent className="z-[99999999]">
-                          {assignType === "Staff" ? (
-                            <>
-                              <SelectItem value="ruwini">
-                                <div className="flex items-center gap-2">
-                                  <div className="h-6 w-6 rounded-full bg-gray-300 overflow-hidden shrink-0">
-                                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=ruwini`} alt="avatar" />
-                                  </div>
-                                  <span className="text-[#0F172B]">Ruwini Gomez</span>
-                                  <span className="text-[#64748B]">@ruwini</span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="kalpa">
-                                <div className="flex items-center gap-2">
-                                  <div className="h-6 w-6 rounded-full bg-gray-300 overflow-hidden shrink-0">
-                                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=kalpa`} alt="avatar" />
-                                  </div>
-                                  <span className="text-[#0F172B]">Kalpa Perera</span>
-                                  <span className="text-[#64748B]">@kalpa</span>
-                                </div>
-                              </SelectItem>
-                            </>
-                          ) : (
-                            <>
-                              <SelectItem value="batch-a">Batch A — Digital Marketing</SelectItem>
-                              <SelectItem value="batch-b">Batch B — UI/UX Design</SelectItem>
-                              <SelectItem value="batch-c">Batch C — Web Development</SelectItem>
-                            </>
-                          )}
-                        </SelectContent>
-                      </Select>
+                      {assignType === "Staff" ? (
+                        <SearchableSelect
+                          options={staffOptions}
+                          value={selectedStaff}
+                          onChange={(val) => {
+                            setSelectedStaff(val);
+                            handleInputChange();
+                          }}
+                          onSearchChange={setStaffSearch}
+                          searchValue={staffSearch}
+                          isLoading={isLoadingStaff}
+                          placeholder="Select Staff"
+                          searchPlaceholder="Search staff name or email..."
+                        />
+                      ) : (
+                        <SearchableSelect
+                          options={batchOptions}
+                          value={selectedBatch}
+                          onChange={(val) => {
+                            setSelectedBatch(val);
+                            handleInputChange();
+                          }}
+                          onSearchChange={setBatchSearch}
+                          searchValue={batchSearch}
+                          isLoading={isLoadingBatches}
+                          placeholder="Select Batch"
+                          searchPlaceholder="Search batch name or category..."
+                        />
+                      )}
                     </div>
 
                     {/* Materials Related to Task */}

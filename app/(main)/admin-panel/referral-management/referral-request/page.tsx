@@ -27,9 +27,10 @@ export default function ReferralRequestPage() {
   const activeTab = tabs.some((t) => t.value === currentTab) ? currentTab : "pending";
 
   const handleTabChange = (tabValue: ReferralRequestTabType) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams();
 
     params.set("tab", tabValue);
+    params.set("page", "1");
     params.delete("page"); // Reset page when switching tabs
     router.replace(`${pathname}?${params.toString()}`);
   };

@@ -51,6 +51,7 @@ export default function ImageUpload({
   }, [imageUrl]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [fileName, setFileName] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cancelTokenSourceRef = useRef<any>(null);
@@ -70,6 +71,7 @@ export default function ImageUpload({
         return;
       }
 
+      setFileName(file.name);
       const reader = new FileReader();
 
       reader.onloadend = async () => {
@@ -116,6 +118,7 @@ export default function ImageUpload({
   const resetUploadState = () => {
     setPreview(null);
     setUploadProgress(0);
+    setFileName(null);
     removeImage();
     if (fileInputRef.current) fileInputRef.current.value = "";
 
@@ -182,12 +185,21 @@ export default function ImageUpload({
                   controls
                   muted
                 />
-              ) : (
+              ) : preview.startsWith("data:image") || preview.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i) ? (
                 <img
                   src={preview}
                   alt="Selected file preview"
                   className={cn("w-full h-full object-cover transition-opacity duration-300", isUploading && "opacity-20")}
                 />
+              ) : (
+                <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-slate-50 p-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white shadow-sm border border-[#E2E8F0]">
+                    <FileUp className="h-6 w-6 text-[#62748E]" />
+                  </div>
+                  <span className="text-xs font-medium text-[#45556C] text-center line-clamp-2 px-2">
+                    {(fileName || (preview.startsWith("data:") ? "Document Uploaded" : preview.split("/").pop()))}
+                  </span>
+                </div>
               )}
               {!isUploading && (
                 <Button
@@ -201,8 +213,8 @@ export default function ImageUpload({
                 </Button>
               )}
               {isUploading && (
-                 <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-                    <span className="text-sm font-bold text-[#E60076]">{uploadProgress}%</span>
+                 <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none bg-white/60">
+                    <span className="text-lg font-bold text-[#E60076]">{uploadProgress}%</span>
                  </div>
               )}
               {isUploading && (
@@ -214,6 +226,11 @@ export default function ImageUpload({
                  </div>
               )}
             </div>
+            {isUploading && (
+               <p className="mt-2 text-center text-xs font-medium text-[#E60076] animate-pulse">
+                 Uploading...
+               </p>
+            )}
           </div>
         )}
         {!isUploading && !preview && (
@@ -230,18 +247,18 @@ export default function ImageUpload({
             {(placeholder !== null) && (
               <div className="flex flex-col items-center gap-0">
                 {placeholder !== "" && (
-                  <p className="text-[#62748E] text-center text-[14px] italic font-normal leading-5">
+                  <div className="text-[#62748E] text-center text-[14px] italic font-normal leading-5">
                     {placeholder ?? "Upload Image Here or drag and drop here"}
-                  </p>
+                  </div>
                 )}
                 {showSupportedFormats && (
                   <>
-                    <p className="text-[#90A1B9] text-center text-[12px] italic font-normal leading-4 mt-1">
+                    <div className="text-[#90A1B9] text-center text-[12px] italic font-normal leading-4 mt-1">
                       {supportedFormats || "Supported File format: png, jpeg, WebP"}
-                    </p>
-                    <p className="text-[#90A1B9] text-center text-[12px] italic font-normal leading-4">
+                    </div>
+                    <div className="text-[#90A1B9] text-center text-[12px] italic font-normal leading-4">
                       {maxSize || `(Max ${limit ?? 10}MB)`}
-                    </p>
+                    </div>
                   </>
                 )}
               </div>

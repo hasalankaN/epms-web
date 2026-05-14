@@ -7,6 +7,7 @@ import { queryKeys } from "@/lib/constants/queryKeys";
 
 export interface UpdateCertificateTemplatePayload {
   name: string;
+  pricing_type: "FREE" | "PAID";
   price: number;
   template_file_url: string;
   file_type: string;

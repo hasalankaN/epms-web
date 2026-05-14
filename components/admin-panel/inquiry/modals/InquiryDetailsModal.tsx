@@ -393,8 +393,8 @@ export function InquiryDetailsModal({
           </motion.div>
 
           {/* ===== BODY (Scrollable) ===== */}
-          <motion.div variants={itemVariants} className="flex-1 overflow-y-auto p-4 sm:p-6 sm:pt-4 pt-4 custom-scrollbar">
-            <form id="inquiry-form" onSubmit={handleSubmit(handleUpdate)} className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+          <motion.div variants={itemVariants} className="flex-1 overflow-y-auto p-4 sm:p-6 sm:pt-0 pt-0 custom-scrollbar">
+            <form id="inquiry-form" onSubmit={handleSubmit(handleUpdate)} className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
               {/* Row 1: Student Name & Next Follow-Up */}
               <div className="space-y-1">
                 <FieldLabel required>Student Name</FieldLabel>

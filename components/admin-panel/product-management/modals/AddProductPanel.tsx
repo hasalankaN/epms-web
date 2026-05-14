@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import type { ReactNode } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
@@ -22,10 +23,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 import { cn } from "@/lib/utils";
 import { AUTH_TYPOGRAPHY, AUTH_INPUT, BUTTON_STYLES } from "@/lib/constants/theme";
 import { useCreateProduct } from "@/hooks/api/products/useCreateProduct";
+import { useGetProductCategories } from "@/hooks/api/product-categories/useGetProductCategories";
 
 // ===== SCHEMA =====
 
@@ -44,6 +47,7 @@ const productSchema = z
     commission_type: z.enum(["PERCENTAGE", "FIXED"]).optional(),
     commission_value: z.string().optional(),
     team_commission_value: z.string().optional(),
+    category_id: z.string().min(1, "Product category is required."),
   })
   .refine(
     (data) => {
@@ -71,7 +75,7 @@ interface AddProductPanelProps {
 
 // ===== PORTAL =====
 
-const Portal = ({ children }: { children: React.ReactNode }) => {
+const Portal = ({ children }: { children: ReactNode }) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -88,7 +92,7 @@ const FieldLabel = ({
   required = false,
   className,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   required?: boolean;
   className?: string;
 }) => (
@@ -144,20 +148,44 @@ export function AddProductPanel({ isOpen, onClose }: AddProductPanelProps) {
       price: "",
       commission_value: "",
       team_commission_value: "",
+      category_id: "",
+      starting_stock: undefined,
+      stock_threshold: undefined,
     },
   });
 
-  const productType = watch("type");
-  const isDelivery = productType === "DELIVERY";
+  // Category Search State
+  const [categorySearch, setCategorySearch] = useState("");
 
-  // Reset on open
+  const { data: categoriesData, isLoading: isLoadingCategories } = useGetProductCategories({
+    page: 1,
+    size: 100, // Fetch more for search
+    search: categorySearch || undefined,
+  });
+
+  const categoryOptions = useMemo(() => {
+    if (!categoriesData?.results) return [];
+
+    return categoriesData.results
+      .filter(c => c.is_active)
+      .map((c) => ({
+        value: c.id,
+        label: c.name,
+      }));
+  }, [categoriesData]);
+
+  // Reset on close to avoid Radix UI Select stale state on reopen
   useEffect(() => {
-    if (isOpen) {
-      reset();
-      setIsDirty(false);
-      setShowDiscardModal(false);
-      setMainImageUrl("");
-      setGalleryUrls(["", "", "", ""]);
+    if (!isOpen) {
+      const timer = setTimeout(() => {
+        reset();
+        setIsDirty(false);
+        setShowDiscardModal(false);
+        setMainImageUrl("");
+        setGalleryUrls(["", "", "", ""]);
+      }, 300); // Wait for exit animation
+      
+      return () => clearTimeout(timer);
     }
   }, [isOpen, reset]);
 
@@ -229,8 +257,54 @@ export function AddProductPanel({ isOpen, onClose }: AddProductPanelProps) {
     };
 
     if (values.type === "DELIVERY") {
-      if (values.starting_stock !== undefined) payload.starting_stock = values.starting_stock;
-      if (values.stock_threshold !== undefined) payload.stock_threshold = values.stock_threshold;
+      payload.starting_stock = values.starting_stock;
+      payload.stock_threshold = values.stock_threshold;
+    }
+
+    payload.category_id = values.category_id;
+
+    await createProduct(payload);
+    onClose();
+  };
+
+  const handleSaveAsDraft = async () => {
+    const values = watch();
+    const images: { url: string; is_primary: boolean; display_order: number }[] = [];
+
+    if (mainImageUrl) {
+      images.push({ url: mainImageUrl, is_primary: true, display_order: 1 });
+    }
+
+    for (let i = 0; i < galleryUrls.length; i++) {
+      const url = galleryUrls[i];
+      
+      if (url) {
+        images.push({ url, is_primary: false, display_order: i + 2 });
+      }
+    }
+
+    // Build payload with minimum requirements for draft
+    const payload: any = {
+      name: values.name || "Untitled Product",
+      type: values.type || "DIGITAL",
+      price: values.price || "0",
+      status: "DRAFT",
+      ...(values.sku && { sku: values.sku }),
+      ...(values.short_description && { short_description: values.short_description }),
+      ...(values.long_description && { long_description: values.long_description }),
+      ...(values.commission_type && { commission_type: values.commission_type }),
+      ...(values.commission_value && { commission_value: values.commission_value }),
+      ...(values.team_commission_value && { team_commission_value: values.team_commission_value }),
+      ...(images.length > 0 && { images }),
+    };
+
+    if (values.type === "DELIVERY") {
+      payload.starting_stock = values.starting_stock;
+      payload.stock_threshold = values.stock_threshold;
+    }
+
+    if (values.category_id) {
+      payload.category_id = values.category_id;
     }
 
     await createProduct(payload);
@@ -347,6 +421,35 @@ export function AddProductPanel({ isOpen, onClose }: AddProductPanelProps) {
                         )}
                       </motion.div>
 
+                      {/* Product Category */}
+                      <motion.div variants={itemVariants} className="space-y-1">
+                        <FieldLabel required>Product Category</FieldLabel>
+                        <Controller
+                          control={control}
+                          name="category_id"
+                          render={({ field }) => (
+                            <SearchableSelect
+                              options={categoryOptions}
+                              value={field.value}
+                              onChange={(val) => {
+                                field.onChange(val);
+                                trigger("category_id");
+                                markDirty();
+                              }}
+                              onSearchChange={setCategorySearch}
+                              searchValue={categorySearch}
+                              placeholder="Select category"
+                              searchPlaceholder="Search categories..."
+                              isLoading={isLoadingCategories}
+                              error={!!errors.category_id}
+                            />
+                          )}
+                        />
+                        {errors.category_id && (
+                          <p className="text-xs text-red-500">{errors.category_id.message}</p>
+                        )}
+                      </motion.div>
+
                       {/* SKU */}
                       <motion.div variants={itemVariants} className="space-y-1">
                         <FieldLabel>Barcode / SKU</FieldLabel>
@@ -417,13 +520,18 @@ export function AddProductPanel({ isOpen, onClose }: AddProductPanelProps) {
                       </motion.div>
 
                       {/* Stock fields — only for DELIVERY */}
-                      {isDelivery && (
-                        <>
+                      {watch("type") === "DELIVERY" && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          transition={{ duration: 0.2 }}
+                          className="flex flex-col gap-5 overflow-hidden"
+                        >
                           <motion.div
                             variants={itemVariants}
-                            className="space-y-1"
                             initial="hidden"
                             animate="visible"
+                            className="space-y-1"
                           >
                             <FieldLabel required>Starting Stock Quantity</FieldLabel>
                             <Input
@@ -445,9 +553,9 @@ export function AddProductPanel({ isOpen, onClose }: AddProductPanelProps) {
 
                           <motion.div
                             variants={itemVariants}
-                            className="space-y-1"
                             initial="hidden"
                             animate="visible"
+                            className="space-y-1"
                           >
                             <FieldLabel>Stock Threshold</FieldLabel>
                             <Input
@@ -460,8 +568,13 @@ export function AddProductPanel({ isOpen, onClose }: AddProductPanelProps) {
                               )}
                               placeholder="eg: 5"
                             />
+                            {errors.stock_threshold && (
+                              <p className="text-xs text-red-500">
+                                {errors.stock_threshold.message}
+                              </p>
+                            )}
                           </motion.div>
-                        </>
+                        </motion.div>
                       )}
 
                       {/* Image Upload */}
@@ -612,15 +725,21 @@ export function AddProductPanel({ isOpen, onClose }: AddProductPanelProps) {
                   <div className="flex items-center justify-end gap-3 border-t border-[#E2E8F0] px-6 py-4">
                     <Button
                       type="button"
-                      variant="ghost"
                       disabled={isPending}
-                      onClick={handleCloseAttempt}
+                      onClick={handleSaveAsDraft}
                       className={cn(
                         BUTTON_STYLES.secondary.md,
-                        "text-sm font-semibold text-[#0F172B] hover:bg-slate-100"
+                        "text-sm font-semibold"
                       )}
                     >
-                      Cancel
+                      {isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save as Draft"
+                      )}
                     </Button>
                     <Button
                       type="submit"
@@ -636,7 +755,7 @@ export function AddProductPanel({ isOpen, onClose }: AddProductPanelProps) {
                           Adding...
                         </>
                       ) : (
-                        "Add Product"
+                        "Add"
                       )}
                     </Button>
                   </div>

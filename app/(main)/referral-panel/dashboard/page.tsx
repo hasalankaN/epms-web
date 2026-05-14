@@ -1,18 +1,17 @@
 "use client";
 
+import React from "react";
+
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 
-import { CommissionsCard } from "@/components/referral-panel/dashboard/commissions/CommissionsCard";
-import { EnrollmentStats } from "@/components/referral-panel/dashboard/enrollment/EnrollmentStats";
-import { MyAgentsCard } from "@/components/referral-panel/dashboard/agents/MyAgentsCard";
 import { ReferralIdCard } from "@/components/referral-panel/dashboard/referral-info/ReferralIdCard";
-import { ReferralStats } from "@/components/referral-panel/dashboard/referral-info/ReferralStats";
-import { TopBatchesChart } from "@/components/referral-panel/dashboard/pcharts/TopBatchesChart";
-import { TopCoursesChart } from "@/components/referral-panel/dashboard/pcharts/TopCoursesChart";
-import { TopProductsChart } from "@/components/referral-panel/dashboard/pcharts/TopProductsChart";
+import { OverviewSection } from "@/components/referral-panel/dashboard/OverviewSection";
+import { TeamSection } from "@/components/referral-panel/dashboard/TeamSection";
 import { itemVariants } from "@/components/ui/dialog";
-import { BUTTON_STYLES } from "@/lib/constants/theme";
+import { TAB_STYLES, BUTTON_STYLES } from "@/lib/constants/theme";
 import { cn } from "@/lib/utils";
 
 const containerVariants = {
@@ -25,65 +24,84 @@ const containerVariants = {
   },
 };
 
+const tabs = [
+  { value: "overview", label: "Overview" },
+  { value: "team", label: "Team" },
+] as const;
+
+export type ReferralTabType = "overview" | "team";
+
 export default function ReferralDashboardPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const currentTab = searchParams.get("tab") as ReferralTabType;
+  const activeTab = tabs.some((t) => t.value === currentTab) ? currentTab : "overview";
+
+  const handleTabChange = (tabValue: ReferralTabType) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.set("tab", tabValue);
+    router.replace(`${pathname}?${params.toString()}`);
+  };
+
   return (
     <motion.div 
       initial="hidden" 
       animate="show" 
       variants={containerVariants}
-      className="pt-3 pl-4 pr-6 pb-6"
+      className="pt-3 pl-4 pr-6 pb-6 flex flex-col gap-3"
     >
-      {/* Header Section */}
-      <motion.div variants={itemVariants} className="mb-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="group cursor-default text-left font-sans text-2xl font-semibold leading-[38px] text-[#0F172B]">
-          Welcome Back!{" "}
-          <span className="wave-on-hover wave-once">
-            👋
-          </span>
-        </h1>
-        
-        <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
-          <button className={cn(BUTTON_STYLES.outline.md, "text-sm font-semibold leading-5 text-[#0F172B]")}>
-            <Plus className="h-5 w-5" />
-            <span>Add Member</span>
-          </button>
-          
-          <button className={cn(BUTTON_STYLES.outline.md, "text-sm font-semibold leading-5 text-[#0F172B]")}>
-            <Plus className="h-5 w-5" />
-            <span>Add Student</span>
-          </button>
-        </div>
-      </motion.div>
-
       <motion.div variants={itemVariants}>
         <ReferralIdCard />
       </motion.div>
-      
-      <motion.div variants={itemVariants}>
-        <ReferralStats />
-      </motion.div>
-      
-      <motion.div variants={itemVariants}>
-        <CommissionsCard />
-      </motion.div>
-      
-      {/* 2-Column Grid for Enrollment Stats, My Agents and Charts - 2/3 vs 1/3 split */}
+
       <motion.div 
         variants={itemVariants}
-        className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3 items-start"
+        className="mt-3 h-[4px] w-full bg-[#F1F5F9]" 
+      />
+
+      {/* Tabs Section */}
+      <motion.div variants={itemVariants} className="mt-3">
+        <div className="flex h-9 items-center justify-between gap-3 sm:h-10 sm:gap-4">
+          <div className="flex min-w-0 flex-1 items-center overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+            <div className={cn(TAB_STYLES.container, "h-9 w-max items-center sm:h-10 sm:w-auto")}>
+              {tabs.map((tab) => {
+                return (
+                  <button
+                    key={tab.value}
+                    onClick={() => handleTabChange(tab.value)}
+                    className={cn(
+                      TAB_STYLES.triggerBase,
+                      "px-3 sm:px-6",
+                      activeTab === tab.value
+                        ? TAB_STYLES.active
+                        : TAB_STYLES.inactive
+                    )}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <button className={cn(BUTTON_STYLES.secondary.md, "h-9 sm:h-10 shrink-0 px-3 sm:px-4 text-xs sm:text-sm font-semibold whitespace-nowrap")}>
+            <Plus className="h-4 w-4" />
+            <span className="inline">Add Student</span>
+          </button>
+        </div>
+      </motion.div>
+      
+      <motion.div 
+        key={activeTab}
+        initial="hidden"
+        animate="show"
+        variants={containerVariants}
+        className="mt-3"
       >
-        {/* Left Column (2/3 width) */}
-        <div className="flex flex-col gap-6 lg:col-span-2">
-          <EnrollmentStats />
-          <MyAgentsCard />
-        </div>
-        
-        {/* Right Column (Charts Sidebar - 1/3 width) */}
-        <div className="flex flex-col gap-6">
-          <TopBatchesChart />
-          <TopCoursesChart />
-          <TopProductsChart />
-        </div>
+        {activeTab === "overview" && <OverviewSection />}
+        {activeTab === "team" && <TeamSection />}
       </motion.div>
     </motion.div>
   );

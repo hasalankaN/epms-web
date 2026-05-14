@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -8,6 +8,8 @@ import { MoreVertical } from "lucide-react";
 
 import type { StudentDataType } from "@/types/user-management";
 import { STUDENT_STATUS_CONFIG } from "@/types/user-management";
+
+import { cn } from "@/lib/utils";
 
 import { DataTable } from "@/components/common/table/DataTable";
 import { StatusPopover } from "@/components/common/StatusPopover";
@@ -23,6 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useUpdateStudentStatus } from "@/hooks/api/user-management/useUpdateStudentStatus";
 
 
 interface StudentTableProps {
@@ -33,6 +36,7 @@ interface StudentTableProps {
   isError?: boolean;
   currentPage: number;
   onPageChange: (page: number) => void;
+  totalResults: number;
 }
 
 export function StudentTable({
@@ -43,24 +47,17 @@ export function StudentTable({
   isError = false,
   currentPage,
   onPageChange,
+  totalResults,
 }: StudentTableProps) {
   const router = useRouter();
   const itemsPerPage = 10;
 
-  const filteredData = useMemo(() => data || [], [data]);
-  const totalCount = filteredData.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-
-    return filteredData.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, currentPage, itemsPerPage]);
 
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
-      const newSelection = Object.fromEntries(filteredData.map((item) => [item.id, true]));
+      const newSelection = Object.fromEntries(data.map((item) => [item.id, true]));
 
       setRowSelection(newSelection);
     } else {
@@ -95,9 +92,19 @@ export function StudentTable({
     }
   };
 
-  const handleDeactivateConfirm = () => {
-    console.log("Deactivating student:", selectedStudent?.id);
-    setIsDeactivateModalOpen(false);
+  const { mutateAsync: updateStatus, isPending: isUpdatingStatus } = useUpdateStudentStatus(
+    selectedStudent?.id || ""
+  );
+
+  const handleDeactivateConfirm = async () => {
+    try {
+      const newStatus = selectedStudent?.studentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+
+      await updateStatus({ status: newStatus });
+      setIsDeactivateModalOpen(false);
+    } catch {
+      // toast handled in hook
+    }
   };
 
   const columns: Column<StudentDataType>[] = [
@@ -106,7 +113,7 @@ export function StudentTable({
       header: () => (
         <Checkbox
           checked={
-            selectedRowCount === filteredData.length && filteredData.length > 0
+            selectedRowCount === data.length && data.length > 0
               ? true
               : selectedRowCount > 0
                 ? "indeterminate"
@@ -159,7 +166,18 @@ export function StudentTable({
       ),
       accessorKey: "phone",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.phone}</div>,
+      cell: (item) => (
+        item.phone && item.phone !== "-" ? (
+          <a
+            href={`tel:${item.phone}`}
+            className="text-[11px] font-medium text-[#45556C] transition-colors hover:text-[#E60076]"
+          >
+            {item.phone}
+          </a>
+        ) : (
+          <span className="text-[11px] font-medium text-[#45556C]">{item.phone || "-"}</span>
+        )
+      ),
     },
     {
       header: () => (
@@ -169,7 +187,20 @@ export function StudentTable({
       ),
       accessorKey: "whatsApp",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.whatsApp}</div>,
+      cell: (item) => (
+        item.whatsApp && item.whatsApp !== "-" ? (
+          <a
+            href={`https://wa.me/${item.whatsApp.replace(/\s+/g, "")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] font-medium text-[#45556C] transition-colors hover:text-[#E60076]"
+          >
+            {item.whatsApp}
+          </a>
+        ) : (
+          <span className="text-[11px] font-medium text-[#45556C]">{item.whatsApp || "-"}</span>
+        )
+      ),
     },
     {
       header: () => <div className="text-center w-full">Payment Status</div>,
@@ -180,7 +211,7 @@ export function StudentTable({
 
         return (
           <div className={`text-[12px] font-medium text-center whitespace-nowrap overflow-hidden text-ellipsis ${isCompleted ? "text-[#16A34A]" : "text-[#FB2C36]"}`}>
-            {isCompleted ? "Completed" : "Pending - XXXX.00"}
+             {isCompleted ? "Completed" : `Pending - ${student.paymentPendingAmount}`}
           </div>
         );
       },
@@ -194,7 +225,7 @@ export function StudentTable({
 
         return (
           <div className={`text-[12px] font-medium text-center whitespace-nowrap overflow-hidden text-ellipsis ${isCompleted ? "text-[#16A34A]" : "text-[#FB2C36]"}`}>
-            {isCompleted ? "Completed" : "Pending - 1"}
+             {isCompleted ? "Completed" : `Pending - ${student.pendingCertificates}`}
           </div>
         );
       },
@@ -212,7 +243,6 @@ export function StudentTable({
       cell: (student) => {
         const options = Object.entries(STUDENT_STATUS_CONFIG).map(([status, config]) => ({
           value: status,
-          label: status.charAt(0).toUpperCase() + status.slice(1),
           bg: config.bg,
           text: config.text,
         }));
@@ -259,8 +289,13 @@ export function StudentTable({
               <DropdownMenuItem onClick={() => handleAction("student-report", student)} className="cursor-pointer focus:bg-[#FDF2F8]">
                 Student Report
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAction("deactivate", student)} className="cursor-pointer text-red-600 focus:bg-[#FDF2F8] focus:text-red-600">
-                Deactivate
+              <DropdownMenuItem 
+                onClick={() => handleAction("deactivate", student)} 
+                className={cn(
+                  "cursor-pointer focus:bg-[#FDF2F8]",
+                )}
+              >
+                {student.studentStatus === "ACTIVE" ? "Deactivate" : "Activate"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -272,14 +307,14 @@ export function StudentTable({
   return (
     <>
       <DataTable
-        data={paginatedData}
+        data={data}
         columns={columns}
         keyExtractor={(item) => item.id}
         isLoading={isLoading}
         isError={isError}
         pagination={{
           variant: "simple",
-          totalCount,
+          totalCount: totalResults,
           selectedRowCount,
           currentPage,
           totalPages,
@@ -301,10 +336,15 @@ export function StudentTable({
         isOpen={isDeactivateModalOpen}
         onClose={() => setIsDeactivateModalOpen(false)}
         onConfirm={handleDeactivateConfirm}
-        title="Confirm Deactivation"
-        description={`Are you sure you want to deactivate this student [${selectedStudent?.name}]?`}
-        confirmText="Confirm Deactivation"
-        confirmVariant="destructive"
+        title={selectedStudent?.studentStatus === "ACTIVE" ? "Confirm Deactivation" : "Confirm Activation"}
+        description={
+          selectedStudent?.studentStatus === "ACTIVE" 
+            ? `Are you sure you want to deactivate this student [${selectedStudent?.name}]?`
+            : `Are you sure you want to activate this student [${selectedStudent?.name}]?`
+        }
+        confirmText={selectedStudent?.studentStatus === "ACTIVE" ? "Confirm Deactivation" : "Confirm Activation"}
+        confirmVariant={selectedStudent?.studentStatus === "ACTIVE" ? "destructive" : "primary"}
+        isDeleting={isUpdatingStatus}
       />
     </>
   );

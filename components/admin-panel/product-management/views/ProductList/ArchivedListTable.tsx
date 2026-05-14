@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
+import React, { useState } from "react";
 
 import { MoreVertical } from "lucide-react";
 
@@ -20,39 +21,38 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
 import { ViewProductModal } from "../../modals/ViewProductModal";
+import { useDeleteProduct } from "@/hooks/api/products/useDeleteProduct";
+import { useRestoreProduct } from "@/hooks/api/products/useRestoreProduct";
 
-interface ProductListTableProps {
+interface ArchivedListTableProps {
   data: ProductDataType[];
+  isLoading?: boolean;
+  isError?: boolean;
   rowSelection: { [key: string]: boolean };
-  setRowSelection: React.Dispatch<React.SetStateAction<{ [key: string]: boolean }>>;
+  setRowSelection: Dispatch<SetStateAction<{ [key: string]: boolean }>>;
   currentPage: number;
+  totalResults: number;
   onPageChange: (page: number) => void;
 }
 
 export function ProductListTable({
   data,
+  isLoading = false,
+  isError = false,
   rowSelection,
   setRowSelection,
   currentPage,
+  totalResults,
   onPageChange,
-}: ProductListTableProps) {
+}: ArchivedListTableProps) {
   const itemsPerPage = 10;
 
-  const filteredData = useMemo(() => data || [], [data]);
-
-  const totalCount = filteredData.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(totalResults / itemsPerPage));
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-
-    return filteredData.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, currentPage, itemsPerPage]);
 
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
-      const newSelection = Object.fromEntries(filteredData.map((item) => [item.id, true]));
+      const newSelection = Object.fromEntries(data.map((item) => [item.id, true]));
 
       setRowSelection(newSelection);
     } else {
@@ -69,6 +69,9 @@ export function ProductListTable({
   const [isDelModalOpen, setIsDelModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewProduct, setViewProduct] = useState<ProductDataType | null>(null);
+
+  const { mutateAsync: deleteProduct, isPending: isDeleting } = useDeleteProduct();
+  const { mutateAsync: restoreProduct, isPending: isRestoring } = useRestoreProduct();
 
   const handleAction = (action: string, product: ProductDataType) => {
     setActionProduct(product);
@@ -93,7 +96,7 @@ export function ProductListTable({
       header: () => (
         <Checkbox
           checked={
-            selectedRowCount === filteredData.length && filteredData.length > 0
+            selectedRowCount === data.length && data.length > 0
               ? true
               : selectedRowCount > 0
                 ? "indeterminate"
@@ -137,7 +140,17 @@ export function ProductListTable({
       header: "Product Name",
       accessorKey: "productName",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[180px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#0F172B] whitespace-nowrap overflow-hidden text-ellipsis">{item.productName}</div>,
+      cell: (item) => <div className="text-[11px] font-medium text-[#0F172B] whitespace-nowrap overflow-hidden text-ellipsis">{item.productName || "-"}</div>,
+    },
+    {
+      header: "Category",
+      accessorKey: "category",
+      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[120px]",
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
+          {item.category?.name || "-"}
+        </div>
+      ),
     },
     {
       header: "Product Type",
@@ -149,19 +162,23 @@ export function ProductListTable({
       header: "Quantity",
       accessorKey: "quantity",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[100px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.quantity}</div>,
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
+          {item.productType === "Digital" ? "N/A" : item.quantity}
+        </div>
+      ),
     },
     {
       header: "Barcode/SKU",
       accessorKey: "barcodeSku",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[180px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.barcodeSku}</div>,
+      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.barcodeSku || "-"}</div>,
     },
     {
       header: "Price",
       accessorKey: "price",
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[100px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.price.toFixed(2)}</div>,
+      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.price ? item.price.toFixed(2) : "-"}</div>,
     },
     {
       header: "Stock Status",
@@ -214,12 +231,14 @@ export function ProductListTable({
   return (
     <>
       <DataTable
-        data={paginatedData}
+        data={data}
         columns={columns}
+        isLoading={isLoading}
+        isError={isError}
         keyExtractor={(item) => item.id}
         pagination={{
           variant: "simple",
-          totalCount,
+          totalCount: totalResults,
           selectedRowCount,
           currentPage,
           totalPages,
@@ -232,10 +251,14 @@ export function ProductListTable({
       <DeleteConfirmationModal
         isOpen={isRestoreModalOpen}
         onClose={() => setIsRestoreModalOpen(false)}
-        onConfirm={() => {
-          console.log("Restoring product:", actionProduct);
+        onConfirm={async () => {
+          if (actionProduct) {
+            await restoreProduct(actionProduct.id);
+          }
+
           setIsRestoreModalOpen(false);
         }}
+        isDeleting={isRestoring}
         title="Restore Product"
         description="Are you sure you want to restore this product?"
         confirmText="Restore Product"
@@ -247,10 +270,14 @@ export function ProductListTable({
       <DeleteConfirmationModal
         isOpen={isDelModalOpen}
         onClose={() => setIsDelModalOpen(false)}
-        onConfirm={() => {
-          console.log("Deleting product:", actionProduct);
+        onConfirm={async () => {
+          if (actionProduct) {
+            await deleteProduct(actionProduct.id);
+          }
+          
           setIsDelModalOpen(false);
         }}
+        isDeleting={isDeleting}
         title="Confirm Deletion"
         description="Are you sure you want to delete this product? This action cannot be undone."
         confirmText="Confirm Delete"

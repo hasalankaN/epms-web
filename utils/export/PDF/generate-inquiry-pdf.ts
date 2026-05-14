@@ -21,6 +21,7 @@ export interface InquiryPDFFilters {
   follow_up_from?: string;
   follow_up_to?: string;
   tab?: "all" | "assignment_pending";
+  priority_status?: "HOT" | "COLD";
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -47,6 +48,7 @@ async function fetchAllEnquiries(filters: InquiryPDFFilters): Promise<ApiEnquiry
     date_to: filters.date_to || undefined,
     follow_up_from: filters.follow_up_from || undefined,
     follow_up_to: filters.follow_up_to || undefined,
+    priority_status: filters.priority_status || undefined,
   };
 
   do {

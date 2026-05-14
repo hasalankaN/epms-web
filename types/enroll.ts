@@ -9,12 +9,15 @@ export type EnrollStatus = "On Going" | "Pending" | "Completed" | "Hold" | "Drop
 export interface EnrollDataType {
   id: string;
   date: string;
+  enrollId: string;
   type: string;
   studentId: string;
+  studentUserId: string;
   studentName: string;
   phone: string;
   whatsapp: string;
-  scope: string; // "Course" or "Batch"
+  scope: string; // "Course" or "Batch" name
+  targetType: "BATCH" | "COURSE";
   status: EnrollStatus;
 }
 
@@ -32,115 +35,63 @@ export const ENROLL_STATUS_CONFIG: Record<EnrollStatus, { bg: string; text: stri
 /**
  * Mock data representing the user's provided design constraints
  */
-export const DUMMY_ENROLL_DATA: EnrollDataType[] = [
-  {
-    id: "1",
-    date: "01/21",
-    type: "Direct",
-    studentId: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsapp: "+9470 492 2345",
-    scope: "Course",
-    status: "On Going",
-  },
-  {
-    id: "2",
-    date: "01/21",
-    type: "Referral",
-    studentId: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsapp: "+9470 492 2345",
-    scope: "Batch",
-    status: "Pending",
-  },
-  {
-    id: "3",
-    date: "01/21",
-    type: "Direct",
-    studentId: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsapp: "+9470 492 2345",
-    scope: "Course",
-    status: "Completed",
-  },
-  {
-    id: "4",
-    date: "01/21",
-    type: "Referral",
-    studentId: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsapp: "+9470 492 2345",
-    scope: "Batch",
-    status: "Hold",
-  },
-  {
-    id: "5",
-    date: "01/21",
-    type: "Direct",
-    studentId: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsapp: "+9470 492 2345",
-    scope: "Course",
-    status: "Dropped",
-  },
-  {
-    id: "6",
-    date: "01/21",
-    type: "Direct",
-    studentId: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsapp: "+9470 492 2345",
-    scope: "Course",
-    status: "Completed",
-  },
-  {
-    id: "7",
-    date: "01/21",
-    type: "Referral",
-    studentId: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsapp: "+9470 492 2345",
-    scope: "Batch",
-    status: "Pending",
-  },
-  {
-    id: "8",
-    date: "01/21",
-    type: "Direct",
-    studentId: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsapp: "+9470 492 2345",
-    scope: "Course",
-    status: "On Going",
-  },
-  {
-    id: "9",
-    date: "01/21",
-    type: "Direct",
-    studentId: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsapp: "+9470 492 2345",
-    scope: "Course",
-    status: "On Going",
-  },
-  {
-    id: "10",
-    date: "01/21",
-    type: "Direct",
-    studentId: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsapp: "+9470 492 2345",
-    scope: "Course",
-    status: "On Going",
-  },
-];
+// ===== API TYPES =====
+
+export interface ApiEnrollmentRow {
+  enrollment_id: string;
+  enroll_public_id?: string;
+  created_at: string;
+  student_user_id: string;
+  student_public_id: string;
+  student_nic: string;
+  student_name: string;
+  gender: string;
+  mobile_number: string;
+  whatsapp_number: string;
+  batch_id: string | null;
+  batch_name: string | null;
+  course_id: string | null;
+  course_name: string | null;
+  enrollment_target: "BATCH" | "COURSE";
+  lifecycle_status: EnrollStatus | string;
+  enrollment_type: "DIRECT" | "REFERRAL";
+  payment_type: string;
+  payment_status: string;
+}
+
+export interface GetEnrollmentsParams {
+  page?: number;
+  size?: number;
+  orderBy?: string;
+  order?: "asc" | "desc";
+  search?: string;
+  district?: string;
+  gender?: string;
+  batch_or_course_id?: string;
+  enrollment_type?: "DIRECT" | "REFERRAL";
+  lifecycle_status?: string;
+  date_from?: string;
+  date_to?: string;
+  enrollment_target?: "BATCH" | "COURSE";
+}
+
+export interface GetEnrollmentsResponse {
+  results: ApiEnrollmentRow[];
+  totalResults: number;
+  page: number;
+  size: number;
+  totalPages: number;
+  isFirstPage: boolean;
+  isLastPage: boolean;
+}
+
+export interface EnrollmentSummary {
+  all: number;
+  batches: number;
+  courses: number;
+  pending: number;
+  ongoing: number;
+  completed: number;
+  hold: number;
+  dropped: number;
+}

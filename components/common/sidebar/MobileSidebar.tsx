@@ -209,6 +209,7 @@ export default function MobileSidebar({ filteredSidebarData }: MobileSidebarProp
                   level="main"
                   icon={item.icon}
                   active={isLinkActive(item.url)}
+                  count={item.count}
                   className="transition-transform duration-300 hover:translate-x-1"
                 >
                   {item.title}
@@ -232,7 +233,7 @@ export default function MobileSidebar({ filteredSidebarData }: MobileSidebarProp
         side="left" 
         showCloseButton={false}
         overlayClassName="bg-[rgba(0,0,0,0.10)]"
-        className="flex w-[264px] flex-col p-0 bg-white dark:bg-slate-950 z-50 h-full data-[state=open]:duration-300 rounded-r-[16px] border-r border-[#E2E8F0] shadow-[2px_0_12px_8px_rgba(202,213,226,0.15)] overflow-hidden"
+        className="flex w-[280px] flex-col p-0 bg-white dark:bg-slate-950 z-50 h-full data-[state=open]:duration-300 rounded-r-[16px] border-r border-[#E2E8F0] shadow-[2px_0_12px_8px_rgba(202,213,226,0.15)] overflow-hidden"
       >
         <SheetHeader className="px-6 py-[11px] border-b border-[#E2E8F0] min-h-[62px]">
           <div className="flex w-full items-center justify-between">
@@ -276,15 +277,6 @@ export default function MobileSidebar({ filteredSidebarData }: MobileSidebarProp
           </SidebarMenu>
         </ScrollArea>
         <div className="mt-auto border-t border-[#E2E8F0] bg-white p-4 flex flex-col gap-[6px] shadow-[0_-1px_2px_0_rgba(16,24,40,0.05)]">
-          {/* Notification Item */}
-          <div className="flex w-full items-center gap-3 rounded-md px-2 py-1.5 h-8 hover:bg-[#FDF2F8] transition-colors cursor-pointer">
-            <i className="notification-bell-icon h-4 w-4 shrink-0 text-[#0F172B]" />
-            <span className="flex-1 truncate font-[Inter] text-sm font-medium leading-5 text-[#0F172B]">
-              Notification
-            </span>
-            <span className="ml-auto text-sm font-medium text-[#64748B]">12</span>
-          </div>
-
           {/* User Profile Item */}
           <div 
             onClick={handleProfileClick}

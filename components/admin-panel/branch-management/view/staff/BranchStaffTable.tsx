@@ -31,6 +31,7 @@ interface BranchStaffTableProps {
   isError?: boolean;
   currentPage: number;
   totalPages: number;
+  totalCount?: number;
   onPageChange: (page: number) => void;
 }
 
@@ -43,6 +44,7 @@ export function BranchStaffTable({
   isError = false,
   currentPage,
   totalPages,
+  totalCount,
   onPageChange,
 }: BranchStaffTableProps) {
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
@@ -183,7 +185,7 @@ export function BranchStaffTable({
       tableContainerClassName="h-auto"
       pagination={{
         variant: "simple",
-        totalCount: data.length, // Should be passed as prop but using data.length as fallback
+        totalCount: totalCount ?? data.length,
         selectedRowCount,
         currentPage,
         totalPages,

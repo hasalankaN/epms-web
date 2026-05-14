@@ -19,6 +19,8 @@ export interface ProductDetailItem {
   name: string;
   type: ProductType;
   sku: string;
+  category_id: string;
+  category_name: string | null;
   short_description: string;
   long_description: string;
   price: string;
@@ -32,9 +34,7 @@ export interface ProductDetailItem {
   is_archived: boolean;
   created_at: string;
   updated_at: string;
-  created_by: string;
-  updated_by: string;
-  deleted_at: string | null;
+  product_image_url: string | null;
   stock_status: ProductStockStatus;
   images: ProductImage[];
 }

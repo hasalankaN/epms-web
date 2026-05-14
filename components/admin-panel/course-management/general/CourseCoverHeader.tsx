@@ -23,9 +23,7 @@ export function CourseCoverHeader({
   isLoading,
 }: CourseCoverHeaderProps) {
   // Use a fallback image if coverImageUrl is null
-  const COVER_IMAGE_URL =
-    coverImageUrl ||
-    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2426&auto=format&fit=crop";
+  const COVER_IMAGE_URL = coverImageUrl || "/images/placeholder.jpg";
 
   const courseStatus: CourseStatus = (status as CourseStatus) || "Active";
   const statusColors = COURSE_STATUS_CONFIG[courseStatus] || COURSE_STATUS_CONFIG.Active;
@@ -37,10 +35,10 @@ export function CourseCoverHeader({
   return (
     <div
       className={cn(
-        "relative w-full overflow-hidden rounded-none flex flex-col justify-end items-start",
+        "relative w-full overflow-hidden rounded-none flex flex-col justify-end items-start min-h-[200px]",
         "bg-cover bg-center bg-no-repeat",
         "p-6",
-        "lg:pt-[68px] lg:pr-[611px] lg:pb-[24px] lg:pl-[26px]"
+        "lg:pt-[120px] lg:pr-[611px] lg:pb-[24px] lg:pl-[26px]"
       )}
       style={{
         backgroundImage: `linear-gradient(270deg, rgba(28, 25, 23, 0.00) 0%, rgba(28, 25, 19, 0.80) 100%), url(${COVER_IMAGE_URL})`,

@@ -22,9 +22,13 @@ function CourseStatCard({
       className={cn("flex flex-col items-center justify-center gap-1 px-4", className)}
     >
       {/* Title */}
-      <span className="text-center font-sans text-[14px] font-normal leading-[20px] text-[#314158]">
-        {title}
-      </span>
+      {isLoading ? (
+        <Skeleton className="h-[14px] w-24 rounded-md mb-1" />
+      ) : (
+        <span className="text-center font-sans text-[14px] font-normal leading-[20px] text-[#314158]">
+          {title}
+        </span>
+      )}
       {/* Value */}
       {isLoading ? (
         <Skeleton className="h-[28px] w-12 rounded-md" />

@@ -4,6 +4,8 @@ import React, { useState } from "react";
 
 import { MoreVertical } from "lucide-react";
 
+import { format } from "date-fns";
+
 import { DataTable } from "@/components/common/table/DataTable";
 import type { Column } from "@/components/common/table/DataTable";
 import { StatusPopover } from "@/components/common/StatusPopover";
@@ -15,84 +17,75 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface ProductPurchase {
-  id: string;
-  purchasedDate: string;
-  productName: string;
-  orderQty: string;
-  amount: string;
-  orderStatus: string;
+
+import type { ProductPurchaseItem } from "@/types/user-management";
+
+interface StudentProductPurchasesProps {
+  data?: ProductPurchaseItem[];
+  total?: number;
+  isLoading?: boolean;
 }
 
-const MOCK_DATA: ProductPurchase[] = [
-  {
-    id: "1",
-    purchasedDate: "2025/01/21",
-    productName: "Lorem Ipsum",
-    orderQty: "XX",
-    amount: "XXXX.00",
-    orderStatus: "Dispatch",
-  },
-  {
-    id: "2",
-    purchasedDate: "2025/01/21",
-    productName: "Lorem Ipsum",
-    orderQty: "XX",
-    amount: "XXXX.00",
-    orderStatus: "Downloaded",
-  },
-];
-
-export function StudentProductPurchases() {
+export function StudentProductPurchases({ data = [], total = 0, isLoading }: StudentProductPurchasesProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const totalCount = MOCK_DATA.length;
+  const totalCount = total;
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
-  const paginatedData = MOCK_DATA.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   
-  const handleAction = (action: string, purchase: ProductPurchase) => {
+  const handleAction = (action: string, purchase: ProductPurchaseItem) => {
     console.log(`Action: ${action}`, purchase);
   };
 
-  const columns: Column<ProductPurchase>[] = [
+  const columns: Column<ProductPurchaseItem>[] = [
     {
       header: "Purchased Date",
-      accessorKey: "purchasedDate",
+      accessorKey: "purchased_at",
       className: "px-4 py-3 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[120px]",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C]">{item.purchasedDate}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C]">
+          {item.purchased_at ? format(new Date(item.purchased_at), "yyyy/MM/dd") : "-"}
+        </div>
+      ),
     },
     {
       header: "Product Name",
-      accessorKey: "productName",
+      accessorKey: "product_name",
       className: "px-4 py-3 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C]">{item.productName}</div>,
+      cell: (item) => <div className="text-[12px] font-medium text-[#45556C]">{item.product_name}</div>,
     },
     {
       header: () => <div className="text-center w-full">Order QTY</div>,
-      accessorKey: "orderQty",
+      accessorKey: "quantity",
       className: "px-4 py-3 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis",
-      cell: (item) => <div className="text-[12px] font-medium text-center text-[#45556C]">{item.orderQty}</div>,
+      cell: (item) => <div className="text-[12px] font-medium text-center text-[#45556C]">{item.quantity}</div>,
     },
     {
       header: () => <div className="text-center w-full">Amount</div>,
-      accessorKey: "amount",
+      accessorKey: "total_amount",
       className: "px-4 py-3 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis",
-      cell: (item) => <div className="text-[12px] font-medium text-center text-[#45556C]">{item.amount}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-center text-[#45556C]">
+          {item.currency} {new Intl.NumberFormat().format(parseFloat(item.total_amount))}
+        </div>
+      ),
     },
     {
       header: () => <div className="text-center w-full">Order Status</div>,
-      accessorKey: "orderStatus",
+      accessorKey: "fulfillment_status",
       className: "px-4 py-3 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis",
       cell: (item) => {
         const options = [
-          { value: "Dispatch", label: "Dispatch", bg: "#F1F5F9", text: "#000000" },
-          { value: "Downloaded", label: "Downloaded", bg: "#DFFFF0", text: "#16A34A" },
+          { value: "DISPATCHED", label: "Dispatched", bg: "#F1F5F9", text: "#000000" },
+          { value: "DOWNLOADED", label: "Downloaded", bg: "#DFFFF0", text: "#16A34A" },
+          { value: "DELIVERED", label: "Delivered", bg: "#DFFFF0", text: "#16A34A" },
+          { value: "PENDING", label: "Pending", bg: "#FFF7D7", text: "#F59E0B" },
+          { value: "CANCELLED", label: "Cancelled", bg: "#FEE2E2", text: "#EF4444" },
         ];
         
         return (
           <div className="flex justify-center w-full">
             <StatusPopover
-              value={item.orderStatus}
+              value={item.fulfillment_status}
               options={options}
               readOnly
             />
@@ -133,11 +126,12 @@ export function StudentProductPurchases() {
       
       <div className="mt-[8px] w-full max-w-full overflow-hidden">
         <DataTable
-          data={paginatedData}
+          data={data}
           columns={columns}
           keyExtractor={(item) => item.id}
           showCheckboxes={false}
           tableContainerClassName="h-auto"
+          isLoading={isLoading}
           pagination={{
             variant: "simple",
             totalCount: totalCount,
@@ -150,3 +144,4 @@ export function StudentProductPurchases() {
     </div>
   );
 }
+

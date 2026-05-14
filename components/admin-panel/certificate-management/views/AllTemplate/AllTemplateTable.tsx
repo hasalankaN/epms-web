@@ -186,7 +186,11 @@ export function AllTemplateTable({
       className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[100px]",
       cell: (item) => (
         <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
-          {`LKR ${parseFloat(item.price).toLocaleString("en-LK", { minimumFractionDigits: 2 })}`}
+          {item.pricing_type === "FREE" ? (
+            <span className="font-semibold uppercase">Free</span>
+          ) : (
+            `LKR ${parseFloat(item.price ?? "0").toLocaleString("en-LK", { minimumFractionDigits: 2 })}`
+          )}
         </div>
       ),
     },
