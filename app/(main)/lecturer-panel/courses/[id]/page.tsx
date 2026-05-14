@@ -27,7 +27,7 @@ import { useGetTierMaterials } from "@/hooks/api/courses/useGetTierMaterials";
 import type { Material } from "@/hooks/api/courses/useGetTierMaterials";
 import { useDeleteMaterial } from "@/hooks/api/courses/useDeleteMaterial";
 import { useUpdateTier } from "@/hooks/api/courses/useUpdateTier";
-import { Switch } from "@/components/ui/Switch";
+import { Switch } from "@/components/ui/switch";
 
 
 const containerVariants = {

@@ -41,17 +41,22 @@ export function ReferralStaffTable({
   totalResults,
 }: ReferralStaffTableProps) {
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
+
   const [selectedItem, setSelectedItem] =
     useState<ReferralAgentDataType | null>(null);
+
   const [isAgentProfileOpen, setIsAgentProfileOpen] = useState(false);
+
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
 
   const [isPaymentHistoryOpen, setIsPaymentHistoryOpen] = useState(false);
+
   const [paymentHistoryAgentId, setPaymentHistoryAgentId] = useState<
     string | null
   >(null);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
   const [selectedMemberToEdit, setSelectedMemberToEdit] =
     useState<ReferralAgentDataType | null>(null);
 
