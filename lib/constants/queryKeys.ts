@@ -32,6 +32,8 @@ export const queryKeys = {
 
   // Batches
   batches: "batches",
+  batchAnalytics: "batchAnalytics",
+  batchStudents: "batchStudents",
 
   // Courses
   courses: "courses",
