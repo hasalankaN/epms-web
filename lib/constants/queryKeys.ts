@@ -78,4 +78,7 @@ export const queryKeys = {
   websiteTestimonials: "websiteTestimonials",
   websiteNewsPosts: "websiteNewsPosts",
   websiteTerms: "websiteTerms",
+
+  // Lecturer
+  lecturer: "lecturer",
 };

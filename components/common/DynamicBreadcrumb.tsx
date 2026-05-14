@@ -123,13 +123,21 @@ export default function DynamicBreadcrumb({ sidebarData }: { sidebarData: Sideba
   // Fallback: Generate breadcrumbs from path segments
   const allSegments = pathSegments.map((segment, index) => {
     const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(segment);
-    const isNumericId = /^\d+$/.test(segment);
-    const isID = isUUID || isNumericId;
+    const isNumeric = /^\d+$/.test(segment);
+    const isID = isUUID || isNumeric;
+    
+    const parentSegment = index > 0 ? pathSegments[index - 1] : null;
+
+    let formatted = formatBreadcrumbSegment(segment);
+
+    if (isID) {
+      formatted = parentSegment === "courses" ? "View Course" : "View";
+    }
     
     return {
       segment,
       href: "/" + pathSegments.slice(0, index + 1).join("/"),
-      formatted: isID ? "View" : formatBreadcrumbSegment(segment)
+      formatted
     };
   });
 

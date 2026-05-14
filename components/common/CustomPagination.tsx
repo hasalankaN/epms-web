@@ -42,6 +42,9 @@ export interface CustomPaginationProps {
 
   /** Custom class name */
   className?: string;
+
+  /** Hide the total count/selected count text on the left */
+  hideTotalCount?: boolean;
 }
 
 const CustomPagination: React.FC<CustomPaginationProps> = ({
@@ -54,6 +57,7 @@ const CustomPagination: React.FC<CustomPaginationProps> = ({
   onPageChange,
   itemsPerPage: initialItemsPerPage = 10,
   className,
+  hideTotalCount = false,
 }) => {
   // URL-based state (for uncontrolled mode)
   const [internalPage, setInternalPage] = useState(1);
@@ -186,14 +190,16 @@ const CustomPagination: React.FC<CustomPaginationProps> = ({
       <div className={cn("flex h-[64px] w-full items-center justify-between border-t border-[#E4E4E7] px-4 py-4", className)}>
         {/* Left: Selection count or record count */}
         <div className="text-[14px] font-normal text-[#6B7280]">
-          {selectedRowCount !== undefined ? (
-            selectedRowCount > 0 ? (
-              `${selectedRowCount} of ${totalCount ?? 0} row(s) selected.`
+          {!hideTotalCount && (
+            selectedRowCount !== undefined ? (
+              selectedRowCount > 0 ? (
+                `${selectedRowCount} of ${totalCount ?? 0} row(s) selected.`
+              ) : (
+                `0 of ${totalCount ?? 0} row(s) selected.`
+              )
             ) : (
-              `0 of ${totalCount ?? 0} row(s) selected.`
+              `Total: ${totalCount ?? 0} records`
             )
-          ) : (
-            `Total: ${totalCount ?? 0} records`
           )}
         </div>
 

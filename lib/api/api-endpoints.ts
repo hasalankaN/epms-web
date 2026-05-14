@@ -282,4 +282,8 @@ export const API_ENDPOINTS = {
     GET_PARTICIPANTS: (roomId: string) =>
       `/api/v1/chat/rooms/${roomId}/participants`,
   },
+  lecturer: {
+    PROFILE: `/api/v1/lecturer/profile`,
+    ASSIGNMENTS: `/api/v1/lecturer/profile/assignments`,
+  },
 };
