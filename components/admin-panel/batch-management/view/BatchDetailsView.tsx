@@ -3,6 +3,7 @@
 import React from "react";
 
 import { useGetBatchById } from "@/hooks/api/batches/useGetBatchById";
+import { useGetBatchAnalytics } from "@/hooks/api/batches/useGetBatchAnalytics";
 import { BatchCoverHeader } from "./general/BatchCoverHeader";
 import { BatchGeneralInfo } from "./general/BatchGeneralInfo";
 import { BatchEnrollmentStats } from "./students/BatchEnrollmentStats";
@@ -15,6 +16,11 @@ import { BatchAccountCard } from "./financials/BatchAccountCard";
 
 export function BatchDetailsView({ batchId }: { batchId: string }) {
   const { data: batch, isLoading } = useGetBatchById(batchId);
+  const { data: analytics } = useGetBatchAnalytics(batchId);
+
+  const enrollmentStats = analytics?.enrollment_stats;
+  const certStats = analytics?.certificate_stats;
+  const financialSummary = analytics?.financial_summary;
 
   return (
     <div className="mt-3">
@@ -51,8 +57,11 @@ export function BatchDetailsView({ batchId }: { batchId: string }) {
         </h2>
       </div>
       <div className="mt-4 w-full px-4 md:px-6">
-        {/* TODO: wire to useGetBatchEnrollmentStats(batchId) when endpoint is available */}
-        <BatchEnrollmentStats />
+        <BatchEnrollmentStats
+          total={enrollmentStats?.total}
+          direct={enrollmentStats?.direct}
+          referral={enrollmentStats?.referral}
+        />
       </div>
 
       {/* Student Details */}
@@ -62,8 +71,7 @@ export function BatchDetailsView({ batchId }: { batchId: string }) {
         </h2>
       </div>
       <div className="mt-4 w-full px-4 md:px-6">
-        {/* TODO: wire to useGetBatchStudents(batchId) when endpoint is available */}
-        <BatchStudentDetails />
+        <BatchStudentDetails batchId={batchId} />
       </div>
 
       {/* Certificate Details */}
@@ -73,8 +81,12 @@ export function BatchDetailsView({ batchId }: { batchId: string }) {
         </h2>
       </div>
       <div className="mt-4 px-4 md:px-6">
-        {/* TODO: wire to useGetBatchCertificateStats(batchId) when endpoint is available */}
-        <BatchCertificateStats />
+        <BatchCertificateStats
+          completedPayments={certStats?.completed_payments}
+          issuedCertificates={certStats?.issued_certificates}
+          totalDownloads={certStats?.total_downloads}
+          pendingCertificates={certStats?.pending_certificates}
+        />
       </div>
 
       {/* Allocated Certificates */}
@@ -103,16 +115,34 @@ export function BatchDetailsView({ batchId }: { batchId: string }) {
       </div>
 
       {/* Revenue + Batch Account */}
-      {/* TODO: wire completedPercentage, estimatedPayment, pendingPayment, account data
-               to useGetBatchFinancialSummary(batchId) when endpoint is available */}
       <div className="mt-4 px-4 md:px-6 w-full flex flex-col lg:flex-row gap-4 mb-10">
         <BatchRevenueCard
-          completedPercentage={75}
-          estimatedPayment="89,935"
-          pendingPayment="19,935"
+          completedPercentage={financialSummary?.completed_percentage ?? 0}
+          estimatedPayment={financialSummary?.estimated_payment ?? "0.00"}
+          pendingPayment={financialSummary?.pending_payment ?? "0.00"}
           className="flex-1"
         />
-        <BatchAccountCard className="flex-1" />
+        <BatchAccountCard
+          totalPayments={
+            financialSummary
+              ? `+LKR ${financialSummary.total_payments}`
+              : undefined
+          }
+          referralCommissions={
+            financialSummary
+              ? `-LKR ${financialSummary.referral_commissions}`
+              : undefined
+          }
+          discounts={
+            financialSummary ? `-LKR ${financialSummary.discounts}` : undefined
+          }
+          payOuts={financialSummary?.pay_outs?.map((p) => ({
+            label: p.label,
+            amount: `-LKR ${p.amount}`,
+          }))}
+          totalProfit={financialSummary?.total_profit}
+          className="flex-1"
+        />
       </div>
     </div>
   );

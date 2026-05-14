@@ -98,6 +98,8 @@ export const API_ENDPOINTS = {
     GET_ALL: `/api/v1/batches`,
     CREATE: `/api/v1/batches`,
     GET_BY_ID: (id: string) => `/api/v1/batches/${id}`,
+    GET_ANALYTICS: (id: string) => `/api/v1/batches/${id}/analytics`,
+    GET_STUDENTS: (id: string) => `/api/v1/batches/${id}/students`,
     UPDATE: (id: string) => `/api/v1/batches/${id}`,
     UPDATE_STATUS: (id: string) => `/api/v1/batches/${id}/status`,
     DEACTIVATE: (id: string) => `/api/v1/batches/${id}/deactivate`,

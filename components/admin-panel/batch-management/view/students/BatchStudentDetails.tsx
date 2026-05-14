@@ -7,26 +7,16 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { toast } from "sonner";
 
 import type { StudentDataType } from "@/types/student";
+import { useGetBatchStudents } from "@/hooks/api/batches/useGetBatchStudents";
 
 import { StudentDetailsToolbar } from "./StudentDetailsToolbar";
 import { StudentDetailsTable } from "./StudentDetailsTable";
 
-// ===== MOCK DATA =====
-const mockStudents: StudentDataType[] = Array.from({ length: 50 }, (_, i) => ({
-  id: `student-${i + 1}`,
-  enrollDate: "2026/01/21",
-  studentId: `#${String(i + 1).padStart(6, "0")}`,
-  name: "Dilshan Perera",
-  gender: "Male",
-  enrollType: i % 2 === 0 ? "Direct" : "Referral",
-  certificateType: "Free / UK",
-  certificateStatus: i % 3 === 0 ? "Issued" : "Not Issued",
-  paymentType: i % 2 === 0 ? "Complete" : "Installment",
-  paymentStatus: i % 2 === 0 ? "Paid" : "Pending",
-  status: (["Active", "Inactive", "Dropped"] as const)[i % 3],
-}));
+interface BatchStudentDetailsProps {
+  batchId: string;
+}
 
-export function BatchStudentDetails() {
+export function BatchStudentDetails({ batchId }: BatchStudentDetailsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -34,32 +24,52 @@ export function BatchStudentDetails() {
   // ===== URL STATE =====
   const pageParam = searchParams.get("studentPage");
   const currentPage = pageParam ? parseInt(pageParam) : 1;
+  const searchParam = searchParams.get("studentSearch") ?? undefined;
 
   // ===== SHARED STATE =====
-  const [data] = useState<StudentDataType[]>(mockStudents);
-  const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
+  const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>(
+    {},
+  );
+
+  // ===== DATA FETCHING =====
+  const { data: studentsData, isLoading } = useGetBatchStudents({
+    batchId,
+    page: currentPage,
+    size: 10,
+    search: searchParam,
+  });
+
+  const data: StudentDataType[] = studentsData?.items ?? [];
 
   // ===== DERIVED VALUES =====
   const selectedIds = useMemo(
-    () => Object.entries(rowSelection).filter(([, selected]) => selected).map(([id]) => id),
-    [rowSelection]
+    () =>
+      Object.entries(rowSelection)
+        .filter(([, selected]) => selected)
+        .map(([id]) => id),
+    [rowSelection],
   );
 
   const selectedStudents = useMemo(
     () => data.filter((item) => selectedIds.includes(item.id)),
-    [data, selectedIds]
+    [data, selectedIds],
   );
 
   // ===== HANDLERS =====
-  const handlePageChange = useCallback((page: number) => {
-    const params = new URLSearchParams(searchParams.toString());
+  const handlePageChange = useCallback(
+    (page: number) => {
+      const params = new URLSearchParams(searchParams.toString());
 
-    params.set("studentPage", page.toString());
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [searchParams, pathname, router]);
+      params.set("studentPage", page.toString());
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, pathname, router],
+  );
 
   const handleSelectAll = useCallback(() => {
-    const newSelection = Object.fromEntries(data.map((item) => [item.id, true]));
+    const newSelection = Object.fromEntries(
+      data.map((item) => [item.id, true]),
+    );
 
     setRowSelection(newSelection);
     toast.success(`Selected all ${data.length} students`);
@@ -99,7 +109,9 @@ export function BatchStudentDetails() {
       return;
     }
 
-    toast.success(`Issuing certificates for ${selectedIds.length} selected students`);
+    toast.success(
+      `Issuing certificates for ${selectedIds.length} selected students`,
+    );
     console.log("Issue Certificate to:", selectedStudents);
   }, [selectedIds, selectedStudents]);
 
@@ -109,8 +121,10 @@ export function BatchStudentDetails() {
 
       return;
     }
-    
-    toast.success(`Issuing documents for ${selectedIds.length} selected students`);
+
+    toast.success(
+      `Issuing documents for ${selectedIds.length} selected students`,
+    );
     console.log("Issue Document to:", selectedStudents);
   }, [selectedIds, selectedStudents]);
 
@@ -138,16 +152,33 @@ export function BatchStudentDetails() {
       onIssueDocument: handleIssueDocument,
       onDelete: handleDelete,
     }),
-    [handleSelectAll, handleClearSelection, handleSendSMS, handleSendEmail, handleIssueCertificate, handleIssueDocument, handleDelete]
+    [
+      handleSelectAll,
+      handleClearSelection,
+      handleSendSMS,
+      handleSendEmail,
+      handleIssueCertificate,
+      handleIssueDocument,
+      handleDelete,
+    ],
   );
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="h-10 w-full animate-pulse rounded bg-slate-100" />
+        <div className="h-64 w-full animate-pulse rounded bg-slate-100" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
       {/* Table Toolbar */}
-      <StudentDetailsToolbar 
-        bulkActions={bulkActions} 
-        selectedCount={selectedIds.length} 
-        totalCount={data.length} 
+      <StudentDetailsToolbar
+        bulkActions={bulkActions}
+        selectedCount={selectedIds.length}
+        totalCount={data.length}
       />
 
       {/* Student Table */}
@@ -157,8 +188,8 @@ export function BatchStudentDetails() {
         onPageChange={handlePageChange}
         rowSelection={rowSelection}
         setRowSelection={setRowSelection}
-        batchId="batch-02"
-        batchName="Diploma in Computing – Batch 02"
+        batchId={batchId}
+        batchName=""
       />
     </div>
   );
