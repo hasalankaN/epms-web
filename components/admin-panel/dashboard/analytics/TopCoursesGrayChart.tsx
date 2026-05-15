@@ -2,24 +2,38 @@
 
 import React from "react";
 
+import type { AnalyticsChartItem } from "@/hooks/api/dashboard/useGetDashboardAnalytics";
 import { CommonPieChart } from "../shared/charts/CommonPieChart";
 
-// Chart data with Gray/Blue color scheme
-const coursesData = [
-  { name: "Course A", value: 28, color: "#334155" },
-  { name: "Course B", value: 24, color: "#475569" },
-  { name: "Course C", value: 20, color: "#64748B" },
-  { name: "Course D", value: 14, color: "#94A3B8" },
-  { name: "Course E", value: 10, color: "#CBD5E1" },
-  { name: "Other", value: 4, color: "#E2E8F0" },
+// Gray/Blue color palette
+const GRAY_COLORS = [
+  "#334155",
+  "#475569",
+  "#64748B",
+  "#94A3B8",
+  "#CBD5E1",
+  "#E2E8F0",
 ];
 
-export function TopCoursesGrayChart() {
+interface Props {
+  data?: AnalyticsChartItem[];
+  dateRange?: string;
+}
+
+export function TopCoursesGrayChart({ data, dateRange }: Props) {
+  const chartData = data?.length
+    ? data.map((item, i) => ({
+        name: item.name,
+        value: item.value,
+        color: GRAY_COLORS[i % GRAY_COLORS.length],
+      }))
+    : [];
+
   return (
     <CommonPieChart
       title="Top 5 Courses by Enrollment"
-      dateRange="From {month} - To {month} {Year}"
-      data={coursesData}
+      dateRange={dateRange ?? ""}
+      data={chartData}
     />
   );
 }

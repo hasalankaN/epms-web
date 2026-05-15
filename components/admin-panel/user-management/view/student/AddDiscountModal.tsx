@@ -9,7 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { AUTH_INPUT, AUTH_TYPOGRAPHY, BUTTON_STYLES } from "@/lib/constants/theme";
+import {
+  AUTH_INPUT,
+  AUTH_TYPOGRAPHY,
+  BUTTON_STYLES,
+} from "@/lib/constants/theme";
 import { useAddEnrollmentDiscount } from "@/hooks/api/user-management/useAddEnrollmentDiscount";
 import { useEmailEnrollmentInvoice } from "@/hooks/api/user-management/useEmailEnrollmentInvoice";
 
@@ -73,8 +77,11 @@ const STATUS_OPTIONS = [
   { value: "Unpaid", label: "Unpaid", bg: "#FFE4E6", text: "#FB2C36" },
 ];
 
-const labelClass = "text-[#0F172B] font-inter text-[16px] font-semibold leading-[24px]";
-const valueClass = "text-[#90A1B9] font-inter text-[14px] font-normal leading-[20px]";
+const labelClass =
+  "text-[#0F172B] font-inter text-[16px] font-semibold leading-[24px]";
+
+const valueClass =
+  "text-[#90A1B9] font-inter text-[14px] font-normal leading-[20px]";
 
 const CardField = ({ label, value }: { label: string; value: string }) => (
   <div className="flex flex-col gap-0.5">
@@ -84,26 +91,32 @@ const CardField = ({ label, value }: { label: string; value: string }) => (
 );
 
 // Discount input row shared between both modes
-const DiscountInputRow = ({ 
-  enrollmentId, 
-  installmentId}: { 
-  enrollmentId: string; 
+const DiscountInputRow = ({
+  enrollmentId,
+  installmentId,
+}: {
+  enrollmentId: string;
   installmentId?: string;
   isPending?: boolean;
 }) => {
   const [value, setValue] = useState("");
-  const { mutate: addDiscount, isPending: isAdding } = useAddEnrollmentDiscount();
+
+  const { mutate: addDiscount, isPending: isAdding } =
+    useAddEnrollmentDiscount();
 
   const handleAdd = () => {
     if (!value || isNaN(parseFloat(value))) return;
-    
-    addDiscount({
-      enrollmentId,
-      installment_id: installmentId || "",
-      discount_amount: parseFloat(value),
-    }, {
-      onSuccess: () => setValue(""),
-    });
+
+    addDiscount(
+      {
+        enrollmentId,
+        installment_id: installmentId || "",
+        discount_amount: parseFloat(value),
+      },
+      {
+        onSuccess: () => setValue(""),
+      },
+    );
   };
 
   return (
@@ -121,7 +134,10 @@ const DiscountInputRow = ({
           disabled={isAdding}
         />
         <Button
-          className={cn(BUTTON_STYLES.outline.md, "text-sm font-medium text-[#0F172B] shrink-0")}
+          className={cn(
+            BUTTON_STYLES.outline.md,
+            "text-sm font-medium text-[#0F172B] shrink-0",
+          )}
           onClick={handleAdd}
           disabled={isAdding || !value}
         >
@@ -133,6 +149,7 @@ const DiscountInputRow = ({
 };
 
 // Card used for one-time discount records
+
 const OneTimeDiscountCard = ({ record }: { record: OneTimeDiscountRecord }) => (
   <div
     className="w-full flex flex-col gap-2 rounded-[8px] p-3"
@@ -154,9 +171,18 @@ const OneTimeDiscountCard = ({ record }: { record: OneTimeDiscountRecord }) => (
 );
 
 // Card used for per-installment discount records
-const InstallmentDiscountCard = ({ item, enrollmentId }: { item: InstallmentItem; enrollmentId: string }) => {
-  const isPending = item.status === "Pending" || item.status === "PAYMENT_PENDING";
-  const { mutate: emailInvoice, isPending: isEmailing } = useEmailEnrollmentInvoice();
+const InstallmentDiscountCard = ({
+  item,
+  enrollmentId,
+}: {
+  item: InstallmentItem;
+  enrollmentId: string;
+}) => {
+  const isPending =
+    item.status === "Pending" || item.status === "PAYMENT_PENDING";
+
+  const { mutate: emailInvoice, isPending: isEmailing } =
+    useEmailEnrollmentInvoice();
 
   return (
     <div
@@ -175,7 +201,13 @@ const InstallmentDiscountCard = ({ item, enrollmentId }: { item: InstallmentItem
         <div className="flex flex-col gap-0.5">
           <span className={labelClass}>Status</span>
           <div className="inline-flex">
-            <StatusPopover value={item.status === "PAYMENT_PENDING" ? "Pending" : item.status} options={STATUS_OPTIONS} readOnly />
+            <StatusPopover
+              value={
+                item.status === "PAYMENT_PENDING" ? "Pending" : item.status
+              }
+              options={STATUS_OPTIONS}
+              readOnly
+            />
           </div>
         </div>
         <CardField label="Amount" value={item.amount} />
@@ -189,13 +221,19 @@ const InstallmentDiscountCard = ({ item, enrollmentId }: { item: InstallmentItem
 
       {isPending && (
         <div className="w-full">
-          <DiscountInputRow enrollmentId={enrollmentId} installmentId={item.id} />
+          <DiscountInputRow
+            enrollmentId={enrollmentId}
+            installmentId={item.id}
+          />
         </div>
       )}
 
       <div className="flex items-center gap-2 mt-2">
         <Button
-          className={cn(BUTTON_STYLES.outline.md, "text-sm font-medium text-[#0F172B]")}
+          className={cn(
+            BUTTON_STYLES.outline.md,
+            "text-sm font-medium text-[#0F172B]",
+          )}
           onClick={() => emailInvoice({ enrollmentId })}
           disabled={isEmailing}
         >
@@ -208,7 +246,11 @@ const InstallmentDiscountCard = ({ item, enrollmentId }: { item: InstallmentItem
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
-export function AddDiscountModal({ isOpen, onClose, details }: AddDiscountModalProps) {
+export function AddDiscountModal({
+  isOpen,
+  onClose,
+  details,
+}: AddDiscountModalProps) {
   if (!isOpen || !details) return null;
 
   return (
@@ -226,7 +268,8 @@ export function AddDiscountModal({ isOpen, onClose, details }: AddDiscountModalP
           maxHeight: "90vh",
           padding: "24px",
           gap: "16px",
-          boxShadow: "0 20px 25px -5px rgba(0,0,0,0.10), 0 8px 10px -6px rgba(0,0,0,0.10)",
+          boxShadow:
+            "0 20px 25px -5px rgba(0,0,0,0.10), 0 8px 10px -6px rgba(0,0,0,0.10)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -246,7 +289,6 @@ export function AddDiscountModal({ isOpen, onClose, details }: AddDiscountModalP
 
         {/* Scrollable body */}
         <div className="flex flex-col overflow-y-auto flex-1 pr-1">
-
           {/* ── ONE-TIME LAYOUT ── */}
           {details.mode === "one-time" && (
             <>
@@ -264,7 +306,10 @@ export function AddDiscountModal({ isOpen, onClose, details }: AddDiscountModalP
               {/* Existing discount records */}
               <div className="flex flex-col gap-4">
                 {details.discountRecords.map((record, i) => (
-                  <OneTimeDiscountCard key={i} record={record} />
+                  <OneTimeDiscountCard
+                    key={`one-time-discount-${i}`}
+                    record={record}
+                  />
                 ))}
               </div>
             </>
@@ -276,12 +321,30 @@ export function AddDiscountModal({ isOpen, onClose, details }: AddDiscountModalP
               {/* Summary header */}
               <div className="flex flex-col gap-3 pt-1">
                 <div className="grid grid-cols-2 gap-y-3 gap-x-4">
-                  <CardField label="Transaction Note" value={details.summary.transactionNote} />
-                  <CardField label="Payment Type" value={details.summary.paymentType} />
-                  <CardField label="Total Payment" value={details.summary.totalPayment} />
-                  <CardField label="Discounted Amount" value={details.summary.discountedAmount} />
-                  <CardField label="Total Paid" value={details.summary.totalPaid} />
-                  <CardField label="Due Amount" value={details.summary.dueAmount} />
+                  <CardField
+                    label="Transaction Note"
+                    value={details.summary.transactionNote}
+                  />
+                  <CardField
+                    label="Payment Type"
+                    value={details.summary.paymentType}
+                  />
+                  <CardField
+                    label="Total Payment"
+                    value={details.summary.totalPayment}
+                  />
+                  <CardField
+                    label="Discounted Amount"
+                    value={details.summary.discountedAmount}
+                  />
+                  <CardField
+                    label="Total Paid"
+                    value={details.summary.totalPaid}
+                  />
+                  <CardField
+                    label="Due Amount"
+                    value={details.summary.dueAmount}
+                  />
                 </div>
               </div>
 
@@ -289,8 +352,12 @@ export function AddDiscountModal({ isOpen, onClose, details }: AddDiscountModalP
 
               {/* Per-installment discount cards */}
               <div className="flex flex-col gap-4">
-                {details.summary.installments.map((item, i) => (
-                  <InstallmentDiscountCard key={i} item={item} enrollmentId={details.enrollmentId} />
+                {details.summary.installments.map((item) => (
+                  <InstallmentDiscountCard
+                    key={`installment-discount-${item.id}`}
+                    item={item}
+                    enrollmentId={details.enrollmentId}
+                  />
                 ))}
               </div>
             </>

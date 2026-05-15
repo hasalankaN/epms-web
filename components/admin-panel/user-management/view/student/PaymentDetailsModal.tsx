@@ -45,8 +45,18 @@ interface InstallmentTransaction {
 }
 
 export type PaymentDetails =
-  | { mode: "one-time"; title: string; enrollmentId: string; transactions: OneTimeTransaction[] }
-  | { mode: "installment"; title: string; enrollmentId: string; summary: InstallmentSummary };
+  | {
+      mode: "one-time";
+      title: string;
+      enrollmentId: string;
+      transactions: OneTimeTransaction[];
+    }
+  | {
+      mode: "installment";
+      title: string;
+      enrollmentId: string;
+      summary: InstallmentSummary;
+    };
 
 interface PaymentDetailsModalProps {
   isOpen: boolean;
@@ -62,8 +72,11 @@ const STATUS_OPTIONS = [
   { value: "Unpaid", label: "Unpaid", bg: "#FFE4E6", text: "#FB2C36" },
 ];
 
-const labelClass = "text-[#0F172B] font-inter text-[16px] font-semibold leading-[24px]";
-const valueClass = "text-[#90A1B9] font-inter text-[14px] font-normal leading-[20px]";
+const labelClass =
+  "text-[#0F172B] font-inter text-[16px] font-semibold leading-[24px]";
+
+const valueClass =
+  "text-[#90A1B9] font-inter text-[14px] font-normal leading-[20px]";
 
 const CardField = ({ label, value }: { label: string; value?: string }) => (
   <div className="flex flex-col gap-0.5">
@@ -72,9 +85,17 @@ const CardField = ({ label, value }: { label: string; value?: string }) => (
   </div>
 );
 
-const TransactionCard = ({ tx, enrollmentId }: { tx: OneTimeTransaction | InstallmentTransaction; enrollmentId: string }) => {
+const TransactionCard = ({
+  tx,
+  enrollmentId,
+}: {
+  tx: OneTimeTransaction | InstallmentTransaction;
+  enrollmentId: string;
+}) => {
   const isPending = tx.status === "Pending" || tx.status === "PAYMENT_PENDING";
-  const { mutate: emailInvoice, isPending: isEmailing } = useEmailEnrollmentInvoice();
+
+  const { mutate: emailInvoice, isPending: isEmailing } =
+    useEmailEnrollmentInvoice();
 
   return (
     <div
@@ -85,6 +106,7 @@ const TransactionCard = ({ tx, enrollmentId }: { tx: OneTimeTransaction | Instal
         boxShadow: "0 1px 2px 0 rgba(16, 24, 40, 0.05)",
       }}
     >
+
       {isPending ? (
 
         /* Pending layout: Transaction Note | (empty), Status | Amount */
@@ -98,7 +120,11 @@ const TransactionCard = ({ tx, enrollmentId }: { tx: OneTimeTransaction | Instal
           <div className="flex flex-col gap-0.5">
             <span className={labelClass}>Status</span>
             <div className="inline-flex">
-              <StatusPopover value={tx.status} options={STATUS_OPTIONS} readOnly />
+              <StatusPopover
+                value={tx.status}
+                options={STATUS_OPTIONS}
+                readOnly
+              />
             </div>
           </div>
           {/* Amount */}
@@ -147,7 +173,11 @@ const TransactionCard = ({ tx, enrollmentId }: { tx: OneTimeTransaction | Instal
           <div className="flex flex-col gap-0.5">
             <span className={labelClass}>Status</span>
             <div className="inline-flex">
-              <StatusPopover value={tx.status} options={STATUS_OPTIONS} readOnly />
+              <StatusPopover
+                value={tx.status}
+                options={STATUS_OPTIONS}
+                readOnly
+              />
             </div>
           </div>
           {/* Paid Amount */}
@@ -160,7 +190,10 @@ const TransactionCard = ({ tx, enrollmentId }: { tx: OneTimeTransaction | Instal
 
       {/* View Invoice — on all cards */}
       <Button
-        className={cn(BUTTON_STYLES.outline.md, "text-sm font-medium text-[#0F172B]")}
+        className={cn(
+          BUTTON_STYLES.outline.md,
+          "text-sm font-medium text-[#0F172B]",
+        )}
         onClick={() => emailInvoice({ enrollmentId })}
         disabled={isEmailing}
       >
@@ -217,24 +250,50 @@ export function PaymentDetailsModal({
         <div className="flex flex-col gap-4 overflow-y-auto flex-1 pr-1">
           {details.mode === "one-time" &&
             details.transactions.map((tx, i) => (
-              <TransactionCard key={i} tx={tx} enrollmentId={details.enrollmentId} />
+              <TransactionCard
+                key={`payment-txn-${i}`}
+                tx={tx}
+                enrollmentId={details.enrollmentId}
+              />
             ))}
 
           {details.mode === "installment" && (
             <>
               {/* Installment summary card — no border/bg */}
               <div className="w-full grid grid-cols-2 gap-y-3 gap-x-4 px-1">
-                <CardField label="Transaction Note" value={details.summary.transactionNote} />
-                <CardField label="Payment Type" value={details.summary.paymentType} />
-                <CardField label="Total Payment" value={details.summary.totalPayment} />
-                <CardField label="Discounted Amount" value={details.summary.discountedAmount} />
-                <CardField label="Total Paid" value={details.summary.totalPaid} />
-                <CardField label="Due Amount" value={details.summary.dueAmount} />
+                <CardField
+                  label="Transaction Note"
+                  value={details.summary.transactionNote}
+                />
+                <CardField
+                  label="Payment Type"
+                  value={details.summary.paymentType}
+                />
+                <CardField
+                  label="Total Payment"
+                  value={details.summary.totalPayment}
+                />
+                <CardField
+                  label="Discounted Amount"
+                  value={details.summary.discountedAmount}
+                />
+                <CardField
+                  label="Total Paid"
+                  value={details.summary.totalPaid}
+                />
+                <CardField
+                  label="Due Amount"
+                  value={details.summary.dueAmount}
+                />
               </div>
 
               {/* Per-installment cards */}
-              {details.summary.installments.map((tx, i) => (
-                <TransactionCard key={i} tx={tx} enrollmentId={details.enrollmentId} />
+              {details.summary.installments.map((tx) => (
+                <TransactionCard
+                  key={`installment-txn-${tx.id}`}
+                  tx={tx}
+                  enrollmentId={details.enrollmentId}
+                />
               ))}
             </>
           )}

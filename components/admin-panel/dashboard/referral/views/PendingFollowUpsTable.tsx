@@ -22,87 +22,14 @@ export interface PendingFollowUpRow {
   followUp: string;
 }
 
-const dummyData: PendingFollowUpRow[] = [
-  {
-    id: "1",
-    date: "01/21",
-    idNo: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsApp: "+9470 492 2345",
-    source: "Web",
-    assignee: "Name",
-    district: "Colombo",
-    interest: "Course",
-    branch: "Main",
-    status: "PENDING",
-    followUp: "01/21",
-  },
-  {
-    id: "2",
-    date: "01/21",
-    idNo: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsApp: "+9470 492 2345",
-    source: "Added {Name}",
-    assignee: "Name",
-    district: "Colombo",
-    interest: "Course",
-    branch: "Main",
-    status: "IN_PROGRESS",
-    followUp: "01/21",
-  },
-  {
-    id: "3",
-    date: "01/21",
-    idNo: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsApp: "+9470 492 2345",
-    source: "Added {Name}",
-    assignee: "Name",
-    district: "Colombo",
-    interest: "Course",
-    branch: "Main",
-    status: "COMPLETED",
-    followUp: "01/21",
-  },
-  {
-    id: "4",
-    date: "01/21",
-    idNo: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsApp: "+9470 492 2345",
-    source: "Added {Name}",
-    assignee: "Name",
-    district: "Colombo",
-    interest: "Course",
-    branch: "Main",
-    status: "PENDING",
-    followUp: "01/21",
-  },
-  {
-    id: "5",
-    date: "01/21",
-    idNo: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsApp: "+9470 492 2345",
-    source: "Added {Name}",
-    assignee: "Name",
-    district: "Colombo",
-    interest: "Course",
-    branch: "Main",
-    status: "IN_PROGRESS",
-    followUp: "01/21",
-  },
-];
-
 const statusOptions = [
   { value: "PENDING", label: "Pending", bg: "#FEF3C7", text: "#D97706" },
-  { value: "IN_PROGRESS", label: "In Progress", bg: "#DBEAFE", text: "#2563EB" },
+  {
+    value: "IN_PROGRESS",
+    label: "In Progress",
+    bg: "#DBEAFE",
+    text: "#2563EB",
+  },
   { value: "COMPLETED", label: "Completed", bg: "#DCFCE7", text: "#16A34A" },
 ];
 
@@ -145,7 +72,7 @@ const columns: Column<PendingFollowUpRow>[] = [
     ),
     accessorKey: "phone",
     className: "px-2 py-2 w-[150px] whitespace-nowrap",
-    cell: (item) => (
+    cell: (item) =>
       item.phone && item.phone !== "-" ? (
         <a
           href={`tel:${item.phone}`}
@@ -154,9 +81,10 @@ const columns: Column<PendingFollowUpRow>[] = [
           {item.phone}
         </a>
       ) : (
-        <span className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{item.phone || "-"}</span>
-      )
-    ),
+        <span className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.phone || "-"}
+        </span>
+      ),
   },
   {
     header: () => (
@@ -166,7 +94,7 @@ const columns: Column<PendingFollowUpRow>[] = [
     ),
     accessorKey: "whatsApp",
     className: "px-2 py-2 w-[150px] whitespace-nowrap",
-    cell: (item) => (
+    cell: (item) =>
       item.whatsApp && item.whatsApp !== "-" ? (
         <a
           href={`https://wa.me/${item.whatsApp.replace(/\s+/g, "")}`}
@@ -177,9 +105,10 @@ const columns: Column<PendingFollowUpRow>[] = [
           {item.whatsApp}
         </a>
       ) : (
-        <span className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{item.whatsApp || "-"}</span>
-      )
-    ),
+        <span className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.whatsApp || "-"}
+        </span>
+      ),
   },
   {
     header: "Source",
@@ -236,11 +165,7 @@ const columns: Column<PendingFollowUpRow>[] = [
     accessorKey: "status",
     className: "px-2 py-2 w-[120px] whitespace-nowrap",
     cell: (item) => (
-      <StatusPopover
-        value={item.status}
-        options={statusOptions}
-        readOnly
-      />
+      <StatusPopover value={item.status} options={statusOptions} readOnly />
     ),
   },
   {
@@ -255,11 +180,15 @@ const columns: Column<PendingFollowUpRow>[] = [
   },
 ];
 
-export function PendingFollowUpsTable() {
+interface Props {
+  data?: PendingFollowUpRow[];
+}
+
+export function PendingFollowUpsTable({ data }: Props) {
   return (
     <div className="mt-[10px] w-full rounded-lg border border-[#E2E8F0] bg-white shadow-sm overflow-hidden">
       <DataTable
-        data={dummyData}
+        data={data ?? []}
         columns={columns}
         keyExtractor={(item) => item.id}
         showCheckboxes={false}

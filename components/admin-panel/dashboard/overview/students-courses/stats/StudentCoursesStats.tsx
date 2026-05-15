@@ -2,25 +2,55 @@
 
 import React from "react";
 
+import type { DashboardStudentCourseStats } from "@/hooks/api/dashboard/useGetDashboardOverview";
+
 import { StudentCourseStatCard } from "./StudentCourseStatCard";
 
-export function StudentCoursesStats() {
-  const stats = [
-    { title: "Total Inquiries", value: "35,000" },
-    { title: "Total Student Enrollments", value: "10,670" },
-    { title: "Total Students Count", value: "2340" },
-    { title: "Total Lecturers Count", value: "45" },
-    { title: "Total Staff Members", value: "75" },
-    { title: "Total Products", value: "15" },
-    { title: "Total Batches", value: "55" },
-    { title: "Total Courses", value: "255" },
+interface StudentCoursesStatsProps {
+  stats?: DashboardStudentCourseStats;
+}
+
+export function StudentCoursesStats({ stats }: StudentCoursesStatsProps) {
+  const statItems = [
+    {
+      title: "Total Inquiries",
+      value: stats ? stats.totalInquiries.toLocaleString() : "—",
+    },
+    {
+      title: "Total Student Enrollments",
+      value: stats ? stats.totalEnrollments.toLocaleString() : "—",
+    },
+    {
+      title: "Total Students Count",
+      value: stats ? stats.totalStudents.toLocaleString() : "—",
+    },
+    {
+      title: "Total Lecturers Count",
+      value: stats ? stats.totalLecturers.toLocaleString() : "—",
+    },
+    {
+      title: "Total Staff Members",
+      value: stats ? stats.totalStaff.toLocaleString() : "—",
+    },
+    {
+      title: "Total Products",
+      value: stats ? stats.totalProducts.toLocaleString() : "—",
+    },
+    {
+      title: "Total Batches",
+      value: stats ? stats.totalBatches.toLocaleString() : "—",
+    },
+    {
+      title: "Total Courses",
+      value: stats ? stats.totalCourses.toLocaleString() : "—",
+    },
   ];
 
   return (
     <div className="w-full rounded-[8px] border border-[#E2E8F0] bg-transparent">
       {/* Desktop: Flex layout - 8 columns */}
       <div className="hidden items-center justify-between py-3 lg:flex">
-        {stats.map((stat, index) => (
+        {statItems.map((stat, index) => (
           <React.Fragment key={stat.title}>
             <StudentCourseStatCard
               title={stat.title}
@@ -28,7 +58,7 @@ export function StudentCoursesStats() {
               className="flex-1"
             />
             {/* Divider - not after last item */}
-            {index < stats.length - 1 && (
+            {index < statItems.length - 1 && (
               <div className="h-[102px] w-px bg-[#E2E8F0]" />
             )}
           </React.Fragment>
@@ -37,7 +67,7 @@ export function StudentCoursesStats() {
 
       {/* Tablet: Grid layout - 4 columns (2 rows) */}
       <div className="hidden grid-cols-4 md:grid lg:hidden">
-        {stats.map((stat, index) => (
+        {statItems.map((stat, index) => (
           <div
             key={stat.title}
             className={`
@@ -48,17 +78,14 @@ export function StudentCoursesStats() {
               ${index >= 4 ? "border-t border-[#E2E8F0]" : ""}
             `}
           >
-            <StudentCourseStatCard
-              title={stat.title}
-              value={stat.value}
-            />
+            <StudentCourseStatCard title={stat.title} value={stat.value} />
           </div>
         ))}
       </div>
 
       {/* Mobile: Grid layout - 2 columns (4 rows) */}
       <div className="grid grid-cols-2 md:hidden">
-        {stats.map((stat, index) => (
+        {statItems.map((stat, index) => (
           <div
             key={stat.title}
             className={`
@@ -69,14 +96,10 @@ export function StudentCoursesStats() {
               ${index >= 2 ? "border-t border-[#E2E8F0]" : ""}
             `}
           >
-            <StudentCourseStatCard
-              title={stat.title}
-              value={stat.value}
-            />
+            <StudentCourseStatCard title={stat.title} value={stat.value} />
           </div>
         ))}
       </div>
     </div>
   );
-
 }

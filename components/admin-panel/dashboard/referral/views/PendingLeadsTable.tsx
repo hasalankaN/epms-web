@@ -17,64 +17,6 @@ export interface PendingLeadRow {
   branch: string;
 }
 
-const dummyData: PendingLeadRow[] = [
-  {
-    id: "1",
-    date: "01/21",
-    idNo: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsApp: "+9470 492 2345",
-    district: "Colombo",
-    interest: "Course",
-    branch: "Main",
-  },
-  {
-    id: "2",
-    date: "01/21",
-    idNo: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsApp: "+9470 492 2345",
-    district: "Colombo",
-    interest: "Course",
-    branch: "Main",
-  },
-  {
-    id: "3",
-    date: "01/21",
-    idNo: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsApp: "+9470 492 2345",
-    district: "Colombo",
-    interest: "Course",
-    branch: "Main",
-  },
-  {
-    id: "4",
-    date: "01/21",
-    idNo: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsApp: "+9470 492 2345",
-    district: "Colombo",
-    interest: "Course",
-    branch: "Main",
-  },
-  {
-    id: "5",
-    date: "01/21",
-    idNo: "#000001",
-    studentName: "Amali Perera",
-    phone: "+9470 492 2345",
-    whatsApp: "+9470 492 2345",
-    district: "Colombo",
-    interest: "Course",
-    branch: "Main",
-  },
-];
-
 const columns: Column<PendingLeadRow>[] = [
   {
     header: "Date",
@@ -114,7 +56,7 @@ const columns: Column<PendingLeadRow>[] = [
     ),
     accessorKey: "phone",
     className: "px-2 py-2 w-[150px] whitespace-nowrap",
-    cell: (item) => (
+    cell: (item) =>
       item.phone && item.phone !== "-" ? (
         <a
           href={`tel:${item.phone}`}
@@ -123,9 +65,10 @@ const columns: Column<PendingLeadRow>[] = [
           {item.phone}
         </a>
       ) : (
-        <span className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{item.phone || "-"}</span>
-      )
-    ),
+        <span className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.phone || "-"}
+        </span>
+      ),
   },
   {
     header: () => (
@@ -135,7 +78,7 @@ const columns: Column<PendingLeadRow>[] = [
     ),
     accessorKey: "whatsApp",
     className: "px-2 py-2 w-[150px] whitespace-nowrap",
-    cell: (item) => (
+    cell: (item) =>
       item.whatsApp && item.whatsApp !== "-" ? (
         <a
           href={`https://wa.me/${item.whatsApp.replace(/\s+/g, "")}`}
@@ -146,9 +89,10 @@ const columns: Column<PendingLeadRow>[] = [
           {item.whatsApp}
         </a>
       ) : (
-        <span className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">{item.whatsApp || "-"}</span>
-      )
-    ),
+        <span className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.whatsApp || "-"}
+        </span>
+      ),
   },
   {
     header: "District",
@@ -182,11 +126,15 @@ const columns: Column<PendingLeadRow>[] = [
   },
 ];
 
-export function PendingLeadsTable() {
+interface Props {
+  data?: PendingLeadRow[];
+}
+
+export function PendingLeadsTable({ data }: Props) {
   return (
     <div className="mt-[10px] w-full rounded-lg border border-[#E2E8F0] bg-white shadow-sm overflow-hidden">
       <DataTable
-        data={dummyData}
+        data={data ?? []}
         columns={columns}
         keyExtractor={(item) => item.id}
         showCheckboxes={false}

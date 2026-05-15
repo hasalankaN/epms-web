@@ -86,4 +86,9 @@ export const queryKeys = {
 
   // Lecturer
   lecturer: "lecturer",
+
+  // Dashboard
+  dashboardOverview: "dashboardOverview",
+  dashboardReferral: "dashboardReferral",
+  dashboardAnalytics: "dashboardAnalytics",
 };

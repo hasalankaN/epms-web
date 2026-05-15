@@ -34,9 +34,15 @@ const FieldLabel = ({ children }: { children: React.ReactNode }) => (
   </p>
 );
 
-const FieldValue = ({ children, isLoading }: { children: React.ReactNode; isLoading?: boolean }) => {
+const FieldValue = ({
+  children,
+  isLoading,
+}: {
+  children: React.ReactNode;
+  isLoading?: boolean;
+}) => {
   if (isLoading) return <Skeleton className="h-5 w-3/4 mt-1" />;
-  
+
   return (
     <p className="text-[14px] font-normal leading-[20px] text-[#90A1B9] font-inter">
       {children || "-"}
@@ -62,16 +68,27 @@ export function StudentGeneralDetails({
   paymentPaid = 0,
   profileImageUrl,
 }: StudentGeneralDetailsProps) {
-  const pendingVal = typeof paymentPending === "string" ? parseFloat(paymentPending.replace(/,/g, "")) : paymentPending;
-  const paidVal = typeof paymentPaid === "string" ? parseFloat(paymentPaid.replace(/,/g, "")) : paymentPaid;
+  const pendingVal =
+    typeof paymentPending === "string"
+      ? parseFloat(paymentPending.replace(/,/g, ""))
+      : paymentPending;
+
+  const paidVal =
+    typeof paymentPaid === "string"
+      ? parseFloat(paymentPaid.replace(/,/g, ""))
+      : paymentPaid;
 
   const chartData = [
     { name: "Paid", value: paidVal || 0, color: "#16A34A" },
-    { name: "Pending", value: pendingVal || (paidVal === 0 ? 1 : 0), color: "#EF4444" },
+    {
+      name: "Pending",
+      value: pendingVal || (paidVal === 0 ? 1 : 0),
+      color: "#EF4444",
+    },
   ];
 
-  const formattedEnrolledDate = enrolledDate 
-    ? format(new Date(enrolledDate), "yyyy/MM/dd") 
+  const formattedEnrolledDate = enrolledDate
+    ? format(new Date(enrolledDate), "yyyy/MM/dd")
     : "-";
 
   const formattedPending = new Intl.NumberFormat().format(pendingVal);
@@ -147,15 +164,14 @@ export function StudentGeneralDetails({
 
       {/* ========== Details Grid Section ========== */}
       <div className="grid flex-1 grid-cols-2 xl:grid-cols-6 gap-y-6 flex-wrap gap-x-4 xl:gap-x-6">
-        
         {/* ROW 1 & 2 */}
-        
+
         {/* Address: Col 1, Row 1 & 2 */}
         <div className="flex flex-col gap-1 col-span-2 xl:col-span-2 xl:row-span-2">
           <FieldLabel>Address</FieldLabel>
           <FieldValue isLoading={isLoading}>
             {address?.split(",").map((line, i) => (
-              <React.Fragment key={i}>
+              <React.Fragment key={`address-line-${i}`}>
                 {line.trim()}
                 {i < address.split(",").length - 1 && ","}
                 <br />
@@ -189,7 +205,7 @@ export function StudentGeneralDetails({
         </div>
 
         {/* ROW 3 & 4 */}
-        
+
         {/* Student Progress */}
         <div className="flex flex-col gap-2 col-span-2 xl:col-span-3 xl:row-span-2 mt-2 xl:mt-8">
           <FieldLabel>Student Progress</FieldLabel>
@@ -202,7 +218,8 @@ export function StudentGeneralDetails({
                   className="absolute left-0 top-0 h-full rounded-full origin-left"
                   style={{
                     width: `${progressPercent}%`,
-                    background: "linear-gradient(90deg, #F9A8D4 0%, #E60076 100%)",
+                    background:
+                      "linear-gradient(90deg, #F9A8D4 0%, #E60076 100%)",
                     animation: "expand-width 0.7s ease-out forwards",
                   }}
                 />
@@ -246,7 +263,7 @@ export function StudentGeneralDetails({
                   </Pie>
                 </PieChart>
               </div>
-              
+
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
                   <span className="rounded-sm bg-[#FEE2E2] px-2 py-[2px] font-inter text-[13px] font-medium text-[#EF4444]">
@@ -268,9 +285,7 @@ export function StudentGeneralDetails({
             </div>
           )}
         </div>
-
       </div>
     </div>
   );
 }
-

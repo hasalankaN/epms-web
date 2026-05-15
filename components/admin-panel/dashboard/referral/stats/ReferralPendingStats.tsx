@@ -2,16 +2,34 @@
 
 import React from "react";
 
+import type { ReferralPendingStats as PendingStatsData } from "@/hooks/api/dashboard/useGetDashboardReferral";
 import { ReferralStatCard } from "./ReferralStatCard";
 
-export function ReferralPendingStats() {
+interface Props {
+  pendingStats?: PendingStatsData;
+}
+
+function fmtNum(n?: number) {
+  return n != null ? String(n).padStart(2, "0") : "—";
+}
+
+export function ReferralPendingStats({ pendingStats }: Props) {
   const stats = [
-    { title: "Pending Approvals", value: "20" },
-    { title: "Pending Referral Approval", value: "05" },
-    { title: "Pending Leads", value: "04" },
-    { title: "Pending Follow Ups", value: "45" },
-    { title: "Pending Chat", value: "03" },
-    { title: "Pending Orders", value: "15" },
+    {
+      title: "Pending Approvals",
+      value: fmtNum(pendingStats?.pendingApprovals),
+    },
+    {
+      title: "Pending Referral Approval",
+      value: fmtNum(pendingStats?.pendingReferralApprovals),
+    },
+    { title: "Pending Leads", value: fmtNum(pendingStats?.pendingLeads) },
+    {
+      title: "Pending Follow Ups",
+      value: fmtNum(pendingStats?.pendingFollowUps),
+    },
+    { title: "Pending Chat", value: fmtNum(pendingStats?.pendingChat) },
+    { title: "Pending Orders", value: fmtNum(pendingStats?.pendingOrders) },
   ];
 
   return (
@@ -44,10 +62,7 @@ export function ReferralPendingStats() {
               ${index >= 3 ? "border-t border-[#E2E8F0]" : ""}
             `}
           >
-            <ReferralStatCard
-              title={stat.title}
-              value={stat.value}
-            />
+            <ReferralStatCard title={stat.title} value={stat.value} />
           </div>
         ))}
       </div>
@@ -63,10 +78,7 @@ export function ReferralPendingStats() {
               ${index >= 2 ? "border-t border-[#E2E8F0]" : ""}
             `}
           >
-            <ReferralStatCard
-              title={stat.title}
-              value={stat.value}
-            />
+            <ReferralStatCard title={stat.title} value={stat.value} />
           </div>
         ))}
       </div>

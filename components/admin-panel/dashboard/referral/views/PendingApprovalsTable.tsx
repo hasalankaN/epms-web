@@ -18,69 +18,16 @@ export interface PendingApprovalRow {
   receiptUrl?: string;
 }
 
-const dummyData: PendingApprovalRow[] = [
-  {
-    id: "1",
-    transactionDate: "01/21",
-    batchName: "Batch Name",
-    studentName: "Amali Perera",
-    enrolledBy: "Direct Enroll",
-    whatsApp: "+9470 492 2345",
-    amount: "XXXX.00",
-    refNo: "Ref no",
-    receiptUrl: "https://placehold.co/600x800/e2e8f0/94a3b8?text=ATM+TRANSACTION+SLIP",
-  },
-  {
-    id: "2",
-    transactionDate: "01/21",
-    batchName: "Batch Name",
-    studentName: "Amali Perera",
-    enrolledBy: "Student Referral-Student Name",
-    whatsApp: "+9470 492 2345",
-    amount: "XXXX.00",
-    refNo: "Ref no",
-    receiptUrl: "https://placehold.co/600x800/e2e8f0/94a3b8?text=STUDENT+REFERRAL+SLIP",
-  },
-  {
-    id: "3",
-    transactionDate: "01/21",
-    batchName: "Batch Name",
-    studentName: "Amali Perera",
-    enrolledBy: "Direct Enroll",
-    whatsApp: "+9470 492 2345",
-    amount: "XXXX.00",
-    refNo: "Ref no",
-    receiptUrl: "https://placehold.co/600x800/e2e8f0/94a3b8?text=DIRECT+ENROLL+SLIP",
-  },
-  {
-    id: "4",
-    transactionDate: "01/21",
-    batchName: "Batch Name",
-    studentName: "Amali Perera",
-    enrolledBy: "Direct Enroll",
-    whatsApp: "+9470 492 2345",
-    amount: "XXXX.00",
-    refNo: "Ref no",
-    receiptUrl: "https://placehold.co/600x800/e2e8f0/94a3b8?text=DIRECT+ENROLL+SLIP",
-  },
-  {
-    id: "5",
-    transactionDate: "01/21",
-    batchName: "Batch Name",
-    studentName: "Amali Perera",
-    enrolledBy: "Agent Referral-Agent Name",
-    whatsApp: "+9470 492 2345",
-    amount: "XXXX.00",
-    refNo: "Ref no",
-    receiptUrl: "https://placehold.co/600x800/e2e8f0/94a3b8?text=AGENT+REFERRAL+SLIP",
-  },
-];
+interface Props {
+  data?: PendingApprovalRow[];
+}
 
-
-
-export function PendingApprovalsTable() {
+export function PendingApprovalsTable({ data }: Props) {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [selectedSlipUrl, setSelectedSlipUrl] = useState<string | undefined>(undefined);
+
+  const [selectedSlipUrl, setSelectedSlipUrl] = useState<string | undefined>(
+    undefined,
+  );
 
   const handleViewSlip = (url?: string) => {
     setSelectedSlipUrl(url);
@@ -136,7 +83,7 @@ export function PendingApprovalsTable() {
       ),
       accessorKey: "whatsApp",
       className: "px-2 py-2 w-[150px]",
-      cell: (item) => (
+      cell: (item) =>
         item.whatsApp && item.whatsApp !== "-" ? (
           <a
             href={`https://wa.me/${item.whatsApp.replace(/\s+/g, "")}`}
@@ -147,9 +94,10 @@ export function PendingApprovalsTable() {
             {item.whatsApp}
           </a>
         ) : (
-          <span className="text-[11px] font-medium text-[#45556C]">{item.whatsApp || "-"}</span>
-        )
-      ),
+          <span className="text-[11px] font-medium text-[#45556C]">
+            {item.whatsApp || "-"}
+          </span>
+        ),
     },
     {
       header: "Amount",
@@ -192,18 +140,18 @@ export function PendingApprovalsTable() {
     if (lower.startsWith("student referral")) {
       return "border-b border-[#E7E5E4] bg-[#D9E9FF] hover:bg-[#D9E9FF]";
     }
-    
+
     if (lower.startsWith("agent referral")) {
       return "border-b border-[#E7E5E4] bg-[#FEF3C7] hover:bg-[#FEF3C7]"; // Yellow background for agent
     }
-    
+
     return "border-b border-[#E7E5E4] bg-white hover:bg-[#FFF9FC]";
   };
 
   return (
     <div className="mt-[10px] w-full rounded-lg border border-[#E2E8F0] bg-white shadow-sm overflow-hidden">
       <DataTable
-        data={dummyData}
+        data={data ?? []}
         columns={columns}
         keyExtractor={(item) => item.id}
         showCheckboxes={false}

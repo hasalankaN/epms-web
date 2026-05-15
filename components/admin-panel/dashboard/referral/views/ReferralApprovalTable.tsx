@@ -16,59 +16,6 @@ export interface ReferralApprovalRow {
   commissionAccumulated: string;
 }
 
-const dummyData: ReferralApprovalRow[] = [
-  {
-    id: "1",
-    date: "01/21",
-    batchName: "Batch Name",
-    studentName: "Amali Perera",
-    amount: "XXXX.00",
-    referralMember: "Student Referral-Student Name",
-    commissionRate: "#%",
-    commissionAccumulated: "XXX.00",
-  },
-  {
-    id: "2",
-    date: "01/21",
-    batchName: "Batch Name",
-    studentName: "Amali Perera",
-    amount: "XXXX.00",
-    referralMember: "Agent Referral-Agent Name",
-    commissionRate: "#%",
-    commissionAccumulated: "XXX.00",
-  },
-  {
-    id: "3",
-    date: "01/21",
-    batchName: "Batch Name",
-    studentName: "Amali Perera",
-    amount: "XXXX.00",
-    referralMember: "Agent Referral-Agent Name",
-    commissionRate: "#%",
-    commissionAccumulated: "XXX.00",
-  },
-  {
-    id: "4",
-    date: "01/21",
-    batchName: "Batch Name",
-    studentName: "Amali Perera",
-    amount: "XXXX.00",
-    referralMember: "Student Referral-Student Name",
-    commissionRate: "#%",
-    commissionAccumulated: "XXX.00",
-  },
-  {
-    id: "5",
-    date: "01/21",
-    batchName: "Batch Name",
-    studentName: "Amali Perera",
-    amount: "XXXX.00",
-    referralMember: "Student Referral-Student Name",
-    commissionRate: "#%",
-    commissionAccumulated: "XXX.00",
-  },
-];
-
 const columns: Column<ReferralApprovalRow>[] = [
   {
     header: "Date",
@@ -142,7 +89,11 @@ const columns: Column<ReferralApprovalRow>[] = [
   },
 ];
 
-export function ReferralApprovalTable() {
+interface Props {
+  data?: ReferralApprovalRow[];
+}
+
+export function ReferralApprovalTable({ data }: Props) {
   const getRowClassName = (item: ReferralApprovalRow) => {
     if (item.referralMember.startsWith("Student Referral")) {
       return "border-b border-[#E7E5E4] bg-[#D9E9FF] hover:bg-[#D9E9FF]";
@@ -158,7 +109,7 @@ export function ReferralApprovalTable() {
   return (
     <div className="mt-[10px] w-full rounded-lg border border-[#E2E8F0] bg-white shadow-sm overflow-hidden">
       <DataTable
-        data={dummyData}
+        data={data ?? []}
         columns={columns}
         keyExtractor={(item) => item.id}
         showCheckboxes={false}

@@ -17,9 +17,14 @@ import { cn } from "@/lib/utils";
 
 import { FilterChip } from "../shared/FilterChip";
 
+import type { TrendDataPoint } from "@/hooks/api/dashboard/useGetDashboardOverview";
+
 interface TrendsChartProps {
   title?: string;
   className?: string;
+  trendData?: TrendDataPoint[];
+  selectedDays?: number;
+  onFilterChange?: (days: number) => void;
 }
 
 const filterOptions = [
@@ -27,16 +32,6 @@ const filterOptions = [
   { label: "Last 30 days", value: 30 },
   { label: "Last 90 days", value: 90 },
   { label: "Last 180 days", value: 180 },
-];
-
-// Dummy data for the trends chart
-const trendData = [
-  { month: "Jan", Leads: 30, Enrollments: 45, Orders: 20, Income: 60 },
-  { month: "Feb", Leads: 50, Enrollments: 35, Orders: 40, Income: 75 },
-  { month: "Mar", Leads: 35, Enrollments: 55, Orders: 30, Income: 50 },
-  { month: "Apr", Leads: 60, Enrollments: 40, Orders: 50, Income: 85 },
-  { month: "May", Leads: 45, Enrollments: 65, Orders: 35, Income: 70 },
-  { month: "Jun", Leads: 55, Enrollments: 50, Orders: 45, Income: 90 },
 ];
 
 const lineColors = {
@@ -49,17 +44,28 @@ const lineColors = {
 export function TrendsChart({
   title = "Trends Graphs",
   className,
+  trendData,
+  selectedDays = 180,
+  onFilterChange,
 }: TrendsChartProps) {
-  const [selectedFilter, setSelectedFilter] = useState(180);
+  const chartData = trendData ?? [];
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const selectedLabel = filterOptions.find(opt => opt.value === selectedFilter)?.label || "Last 180 days";
+  const selectedLabel =
+    filterOptions.find((opt) => opt.value === selectedDays)?.label ||
+    "Last 180 days";
+
+  const handleSelect = (value: number) => {
+    onFilterChange?.(value);
+    setIsDropdownOpen(false);
+  };
 
   return (
     <div
       className={cn(
         "relative flex flex-1 flex-col items-center rounded-[8px] border border-[#E2E8F0] bg-transparent p-4 md:p-6 shadow-[0_1px_2px_0_rgba(16,24,40,0.05)]",
-        className
+        className,
       )}
     >
       {/* Title */}
@@ -83,10 +89,10 @@ export function TrendsChart({
             className="flex items-center justify-center gap-2 rounded-[42px] border-[0.5px] border-[#F6339A] bg-gradient-to-bl from-[#F8FAFC] to-[#FFCFEA] px-3 py-2 font-sans text-[12px] font-medium leading-[16px] text-[#F6339A] shadow-[4px_4px_10px_0_rgba(2,17,36,0.05)]"
           >
             {selectedLabel}
-            <ChevronDown 
+            <ChevronDown
               className={cn(
                 "h-3 w-3 stroke-[#F6339A] stroke-2 transition-transform",
-                isDropdownOpen && "rotate-180"
+                isDropdownOpen && "rotate-180",
               )}
             />
           </button>
@@ -95,15 +101,12 @@ export function TrendsChart({
               {filterOptions.map((option) => (
                 <button
                   key={option.value}
-                  onClick={() => {
-                    setSelectedFilter(option.value);
-                    setIsDropdownOpen(false);
-                  }}
+                  onClick={() => handleSelect(option.value)}
                   className={cn(
                     "w-full px-3 py-2 text-left font-sans text-[12px] font-medium leading-[16px] transition-colors hover:bg-[#FDF2F8]",
-                    selectedFilter === option.value
+                    selectedDays === option.value
                       ? "bg-[#FDF2F8] text-[#F6339A]"
-                      : "text-[#45556C]"
+                      : "text-[#45556C]",
                   )}
                 >
                   {option.label}
@@ -119,8 +122,8 @@ export function TrendsChart({
             <FilterChip
               key={option.value}
               label={option.label}
-              selected={selectedFilter === option.value}
-              onClick={() => setSelectedFilter(option.value)}
+              selected={selectedDays === option.value}
+              onClick={() => handleSelect(option.value)}
             />
           ))}
         </div>
@@ -129,8 +132,8 @@ export function TrendsChart({
       {/* Chart */}
       <div className="relative mt-4 md:mt-6 w-full h-[220px] md:h-[300px] md:flex-1 md:min-h-[250px]">
         <ResponsiveContainer width="100%" height={300} debounce={1}>
-          <LineChart 
-            data={trendData} 
+          <LineChart
+            data={chartData}
             margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
           >
             <XAxis

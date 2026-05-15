@@ -2,7 +2,13 @@
 
 import React from "react";
 
-import { AreaChart, Area, ResponsiveContainer, ReferenceLine, Tooltip } from "recharts";
+import {
+  AreaChart,
+  Area,
+  ResponsiveContainer,
+  ReferenceLine,
+  Tooltip,
+} from "recharts";
 
 import { cn } from "@/lib/utils";
 
@@ -14,14 +20,11 @@ interface MetricCardProps {
   className?: string;
 }
 
-// Default dummy data for sparkline
-const defaultChartData = [35, 28, 32, 22, 30, 18, 25, 20, 35, 15, 28];
-
 export function MetricCard({
   title,
   value,
   chartColor = "#F59E0B",
-  chartData = defaultChartData,
+  chartData = [],
   className,
 }: MetricCardProps) {
   // Transform array to chart data format
@@ -31,7 +34,7 @@ export function MetricCard({
     <div
       className={cn(
         "flex flex-col items-start rounded-[8px] border border-[#E2E8F0] bg-white pt-2 px-1 pb-1 shadow-[0_1px_2px_0_rgba(16,24,40,0.05)]",
-        className
+        className,
       )}
     >
       {/* Upper section with dashed border */}
@@ -66,11 +69,24 @@ export function MetricCard({
         {/* Recharts Sparkline */}
         <div className="relative mt-2 h-[50px] w-full">
           <ResponsiveContainer width="100%" height={50} debounce={1}>
-            <AreaChart data={data} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
+            <AreaChart
+              data={data}
+              margin={{ top: 5, right: 0, left: 0, bottom: 0 }}
+            >
               <defs>
-                <linearGradient id={`gradient-${title.replace(/\s+/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+                <linearGradient
+                  id={`gradient-${title.replace(/\s+/g, "")}`}
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
                   <stop offset="0%" stopColor={chartColor} stopOpacity={0.3} />
-                  <stop offset="100%" stopColor={chartColor} stopOpacity={0.05} />
+                  <stop
+                    offset="100%"
+                    stopColor={chartColor}
+                    stopOpacity={0.05}
+                  />
                 </linearGradient>
               </defs>
               <ReferenceLine y={25} stroke="#94A3B8" strokeDasharray="3 3" />
@@ -81,7 +97,11 @@ export function MetricCard({
                   border: "1px solid #E2E8F0",
                   boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
                 }}
-                itemStyle={{ color: "#1D293D", fontSize: "12px", fontWeight: 500 }}
+                itemStyle={{
+                  color: "#1D293D",
+                  fontSize: "12px",
+                  fontWeight: 500,
+                }}
                 formatter={(value: any) => [value, "Value"]}
                 labelStyle={{ display: "none" }}
               />
@@ -90,7 +110,7 @@ export function MetricCard({
                 dataKey="value"
                 stroke={chartColor}
                 strokeWidth={2}
-                fill={`url(#gradient-${title.replace(/\s+/g, '')})`}
+                fill={`url(#gradient-${title.replace(/\s+/g, "")})`}
               />
             </AreaChart>
           </ResponsiveContainer>

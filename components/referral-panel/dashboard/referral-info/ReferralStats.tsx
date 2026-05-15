@@ -16,9 +16,9 @@ const statsData = [
 export function ReferralStats() {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-      {statsData.map((stat, index) => (
+      {statsData.map((stat) => (
         <div
-          key={index}
+          key={stat.label}
           className="flex flex-col items-start gap-2 rounded-lg border border-[#E2E8F0] p-3 shadow-sm bg-white"
         >
           <span className="font-sans text-sm font-normal leading-5 text-[#45556C]">

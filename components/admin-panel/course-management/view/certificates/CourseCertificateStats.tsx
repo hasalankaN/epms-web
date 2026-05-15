@@ -44,20 +44,20 @@ const STATS = [
 export function CourseCertificateStats() {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {STATS.map((stat, index) => (
+      {STATS.map((stat) => (
         <div
-          key={index}
+          key={`cert-stat-${stat.label}`}
           className="flex flex-1 flex-col items-start rounded-lg border border-slate-200 bg-transparent p-4"
         >
           {/* Icon */}
           <div
             className={cn(
               "flex h-11 w-11 items-center justify-center rounded-[31px] mb-2",
-              stat.bgClass
+              stat.bgClass,
             )}
           >
-            <i 
-              className={cn(stat.iconClass, "h-5 w-5")} 
+            <i
+              className={cn(stat.iconClass, "h-5 w-5")}
               style={{ color: stat.color }}
             />
           </div>

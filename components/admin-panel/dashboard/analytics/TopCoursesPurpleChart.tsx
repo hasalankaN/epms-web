@@ -2,24 +2,38 @@
 
 import React from "react";
 
+import type { AnalyticsChartItem } from "@/hooks/api/dashboard/useGetDashboardAnalytics";
 import { CommonPieChart } from "../shared/charts/CommonPieChart";
 
-// Chart data with Purple color scheme
-const coursesData = [
-  { name: "Course 1", value: 30, color: "#7C3AED" },
-  { name: "Course 2", value: 22, color: "#8B5CF6" },
-  { name: "Course 3", value: 18, color: "#A78BFA" },
-  { name: "Course 4", value: 15, color: "#C4B5FD" },
-  { name: "Course 5", value: 10, color: "#DDD6FE" },
-  { name: "Other", value: 5, color: "#EDE9FE" },
+// Purple color palette
+const PURPLE_COLORS = [
+  "#7C3AED",
+  "#8B5CF6",
+  "#A78BFA",
+  "#C4B5FD",
+  "#DDD6FE",
+  "#EDE9FE",
 ];
 
-export function TopCoursesPurpleChart() {
+interface Props {
+  data?: AnalyticsChartItem[];
+  dateRange?: string;
+}
+
+export function TopCoursesPurpleChart({ data, dateRange }: Props) {
+  const chartData = data?.length
+    ? data.map((item, i) => ({
+        name: item.name,
+        value: item.value,
+        color: PURPLE_COLORS[i % PURPLE_COLORS.length],
+      }))
+    : [];
+
   return (
     <CommonPieChart
       title="Top 5 Courses by Enrollment"
-      dateRange="From {month} - To {month} {Year}"
-      data={coursesData}
+      dateRange={dateRange ?? ""}
+      data={chartData}
     />
   );
 }

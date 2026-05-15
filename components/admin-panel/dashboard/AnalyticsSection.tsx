@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 import { X } from "lucide-react";
 
-import { PlaceholderChart } from "./analytics/PlaceholderChart";
+import { useGetDashboardAnalytics } from "@/hooks/api/dashboard/useGetDashboardAnalytics";
 import { TopBatchesChart } from "./analytics/TopBatchesChart";
 import { TopCoursesGrayChart } from "./analytics/TopCoursesGrayChart";
 import { TopCoursesPurpleChart } from "./analytics/TopCoursesPurpleChart";
@@ -24,12 +24,20 @@ const containerVariants = {
 };
 
 export function AnalyticsSection() {
-  const [dateRange, setDateRange] = useState<{ from: Date | null; to: Date | null }>({
+  const [dateRange, setDateRange] = useState<{
+    from: Date | null;
+    to: Date | null;
+  }>({
     from: null,
     to: null,
   });
 
   const [clearKey, setClearKey] = useState(0);
+
+  const { data } = useGetDashboardAnalytics({
+    from: dateRange.from?.toISOString(),
+    to: dateRange.to?.toISOString(),
+  });
 
   const handleClearFilters = useCallback(() => {
     setDateRange({ from: null, to: null });
@@ -48,7 +56,7 @@ export function AnalyticsSection() {
             onClick={handleClearFilters}
             className={cn(
               BUTTON_STYLES.outline.md,
-              "h-10 border-dashed text-[#64748B] hover:text-[#0F172B] font-semibold text-[14px]"
+              "h-10 border-dashed text-[#64748B] hover:text-[#0F172B] font-semibold text-[14px]",
             )}
           >
             <X className="h-4 w-4" />
@@ -71,26 +79,19 @@ export function AnalyticsSection() {
       >
         {/* Top 5 Batches by Enrollment */}
         <motion.div variants={itemVariants}>
-          <TopBatchesChart />
+          <TopBatchesChart data={data?.topBatches} />
         </motion.div>
 
         {/* Top 5 Courses by Enrollment (Purple) */}
         <motion.div variants={itemVariants}>
-          <TopCoursesPurpleChart />
+          <TopCoursesPurpleChart data={data?.topCourses} />
         </motion.div>
 
         {/* Top 5 Courses by Enrollment (Gray) */}
         <motion.div variants={itemVariants}>
-          <TopCoursesGrayChart />
-        </motion.div>
-
-        {/* Placeholder Chart */}
-        <motion.div variants={itemVariants}>
-          <PlaceholderChart />
+          <TopCoursesGrayChart data={data?.topCourses} />
         </motion.div>
       </motion.div>
     </div>
   );
 }
-
-

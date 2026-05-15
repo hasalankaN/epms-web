@@ -20,74 +20,6 @@ export interface PendingOrderRow {
   orderStatus: string;
 }
 
-const dummyData: PendingOrderRow[] = [
-  {
-    id: "1",
-    orderId: "#12345",
-    date: "01/21",
-    productName: "T - shirt",
-    productType: "Digital",
-    quantity: 2,
-    amount: 5000.00,
-    customerName: "User Name",
-    paymentMethod: "Card",
-    commissions: 100.00,
-    orderStatus: "DOWNLOADED",
-  },
-  {
-    id: "2",
-    orderId: "#12345",
-    date: "01/21",
-    productName: "T - shirt",
-    productType: "Digital",
-    quantity: 2,
-    amount: 5000.00,
-    customerName: "User Name",
-    paymentMethod: "Card",
-    commissions: 100.00,
-    orderStatus: "PENDING",
-  },
-  {
-    id: "3",
-    orderId: "#12345",
-    date: "01/21",
-    productName: "T - shirt",
-    productType: "Digital",
-    quantity: 2,
-    amount: 5000.00,
-    customerName: "User Name",
-    paymentMethod: "Card",
-    commissions: 100.00,
-    orderStatus: "PROCESSING",
-  },
-  {
-    id: "4",
-    orderId: "#12345",
-    date: "01/21",
-    productName: "T - shirt",
-    productType: "Digital",
-    quantity: 2,
-    amount: 5000.00,
-    customerName: "User Name",
-    paymentMethod: "Card",
-    commissions: 100.00,
-    orderStatus: "DISPATCH",
-  },
-  {
-    id: "5",
-    orderId: "#12345",
-    date: "01/21",
-    productName: "T - shirt",
-    productType: "Digital",
-    quantity: 2,
-    amount: 5000.00,
-    customerName: "User Name",
-    paymentMethod: "Card",
-    commissions: 100.00,
-    orderStatus: "REFUNDED",
-  },
-];
-
 const statusOptions = [
   { value: "DOWNLOADED", label: "Downloaded", bg: "#DCFCE7", text: "#16A34A" },
   { value: "PENDING", label: "Pending", bg: "#FEF3C7", text: "#D97706" },
@@ -201,11 +133,15 @@ const columns: Column<PendingOrderRow>[] = [
   },
 ];
 
-export function PendingOrdersTable() {
+interface Props {
+  data?: PendingOrderRow[];
+}
+
+export function PendingOrdersTable({ data }: Props) {
   return (
     <div className="mt-[10px] w-full rounded-lg border border-[#E2E8F0] bg-white shadow-sm overflow-hidden">
       <DataTable
-        data={dummyData}
+        data={data ?? []}
         columns={columns}
         keyExtractor={(item) => item.id}
         showCheckboxes={false}

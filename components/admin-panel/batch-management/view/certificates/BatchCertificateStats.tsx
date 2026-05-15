@@ -54,9 +54,9 @@ export function BatchCertificateStats({
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {STATS.map((stat, index) => (
+      {STATS.map((stat) => (
         <div
-          key={index}
+          key={`batch-cert-stat-${stat.label}`}
           className="flex flex-1 flex-col items-start rounded-lg border border-slate-200 bg-transparent p-4"
         >
           {/* Icon */}

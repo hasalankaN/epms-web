@@ -85,13 +85,12 @@ export function MyStudentGeneralDetails({
 
       {/* ========== Details Grid Section ========== */}
       <div className="grid flex-1 grid-cols-2 xl:grid-cols-6 gap-y-6 flex-wrap gap-x-4 xl:gap-x-6">
-
         {/* Address: Col 1, Row 1 & 2 */}
         <div className="flex flex-col gap-1 col-span-2 xl:col-span-2 xl:row-span-2">
           <FieldLabel>Address</FieldLabel>
           <FieldValue>
             {address.split(",").map((line, i) => (
-              <React.Fragment key={i}>
+              <React.Fragment key={`mystudent-field-${i}`}>
                 {line.trim()}
                 {i < address.split(",").length - 1 && ","}
                 <br />
@@ -123,7 +122,6 @@ export function MyStudentGeneralDetails({
           <FieldLabel>Email Address</FieldLabel>
           <FieldValue>{emailAddress}</FieldValue>
         </div>
-
       </div>
     </div>
   );

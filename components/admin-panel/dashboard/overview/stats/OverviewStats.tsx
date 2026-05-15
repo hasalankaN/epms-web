@@ -2,41 +2,58 @@
 
 import React from "react";
 
+import type { DashboardTodayStats } from "@/hooks/api/dashboard/useGetDashboardOverview";
+
 import { StatCard } from "./StatCard";
 
-export function OverviewStats() {
+interface OverviewStatsProps {
+  todayStats?: DashboardTodayStats;
+}
+
+function formatCurrency(value: number): string {
+  return `LKR ${value.toLocaleString("en-LK", { minimumFractionDigits: 0 })}`;
+}
+
+export function OverviewStats({ todayStats }: OverviewStatsProps) {
+  const mkTrend = (dod: number | undefined) =>
+    dod !== undefined
+      ? { value: Math.abs(dod), isPositive: dod >= 0 }
+      : undefined;
+
   const stats = [
-    { 
-      title: "Today's Inquiries", 
-      value: "35", 
-      trend: { value: 1.2, isPositive: true } 
+    {
+      title: "Today's Inquiries",
+      value: todayStats ? String(todayStats.inquiries) : "—",
+      trend: mkTrend(todayStats?.inquiriesDod),
     },
-    { 
-      title: "Today's Stu. Enrollments", 
-      value: "10", 
-      trend: { value: 1.2, isPositive: true } 
+    {
+      title: "Today's Stu. Enrollments",
+      value: todayStats ? String(todayStats.enrollments) : "—",
+      trend: mkTrend(todayStats?.enrollmentsDod),
     },
-    { 
-      title: "Today's Orders", 
-      value: "02", 
-      trend: { value: 0.1, isPositive: false } 
+    {
+      title: "Today's Orders",
+      value: todayStats ? String(todayStats.orders).padStart(2, "0") : "—",
+      trend: mkTrend(todayStats?.ordersDod),
     },
-    { 
-      title: "Today's Sales", 
-      value: "982", 
-      trend: { value: 80.2, isPositive: true } 
+    {
+      title: "Today's Sales",
+      value: todayStats ? String(todayStats.sales.toFixed(0)) : "—",
+      trend: mkTrend(todayStats?.salesDod),
     },
-    { 
-      title: "Today's Income", 
-      value: "LKR 75,000", 
-      trend: { value: 24.2, isPositive: true } 
+    {
+      title: "Today's Income",
+      value: todayStats ? formatCurrency(todayStats.income) : "—",
+      trend: mkTrend(todayStats?.incomeDod),
     },
-    { 
-      title: "Cash In Hand", 
-      value: "LKR 89,935", 
-      showDoD: false, 
+    {
+      title: "Cash In Hand",
+      value: todayStats
+        ? formatCurrency(todayStats.income + todayStats.sales)
+        : "—",
+      showDoD: false,
       valueClassName: "text-[#E60076]",
-      className: "py-9" // Special padding for this card
+      className: "py-9",
     },
   ];
 

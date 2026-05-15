@@ -6,7 +6,11 @@ import React, { useState } from "react";
 
 import { MoreVertical } from "lucide-react";
 
-import { DOCUMENT_TYPE_LABELS, type DocumentTemplateListItem, type IssueDocumentPayload } from "@/types/document";
+import {
+  DOCUMENT_TYPE_LABELS,
+  type DocumentTemplateListItem,
+  type IssueDocumentPayload,
+} from "@/types/document";
 
 import { DataTable } from "@/components/common/table/DataTable";
 import type { Column } from "@/components/common/table/DataTable";

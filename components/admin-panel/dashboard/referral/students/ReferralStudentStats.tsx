@@ -2,39 +2,35 @@
 
 import React from "react";
 
+import { useRouter } from "next/navigation";
+
+import type { StudentItem } from "@/hooks/api/dashboard/useGetDashboardReferral";
 import { StudentListCard } from "./StudentListCard";
 
-// Dummy data for students
-const dummyStudentsWithPrice = [
-  { id: "1", name: "Student Name", location: "Location Details", students: 22, products: 10, price: "LKR 7,000" },
-  { id: "2", name: "Student Name", location: "Location Details", students: 22, products: 10, price: "LKR 7,000" },
-  { id: "3", name: "Student Name", location: "Location Details", students: 22, products: 10, price: "LKR 7,000" },
-  { id: "4", name: "Student Name", location: "Location Details", students: 22, products: 10, price: "LKR 7,000" },
-  { id: "5", name: "Student Name", location: "Location Details", students: 22, products: 10, price: "LKR 7,000" },
-];
+interface Props {
+  recentlyReferralStudents?: StudentItem[];
+  recentlyReferredStudents?: StudentItem[];
+}
 
-const dummyStudentsWithButton = [
-  { id: "1", name: "Student Name", location: "Location Details", students: 22, products: 10 },
-  { id: "2", name: "Student Name", location: "Location Details", students: 22, products: 10 },
-  { id: "3", name: "Student Name", location: "Location Details", students: 22, products: 10 },
-  { id: "4", name: "Student Name", location: "Location Details", students: 22, products: 10 },
-  { id: "5", name: "Student Name", location: "Location Details", students: 22, products: 10 },
-];
+export function ReferralStudentStats({
+  recentlyReferralStudents,
+  recentlyReferredStudents,
+}: Props) {
+  const router = useRouter();
 
-export function ReferralStudentStats() {
   const handleViewProfile = (studentId: string) => {
-    console.log("View profile for student:", studentId);
+    router.push(`/admin-panel/user-management/student/${studentId}`);
   };
 
   return (
     <div className="flex w-full flex-col gap-4 md:flex-row">
       <StudentListCard
         title="Recently Referral Student"
-        students={dummyStudentsWithPrice}
+        students={recentlyReferralStudents ?? []}
       />
       <StudentListCard
         title="Recently Referred Student"
-        students={dummyStudentsWithButton}
+        students={recentlyReferredStudents ?? []}
         showButton
         buttonLabel="View Profile"
         onButtonClick={handleViewProfile}

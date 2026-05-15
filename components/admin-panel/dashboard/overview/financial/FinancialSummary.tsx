@@ -2,16 +2,55 @@
 
 import React from "react";
 
+import type { DashboardFinancialSummary } from "@/hooks/api/dashboard/useGetDashboardOverview";
+
 import { MetricCard } from "./MetricCard";
 import { NetAmountCard } from "./NetAmountCard";
 
-export function FinancialSummary() {
+interface FinancialSummaryProps {
+  financialSummary?: DashboardFinancialSummary;
+}
+
+function fmt(value: number): string {
+  return `LKR ${value.toLocaleString("en-LK", { minimumFractionDigits: 0 })}`;
+}
+
+export function FinancialSummary({ financialSummary }: FinancialSummaryProps) {
   const metrics = [
-    { title: "Total Sales", value: "LKR 89,935", chartColor: "#3B82F6", chartData: [20, 35, 28, 45, 32, 40, 38, 50, 42, 55, 48] },
-    { title: "Total Income", value: "LKR 109,935", chartColor: "#10B981", chartData: [15, 22, 30, 25, 35, 28, 40, 32, 45, 38, 50] },
-    { title: "Total Expenses", value: "LKR 45,935", chartColor: "#F59E0B", chartData: [35, 28, 32, 22, 30, 18, 25, 20, 35, 15, 28] },
-    { title: "Total Discounts", value: "LKR 9,000", chartColor: "#EF4444", chartData: [10, 18, 12, 22, 15, 20, 18, 25, 20, 28, 22] },
-    { title: "Total Due", value: "LKR 55,000", chartColor: "#8B5CF6", chartData: [25, 30, 22, 35, 28, 40, 32, 38, 35, 45, 40] },
+    {
+      title: "Total Sales",
+      value: financialSummary ? fmt(financialSummary.totalSales) : "LKR 0",
+      chartColor: "#3B82F6",
+      chartData: financialSummary?.salesSeries?.length
+        ? financialSummary.salesSeries
+        : [20, 35, 28, 45, 32, 40, 38, 50, 42, 55, 48],
+    },
+    {
+      title: "Total Income",
+      value: financialSummary ? fmt(financialSummary.totalIncome) : "LKR 0",
+      chartColor: "#10B981",
+      chartData: financialSummary?.incomeSeries?.length
+        ? financialSummary.incomeSeries
+        : [15, 22, 30, 25, 35, 28, 40, 32, 45, 38, 50],
+    },
+    {
+      title: "Total Expenses",
+      value: financialSummary ? fmt(financialSummary.totalExpenses) : "LKR 0",
+      chartColor: "#F59E0B",
+      chartData: financialSummary?.expensesSeries ?? [],
+    },
+    {
+      title: "Total Discounts",
+      value: financialSummary ? fmt(financialSummary.totalDiscounts) : "LKR 0",
+      chartColor: "#EF4444",
+      chartData: financialSummary?.discountsSeries ?? [],
+    },
+    {
+      title: "Total Due",
+      value: financialSummary ? fmt(financialSummary.totalDue) : "LKR 0",
+      chartColor: "#8B5CF6",
+      chartData: financialSummary?.dueSeries ?? [],
+    },
   ];
 
   return (
@@ -28,7 +67,9 @@ export function FinancialSummary() {
       ))}
 
       {/* Net Amount Card */}
-      <NetAmountCard value="LKR 199,900" />
+      <NetAmountCard
+        value={financialSummary ? fmt(financialSummary.netAmount) : "LKR 0"}
+      />
     </div>
   );
 }

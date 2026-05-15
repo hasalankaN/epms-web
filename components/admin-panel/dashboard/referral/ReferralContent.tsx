@@ -7,13 +7,120 @@ import { CircleCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { TAB_STYLES } from "@/lib/constants/theme";
 import { cn } from "@/lib/utils";
+import type {
+  PendingApprovalItem,
+  ReferralApprovalItem,
+  PendingLeadItem,
+  PendingFollowUpItem,
+  PendingOrderItem,
+} from "@/hooks/api/dashboard/useGetDashboardReferral";
+import type { PendingApprovalRow } from "./views/PendingApprovalsTable";
+import type { ReferralApprovalRow } from "./views/ReferralApprovalTable";
+import type { PendingLeadRow } from "./views/PendingLeadsTable";
+import type { PendingFollowUpRow } from "./views/PendingFollowUpsTable";
+import type { PendingOrderRow } from "./views/PendingOrdersTable";
 import { PendingApprovalsTable } from "./views/PendingApprovalsTable";
 import { ReferralApprovalTable } from "./views/ReferralApprovalTable";
 import { PendingLeadsTable } from "./views/PendingLeadsTable";
 import { PendingFollowUpsTable } from "./views/PendingFollowUpsTable";
 import { PendingOrdersTable } from "./views/PendingOrdersTable";
 
-export function ReferralContent() {
+interface Props {
+  pendingApprovals?: PendingApprovalItem[];
+  referralApprovals?: ReferralApprovalItem[];
+  pendingLeads?: PendingLeadItem[];
+  pendingFollowUps?: PendingFollowUpItem[];
+  pendingOrders?: PendingOrderItem[];
+}
+
+function mapApprovals(
+  items?: PendingApprovalItem[],
+): PendingApprovalRow[] | undefined {
+  return items?.map((a) => ({
+    id: a.id,
+    transactionDate: a.transactionDate,
+    batchName: a.batchName,
+    studentName: a.studentName,
+    enrolledBy: a.enrolledBy,
+    whatsApp: a.whatsApp,
+    amount: a.amount,
+    refNo: a.refNo,
+    receiptUrl: a.receiptUrl,
+  }));
+}
+
+function mapReferralApprovals(
+  items?: ReferralApprovalItem[],
+): ReferralApprovalRow[] | undefined {
+  return items?.map((a) => ({
+    id: a.id,
+    date: a.date,
+    batchName: a.batchName,
+    studentName: a.studentName,
+    amount: a.amount,
+    referralMember: a.referralMember,
+    commissionRate: a.commissionRate,
+    commissionAccumulated: a.commissionAccumulated,
+  }));
+}
+
+function mapLeads(items?: PendingLeadItem[]): PendingLeadRow[] | undefined {
+  return items?.map((l) => ({
+    id: l.id,
+    date: l.date,
+    idNo: l.idNo,
+    studentName: l.studentName,
+    phone: l.phone,
+    whatsApp: l.whatsApp,
+    district: l.district,
+    interest: l.interest,
+    branch: l.branch,
+  }));
+}
+
+function mapFollowUps(
+  items?: PendingFollowUpItem[],
+): PendingFollowUpRow[] | undefined {
+  return items?.map((f) => ({
+    id: f.id,
+    date: f.date,
+    idNo: f.idNo,
+    studentName: f.studentName,
+    phone: f.phone,
+    whatsApp: f.whatsApp,
+    source: f.source,
+    assignee: f.assignee,
+    district: f.district,
+    interest: f.interest,
+    branch: f.branch,
+    status: f.status,
+    followUp: f.followUp,
+  }));
+}
+
+function mapOrders(items?: PendingOrderItem[]): PendingOrderRow[] | undefined {
+  return items?.map((o) => ({
+    id: o.id,
+    orderId: o.orderId,
+    date: o.date,
+    productName: o.productName,
+    productType: o.productType,
+    quantity: o.quantity,
+    amount: o.amount,
+    customerName: o.customerName,
+    paymentMethod: o.paymentMethod,
+    commissions: o.commissions,
+    orderStatus: o.orderStatus,
+  }));
+}
+
+export function ReferralContent({
+  pendingApprovals,
+  referralApprovals,
+  pendingLeads,
+  pendingFollowUps,
+  pendingOrders,
+}: Props) {
   const [activeTab, setActiveTab] = useState("approvals");
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -23,7 +130,7 @@ export function ReferralContent() {
     if (!container) return;
 
     const tabElement = container.querySelector(
-      `button[data-value="${value}"]`
+      `button[data-value="${value}"]`,
     ) as HTMLElement;
 
     if (tabElement) {
@@ -47,7 +154,7 @@ export function ReferralContent() {
         direction === "left"
           ? containerRef.current.scrollLeft - scrollAmount
           : containerRef.current.scrollLeft + scrollAmount;
-      
+
       containerRef.current.scrollTo({
         left: newScrollLeft,
         behavior: "smooth",
@@ -72,7 +179,7 @@ export function ReferralContent() {
             ref={containerRef}
             className={cn(
               TAB_STYLES.container,
-              "no-scrollbar flex w-full max-w-full justify-start overflow-x-auto scroll-smooth lg:w-fit"
+              "no-scrollbar flex w-full max-w-full justify-start overflow-x-auto scroll-smooth lg:w-fit",
             )}
           >
             <TabsTrigger
@@ -80,7 +187,7 @@ export function ReferralContent() {
               data-value="approvals"
               className={cn(
                 TAB_STYLES.triggerBase,
-                "w-auto shrink-0 flex-nowrap whitespace-nowrap text-[#62748E] hover:text-[#1D293D] data-[state=active]:bg-white data-[state=active]:text-[#1D293D] data-[state=active]:shadow-sm"
+                "w-auto shrink-0 flex-nowrap whitespace-nowrap text-[#62748E] hover:text-[#1D293D] data-[state=active]:bg-white data-[state=active]:text-[#1D293D] data-[state=active]:shadow-sm",
               )}
             >
               <CircleCheck className="h-4 w-4" />
@@ -91,7 +198,7 @@ export function ReferralContent() {
               data-value="referral-approval"
               className={cn(
                 TAB_STYLES.triggerBase,
-                "w-auto shrink-0 flex-nowrap whitespace-nowrap text-[#62748E] hover:text-[#1D293D] data-[state=active]:bg-white data-[state=active]:text-[#1D293D] data-[state=active]:shadow-sm"
+                "w-auto shrink-0 flex-nowrap whitespace-nowrap text-[#62748E] hover:text-[#1D293D] data-[state=active]:bg-white data-[state=active]:text-[#1D293D] data-[state=active]:shadow-sm",
               )}
             >
               <i className="approvals-icon h-4 w-4" />
@@ -102,7 +209,7 @@ export function ReferralContent() {
               data-value="leads"
               className={cn(
                 TAB_STYLES.triggerBase,
-                "w-auto shrink-0 flex-nowrap whitespace-nowrap text-[#62748E] hover:text-[#1D293D] data-[state=active]:bg-white data-[state=active]:text-[#1D293D] data-[state=active]:shadow-sm"
+                "w-auto shrink-0 flex-nowrap whitespace-nowrap text-[#62748E] hover:text-[#1D293D] data-[state=active]:bg-white data-[state=active]:text-[#1D293D] data-[state=active]:shadow-sm",
               )}
             >
               <i className="navigation-arrow h-4 w-4" />
@@ -113,7 +220,7 @@ export function ReferralContent() {
               data-value="follow-ups"
               className={cn(
                 TAB_STYLES.triggerBase,
-                "w-auto shrink-0 flex-nowrap whitespace-nowrap text-[#62748E] hover:text-[#1D293D] data-[state=active]:bg-white data-[state=active]:text-[#1D293D] data-[state=active]:shadow-sm"
+                "w-auto shrink-0 flex-nowrap whitespace-nowrap text-[#62748E] hover:text-[#1D293D] data-[state=active]:bg-white data-[state=active]:text-[#1D293D] data-[state=active]:shadow-sm",
               )}
             >
               <i className="phone-transfer h-4 w-4" />
@@ -124,7 +231,7 @@ export function ReferralContent() {
               data-value="orders"
               className={cn(
                 TAB_STYLES.triggerBase,
-                "w-auto shrink-0 flex-nowrap whitespace-nowrap text-[#62748E] hover:text-[#1D293D] data-[state=active]:bg-white data-[state=active]:text-[#1D293D] data-[state=active]:shadow-sm"
+                "w-auto shrink-0 flex-nowrap whitespace-nowrap text-[#62748E] hover:text-[#1D293D] data-[state=active]:bg-white data-[state=active]:text-[#1D293D] data-[state=active]:shadow-sm",
               )}
             >
               <i className="package h-4 w-4" />
@@ -141,22 +248,24 @@ export function ReferralContent() {
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
-        
+
         {/* Tab Content */}
         <TabsContent value="approvals" className="mt-0 outline-none">
-          <PendingApprovalsTable />
+          <PendingApprovalsTable data={mapApprovals(pendingApprovals)} />
         </TabsContent>
         <TabsContent value="referral-approval" className="mt-0 outline-none">
-          <ReferralApprovalTable />
+          <ReferralApprovalTable
+            data={mapReferralApprovals(referralApprovals)}
+          />
         </TabsContent>
         <TabsContent value="leads" className="mt-0 outline-none">
-          <PendingLeadsTable />
+          <PendingLeadsTable data={mapLeads(pendingLeads)} />
         </TabsContent>
         <TabsContent value="follow-ups" className="mt-0 outline-none">
-          <PendingFollowUpsTable />
+          <PendingFollowUpsTable data={mapFollowUps(pendingFollowUps)} />
         </TabsContent>
         <TabsContent value="orders" className="mt-0 outline-none">
-          <PendingOrdersTable />
+          <PendingOrdersTable data={mapOrders(pendingOrders)} />
         </TabsContent>
       </Tabs>
     </div>

@@ -297,4 +297,9 @@ export const API_ENDPOINTS = {
     PROFILE: `/api/v1/lecturer/profile`,
     ASSIGNMENTS: `/api/v1/lecturer/profile/assignments`,
   },
+  dashboard: {
+    OVERVIEW: `/api/v1/admin/dashboard/overview`,
+    REFERRAL: `/api/v1/admin/dashboard/referral`,
+    ANALYTICS: `/api/v1/admin/dashboard/analytics`,
+  },
 };

@@ -2,22 +2,41 @@
 
 import React from "react";
 
+import type { ReferralStats as ReferralStatsData } from "@/hooks/api/dashboard/useGetDashboardReferral";
 import { ReferralStatCard } from "./ReferralStatCard";
 
-export function ReferralStats() {
-  const stats = [
-    { title: "Total Referral Staff", value: "20" },
-    { title: "Total Team Leaders", value: "5" },
-    { title: "Total Referral Enrollments", value: "2340" },
-    { title: "Total Referral Orders", value: "45" },
-    { title: "Total Referral Sales", value: "LKR 75,000" },
+interface Props {
+  stats?: ReferralStatsData;
+}
+
+function fmtNum(n?: number) {
+  return n != null ? n.toLocaleString() : "—";
+}
+
+function fmtLkr(n?: number) {
+  return n != null ? `LKR ${n.toLocaleString()}` : "—";
+}
+
+export function ReferralStats({ stats }: Props) {
+  const items = [
+    { title: "Total Referral Staff", value: fmtNum(stats?.totalReferralStaff) },
+    { title: "Total Team Leaders", value: fmtNum(stats?.totalTeamLeaders) },
+    {
+      title: "Total Referral Enrollments",
+      value: fmtNum(stats?.totalReferralEnrollments),
+    },
+    {
+      title: "Total Referral Orders",
+      value: fmtNum(stats?.totalReferralOrders),
+    },
+    { title: "Total Referral Sales", value: fmtLkr(stats?.totalReferralSales) },
   ];
 
   return (
     <div className="w-full rounded-[8px] border border-[#E2E8F0] bg-transparent">
       {/* Desktop: Flex layout - 5 columns */}
       <div className="hidden items-center justify-between py-3 lg:flex">
-        {stats.map((stat, index) => (
+        {items.map((stat, index) => (
           <React.Fragment key={stat.title}>
             <ReferralStatCard
               title={stat.title}
@@ -25,7 +44,7 @@ export function ReferralStats() {
               className="flex-1"
             />
             {/* Divider - not after last item */}
-            {index < stats.length - 1 && (
+            {index < items.length - 1 && (
               <div className="h-[70px] w-px bg-[#E2E8F0]" />
             )}
           </React.Fragment>
@@ -34,7 +53,7 @@ export function ReferralStats() {
 
       {/* Tablet: Grid layout - 6 columns base (first row: 3x col-span-2, second row: 2x col-span-3) */}
       <div className="hidden grid-cols-6 md:grid lg:hidden">
-        {stats.map((stat, index) => (
+        {items.map((stat, index) => (
           <div
             key={stat.title}
             className={`
@@ -45,17 +64,14 @@ export function ReferralStats() {
               ${index >= 3 ? "border-t border-[#E2E8F0]" : ""}
             `}
           >
-            <ReferralStatCard
-              title={stat.title}
-              value={stat.value}
-            />
+            <ReferralStatCard title={stat.title} value={stat.value} />
           </div>
         ))}
       </div>
 
       {/* Mobile: Grid layout - 2 columns (last item spans full width) */}
       <div className="grid grid-cols-2 md:hidden">
-        {stats.map((stat, index) => (
+        {items.map((stat, index) => (
           <div
             key={stat.title}
             className={`
@@ -65,10 +81,7 @@ export function ReferralStats() {
               ${index >= 2 ? "border-t border-[#E2E8F0]" : ""}
             `}
           >
-            <ReferralStatCard
-              title={stat.title}
-              value={stat.value}
-            />
+            <ReferralStatCard title={stat.title} value={stat.value} />
           </div>
         ))}
       </div>
