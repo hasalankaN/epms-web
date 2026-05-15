@@ -44,25 +44,41 @@ export function ProductsTable({
       header: "Date",
       accessorKey: "date",
       className: "px-2 py-2 w-[80px]",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">{item.date}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.date}
+        </div>
+      ),
     },
     {
       header: "Product Name",
       accessorKey: "productName",
       className: "px-2 py-2 w-[150px]",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">{item.productName}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.productName}
+        </div>
+      ),
     },
     {
       header: "Student Name",
       accessorKey: "studentName",
       className: "px-2 py-2 w-[150px]",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">{item.studentName}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.studentName}
+        </div>
+      ),
     },
     {
       header: "Amount",
       accessorKey: "amount",
       className: "px-2 py-2 w-[100px]",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">{item.amount}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.amount}
+        </div>
+      ),
     },
     {
       header: "Referral Member",
@@ -78,13 +94,21 @@ export function ProductsTable({
       header: "Commission Rate",
       accessorKey: "commissionRate",
       className: "px-2 py-2 w-[120px] text-center",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap text-center">{item.commissionRate}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap text-center">
+          {item.commissionRate}
+        </div>
+      ),
     },
     {
       header: "Commission Accumulated",
       accessorKey: "commissionAccumulated",
       className: "px-2 py-2 w-[180px] text-center",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap text-center">{item.commissionAccumulated}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap text-center">
+          {item.commissionAccumulated}
+        </div>
+      ),
     },
     {
       header: "Action",
@@ -98,7 +122,10 @@ export function ProductsTable({
               <span className="sr-only">Open menu</span>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[160px] p-1 rounded-xl shadow-lg border border-[#E2E8F0]">
+          <DropdownMenuContent
+            align="end"
+            className="w-[160px] p-1 rounded-xl shadow-lg border border-[#E2E8F0]"
+          >
             <DropdownMenuItem
               onClick={() => onApproveClick(item.id)}
               className="text-[13px] font-medium text-[#0F172B] hover:bg-[#FDF2F8] focus:bg-[#FDF2F8] cursor-pointer"

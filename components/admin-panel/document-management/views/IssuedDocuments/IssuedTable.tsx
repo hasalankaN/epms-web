@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+/* eslint-disable padding-line-between-statements */
+
+import React, { useCallback, useState } from "react";
 
 import { MoreVertical } from "lucide-react";
 
-import type { IssuedDocumentRow } from "@/types/document";
+import type { IssuedDocumentApiItem } from "@/types/document";
+import { DOCUMENT_TYPE_LABELS } from "@/types/document";
 
 import { DataTable } from "@/components/common/table/DataTable";
 import type { Column } from "@/components/common/table/DataTable";
@@ -18,6 +21,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useDeleteIssuedDocument } from "@/hooks/api/documents/useDeleteIssuedDocument";
+import { useResendDocument } from "@/hooks/api/documents/useResendDocument";
+
+function formatDate(iso: string | null): string {
+  if (!iso) return "-";
+
+  try {
+    return new Date(iso).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return iso;
+  }
+}
 
 const ISSUED_DOC_STATUS_OPTIONS = [
   { value: "Pending", bg: "#FFF7D7", text: "#F59E0B" },
@@ -27,12 +46,15 @@ const ISSUED_DOC_STATUS_OPTIONS = [
 ];
 
 interface IssuedTableProps {
-  data: IssuedDocumentRow[];
+  data: IssuedDocumentApiItem[];
   rowSelection: { [key: string]: boolean };
-  setRowSelection: React.Dispatch<React.SetStateAction<{ [key: string]: boolean }>>;
+  setRowSelection: React.Dispatch<
+    React.SetStateAction<{ [key: string]: boolean }>
+  >;
   isLoading?: boolean;
   isError?: boolean;
   currentPage: number;
+  totalCount: number;
   onPageChange: (page: number) => void;
 }
 
@@ -43,23 +65,18 @@ export function IssuedTable({
   isLoading = false,
   isError = false,
   currentPage,
+  totalCount,
   onPageChange,
 }: IssuedTableProps) {
   const itemsPerPage = 10;
-
-  const totalCount = data.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
 
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-
-    return data.slice(startIndex, startIndex + itemsPerPage);
-  }, [data, currentPage]);
-
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
-      const newSelection = Object.fromEntries(data.map((item) => [item.id, true]));
+      const newSelection = Object.fromEntries(
+        data.map((item) => [item.id, true]),
+      );
 
       setRowSelection(newSelection);
     } else {
@@ -72,18 +89,54 @@ export function IssuedTable({
   };
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<IssuedDocumentRow | null>(null);
+  const [deleteReason, setDeleteReason] = useState("");
+  const [selectedItem, setSelectedItem] =
+    useState<IssuedDocumentApiItem | null>(null);
 
-  const handleAction = (action: string, item: IssuedDocumentRow) => {
-    console.log(`Action: ${action}`, item);
+  const { mutateAsync: deleteDocument, isPending: isDeleting } =
+    useDeleteIssuedDocument();
+  const { mutateAsync: resendDocument, isPending: isResending } =
+    useResendDocument();
 
-    if (action === "delete") {
-      setSelectedItem(item);
-      setDeleteModalOpen(true);
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!selectedItem || deleteReason.trim().length < 5) return;
+
+    try {
+      await deleteDocument({
+        id: selectedItem.id,
+        reason: deleteReason.trim(),
+      });
+      setDeleteModalOpen(false);
+      setSelectedItem(null);
+      setDeleteReason("");
+    } catch {
+      // toast handled in hook
     }
-  };
+  }, [selectedItem, deleteReason, deleteDocument]);
 
-  const columns: Column<IssuedDocumentRow>[] = [
+  const handleAction = useCallback(
+    async (action: string, item: IssuedDocumentApiItem) => {
+      if (action === "delete") {
+        setSelectedItem(item);
+        setDeleteReason("");
+        setDeleteModalOpen(true);
+      } else if (action === "email") {
+        try {
+          await resendDocument(item.id);
+        } catch {
+          // toast handled in hook
+        }
+      } else if (
+        (action === "view" || action === "print") &&
+        item.file_snapshot_url
+      ) {
+        window.open(item.file_snapshot_url, "_blank");
+      }
+    },
+    [resendDocument],
+  );
+
+  const columns: Column<IssuedDocumentApiItem>[] = [
     {
       id: "select",
       header: () => (
@@ -104,7 +157,7 @@ export function IssuedTable({
         <Checkbox
           checked={!!rowSelection[item.id]}
           onCheckedChange={(checked) => handleSelectRow(item.id, !!checked)}
-          aria-label={`Select ${item.studentName}`}
+          aria-label="Select row"
           className="data-[state=checked]:bg-[#E60076] data-[state=checked]:border-[#E60076]"
         />
       ),
@@ -112,32 +165,55 @@ export function IssuedTable({
     },
     {
       header: "Student Name",
-      accessorKey: "studentName",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[130px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#0F172B] whitespace-nowrap overflow-hidden text-ellipsis">{item.studentName}</div>,
+      accessorKey: "student_name",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[130px]",
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#0F172B] whitespace-nowrap overflow-hidden text-ellipsis">
+          {item.student_name ?? "—"}
+        </div>
+      ),
     },
     {
       header: "Document Name",
-      accessorKey: "documentName",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.documentName}</div>,
+      accessorKey: "template_name",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
+          {item.template_name ?? "—"}
+        </div>
+      ),
     },
     {
       header: "Courses/Batches Name",
-      accessorKey: "coursesBatchesName",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[170px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.coursesBatchesName}</div>,
+      accessorKey: "source_name",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[170px]",
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
+          {item.source_name ?? "—"}
+        </div>
+      ),
     },
     {
       header: "Document Type",
-      accessorKey: "documentType",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.documentType}</div>,
+      accessorKey: "document_type_snapshot",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[150px]",
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
+          {DOCUMENT_TYPE_LABELS[
+            item.document_type_snapshot as keyof typeof DOCUMENT_TYPE_LABELS
+          ] ?? item.document_type_snapshot}
+        </div>
+      ),
     },
     {
       header: "Status",
       accessorKey: "status",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[140px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[140px]",
       cell: (item) => (
         <StatusPopover
           value={item.status}
@@ -148,19 +224,30 @@ export function IssuedTable({
     },
     {
       header: "Issued Date",
-      accessorKey: "issuedDate",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[110px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.issuedDate}</div>,
+      accessorKey: "issued_at",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[110px]",
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
+          {formatDate(item.issued_at)}
+        </div>
+      ),
     },
     {
       header: "Verification No",
-      accessorKey: "verificationNo",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[130px]",
-      cell: (item) => <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">{item.verificationNo}</div>,
+      accessorKey: "document_code",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap overflow-hidden text-ellipsis w-[130px]",
+      cell: (item) => (
+        <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap overflow-hidden text-ellipsis">
+          {item.document_code}
+        </div>
+      ),
     },
     {
       header: "Action",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap text-right w-[80px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap text-right w-[80px]",
       cell: (item) => (
         <div className="text-right">
           <DropdownMenu>
@@ -170,10 +257,38 @@ export function IssuedTable({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[120px]">
-              <DropdownMenuItem onClick={() => handleAction("view", item)} className="cursor-pointer focus:bg-[#FDF2F8]">View</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAction("print", item)} className="cursor-pointer focus:bg-[#FDF2F8]">Print</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAction("email", item)} className="cursor-pointer focus:bg-[#FDF2F8]">Email</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAction("delete", item)} className="cursor-pointer text-red-600 focus:bg-[#FDF2F8] focus:text-red-600">Delete</DropdownMenuItem>
+              {item.file_snapshot_url && (
+                <DropdownMenuItem
+                  onClick={() => handleAction("view", item)}
+                  className="cursor-pointer focus:bg-[#FDF2F8]"
+                >
+                  View
+                </DropdownMenuItem>
+              )}
+              {item.file_snapshot_url && (
+                <DropdownMenuItem
+                  onClick={() => handleAction("print", item)}
+                  className="cursor-pointer focus:bg-[#FDF2F8]"
+                >
+                  Print
+                </DropdownMenuItem>
+              )}
+              {(item.issued_method === "EMAIL" ||
+                item.issued_method === "BOTH") && (
+                <DropdownMenuItem
+                  onClick={() => handleAction("email", item)}
+                  disabled={isResending}
+                  className="cursor-pointer focus:bg-[#FDF2F8]"
+                >
+                  {isResending ? "Sending..." : "Resend Email"}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem
+                onClick={() => handleAction("delete", item)}
+                className="cursor-pointer text-red-600 focus:bg-[#FDF2F8] focus:text-red-600"
+              >
+                Delete
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -184,7 +299,7 @@ export function IssuedTable({
   return (
     <>
       <DataTable
-        data={paginatedData}
+        data={data}
         columns={columns}
         keyExtractor={(item) => item.id}
         isLoading={isLoading}
@@ -199,15 +314,22 @@ export function IssuedTable({
         }}
         rowClassName={(item) => (rowSelection[item.id] ? "selected" : "")}
       />
+
       <DeleteConfirmationModal
         isOpen={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        onConfirm={() => {
-          console.log("Deleting:", selectedItem?.id);
+        onClose={() => {
           setDeleteModalOpen(false);
+          setDeleteReason("");
+          setSelectedItem(null);
         }}
-        title="Confirm Deletion"
-        description="Are you sure you want to delete this issued document record? This action cannot be undone."
+        onConfirm={handleDeleteConfirm}
+        title="Delete Issued Document"
+        description="This will soft-delete the issued document. A reason is required for audit purposes."
+        isDeleting={isDeleting}
+        requiresReason
+        reason={deleteReason}
+        onReasonChange={setDeleteReason}
+        reasonPlaceholder="Enter deletion reason (min. 5 characters)..."
       />
     </>
   );

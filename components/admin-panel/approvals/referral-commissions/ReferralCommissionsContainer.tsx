@@ -57,7 +57,7 @@ function formatAmount(value: string | number | null | undefined): string {
 
 function formatRate(value: string | number | null | undefined): string {
   if (value === null || value === undefined) return "0%";
-  
+
   return `${value}%`;
 }
 
@@ -145,7 +145,11 @@ export function ReferralCommissionsContainer({
 
   const apiType = TAB_TYPE_MAP[activeTab];
 
-  const { data: apiResponse, isLoading, isError } = useGetCommissions({
+  const {
+    data: apiResponse,
+    isLoading,
+    isError,
+  } = useGetCommissions({
     type: apiType,
     page: currentPage,
     size: 10,

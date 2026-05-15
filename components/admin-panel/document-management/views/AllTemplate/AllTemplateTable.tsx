@@ -1,11 +1,12 @@
 "use client";
 
+/* eslint-disable padding-line-between-statements */
+
 import React, { useState } from "react";
 
 import { MoreVertical } from "lucide-react";
 
-import type { DocumentTemplateListItem } from "@/types/document";
-import { DOCUMENT_TYPE_LABELS } from "@/types/document";
+import { DOCUMENT_TYPE_LABELS, type DocumentTemplateListItem, type IssueDocumentPayload } from "@/types/document";
 
 import { DataTable } from "@/components/common/table/DataTable";
 import type { Column } from "@/components/common/table/DataTable";
@@ -19,6 +20,7 @@ import { ViewDocumentTemplateModal } from "@/components/admin-panel/document-man
 import { ViewAssignmentsModal } from "@/components/admin-panel/document-management/modals/ViewAssignmentsModal";
 import { useToggleDocumentTemplateStatus } from "@/hooks/api/documents/useToggleDocumentTemplateStatus";
 import { useDeleteDocumentTemplate } from "@/hooks/api/documents/useDeleteDocumentTemplate";
+import { useIssueDocument } from "@/hooks/api/documents/useIssueDocument";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,7 +50,9 @@ function formatDate(iso: string): string {
 interface AllTemplateTableProps {
   data: DocumentTemplateListItem[];
   rowSelection: { [key: string]: boolean };
-  setRowSelection: React.Dispatch<React.SetStateAction<{ [key: string]: boolean }>>;
+  setRowSelection: React.Dispatch<
+    React.SetStateAction<{ [key: string]: boolean }>
+  >;
   isLoading?: boolean;
   isError?: boolean;
   currentPage: number;
@@ -72,7 +76,9 @@ export function AllTemplateTable({
 
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
-      const newSelection = Object.fromEntries(data.map((item) => [item.id, true]));
+      const newSelection = Object.fromEntries(
+        data.map((item) => [item.id, true]),
+      );
 
       setRowSelection(newSelection);
     } else {
@@ -85,25 +91,35 @@ export function AllTemplateTable({
   };
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<DocumentTemplateListItem | null>(null);
+  const [selectedItem, setSelectedItem] =
+    useState<DocumentTemplateListItem | null>(null);
 
   const [issueModalOpen, setIssueModalOpen] = useState(false);
-  const [issueItem, setIssueItem] = useState<DocumentTemplateListItem | null>(null);
+  const [issueItem, setIssueItem] = useState<DocumentTemplateListItem | null>(
+    null,
+  );
 
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editItem, setEditItem] = useState<DocumentTemplateListItem | null>(null);
+  const [editItem, setEditItem] = useState<DocumentTemplateListItem | null>(
+    null,
+  );
 
   const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [viewItem, setViewItem] = useState<DocumentTemplateListItem | null>(null);
+  const [viewItem, setViewItem] = useState<DocumentTemplateListItem | null>(
+    null,
+  );
 
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
-  const [deactivateItem, setDeactivateItem] = useState<DocumentTemplateListItem | null>(null);
+  const [deactivateItem, setDeactivateItem] =
+    useState<DocumentTemplateListItem | null>(null);
 
   const [activateModalOpen, setActivateModalOpen] = useState(false);
-  const [activateItem, setActivateItem] = useState<DocumentTemplateListItem | null>(null);
+  const [activateItem, setActivateItem] =
+    useState<DocumentTemplateListItem | null>(null);
 
   const [assignmentsModalOpen, setAssignmentsModalOpen] = useState(false);
-  const [assignmentsItem, setAssignmentsItem] = useState<DocumentTemplateListItem | null>(null);
+  const [assignmentsItem, setAssignmentsItem] =
+    useState<DocumentTemplateListItem | null>(null);
 
   const handleAction = (action: string, item: DocumentTemplateListItem) => {
     if (action === "delete") {
@@ -129,11 +145,15 @@ export function AllTemplateTable({
       setActivateModalOpen(true);
     }
   };
-  
+
   // -- Toggling status hooks --
-  const { mutateAsync: toggleDeactivate, isPending: isDeactivating } = useToggleDocumentTemplateStatus(deactivateItem?.id || "");
-  const { mutateAsync: toggleActivate, isPending: isActivating } = useToggleDocumentTemplateStatus(activateItem?.id || "");
-  const { mutateAsync: deleteTemplate, isPending: isDeleting } = useDeleteDocumentTemplate();
+  const { mutateAsync: toggleDeactivate, isPending: isDeactivating } =
+    useToggleDocumentTemplateStatus(deactivateItem?.id || "");
+  const { mutateAsync: toggleActivate, isPending: isActivating } =
+    useToggleDocumentTemplateStatus(activateItem?.id || "");
+  const { mutateAsync: deleteTemplate, isPending: isDeleting } =
+    useDeleteDocumentTemplate();
+  const { mutateAsync: issueDocument } = useIssueDocument();
 
   const handleDeleteConfirm = async () => {
     if (!selectedItem) return;
@@ -196,7 +216,8 @@ export function AllTemplateTable({
     {
       header: "Added Date",
       accessorKey: "created_at",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[110px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[110px]",
       cell: (item) => (
         <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">
           {formatDate(item.created_at)}
@@ -206,7 +227,8 @@ export function AllTemplateTable({
     {
       header: "Document Name",
       accessorKey: "name",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[180px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[180px]",
       cell: (item) => (
         <div className="text-[11px] font-medium text-[#0F172B] whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px]">
           {item.name}
@@ -216,7 +238,8 @@ export function AllTemplateTable({
     {
       header: "Document Type",
       accessorKey: "document_type",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[150px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[150px]",
       cell: (item) => (
         <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">
           {DOCUMENT_TYPE_LABELS[item.document_type] ?? item.document_type}
@@ -226,7 +249,8 @@ export function AllTemplateTable({
     {
       header: "Template",
       accessorKey: "id",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[100px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[100px]",
       cell: (item) => (
         <button
           className="text-[11px] font-medium text-[#E60076] hover:underline whitespace-nowrap"
@@ -239,7 +263,8 @@ export function AllTemplateTable({
     {
       header: "Assigned Courses/Batches",
       accessorKey: "id",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[180px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[180px]",
       cell: (item) => (
         <button
           className="text-[11px] font-medium text-[#E60076] hover:underline whitespace-nowrap"
@@ -252,7 +277,8 @@ export function AllTemplateTable({
     {
       header: "Issued Count",
       accessorKey: "issued_count",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[120px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[120px]",
       cell: (item) => (
         <div className="text-[11px] font-medium text-[#45556C] whitespace-nowrap">
           {item.issued_count}
@@ -262,7 +288,8 @@ export function AllTemplateTable({
     {
       header: "Status",
       accessorKey: "is_active",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[100px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap w-[100px]",
       cell: (item) => (
         <StatusPopover
           value={item.is_active ? "Active" : "Inactive"}
@@ -273,7 +300,8 @@ export function AllTemplateTable({
     },
     {
       header: "Action",
-      className: "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap text-right w-[80px]",
+      className:
+        "px-2 py-2 text-[13px] font-semibold text-[#1D293D] whitespace-nowrap text-right w-[80px]",
       cell: (item) => (
         <div className="text-right">
           <DropdownMenu>
@@ -283,16 +311,41 @@ export function AllTemplateTable({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[120px]">
-              <DropdownMenuItem onClick={() => handleAction("edit", item)} className="cursor-pointer focus:bg-[#FDF2F8]">Edit</DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleAction("edit", item)}
+                className="cursor-pointer focus:bg-[#FDF2F8]"
+              >
+                Edit
+              </DropdownMenuItem>
               {item.is_active ? (
                 <>
-                  <DropdownMenuItem onClick={() => handleAction("issue", item)} className="cursor-pointer focus:bg-[#FDF2F8]">Issue</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleAction("deactivate", item)} className="cursor-pointer focus:bg-[#FDF2F8]">Deactivate</DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleAction("issue", item)}
+                    className="cursor-pointer focus:bg-[#FDF2F8]"
+                  >
+                    Issue
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleAction("deactivate", item)}
+                    className="cursor-pointer focus:bg-[#FDF2F8]"
+                  >
+                    Deactivate
+                  </DropdownMenuItem>
                 </>
               ) : (
-                <DropdownMenuItem onClick={() => handleAction("activate", item)} className="cursor-pointer focus:bg-[#FDF2F8]">Activate</DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleAction("activate", item)}
+                  className="cursor-pointer focus:bg-[#FDF2F8]"
+                >
+                  Activate
+                </DropdownMenuItem>
               )}
-              <DropdownMenuItem onClick={() => handleAction("delete", item)} className="cursor-pointer text-red-600 focus:bg-[#FDF2F8] focus:text-red-600">Delete</DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleAction("delete", item)}
+                className="cursor-pointer text-red-600 focus:bg-[#FDF2F8] focus:text-red-600"
+              >
+                Delete
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -356,8 +409,36 @@ export function AllTemplateTable({
         isOpen={issueModalOpen}
         onClose={() => setIssueModalOpen(false)}
         documentName={issueItem?.name}
-        onIssue={(issueData) => {
-          console.log("Issuing document:", issueData);
+        onIssue={async (issueData) => {
+          if (!issueItem) return;
+
+          const methodMap: Record<
+            string,
+            IssueDocumentPayload["issued_method"]
+          > = {
+            email: "EMAIL",
+            print: "PRINT",
+            both: "BOTH",
+            "student-dashboard": "DASHBOARD",
+          };
+
+          const payload: IssueDocumentPayload = {
+            template_id: issueItem.id,
+            student_user_id: issueData.studentId,
+            batch_id: issueData.batchId || undefined,
+            issued_method: methodMap[issueData.issueMethod] ?? "EMAIL",
+            email_recipient:
+              issueData.emailDetails?.recipientsEmail || undefined,
+            email_subject: issueData.emailDetails?.subject || undefined,
+            email_body: issueData.emailDetails?.body || undefined,
+          };
+
+          try {
+            await issueDocument(payload);
+            setIssueModalOpen(false);
+          } catch {
+            // toast handled in hook
+          }
         }}
       />
 

@@ -40,7 +40,11 @@ export const DOCUMENT_FIELD_LABELS: Record<DocumentFieldType, string> = {
 
 export type DocumentTemplateStatus = "Active" | "Inactive";
 
-export type IssuedDocumentStatus = "Pending" | "In Progress" | "Downloaded" | "Delivered";
+export type IssuedDocumentStatus =
+  | "Pending"
+  | "In Progress"
+  | "Downloaded"
+  | "Delivered";
 
 // ===== CREATE PAYLOAD TYPES =====
 
@@ -179,3 +183,63 @@ export interface DocumentTemplateDetail {
   assignments: DocumentTemplateAssignment[];
 }
 
+// ===== ISSUED DOCUMENTS API TYPES =====
+
+export type IssuedDocumentApiStatus =
+  | "Pending"
+  | "In Progress"
+  | "Downloaded"
+  | "Delivered";
+
+/** Single item returned in GET /admin/documents/issued list */
+export interface IssuedDocumentApiItem {
+  id: string;
+  document_code: string;
+  template_id: string;
+  template_name: string | null;
+  document_type_snapshot: string;
+  student_user_id: string;
+  student_name: string | null;
+  course_id: string | null;
+  batch_id: string | null;
+  source_name: string | null;
+  issued_method: string;
+  file_snapshot_url: string | null;
+  issued_at: string | null;
+  deleted_at: string | null;
+  deletion_reason: string | null;
+  superseded_at: string | null;
+  reissued_from_document_id: string | null;
+  verification_token: string;
+  status: IssuedDocumentApiStatus;
+}
+
+export interface GetIssuedDocumentsParams {
+  search?: string;
+  document_type?: ApiDocumentType;
+  course_id?: string;
+  batch_id?: string;
+  issued_from?: string;
+  issued_to?: string;
+  include_deleted?: boolean;
+  page?: number;
+  limit?: number;
+}
+
+export interface GetIssuedDocumentsResponse {
+  data: IssuedDocumentApiItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface IssueDocumentPayload {
+  template_id: string;
+  student_user_id: string;
+  course_id?: string;
+  batch_id?: string;
+  issued_method: "EMAIL" | "PRINT" | "BOTH" | "DASHBOARD";
+  email_recipient?: string;
+  email_subject?: string;
+  email_body?: string;
+}

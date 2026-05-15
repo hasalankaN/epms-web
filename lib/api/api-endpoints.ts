@@ -66,6 +66,15 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/api/v1/admin/documents/templates/${id}`,
     DELETE_BULK: "/api/v1/admin/documents/templates/bulk",
   },
+  issuedDocuments: {
+    GET_ALL: `/api/v1/admin/documents/issued`,
+    GET_BY_ID: (id: string) => `/api/v1/admin/documents/issued/${id}`,
+    ISSUE: `/api/v1/admin/documents/issue`,
+    RESEND: (id: string) => `/api/v1/admin/documents/issued/${id}/resend`,
+    REISSUE: (id: string) => `/api/v1/admin/documents/issued/${id}/reissue`,
+    DELETE: (id: string) => `/api/v1/admin/documents/issued/${id}`,
+    DELETE_BULK: `/api/v1/admin/documents/issued/bulk`,
+  },
 
   courseCategories: {
     GET_ALL: `/api/v1/categories`,

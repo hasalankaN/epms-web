@@ -40,31 +40,51 @@ export function RejectedTable({
       header: "Date",
       accessorKey: "date",
       className: "px-2 py-2 w-[80px]",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">{item.date}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.date}
+        </div>
+      ),
     },
     {
       header: "Transaction For",
       accessorKey: "transactionFor",
       className: "px-2 py-2 w-[150px]",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">{item.transactionFor}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.transactionFor}
+        </div>
+      ),
     },
     {
       header: "Type",
       accessorKey: "type",
       className: "px-2 py-2 w-[90px]",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">{item.type}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.type}
+        </div>
+      ),
     },
     {
       header: "Student Name",
       accessorKey: "studentName",
       className: "px-2 py-2 w-[150px]",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">{item.studentName}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.studentName}
+        </div>
+      ),
     },
     {
       header: "Amount",
       accessorKey: "amount",
       className: "px-2 py-2 w-[100px]",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">{item.amount}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.amount}
+        </div>
+      ),
     },
     {
       header: "Referral Member",
@@ -80,19 +100,31 @@ export function RejectedTable({
       header: "Com. Rate",
       accessorKey: "comRate",
       className: "px-2 py-2 w-[90px] text-center",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap text-center">{item.comRate}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap text-center">
+          {item.comRate}
+        </div>
+      ),
     },
     {
       header: "Com. Accumulated",
       accessorKey: "comAccumulated",
       className: "px-2 py-2 w-[140px] text-center",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap text-center">{item.comAccumulated}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap text-center">
+          {item.comAccumulated}
+        </div>
+      ),
     },
     {
       header: "Rejected Reason",
       accessorKey: "rejectedReason",
       className: "px-2 py-2 w-[140px]",
-      cell: (item) => <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">{item.rejectedReason}</div>,
+      cell: (item) => (
+        <div className="text-[12px] font-medium text-[#45556C] whitespace-nowrap">
+          {item.rejectedReason}
+        </div>
+      ),
     },
     {
       header: "Action",
@@ -106,7 +138,10 @@ export function RejectedTable({
               <span className="sr-only">Open menu</span>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[160px] p-1 rounded-xl shadow-lg border border-[#E2E8F0]">
+          <DropdownMenuContent
+            align="end"
+            className="w-[160px] p-1 rounded-xl shadow-lg border border-[#E2E8F0]"
+          >
             <DropdownMenuItem className="text-[13px] font-medium text-[#0F172B] hover:bg-[#FDF2F8] focus:bg-[#FDF2F8] cursor-pointer">
               View
             </DropdownMenuItem>

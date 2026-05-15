@@ -21,6 +21,9 @@ export const queryKeys = {
   // Document Templates
   documentTemplates: "documentTemplates",
 
+  // Issued Documents
+  issuedDocuments: "issuedDocuments",
+
   // Course Categories
   courseCategories: "courseCategories",
 
