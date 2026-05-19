@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 import { MultiSelect } from "@/components/ui/multi-select";
 import { cn } from "@/lib/utils";
 import { AUTH_TYPOGRAPHY } from "@/lib/constants/theme";
 import { FilterChip } from "@/components/common/filters/FilterChip";
+import { useGetLookup } from "@/hooks/api/lookup/useGetLookup";
 
 // ===== TYPES =====
 
@@ -31,35 +32,6 @@ export interface RecipientSelection {
   };
 }
 
-// ===== MOCK DATA =====
-
-const MOCK_DATA = {
-  staff: [
-    { value: "s1", label: "Alice Johnson", handle: "@alice.j" },
-    { value: "s2", label: "Bob Wilson", handle: "@bob.w" },
-  ],
-  lecturers: [
-    { value: "l1", label: "Dr. Frank Lee", subLabel: "Computer Science" },
-    { value: "l2", label: "Prof. Grace Park", subLabel: "Mathematics" },
-  ],
-  students: [
-    { value: "st1", label: "Irene Kim", subLabel: "STU-001" },
-    { value: "st2", label: "James Liu", subLabel: "STU-002" },
-  ],
-  referral_agents: [
-    { value: "ra1", label: "Oscar Taylor" },
-    { value: "ra2", label: "Priya Sharma" },
-  ],
-  courses: [
-    { value: "c1", label: "React Fundamentals" },
-    { value: "c2", label: "Python for Beginners" },
-  ],
-  batches: [
-    { value: "b1", label: "Batch 01 - 2026" },
-    { value: "b2", label: "Batch 02 - 2026" },
-  ],
-};
-
 const GROUP_LABELS: Record<TargetGroupType, string> = {
   staff: "Staff",
   lecturers: "Lecturers",
@@ -75,12 +47,282 @@ interface RecipientSelectorProps {
   value: RecipientSelection;
   onChange: (val: RecipientSelection) => void;
   error?: boolean;
+  initialResolvedOptions?: { group: TargetGroupType; items: any[] } | null;
 }
 
 // ===== COMPONENT =====
 
-export function RecipientSelector({ value, onChange, error = false }: RecipientSelectorProps) {
+export function RecipientSelector({ 
+  value, 
+  onChange, 
+  error = false,
+  initialResolvedOptions,
+}: RecipientSelectorProps) {
   
+  // --- SEARCH STATES ---
+  const [staffSearch, setStaffSearch] = useState("");
+  const [lecturersSearch, setLecturersSearch] = useState("");
+  const [studentsSearch, setStudentsSearch] = useState("");
+  const [referralAgentsSearch, setReferralAgentsSearch] = useState("");
+  const [coursesSearch, setCoursesSearch] = useState("");
+  const [batchesSearch, setBatchesSearch] = useState("");
+
+  // --- QUERY HOOKS ---
+  const { data: staffLookup, isLoading: staffLoading } = useGetLookup(
+    { type: "STAFF", search: staffSearch, limit: 50 },
+    value.selectedGroups.includes("staff")
+  );
+
+  const { data: lecturersLookup, isLoading: lecturersLoading } = useGetLookup(
+    { type: "LECTURER", search: lecturersSearch, limit: 50 },
+    value.selectedGroups.includes("lecturers")
+  );
+
+  const { data: studentsLookup, isLoading: studentsLoading } = useGetLookup(
+    { type: "STUDENT", search: studentsSearch, limit: 50 },
+    value.selectedGroups.includes("students")
+  );
+
+  const { data: referralAgentsLookup, isLoading: referralAgentsLoading } = useGetLookup(
+    { type: "REFERRAL_AGENT", search: referralAgentsSearch, limit: 50 },
+    value.selectedGroups.includes("referral_agents")
+  );
+
+  const { data: coursesLookup, isLoading: coursesLoading } = useGetLookup(
+    { type: "COURSE", search: coursesSearch, limit: 50 },
+    value.selectedGroups.includes("courses")
+  );
+
+  const { data: batchesLookup, isLoading: batchesLoading } = useGetLookup(
+    { type: "BATCH", search: batchesSearch, limit: 50 },
+    value.selectedGroups.includes("batches")
+  );
+
+  // --- ACCUMULATED OPTIONS TO PRESERVE LABELS FOR CHIPS ---
+  const [accumulatedOptions, setAccumulatedOptions] = useState<Record<TargetGroupType, any[]>>({
+    staff: [],
+    lecturers: [],
+    students: [],
+    referral_agents: [],
+    courses: [],
+    batches: [],
+  });
+
+  useEffect(() => {
+    if (staffLookup?.results) {
+      setAccumulatedOptions(prev => {
+        const existing = new Set(prev.staff.map(o => o.value));
+        const added = staffLookup.results.filter(o => !existing.has(o.value));
+
+        return added.length ? { ...prev, staff: [...prev.staff, ...added] } : prev;
+      });
+    }
+  }, [staffLookup]);
+
+  useEffect(() => {
+    if (lecturersLookup?.results) {
+      setAccumulatedOptions(prev => {
+        const existing = new Set(prev.lecturers.map(o => o.value));
+        const added = lecturersLookup.results.filter(o => !existing.has(o.value));
+
+        return added.length ? { ...prev, lecturers: [...prev.lecturers, ...added] } : prev;
+      });
+    }
+  }, [lecturersLookup]);
+
+  useEffect(() => {
+    if (studentsLookup?.results) {
+      setAccumulatedOptions(prev => {
+        const existing = new Set(prev.students.map(o => o.value));
+        const added = studentsLookup.results.filter(o => !existing.has(o.value));
+
+        return added.length ? { ...prev, students: [...prev.students, ...added] } : prev;
+      });
+    }
+  }, [studentsLookup]);
+
+  useEffect(() => {
+    if (referralAgentsLookup?.results) {
+      setAccumulatedOptions(prev => {
+        const existing = new Set(prev.referral_agents.map(o => o.value));
+        const added = referralAgentsLookup.results.filter(o => !existing.has(o.value));
+
+        return added.length ? { ...prev, referral_agents: [...prev.referral_agents, ...added] } : prev;
+      });
+    }
+  }, [referralAgentsLookup]);
+
+  useEffect(() => {
+    if (coursesLookup?.results) {
+      setAccumulatedOptions(prev => {
+        const existing = new Set(prev.courses.map(o => o.value));
+        const added = coursesLookup.results.filter(o => !existing.has(o.value));
+
+        return added.length ? { ...prev, courses: [...prev.courses, ...added] } : prev;
+      });
+    }
+  }, [coursesLookup]);
+
+  useEffect(() => {
+    if (batchesLookup?.results) {
+      setAccumulatedOptions(prev => {
+        const existing = new Set(prev.batches.map(o => o.value));
+        const added = batchesLookup.results.filter(o => !existing.has(o.value));
+
+        return added.length ? { ...prev, batches: [...prev.batches, ...added] } : prev;
+      });
+    }
+  }, [batchesLookup]);
+
+  useEffect(() => {
+    if (initialResolvedOptions?.items && initialResolvedOptions.items.length > 0) {
+      const { group, items } = initialResolvedOptions;
+
+      setAccumulatedOptions(prev => {
+        const existing = new Set(prev[group].map(o => o.value));
+        const added = items.filter(o => !existing.has(o.value));
+        
+        return added.length ? { ...prev, [group]: [...prev[group], ...added] } : prev;
+      });
+    }
+  }, [initialResolvedOptions]);
+
+  // --- COMBINED OPTIONS FOR MULTISELECTS ---
+  const staffOptions = useMemo(() => {
+    const currentResults = staffLookup?.results || [];
+    const selectedItems = accumulatedOptions.staff.filter(opt => value.roleSettings.staff.specificIds.includes(opt.value));
+    const seen = new Set(currentResults.map(o => o.value));
+    const combined = [...currentResults];
+
+    for (const item of selectedItems) {
+      if (!seen.has(item.value)) {
+        combined.push(item);
+        seen.add(item.value);
+      }
+    }
+
+    return combined;
+  }, [staffLookup?.results, accumulatedOptions.staff, value.roleSettings.staff.specificIds]);
+
+  const lecturersOptions = useMemo(() => {
+    const currentResults = lecturersLookup?.results || [];
+    const selectedItems = accumulatedOptions.lecturers.filter(opt => value.roleSettings.lecturers.specificIds.includes(opt.value));
+    const seen = new Set(currentResults.map(o => o.value));
+    const combined = [...currentResults];
+
+    for (const item of selectedItems) {
+      if (!seen.has(item.value)) {
+        combined.push(item);
+        seen.add(item.value);
+      }
+    }
+
+    return combined;
+  }, [lecturersLookup?.results, accumulatedOptions.lecturers, value.roleSettings.lecturers.specificIds]);
+
+  const studentsOptions = useMemo(() => {
+    const currentResults = studentsLookup?.results || [];
+    const selectedItems = accumulatedOptions.students.filter(opt => value.roleSettings.students.specificIds.includes(opt.value));
+    const seen = new Set(currentResults.map(o => o.value));
+    const combined = [...currentResults];
+
+    for (const item of selectedItems) {
+      if (!seen.has(item.value)) {
+        combined.push(item);
+        seen.add(item.value);
+      }
+    }
+
+    return combined;
+  }, [studentsLookup?.results, accumulatedOptions.students, value.roleSettings.students.specificIds]);
+
+  const referralAgentsOptions = useMemo(() => {
+    const currentResults = referralAgentsLookup?.results || [];
+    const selectedItems = accumulatedOptions.referral_agents.filter(opt => value.roleSettings.referral_agents.specificIds.includes(opt.value));
+    const seen = new Set(currentResults.map(o => o.value));
+    const combined = [...currentResults];
+
+    for (const item of selectedItems) {
+      if (!seen.has(item.value)) {
+        combined.push(item);
+        seen.add(item.value);
+      }
+    }
+
+    return combined;
+  }, [referralAgentsLookup?.results, accumulatedOptions.referral_agents, value.roleSettings.referral_agents.specificIds]);
+
+  const coursesOptions = useMemo(() => {
+    const currentResults = coursesLookup?.results || [];
+    const selectedItems = accumulatedOptions.courses.filter(opt => value.courseSettings.selectedIds.includes(opt.value));
+    const seen = new Set(currentResults.map(o => o.value));
+    const combined = [...currentResults];
+
+    for (const item of selectedItems) {
+      if (!seen.has(item.value)) {
+        combined.push(item);
+        seen.add(item.value);
+      }
+    }
+
+    return combined;
+  }, [coursesLookup?.results, accumulatedOptions.courses, value.courseSettings.selectedIds]);
+
+  const batchesOptions = useMemo(() => {
+    const currentResults = batchesLookup?.results || [];
+    const selectedItems = accumulatedOptions.batches.filter(opt => value.batchSettings.selectedIds.includes(opt.value));
+    const seen = new Set(currentResults.map(o => o.value));
+    const combined = [...currentResults];
+
+    for (const item of selectedItems) {
+      if (!seen.has(item.value)) {
+        combined.push(item);
+        seen.add(item.value);
+      }
+    }
+    
+    return combined;
+  }, [batchesLookup?.results, accumulatedOptions.batches, value.batchSettings.selectedIds]);
+
+  const groupLookupMap = {
+    staff: {
+      options: staffOptions,
+      isLoading: staffLoading,
+      search: staffSearch,
+      setSearch: setStaffSearch,
+    },
+    lecturers: {
+      options: lecturersOptions,
+      isLoading: lecturersLoading,
+      search: lecturersSearch,
+      setSearch: setLecturersSearch,
+    },
+    students: {
+      options: studentsOptions,
+      isLoading: studentsLoading,
+      search: studentsSearch,
+      setSearch: setStudentsSearch,
+    },
+    referral_agents: {
+      options: referralAgentsOptions,
+      isLoading: referralAgentsLoading,
+      search: referralAgentsSearch,
+      setSearch: setReferralAgentsSearch,
+    },
+    courses: {
+      options: coursesOptions,
+      isLoading: coursesLoading,
+      search: coursesSearch,
+      setSearch: setCoursesSearch,
+    },
+    batches: {
+      options: batchesOptions,
+      isLoading: batchesLoading,
+      search: batchesSearch,
+      setSearch: setBatchesSearch,
+    },
+  };
+
   const handleGroupToggle = (group: TargetGroupType) => {
     let newGroups = [...value.selectedGroups];
 
@@ -119,7 +361,7 @@ export function RecipientSelector({ value, onChange, error = false }: RecipientS
 
   const renderRoleBlock = (type: keyof typeof value.roleSettings) => {
     const settings = value.roleSettings[type];
-    const options = MOCK_DATA[type];
+    const { options, isLoading, search, setSearch } = groupLookupMap[type];
 
     return (
       <div className="space-y-3 rounded-md border border-slate-200 p-3 bg-slate-50/50">
@@ -152,8 +394,11 @@ export function RecipientSelector({ value, onChange, error = false }: RecipientS
               options={options}
               value={settings.specificIds}
               onChange={(ids) => updateRoleSetting(type, { specificIds: ids })}
+              onSearchChange={setSearch}
+              searchValue={search}
+              isLoading={isLoading}
               placeholder={`Search...`}
-              className="h-9"
+              className="min-h-9 h-auto py-1"
             />
           </div>
         )}
@@ -164,7 +409,7 @@ export function RecipientSelector({ value, onChange, error = false }: RecipientS
   const renderContextBlock = (type: "courses" | "batches") => {
     const settings = type === "courses" ? value.courseSettings : value.batchSettings;
     const updateFn = type === "courses" ? updateCourseSetting : updateBatchSetting;
-    const options = MOCK_DATA[type];
+    const { options, isLoading, search, setSearch } = groupLookupMap[type];
 
     return (
       <div className="space-y-4 rounded-md border border-slate-200 p-3 bg-slate-50/50">
@@ -175,8 +420,11 @@ export function RecipientSelector({ value, onChange, error = false }: RecipientS
             options={options}
             value={settings.selectedIds}
             onChange={(ids) => updateFn({ selectedIds: ids })}
+            onSearchChange={setSearch}
+            searchValue={search}
+            isLoading={isLoading}
             placeholder={`Search...`}
-            className="h-9"
+            className="min-h-9 h-auto py-1"
           />
         </div>
         

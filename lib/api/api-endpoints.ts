@@ -302,4 +302,7 @@ export const API_ENDPOINTS = {
     REFERRAL: `/api/v1/admin/dashboard/referral`,
     ANALYTICS: `/api/v1/admin/dashboard/analytics`,
   },
+  lookup: {
+    GET: `/api/v1/admin/lookup`,
+  },
 };

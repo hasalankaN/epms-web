@@ -91,4 +91,7 @@ export const queryKeys = {
   dashboardOverview: "dashboardOverview",
   dashboardReferral: "dashboardReferral",
   dashboardAnalytics: "dashboardAnalytics",
+
+  // Lookup
+  lookup: "lookup",
 };
