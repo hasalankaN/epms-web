@@ -254,7 +254,6 @@ export function AddDiscountModal({
   if (!isOpen || !details) return null;
 
   return (
-
     /* Backdrop */
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/20 backdrop-blur-sm"
