@@ -32,7 +32,9 @@ export function useGetLecturerProfile() {
       const response = await api.get<LecturerOwnProfileResponse>(
         API_ENDPOINTS.lecturer.PROFILE
       );
-      return response.data.data;
+
+      
+return response.data.data;
     },
   });
 }

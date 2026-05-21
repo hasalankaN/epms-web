@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
 import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
@@ -104,6 +105,7 @@ export function useGetCourseWiseSummary(params: CourseWiseParams) {
       const res = await api.get(API_ENDPOINTS.finances.COURSE_WISE_SUMMARY, {
         params: cleanParams(params as Record<string, unknown>),
       });
+
       return res.data.data as CourseWiseSummary;
     },
   });
@@ -114,6 +116,7 @@ function useGetCourseTable<T>(url: string, params: CourseWiseParams, key: string
     queryKey: ["course-wise", key, params],
     queryFn: async () => {
       const res = await api.get(url, { params: cleanParams(params as Record<string, unknown>) });
+
       return res.data.data as CourseWiseTableResponse<T>;
     },
   });
@@ -146,6 +149,7 @@ export function useGetCourseWiseChart(params: { metric: CourseReportMetric; date
       const res = await api.get(API_ENDPOINTS.finances.COURSE_WISE_CHART, {
         params: cleanParams(params as Record<string, unknown>),
       });
+      
       return res.data.data as ChartPoint[];
     },
   });

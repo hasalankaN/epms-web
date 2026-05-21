@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 import type { CommonResponseDataType } from "@/types/common";
 
 export interface Material {
@@ -26,8 +28,9 @@ export const useGetTierMaterials = (tierId: string, enabled: boolean = true) => 
     queryKey: ["tier-materials", tierId],
     queryFn: async () => {
       const { data } = await api.get<CommonResponseDataType<Material[]>>(
-        `/api/v1/admin/learning/tiers/${tierId}/materials`
+        API_ENDPOINTS.learning.TIER_MATERIALS(tierId)
       );
+      
       return data.data;
     },
     enabled: !!tierId && enabled,

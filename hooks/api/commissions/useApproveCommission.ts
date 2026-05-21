@@ -11,6 +11,7 @@ export function useApproveCommission() {
   return useMutation({
     mutationFn: async ({ id }: { id: string }) => {
       const { data } = await api.patch(API_ENDPOINTS.commissions.APPROVE(id));
+
       return data.data;
     },
     onSuccess: () => {

@@ -112,6 +112,7 @@ export interface ApiPaymentRequestRow {
   requested_amount: string;
   requested_for_type: CommissionSourceType;
   requested_for_id: string;
+
   // Only present when COMPLETED
   paid_date?: string | null;
   bank_slip?: string | null;

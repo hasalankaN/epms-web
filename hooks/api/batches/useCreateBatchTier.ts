@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+
 import api from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 import type { CommonResponseDataType } from "@/types/common";
 
 export interface CreateBatchTierPayload {
@@ -33,9 +35,10 @@ export const useCreateBatchTier = (batchId: string) => {
   return useMutation({
     mutationFn: async (payload: CreateBatchTierPayload) => {
       const { data } = await api.post<CommonResponseDataType<TierResponse>>(
-        "/api/v1/lecturer/content/tiers",
+        API_ENDPOINTS.lecturer.CONTENT_TIERS,
         payload
       );
+
       return data;
     },
     onSuccess: (response) => {
@@ -46,6 +49,7 @@ export const useCreateBatchTier = (batchId: string) => {
     },
     onError: (error: any) => {
       const errorMessage = error.response?.data?.message || "Failed to create semester.";
+
       toast.error(errorMessage);
     },
   });

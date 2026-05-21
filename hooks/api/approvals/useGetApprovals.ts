@@ -26,6 +26,7 @@ export function useGetApprovals<
   const { type, page = 1, size = 10, search, dateRange } = params;
 
   const queryParams: Record<string, any> = { type, page, size };
+
   if (search) queryParams.search = search;
   if (dateRange?.from)
     queryParams.date_start = format(dateRange.from, "yyyy-MM-dd'T'00:00:00");
@@ -38,7 +39,9 @@ export function useGetApprovals<
       const { data } = await api.get(API_ENDPOINTS.approvals.GET_ALL, {
         params: queryParams,
       });
-      return data.data;
+
+      
+return data.data;
     },
   });
 }

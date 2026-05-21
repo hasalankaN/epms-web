@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+
 import api from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 import type { CommonResponseDataType } from "@/types/common";
 
 export interface CreateMaterialPayload {
@@ -38,20 +40,23 @@ export const useCreateMaterial = () => {
   return useMutation({
     mutationFn: async (payload: CreateMaterialPayload) => {
       const { data } = await api.post<CommonResponseDataType<MaterialResponse>>(
-        "/api/v1/lecturer/content/materials",
+        API_ENDPOINTS.lecturer.CONTENT_MATERIALS,
         payload
       );
+
       return data;
     },
     onSuccess: (response) => {
       if (response.status === "SUCCESS") {
         toast.success("Material added successfully!");
+
         // Refresh tiers structure to show new material
         queryClient.invalidateQueries({ queryKey: ["course-tiers"] });
       }
     },
     onError: (error: any) => {
       const errorMessage = error.response?.data?.message || "Failed to add material.";
+      
       toast.error(errorMessage);
     },
   });

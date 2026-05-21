@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
 import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
@@ -52,6 +53,7 @@ export function useGetFinanceOverviewSummary(params: OverviewParams) {
     queryKey: ["finances", "overview-summary", params],
     queryFn: async () => {
       const res = await api.get(API_ENDPOINTS.finances.OVERVIEW_SUMMARY, { params: cleanParams(params) });
+
       return res.data.data as OverviewSummary;
     },
   });
@@ -62,6 +64,7 @@ export function useGetFinanceOverviewGraph(params: OverviewParams) {
     queryKey: ["finances", "overview-graph", params],
     queryFn: async () => {
       const res = await api.get(API_ENDPOINTS.finances.OVERVIEW_GRAPH, { params: cleanParams(params) });
+
       return res.data.data as OverviewGraph;
     },
   });
@@ -72,6 +75,7 @@ export function useGetFinanceOverviewTable(params: OverviewParams) {
     queryKey: ["finances", "overview-table", params],
     queryFn: async () => {
       const res = await api.get(API_ENDPOINTS.finances.OVERVIEW_TABLE, { params: cleanParams(params) });
+      
       return res.data.data as TableRow[];
     },
   });

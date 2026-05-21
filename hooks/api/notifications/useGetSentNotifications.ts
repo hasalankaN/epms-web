@@ -19,13 +19,16 @@ export function useGetSentNotifications(params: GetSentNotificationsParams) {
     queryKey: [queryKeys.notificationsSent, params],
     queryFn: async () => {
       const p: Record<string, any> = { page: params.page ?? 1, size: params.size ?? 10 };
+
       if (params.dateFrom) p.dateFrom = params.dateFrom;
       if (params.dateTo) p.dateTo = params.dateTo;
       if (params.channels) p.channels = params.channels;
       if (params.targetType) p.targetType = params.targetType;
 
       const { data } = await api.get(API_ENDPOINTS.notifications.GET_SENT, { params: p });
-      return data.data;
+
+      
+return data.data;
     },
   });
 }

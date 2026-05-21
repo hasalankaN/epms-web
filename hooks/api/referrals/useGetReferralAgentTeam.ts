@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 import type { CommonResponseDataType } from "@/types/common";
 
 export interface AgentTeamMember {
@@ -26,10 +28,12 @@ export const useGetReferralAgentTeam = (agentId: string | null, page = 1, size =
     queryKey: ["referral-agent-team", agentId, page, size],
     queryFn: async () => {
       if (!agentId) return null;
+
       const { data } = await api.get<CommonResponseDataType<PaginatedResponse<AgentTeamMember>>>(
-        `/api/v1/admin/referrals/agents/${agentId}/team`,
+        API_ENDPOINTS.referrals.AGENT_TEAM(agentId),
         { params: { page, size } }
       );
+
       return data.data;
     },
     enabled: !!agentId,

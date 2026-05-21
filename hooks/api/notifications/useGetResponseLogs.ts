@@ -20,6 +20,7 @@ export function useGetResponseLogs(params: GetResponseLogsParams) {
     queryKey: [queryKeys.notificationsResponseLogs, params],
     queryFn: async () => {
       const p: Record<string, any> = { page: params.page ?? 1, size: params.size ?? 10 };
+
       if (params.studentName) p.studentName = params.studentName;
       if (params.receiverName) p.receiverName = params.receiverName;
       if (params.status) p.status = params.status;
@@ -27,7 +28,9 @@ export function useGetResponseLogs(params: GetResponseLogsParams) {
       if (params.dateTo) p.dateTo = params.dateTo;
 
       const { data } = await api.get(API_ENDPOINTS.notifications.GET_RESPONSE_LOGS, { params: p });
-      return data.data;
+
+      
+return data.data;
     },
   });
 }

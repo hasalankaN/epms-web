@@ -107,6 +107,7 @@ const TransactionCard = ({
       }}
     >
       {isPending ? (
+
         /* Pending layout: Transaction Note | (empty), Status | Amount */
         <div className="w-full grid grid-cols-2 gap-y-3 gap-x-4">
           {/* Transaction Note — spans both columns */}
@@ -132,6 +133,7 @@ const TransactionCard = ({
           </div>
         </div>
       ) : (
+
         /* Paid / default layout: full 6-field grid */
         <div className="w-full grid grid-cols-2 gap-y-3 gap-x-4">
           {/* Transaction Note */}
@@ -210,6 +212,7 @@ export function PaymentDetailsModal({
   if (!isOpen || !details) return null;
 
   return (
+
     /* Backdrop */
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/20 backdrop-blur-sm"

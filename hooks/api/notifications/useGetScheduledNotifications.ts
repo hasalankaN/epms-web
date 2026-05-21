@@ -21,6 +21,7 @@ export function useGetScheduledNotifications(params: GetScheduledNotificationsPa
     queryKey: [queryKeys.notificationsScheduled, params],
     queryFn: async () => {
       const p: Record<string, any> = { page: params.page ?? 1, size: params.size ?? 10 };
+
       if (params.scheduledOnFrom) p.scheduledOnFrom = params.scheduledOnFrom;
       if (params.scheduledOnTo) p.scheduledOnTo = params.scheduledOnTo;
       if (params.scheduledForFrom) p.scheduledForFrom = params.scheduledForFrom;
@@ -29,7 +30,9 @@ export function useGetScheduledNotifications(params: GetScheduledNotificationsPa
       if (params.targetType) p.targetType = params.targetType;
 
       const { data } = await api.get(API_ENDPOINTS.notifications.GET_SCHEDULED, { params: p });
-      return data.data;
+
+      
+return data.data;
     },
   });
 }

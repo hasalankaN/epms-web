@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
 export interface LecturerSubmissionItem {
   id: string;
@@ -45,9 +47,10 @@ export function useGetLecturerSubmissions(params?: {
     queryKey: ["lecturer-submissions", params],
     queryFn: async () => {
       const response = await api.get<{ data: PaginatedSubmissionsResponse }>(
-        "/api/v1/lecturer/assignments/global/submissions",
+        API_ENDPOINTS.lecturer.SUBMISSIONS,
         { params }
       );
+
       return response.data.data;
     },
     enabled: !!params?.status, // ensure status is always provided

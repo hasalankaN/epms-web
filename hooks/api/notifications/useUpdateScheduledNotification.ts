@@ -12,7 +12,9 @@ export function useUpdateScheduledNotification() {
   return useMutation({
     mutationFn: async ({ id, dto }: { id: string; dto: UpdateNotificationDto }) => {
       const { data } = await api.patch(API_ENDPOINTS.notifications.UPDATE_SCHEDULED(id), dto);
-      return data.data;
+
+      
+return data.data;
     },
     onSuccess: () => {
       toast.success("Notification updated.");

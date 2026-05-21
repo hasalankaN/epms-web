@@ -11,7 +11,9 @@ export function useDeleteScheduledNotification() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { data } = await api.delete(API_ENDPOINTS.notifications.DELETE_SCHEDULED(id));
-      return data.data;
+
+      
+return data.data;
     },
     onSuccess: () => {
       toast.success("Scheduled notification deleted.");

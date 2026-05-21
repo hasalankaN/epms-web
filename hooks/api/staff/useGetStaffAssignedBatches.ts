@@ -19,6 +19,8 @@ export function useGetStaffAssignedBatches(staffId: string | null) {
     queryKey: [queryKeys.staff, staffId, "batches"],
     queryFn: async () => {
       const res = await api.get(API_ENDPOINTS.staff.GET_ASSIGNED_BATCHES(staffId!));
+
+      
       return res.data.data ?? [];
     },
     enabled: !!staffId,

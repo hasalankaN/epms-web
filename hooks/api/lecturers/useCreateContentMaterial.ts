@@ -1,7 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/axios";
-import type { CommonResponseDataType } from "@/types/common";
+
 import { toast } from "sonner";
+
+import api from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
+import type { CommonResponseDataType } from "@/types/common";
 
 export interface CreateContentMaterialRequest {
   tier_id: string;
@@ -18,9 +21,10 @@ export const useCreateContentMaterial = () => {
   return useMutation({
     mutationFn: async (data: CreateContentMaterialRequest) => {
       const response = await api.post<CommonResponseDataType<any>>(
-        "/api/v1/lecturer/content/materials",
+        API_ENDPOINTS.lecturer.CONTENT_MATERIALS,
         data
       );
+
       return response.data;
     },
     onSuccess: () => {

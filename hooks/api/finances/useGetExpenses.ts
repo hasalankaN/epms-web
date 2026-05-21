@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
 import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
@@ -61,6 +62,7 @@ export function useGetExpenses(params: ExpenseParams) {
       const res = await api.get(API_ENDPOINTS.finances.EXPENSES_LIST, {
         params: cleanParams(params as Record<string, unknown>),
       });
+
       return res.data.data as ExpenseListResponse;
     },
   });
@@ -68,9 +70,11 @@ export function useGetExpenses(params: ExpenseParams) {
 
 export function useCreateExpense() {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (payload: CreateExpensePayload) => {
       const res = await api.post(API_ENDPOINTS.finances.EXPENSES_CREATE, payload);
+      
       return res.data.data;
     },
     onSuccess: () => {

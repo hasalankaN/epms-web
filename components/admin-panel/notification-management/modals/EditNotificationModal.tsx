@@ -8,6 +8,8 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
+import axios from "axios";
+
 import {
   Dialog,
   DialogContent,
@@ -29,7 +31,11 @@ import { TimePicker } from "@/components/common/TimePicker";
 import {
   RecipientSelector,
   type RecipientSelection,
+  type TargetGroupType,
 } from "./RecipientSelector";
+import api from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
+import type { LookupType } from "@/hooks/api/lookup/useGetLookup";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
 import { useUpdateScheduledNotification } from "@/hooks/api/notifications/useUpdateScheduledNotification";
 import type {
@@ -214,6 +220,113 @@ export function EditNotificationModal({
   notification,
 }: EditNotificationModalProps) {
   const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [resolvedRecipients, setResolvedRecipients] = useState<{ group: TargetGroupType; items: any[] } | null>(null);
+
+  useEffect(() => {
+    if (isOpen && notification && notification.target_ids && notification.target_ids.length > 0) {
+      const targetIds = notification.target_ids;
+
+      const fetchResolved = async () => {
+        try {
+          let group: TargetGroupType | null = null;
+          let lookupType: LookupType | null = null;
+
+          if (notification.target_type === "BATCH") {
+            group = "batches";
+            lookupType = "BATCH";
+          } else if (notification.target_type === "COURSE") {
+            group = "courses";
+            lookupType = "COURSE";
+          } else if (notification.target_type === "USER_IDS") {
+            group = "students";
+            lookupType = "STUDENT";
+          }
+
+          if (!group || !lookupType) return;
+
+          const { getSession } = await import("@/lib/authentication");
+          const session = await getSession();
+          
+          const silentApi = axios.create({
+            baseURL: api.defaults.baseURL,
+          });
+
+          if (session?.tokens?.accessToken) {
+            silentApi.defaults.headers.common["Authorization"] = `Bearer ${session.tokens.accessToken}`;
+          }
+
+          const promises = targetIds.map(async (id) => {
+            try {
+              if (lookupType === "BATCH") {
+                const res = await silentApi.get(API_ENDPOINTS.batches.GET_BY_ID(id));
+                const name = res.data?.data?.name;
+                
+                return { value: id, label: name || id };
+              } else if (lookupType === "COURSE") {
+                const res = await silentApi.get(API_ENDPOINTS.courses.GET_BY_ID(id));
+                const detail = res.data?.data?.data || res.data?.data;
+                const name = detail?.general_details?.name;
+
+                return { value: id, label: name || id };
+              } else if (lookupType === "STUDENT") {
+                let name: string | null = null;
+                
+                // Try student
+                try {
+                  const res = await silentApi.get(API_ENDPOINTS.adminStudents.GET_BY_ID(id));
+
+                  name = res.data?.data?.profile?.full_name;
+                } catch {
+                  // Not a student, try staff
+                  try {
+                    const res = await silentApi.get(API_ENDPOINTS.staff.GET_BY_ID(id));
+                    const p = res.data?.data?.profile;
+
+                    if (p) name = `${p.first_name} ${p.last_name || ''}`;
+                  } catch {
+                    // Not staff, try lecturer
+                    try {
+                      const res = await silentApi.get(API_ENDPOINTS.lecturers.GET_BY_ID(id));
+                      const p = res.data?.data?.profile;
+
+                      if (p) name = `${p.first_name} ${p.last_name || ''}`;
+                    } catch {
+                      // Not lecturer, try referral agent
+                      try {
+                        const res = await silentApi.get(API_ENDPOINTS.referrals.GET_SUMMARY(id));
+                        const p = res.data?.data?.profile;
+
+                        if (p) name = p.name || `${p.first_name} ${p.last_name || ''}`;
+                      } catch {
+                        console.error(`ID ${id} not found in any user group`);
+                      }
+                    }
+                  }
+                }
+
+                return { value: id, label: name?.trim() || id };
+              }
+            } catch (error) {
+              console.error(`Failed to fetch details for ${id}`, error);
+            }
+            
+            return { value: id, label: id };
+          });
+
+          const items = await Promise.all(promises);
+
+          console.log("RESOLVED RECIPIENTS DEBUG:" + JSON.stringify({ group, items }));
+          setResolvedRecipients({ group, items: items.filter(Boolean) });
+        } catch (e) {
+          console.error("Failed to resolve recipients", e);
+        }
+      };
+
+      fetchResolved();
+    } else {
+      setResolvedRecipients(null);
+    }
+  }, [isOpen, notification]);
 
   const { mutate: updateNotification, isPending } =
     useUpdateScheduledNotification();
@@ -405,6 +518,7 @@ export function EditNotificationModal({
                           value={field.value as RecipientSelection}
                           onChange={field.onChange}
                           error={!!errors.recipients}
+                          initialResolvedOptions={resolvedRecipients}
                         />
                       )}
                     />
@@ -453,6 +567,7 @@ export function EditNotificationModal({
                               mode="single"
                               startDate={field.value || null}
                               endDate={null}
+                              minDate={new Date(new Date().setHours(0, 0, 0, 0))}
                               onDateChange={(start) =>
                                 field.onChange(start || undefined)
                               }

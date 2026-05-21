@@ -97,6 +97,7 @@ export function useGetSourceWiseSummary(params: SourceWiseSummaryParams) {
 
       if (params.date_from) apiParams.date_from = params.date_from;
       if (params.date_to) apiParams.date_to = params.date_to;
+
       // Send as comma-separated string; backend @Transform splits it back to array
       if (params.payment_via && params.payment_via.length > 0) {
         apiParams.payment_via = params.payment_via.join(",");

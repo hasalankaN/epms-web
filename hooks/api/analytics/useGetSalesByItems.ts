@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
 import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
@@ -48,7 +49,9 @@ export function useGetSalesByItemsTop5(params: { date_from?: string; date_to?: s
       const res = await api.get(API_ENDPOINTS.finances.SALES_BY_ITEMS_TOP5, {
         params: cleanParams(params as Record<string, unknown>),
       });
-      return res.data.data as TopFiveItem[];
+
+      
+return res.data.data as TopFiveItem[];
     },
   });
 }
@@ -60,7 +63,9 @@ export function useGetSalesByItemsTable(params: SalesByItemsParams) {
       const res = await api.get(API_ENDPOINTS.finances.SALES_BY_ITEMS_TABLE, {
         params: cleanParams(params as Record<string, unknown>),
       });
-      return res.data.data as SalesTableResponse;
+
+      
+return res.data.data as SalesTableResponse;
     },
   });
 }

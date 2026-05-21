@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
 export interface LecturerAssignmentItem {
   id: string;
@@ -38,9 +40,10 @@ export function useGetLecturerAssignments(params?: {
     queryKey: ["lecturer-assignments", params],
     queryFn: async () => {
       const response = await api.get<{ data: PaginatedAssignmentsResponse }>(
-        "/api/v1/lecturer/assignments",
+        API_ENDPOINTS.lecturer.ASSIGNMENTS_LIST,
         { params }
       );
+
       return response.data.data;
     },
   });

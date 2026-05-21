@@ -503,6 +503,7 @@ export function AddNotificationPanel({
                                         mode="single"
                                         startDate={field.value || null}
                                         endDate={null}
+                                        minDate={new Date(new Date().setHours(0, 0, 0, 0))}
                                         onDateChange={(start) =>
                                           field.onChange(start || undefined)
                                         }
