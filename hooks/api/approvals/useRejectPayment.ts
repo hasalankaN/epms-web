@@ -22,7 +22,9 @@ export function useRejectPayment() {
         API_ENDPOINTS.approvals.REJECT(source, paymentId),
         { reason },
       );
-      return data.data;
+
+      
+return data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKeys.approvals] });

@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 import type { CommonResponseDataType } from "@/types/common";
 
 export interface DashboardCourseOrBatch {
@@ -33,8 +35,9 @@ export const useGetLecturerDashboard = () => {
     queryKey: ["lecturer-dashboard"],
     queryFn: async () => {
       const { data } = await api.get<CommonResponseDataType<LecturerDashboardData>>(
-        "/api/v1/lecturer/dashboard"
+        API_ENDPOINTS.lecturer.DASHBOARD
       );
+
       return data.data;
     },
   });

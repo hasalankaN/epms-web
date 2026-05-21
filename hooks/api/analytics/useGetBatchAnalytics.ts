@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
 import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
@@ -48,6 +49,7 @@ export function useGetBatchAnalyticsSummary(params: BatchAnalyticsParams = {}) {
       const res = await api.get(API_ENDPOINTS.finances.BATCH_ANALYTICS_SUMMARY, {
         params: cleanParams(params as Record<string, unknown>),
       });
+
       return res.data.data as BatchAnalyticsSummary;
     },
   });
@@ -60,6 +62,7 @@ export function useGetBatchStudentSummary(params: BatchAnalyticsParams = {}) {
       const res = await api.get(API_ENDPOINTS.finances.BATCH_ANALYTICS_STUDENT_SUMMARY, {
         params: cleanParams(params as Record<string, unknown>),
       });
+
       return res.data.data as BatchStudentSummary;
     },
   });
@@ -72,6 +75,7 @@ export function useGetBatchEnrollmentByDistrict(params: BatchAnalyticsParams = {
       const res = await api.get(API_ENDPOINTS.finances.BATCH_ANALYTICS_BY_DISTRICT, {
         params: cleanParams(params as Record<string, unknown>),
       });
+
       return res.data.data as DistrictEnrollment[];
     },
   });
@@ -84,6 +88,7 @@ export function useGetBatchWiseBreakdown(params: BatchAnalyticsParams = {}) {
       const res = await api.get(API_ENDPOINTS.finances.BATCH_ANALYTICS_BREAKDOWN, {
         params: cleanParams(params as Record<string, unknown>),
       });
+      
       return res.data.data as BatchWiseBreakdown;
     },
   });

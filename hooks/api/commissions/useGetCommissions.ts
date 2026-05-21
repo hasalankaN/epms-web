@@ -19,6 +19,7 @@ export function useGetCommissions(params: GetCommissionsParams) {
   const { type, page = 1, size = 10, dateRange } = params;
 
   const queryParams: Record<string, any> = { type, page, size };
+
   if (dateRange?.from)
     queryParams.date_start = format(dateRange.from, "yyyy-MM-dd'T'00:00:00");
   if (dateRange?.to)
@@ -30,6 +31,7 @@ export function useGetCommissions(params: GetCommissionsParams) {
       const { data } = await api.get(API_ENDPOINTS.commissions.GET_ALL, {
         params: queryParams,
       });
+
       return data.data as CommissionsApiResponse;
     },
   });

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
 import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
@@ -46,6 +47,7 @@ export function useGetCourseAnalyticsSummary(params: CourseAnalyticsParams = {})
       const res = await api.get(API_ENDPOINTS.finances.COURSE_ANALYTICS_SUMMARY, {
         params: cleanParams(params as Record<string, unknown>),
       });
+
       return res.data.data as CourseAnalyticsSummary;
     },
   });
@@ -58,6 +60,7 @@ export function useGetCourseStudentSummary(params: CourseAnalyticsParams = {}) {
       const res = await api.get(API_ENDPOINTS.finances.COURSE_ANALYTICS_STUDENT_SUMMARY, {
         params: cleanParams(params as Record<string, unknown>),
       });
+
       return res.data.data as CourseStudentSummary;
     },
   });
@@ -70,6 +73,7 @@ export function useGetCourseEnrollmentByDistrict(params: CourseAnalyticsParams =
       const res = await api.get(API_ENDPOINTS.finances.COURSE_ANALYTICS_BY_DISTRICT, {
         params: cleanParams(params as Record<string, unknown>),
       });
+
       return res.data.data as DistrictEnrollment[];
     },
   });
@@ -82,6 +86,7 @@ export function useGetCourseWiseBreakdownAll(params: CourseAnalyticsParams = {})
       const res = await api.get(API_ENDPOINTS.finances.COURSE_ANALYTICS_BREAKDOWN, {
         params: cleanParams(params as Record<string, unknown>),
       });
+      
       return res.data.data as CourseWiseBreakdown;
     },
   });

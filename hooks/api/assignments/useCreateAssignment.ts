@@ -1,6 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/axios";
+
 import { toast } from "sonner";
+
+import api from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 import type { CommonResponseDataType } from "@/types/common";
 
 interface MaterialPayload {
@@ -24,13 +27,15 @@ export const useCreateAssignment = () => {
   return useMutation({
     mutationFn: async (payload: CreateAssignmentPayload) => {
       const { data } = await api.post<CommonResponseDataType<any>>(
-        "/api/v1/lecturer/assignments",
+        API_ENDPOINTS.lecturer.ASSIGNMENTS_LIST,
         payload
       );
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["assignments"] });
+
       // Invalidate tier materials or other relevant queries if needed
     },
     onError: (error: any) => {

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
 import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
@@ -34,6 +35,7 @@ export function useGetOtherIncome(params: OtherIncomeParams) {
     queryKey: ["finances", "other-income", cleanParams],
     queryFn: async () => {
       const res = await api.get(API_ENDPOINTS.finances.OTHER_INCOME_LIST, { params: cleanParams });
+      
       return res.data.data as OtherIncomeResponse;
     },
   });

@@ -12,10 +12,13 @@ export function useCreateNotification() {
   return useMutation({
     mutationFn: async (dto: CreateNotificationDto) => {
       const { data } = await api.post(API_ENDPOINTS.notifications.CREATE, dto);
-      return data.data;
+
+      
+return data.data;
     },
     onSuccess: (_data, variables) => {
       const msg = variables.scheduledAt ? "Notification scheduled." : "Notification sent.";
+
       toast.success(msg);
       queryClient.invalidateQueries({ queryKey: [queryKeys.notificationsSent] });
       queryClient.invalidateQueries({ queryKey: [queryKeys.notificationsScheduled] });

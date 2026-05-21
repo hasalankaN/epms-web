@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 import type { CommonResponseDataType } from "@/types/common";
 
 export interface AgentCommissionItem {
@@ -28,10 +30,12 @@ export const useGetReferralAgentCourses = (agentId: string | null, page = 1, siz
     queryKey: ["referral-agent-courses", agentId, page, size],
     queryFn: async () => {
       if (!agentId) return null;
+
       const { data } = await api.get<CommonResponseDataType<CommissionResponse>>(
-        `/api/v1/admin/referrals/agents/${agentId}/courses`,
+        API_ENDPOINTS.referrals.AGENT_COURSES(agentId),
         { params: { page, size } }
       );
+
       return data.data;
     },
     enabled: !!agentId,

@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 import type { CommonResponseDataType } from "@/types/common";
 
 export interface Batch {
@@ -42,7 +44,7 @@ export const useGetLecturerBatches = (lecturerId: string, params?: any) => {
     queryKey: ["lecturer-batches", lecturerId, params],
     queryFn: async () => {
       const { data } = await api.get<CommonResponseDataType<PaginatedResponse<Batch>>>(
-        `/api/v1/batches`,
+        API_ENDPOINTS.batches.GET_ALL,
         {
           params: {
             ...params,
@@ -54,6 +56,7 @@ export const useGetLecturerBatches = (lecturerId: string, params?: any) => {
           },
         }
       );
+
       return data.data;
     },
     enabled: !!lecturerId,

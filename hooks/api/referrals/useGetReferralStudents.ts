@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 import type { CommonResponseDataType } from "@/types/common";
 
 export interface ReferralStudent {
@@ -28,9 +30,10 @@ export const useGetReferralStudents = (params?: { page?: number; size?: number; 
     queryKey: ["referral-students", params],
     queryFn: async () => {
       const { data } = await api.get<CommonResponseDataType<PaginatedResponse<ReferralStudent>>>(
-        `/api/v1/admin/referrals/students`,
+        API_ENDPOINTS.referrals.STUDENTS,
         { params: { page: params?.page || 1, size: params?.size || 10, search: params?.search || undefined } }
       );
+
       return data.data;
     },
   });

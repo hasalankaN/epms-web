@@ -19,6 +19,7 @@ export function useApprovePayment() {
       const { data } = await api.patch(
         API_ENDPOINTS.approvals.APPROVE(source, paymentId),
       );
+
       return data.data;
     },
     onSuccess: () => {

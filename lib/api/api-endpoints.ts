@@ -143,6 +143,17 @@ export const API_ENDPOINTS = {
       `/api/v1/admin/referrals/payment-requests/${id}/pay`,
     GET_PAYMENT_HISTORY: (id: string) =>
       `/api/v1/admin/referrals/agents/${id}/payment-history`,
+    AGENT_COURSES: (agentId: string) =>
+      `/api/v1/admin/referrals/agents/${agentId}/courses`,
+    AGENT_BATCHES: (agentId: string) =>
+      `/api/v1/admin/referrals/agents/${agentId}/batches`,
+    AGENT_TEAM: (agentId: string) =>
+      `/api/v1/admin/referrals/agents/${agentId}/team`,
+    AGENT_PRODUCTS: (agentId: string) =>
+      `/api/v1/admin/referrals/agents/${agentId}/products`,
+    STUDENTS: `/api/v1/admin/referrals/students`,
+    STUDENT_STATUS: (studentUserId: string) =>
+      `/api/v1/admin/referrals/students/${studentUserId}/status`,
   },
   enquiries: {
     GET_ALL: `/api/v1/admin/enquiries`,
@@ -295,7 +306,20 @@ export const API_ENDPOINTS = {
   },
   lecturer: {
     PROFILE: `/api/v1/lecturer/profile`,
+    DASHBOARD: `/api/v1/lecturer/dashboard`,
     ASSIGNMENTS: `/api/v1/lecturer/profile/assignments`,
+    ASSIGNMENTS_LIST: `/api/v1/lecturer/assignments`,
+    SUBMISSIONS: `/api/v1/lecturer/assignments/global/submissions`,
+    SALARY: `/api/v1/lecturer/profile/salary`,
+    PAYMENTS: `/api/v1/lecturer/profile/payments`,
+    CONTENT_TIERS: `/api/v1/lecturer/content/tiers`,
+    CONTENT_TIER: (id: string) => `/api/v1/lecturer/content/tiers/${id}`,
+    CONTENT_MATERIALS: `/api/v1/lecturer/content/materials`,
+    CONTENT_MATERIAL: (id: string) => `/api/v1/lecturer/content/materials/${id}`,
+  },
+  learning: {
+    TIERS: `/api/v1/admin/learning/tiers`,
+    TIER_MATERIALS: (tierId: string) => `/api/v1/admin/learning/tiers/${tierId}/materials`,
   },
   dashboard: {
     OVERVIEW: `/api/v1/admin/dashboard/overview`,

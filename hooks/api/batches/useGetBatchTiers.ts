@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 import type { CommonResponseDataType } from "@/types/common";
-import { queryKeys } from "@/lib/constants/queryKeys";
 
 export interface TierNode {
   id: string;
@@ -26,7 +27,7 @@ export const useGetBatchTiers = (batchId: string) => {
     queryKey: ["batch-tiers", batchId],
     queryFn: async () => {
       const { data } = await api.get<CommonResponseDataType<TierNode[]>>(
-        `/api/v1/admin/learning/tiers`,
+        API_ENDPOINTS.learning.TIERS,
         {
           params: {
             owner_type: "BATCH",
@@ -34,6 +35,7 @@ export const useGetBatchTiers = (batchId: string) => {
           },
         }
       );
+
       return data.data;
     },
     enabled: !!batchId,

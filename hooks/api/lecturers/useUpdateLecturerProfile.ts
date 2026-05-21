@@ -16,7 +16,9 @@ export function useUpdateLecturerProfile() {
   return useMutation({
     mutationFn: async (data: UpdateLecturerProfileRequest) => {
       const response = await api.put(API_ENDPOINTS.lecturer.PROFILE, data);
-      return response.data;
+
+      
+return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lecturer-profile"] });
@@ -24,6 +26,7 @@ export function useUpdateLecturerProfile() {
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || "Failed to update profile";
+
       toast.error(message);
     },
   });

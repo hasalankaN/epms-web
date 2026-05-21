@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import axiosInstance from "@/lib/axios";
 import { toast } from "sonner";
+
+import axiosInstance from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
 interface UpdateTierPayload {
     title?: string;
@@ -14,7 +16,8 @@ export const useUpdateTier = () => {
 
     return useMutation({
         mutationFn: async ({ id, payload }: { id: string; payload: UpdateTierPayload }) => {
-            const response = await axiosInstance.patch(`/api/v1/lecturer/content/tiers/${id}`, payload);
+            const response = await axiosInstance.patch(API_ENDPOINTS.lecturer.CONTENT_TIER(id), payload);
+
             return response.data;
         },
         onSuccess: () => {

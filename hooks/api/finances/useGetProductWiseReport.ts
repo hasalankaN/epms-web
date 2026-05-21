@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
 import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
@@ -57,6 +58,7 @@ export function useGetProductWiseSummary(params: ProductWiseParams) {
       const res = await api.get(API_ENDPOINTS.finances.PRODUCT_WISE_SUMMARY, {
         params: cleanParams(params as Record<string, unknown>),
       });
+
       return res.data.data as ProductWiseSummary;
     },
   });
@@ -69,6 +71,7 @@ export function useGetProductWiseTable(params: ProductWiseParams) {
       const res = await api.get(API_ENDPOINTS.finances.PRODUCT_WISE_TABLE, {
         params: cleanParams(params as Record<string, unknown>),
       });
+
       return res.data.data as ProductTableResponse;
     },
   });
@@ -87,6 +90,7 @@ export function useGetProductWiseChart(params: {
       const res = await api.get(API_ENDPOINTS.finances.PRODUCT_WISE_CHART, {
         params: cleanParams(params as Record<string, unknown>),
       });
+      
       return res.data.data as ProductChartPoint[];
     },
   });

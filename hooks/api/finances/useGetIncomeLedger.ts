@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
 import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
@@ -45,6 +46,7 @@ export function useGetIncomeLedger(params: LedgerParams) {
     queryKey: ["finances", "income-ledger", cleanParams],
     queryFn: async () => {
       const res = await api.get(API_ENDPOINTS.finances.INCOME_LEDGER, { params: cleanParams });
+      
       return res.data.data as LedgerResponse;
     },
   });

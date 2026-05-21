@@ -13,6 +13,7 @@ export function useRejectCommission() {
       const { data } = await api.patch(API_ENDPOINTS.commissions.REJECT(id), {
         reason,
       });
+
       return data.data;
     },
     onSuccess: () => {

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
 import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
@@ -111,6 +112,7 @@ export function useGetBatchWiseSummary(params: BatchWiseParams) {
       const res = await api.get(API_ENDPOINTS.finances.BATCH_WISE_SUMMARY, {
         params: cleanParams(params as unknown as Record<string, unknown>),
       });
+
       return res.data.data as BatchWiseSummary;
     },
   });
@@ -125,6 +127,7 @@ export function useGetBatchWiseTable<T = unknown>(
       const res = await api.get(API_ENDPOINTS.finances.BATCH_WISE_TABLE, {
         params: cleanParams(params as unknown as Record<string, unknown>),
       });
+
       return res.data.data as BatchWiseTableResponse<T>;
     },
   });
@@ -144,6 +147,7 @@ export function useGetBatchWiseGraph(params: {
       const res = await api.get(API_ENDPOINTS.finances.BATCH_WISE_GRAPH, {
         params: cleanParams(params as unknown as Record<string, unknown>),
       });
+      
       return res.data.data as GraphPoint[];
     },
   });

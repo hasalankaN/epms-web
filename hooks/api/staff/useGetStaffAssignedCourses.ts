@@ -19,6 +19,7 @@ export function useGetStaffAssignedCourses(staffId: string | null) {
     queryKey: [queryKeys.staff, staffId, "courses"],
     queryFn: async () => {
       const res = await api.get(API_ENDPOINTS.staff.GET_ASSIGNED_COURSES(staffId!));
+     
       return res.data.data ?? [];
     },
     enabled: !!staffId,

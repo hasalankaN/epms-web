@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 import type { CommonResponseDataType } from "@/types/common";
 
 export interface LecturerPayment {
@@ -25,11 +27,12 @@ export const useGetLecturerPayments = (page = 1, size = 20) => {
     queryKey: ["lecturer-payments", page, size],
     queryFn: async () => {
       const { data } = await api.get<CommonResponseDataType<LecturerPaymentHistoryResponse>>(
-        "/api/v1/lecturer/profile/payments",
+        API_ENDPOINTS.lecturer.PAYMENTS,
         {
           params: { page, size },
         }
       );
+
       return data.data;
     },
   });

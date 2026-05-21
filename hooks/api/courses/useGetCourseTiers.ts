@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 import type { CommonResponseDataType } from "@/types/common";
 
 export interface TierNode {
@@ -25,7 +27,7 @@ export const useGetCourseTiers = (courseId: string) => {
     queryKey: ["course-tiers", courseId],
     queryFn: async () => {
       const { data } = await api.get<CommonResponseDataType<TierNode[]>>(
-        `/api/v1/admin/learning/tiers`,
+        API_ENDPOINTS.learning.TIERS,
         {
           params: {
             owner_type: "COURSE",
@@ -33,6 +35,7 @@ export const useGetCourseTiers = (courseId: string) => {
           },
         }
       );
+
       return data.data;
     },
     enabled: !!courseId,

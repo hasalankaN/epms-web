@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 import type { CommonResponseDataType } from "@/types/common";
 
 export interface LecturerSalary {
@@ -13,8 +15,9 @@ export const useGetLecturerSalary = () => {
     queryKey: ["lecturer-salary"],
     queryFn: async () => {
       const { data } = await api.get<CommonResponseDataType<LecturerSalary>>(
-        "/api/v1/lecturer/profile/salary"
+        API_ENDPOINTS.lecturer.SALARY
       );
+
       return data.data;
     },
   });

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
 import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
@@ -22,6 +23,7 @@ export function useGetIncomeSummary() {
     queryFn: async () => {
       const res = await api.get(API_ENDPOINTS.finances.INCOME_SUMMARY);
       const raw = res.data.data as IncomeSummaryRaw;
+      
       return {
         total_all: raw.total_payments,
         total_batches: raw.total_payments_batches,

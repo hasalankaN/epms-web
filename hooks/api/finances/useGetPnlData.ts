@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/axios";
 import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 
@@ -73,6 +74,7 @@ export function useGetPnlSummary(params: PnlParams) {
     queryKey: ["finances", "pnl-summary", params],
     queryFn: async () => {
       const res = await api.get(API_ENDPOINTS.finances.PNL_SUMMARY, { params: cleanParams(params as Record<string, unknown>) });
+
       return res.data.data as PnlSummary;
     },
   });
@@ -83,6 +85,7 @@ export function useGetPnlList(params: PnlParams) {
     queryKey: ["finances", "pnl-list", params],
     queryFn: async () => {
       const res = await api.get(API_ENDPOINTS.finances.PNL_LIST, { params: cleanParams(params as Record<string, unknown>) });
+
       return res.data.data as PnlListResponse;
     },
   });
@@ -93,6 +96,7 @@ export function useGetPnlDetail(sourceType: string, sourceId: string, enabled: b
     queryKey: ["finances", "pnl-detail", sourceType, sourceId],
     queryFn: async () => {
       const res = await api.get(API_ENDPOINTS.finances.PNL_DETAIL(sourceType, sourceId));
+      
       return res.data.data as PnlDetail;
     },
     enabled,

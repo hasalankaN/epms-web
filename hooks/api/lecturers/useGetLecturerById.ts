@@ -72,7 +72,9 @@ export function useGetLecturerById(id: string | null) {
     queryFn: async () => {
       if (!id) return null;
       const response = await api.get(API_ENDPOINTS.lecturers.GET_BY_ID(id));
-      return response.data.data as LecturerDetail;
+
+      
+return response.data.data as LecturerDetail;
     },
     enabled: !!id,
   });

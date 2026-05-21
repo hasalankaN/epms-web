@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useCallback, useState } from "react";
-import { io, Socket } from "socket.io-client";
+
+import type { Socket } from "socket.io-client";
+import { io } from "socket.io-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -39,6 +41,7 @@ export function useChatSocket(options: UseChatSocketOptions) {
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+
     const socket = io(`${baseUrl}${SOCKET_NAMESPACE}`, {
       auth: { token },
       transports: ["websocket", "polling"],

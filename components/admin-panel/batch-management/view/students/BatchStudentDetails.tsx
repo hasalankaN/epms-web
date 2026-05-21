@@ -39,7 +39,11 @@ export function BatchStudentDetails({ batchId }: BatchStudentDetailsProps) {
     search: searchParam,
   });
 
-  const data: StudentDataType[] = studentsData?.items ?? [];
+  // Wrap 'data' in useMemo to ensure referential stability when falling back to []
+  const data: StudentDataType[] = useMemo(
+    () => studentsData?.items ?? [],
+    [studentsData?.items],
+  );
 
   // ===== DERIVED VALUES =====
   const selectedIds = useMemo(
