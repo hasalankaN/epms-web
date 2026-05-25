@@ -233,13 +233,3 @@ export interface GetIssuedDocumentsResponse {
   limit: number;
 }
 
-export interface IssueDocumentPayload {
-  template_id: string;
-  student_user_id: string;
-  course_id?: string;
-  batch_id?: string;
-  issued_method: "EMAIL" | "PRINT" | "BOTH" | "DASHBOARD";
-  email_recipient?: string;
-  email_subject?: string;
-  email_body?: string;
-}

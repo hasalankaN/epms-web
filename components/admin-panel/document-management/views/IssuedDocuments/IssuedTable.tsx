@@ -5,6 +5,7 @@
 import React, { useCallback, useState } from "react";
 
 import { MoreVertical } from "lucide-react";
+import { toast } from "sonner";
 
 import type { IssuedDocumentApiItem } from "@/types/document";
 import { DOCUMENT_TYPE_LABELS } from "@/types/document";
@@ -121,10 +122,14 @@ export function IssuedTable({
         setDeleteReason("");
         setDeleteModalOpen(true);
       } else if (action === "email") {
+        const toastId = toast.loading("Resending email...");
+
         try {
           await resendDocument(item.id);
         } catch {
           // toast handled in hook
+        } finally {
+          toast.dismiss(toastId);
         }
       } else if (
         (action === "view" || action === "print") &&

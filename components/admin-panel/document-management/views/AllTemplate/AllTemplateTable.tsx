@@ -9,7 +9,6 @@ import { MoreVertical } from "lucide-react";
 import {
   DOCUMENT_TYPE_LABELS,
   type DocumentTemplateListItem,
-  type IssueDocumentPayload,
 } from "@/types/document";
 
 import { DataTable } from "@/components/common/table/DataTable";
@@ -24,7 +23,6 @@ import { ViewDocumentTemplateModal } from "@/components/admin-panel/document-man
 import { ViewAssignmentsModal } from "@/components/admin-panel/document-management/modals/ViewAssignmentsModal";
 import { useToggleDocumentTemplateStatus } from "@/hooks/api/documents/useToggleDocumentTemplateStatus";
 import { useDeleteDocumentTemplate } from "@/hooks/api/documents/useDeleteDocumentTemplate";
-import { useIssueDocument } from "@/hooks/api/documents/useIssueDocument";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -157,7 +155,6 @@ export function AllTemplateTable({
     useToggleDocumentTemplateStatus(activateItem?.id || "");
   const { mutateAsync: deleteTemplate, isPending: isDeleting } =
     useDeleteDocumentTemplate();
-  const { mutateAsync: issueDocument } = useIssueDocument();
 
   const handleDeleteConfirm = async () => {
     if (!selectedItem) return;
@@ -412,38 +409,9 @@ export function AllTemplateTable({
       <IssueDocumentModal
         isOpen={issueModalOpen}
         onClose={() => setIssueModalOpen(false)}
+        templateId={issueItem?.id}
         documentName={issueItem?.name}
-        onIssue={async (issueData) => {
-          if (!issueItem) return;
-
-          const methodMap: Record<
-            string,
-            IssueDocumentPayload["issued_method"]
-          > = {
-            email: "EMAIL",
-            print: "PRINT",
-            both: "BOTH",
-            "student-dashboard": "DASHBOARD",
-          };
-
-          const payload: IssueDocumentPayload = {
-            template_id: issueItem.id,
-            student_user_id: issueData.studentId,
-            batch_id: issueData.batchId || undefined,
-            issued_method: methodMap[issueData.issueMethod] ?? "EMAIL",
-            email_recipient:
-              issueData.emailDetails?.recipientsEmail || undefined,
-            email_subject: issueData.emailDetails?.subject || undefined,
-            email_body: issueData.emailDetails?.body || undefined,
-          };
-
-          try {
-            await issueDocument(payload);
-            setIssueModalOpen(false);
-          } catch {
-            // toast handled in hook
-          }
-        }}
+        documentType={issueItem?.document_type}
       />
 
       <EditDocumentModal

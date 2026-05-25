@@ -27,7 +27,7 @@ interface TrendsChartProps {
   onFilterChange?: (days: number) => void;
 }
 
-const filterOptions = [
+const filterOptions =[
   { label: "Last 7 days", value: 7 },
   { label: "Last 30 days", value: 30 },
   { label: "Last 90 days", value: 90 },
@@ -35,10 +35,10 @@ const filterOptions = [
 ];
 
 const lineColors = {
-  Leads: "#22C55E", // Green
-  Enrollments: "#F97316", // Orange
-  Orders: "#EC4899", // Pink
-  Income: "#EAB308", // Yellow
+  Leads: "#22C55E",
+  Enrollments: "#F97316",
+  Orders: "#EC4899",
+  Income: "#EAB308",
 };
 
 export function TrendsChart({
@@ -76,7 +76,7 @@ export function TrendsChart({
       {/* Filter - Dropdown on mobile, Chips on desktop */}
       <div className="mt-2 flex w-full items-center justify-center gap-2 md:gap-3">
         <div className="flex items-center gap-2">
-          <i className="filter-icon h-4 w-4 stroke-[#1D293D] stroke-[1.5]" />
+          <i className="filter-icon h-4 w-4 stroke-[#1D293D] stroke-" />
           <span className="font-sans text-[12px] font-medium text-[#1D293D]">
             Filter By
           </span>
@@ -129,18 +129,21 @@ export function TrendsChart({
         </div>
       </div>
 
-      {/* Chart */}
-      <div className="relative mt-4 md:mt-6 w-full h-[220px] md:h-[300px] md:flex-1 md:min-h-[250px]">
-        <ResponsiveContainer width="100%" height={300} debounce={1}>
+      {/* Responsive Chart Container */}
+      {/* Aspect ratio ensures it doesn't get squashed/stretched on different screens */}
+      <div className="mt-4 md:mt-6 w-full aspect-[4/3] md:aspect-[2/1] min-h-[200px]">
+        <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
-            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+
+            // Increase margins to prevent clipping of lines at the very edges
+            margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
           >
             <XAxis
               dataKey="month"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: "#64748B", fontSize: 11 }}
+              tick={{ fill: "#64748B", fontSize: 10 }}
               interval="preserveStartEnd"
             />
             <YAxis hide />

@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 import { X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import {
@@ -11,7 +12,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,6 +23,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { BUTTON_STYLES, AUTH_TYPOGRAPHY, AUTH_INPUT } from "@/lib/constants/theme";
+import { useGetStudents } from "@/hooks/api/user-management/useGetStudents";
+import { useGetCourses } from "@/hooks/api/courses/useGetCourses";
+import { useGetBatches } from "@/hooks/api/batches/useGetBatches";
+import { useIssueDocument } from "@/hooks/api/documents/useIssueDocument";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import type { ApiDocumentType } from "@/types/document";
+import { DOCUMENT_TYPE_LABELS } from "@/types/document";
 
 // ===== TYPES =====
 export type IssueMethod = "email" | "print" | "both" | "student-dashboard";
@@ -30,27 +37,88 @@ export type IssueMethod = "email" | "print" | "both" | "student-dashboard";
 export interface IssueDocumentModalProps {
   isOpen: boolean;
   onClose: () => void;
+  templateId?: string;
   documentName?: string;
-  onIssue?: (data: any) => void;
+  documentType?: ApiDocumentType;
 }
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  show: { opacity: 1, y: 0 },
+};
 
 // ===== COMPONENT =====
 export function IssueDocumentModal({
   isOpen,
   onClose,
-  documentName = "lorem ipsum",
-  onIssue,
+  templateId,
+  documentName = "",
+  documentType,
 }: IssueDocumentModalProps) {
   const [selectedDocType, setSelectedDocType] = useState<string>("");
-  const [selectedBatchId, setSelectedBatchId] = useState<string>("");
+  const [selectedInterestId, setSelectedInterestId] = useState<string>("");
   const [selectedStudentId, setSelectedStudentId] = useState<string>("");
   const [issueMethod, setIssueMethod] = useState<IssueMethod>("email");
+
+  const [studentSearch, setStudentSearch] = useState("");
+  const [interestSearch, setInterestSearch] = useState("");
 
   // Email fields
   const [recipientsEmail, setRecipientsEmail] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
-  const [attachPdf, setAttachPdf] = useState(false);
+
+  // ── API hooks ─────────────────────────────────────────────────────────────────
+  const { data: studentsData, isLoading: studentsLoading } = useGetStudents({
+    search: studentSearch,
+    size: 50,
+  });
+
+  const { data: coursesData, isLoading: coursesLoading } = useGetCourses({
+    search: interestSearch,
+    size: 50,
+  });
+
+  const { data: batchesData, isLoading: batchesLoading } = useGetBatches({
+    search: interestSearch,
+    size: 50,
+  });
+
+  const { mutateAsync: issueDocument, isPending: isIssuing } = useIssueDocument();
+
+  // Format Interest Options (Courses + Batches)
+  const interestOptions = useMemo(() => {
+    const courses = coursesData?.results?.map((c) => ({
+      value: `course:${c.id}`,
+      label: c.name,
+      subLabel: "Course",
+    })) || [];
+
+    const batches = batchesData?.results?.map((b) => ({
+      value: `batch:${b.id}`,
+      label: b.name,
+      subLabel: `Batch • ${b.category}`,
+    })) || [];
+
+    return [...batches, ...courses];
+  }, [coursesData, batchesData]);
+
+  // Format Student Options
+  const studentOptions = useMemo(() => {
+    return studentsData?.results?.map((s) => ({
+      value: s.user_id,
+      label: s.full_name,
+      subLabel: s.email,
+      avatarInitials: s.full_name.charAt(0).toUpperCase(),
+    })) || [];
+  }, [studentsData]);
+
+  // Sync document type from props if available
+  useEffect(() => {
+    if (documentType) {
+      setSelectedDocType(documentType);
+    }
+  }, [documentType]);
 
   // Initialize subject when document name changes
   useEffect(() => {
@@ -59,37 +127,63 @@ export function IssueDocumentModal({
     }
   }, [isOpen, documentName]);
 
+  // Auto-fill email when student is selected
+  useEffect(() => {
+    if (selectedStudentId) {
+      const student = studentsData?.results?.find((s) => s.user_id === selectedStudentId);
+
+      if (student?.email) {
+        setRecipientsEmail(student.email);
+      }
+    }
+  }, [selectedStudentId, studentsData]);
+
   const handleClearAll = () => {
-    setSelectedDocType("");
-    setSelectedBatchId("");
+    setSelectedDocType(documentType || "");
+    setSelectedInterestId("");
     setSelectedStudentId("");
     setIssueMethod("email");
     setRecipientsEmail("");
     setEmailSubject(documentName);
     setEmailBody("");
-    setAttachPdf(false);
+    setStudentSearch("");
+    setInterestSearch("");
   };
 
-  const handleIssue = () => {
-    if (onIssue) {
-      onIssue({
-        documentType: selectedDocType,
-        batchId: selectedBatchId,
-        studentId: selectedStudentId,
-        issueMethod,
-        emailDetails:
-          issueMethod === "email" || issueMethod === "both"
-            ? {
-                recipientsEmail,
-                subject: emailSubject,
-                body: emailBody,
-                attachPdf,
-              }
-            : null,
-      });
+  const handleIssue = async () => {
+    if (!templateId || !selectedStudentId) return;
+
+    let batchId = undefined;
+    let courseId = undefined;
+
+    if (selectedInterestId.startsWith("batch:")) {
+      batchId = selectedInterestId.replace("batch:", "");
+    } else if (selectedInterestId.startsWith("course:")) {
+      courseId = selectedInterestId.replace("course:", "");
     }
 
-    handleClose();
+    const methodMap: Record<IssueMethod, "EMAIL" | "PRINT" | "BOTH" | "DASHBOARD"> = {
+      email: "EMAIL",
+      print: "PRINT",
+      both: "BOTH",
+      "student-dashboard": "DASHBOARD",
+    };
+
+    try {
+      await issueDocument({
+        template_id: templateId,
+        student_user_id: selectedStudentId,
+        batch_id: batchId,
+        course_id: courseId,
+        issued_method: methodMap[issueMethod],
+        email_recipient: recipientsEmail || undefined,
+        email_subject: emailSubject || undefined,
+        email_body: emailBody || undefined,
+      });
+      handleClose();
+    } catch {
+      // toast handled in hook
+    }
   };
 
   const handleClose = () => {
@@ -115,10 +209,14 @@ export function IssueDocumentModal({
   return (
     <Dialog open={isOpen} onOpenChange={(val) => !val && handleClose()}>
       <DialogContent
+        animateChildren
         className="flex w-[95%] max-h-[90vh] max-w-[704px] flex-col rounded-[12px] border border-[#E2E8F0] bg-white p-6 shadow-[0_4px_6px_-4px_rgba(16,24,40,0.10),0_10px_15px_-3px_rgba(0,0,0,0.10)] gap-0 sm:rounded-[12px] overflow-hidden [&>button]:hidden"
       >
         {/* Header (Static) */}
-        <div className="flex shrink-0 items-center justify-between border-b border-[#E2E8F0] pb-4">
+        <motion.div
+          variants={itemVariants}
+          className="flex shrink-0 items-center justify-between border-b border-[#E2E8F0] pb-4"
+        >
           <DialogTitle className="text-lg font-semibold leading-[30px] text-[#0F172B]">
             Issue Document
           </DialogTitle>
@@ -130,14 +228,14 @@ export function IssueDocumentModal({
           >
             <X className="h-4 w-4 text-[#64748B]" />
           </button>
-        </div>
+        </motion.div>
 
         {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto pr-1 py-4 scrollbar-hide">
           <div className="flex flex-col gap-6">
             
             {/* Row 1: Document Name & Type */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+            <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               <div>
                 <FieldLabel required>Document Name</FieldLabel>
                 <Input
@@ -154,45 +252,47 @@ export function IssueDocumentModal({
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent className="z-[99999999]">
-                    <SelectItem value="type-1">Type 01</SelectItem>
-                    <SelectItem value="type-2">Type 02</SelectItem>
+                    {Object.entries(DOCUMENT_TYPE_LABELS).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+            </motion.div>
 
             {/* Row 2: Batch & Student Select */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+            <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               <div>
                 <FieldLabel required>Batch/Course Name</FieldLabel>
-                <Select value={selectedBatchId} onValueChange={setSelectedBatchId}>
-                  <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic")}>
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[99999999]">
-                    <SelectItem value="batch-1">Batch 01</SelectItem>
-                    <SelectItem value="batch-2">Batch 02</SelectItem>
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  options={interestOptions}
+                  value={selectedInterestId}
+                  onChange={setSelectedInterestId}
+                  onSearchChange={setInterestSearch}
+                  searchValue={interestSearch}
+                  placeholder="Select Batch/Course"
+                  isLoading={batchesLoading || coursesLoading}
+                />
               </div>
 
               <div>
-                <FieldLabel>Select Student</FieldLabel>
-                <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
-                  <SelectTrigger className={cn(AUTH_INPUT.base, "data-[placeholder]:text-[#90A1B9] data-[placeholder]:italic")}>
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[99999999]">
-                    <SelectItem value="all">All Students</SelectItem>
-                    <SelectItem value="student-1">Kalpa Perera</SelectItem>
-                    <SelectItem value="student-2">Saduni</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FieldLabel required>Select Student</FieldLabel>
+                <SearchableSelect
+                  options={studentOptions}
+                  value={selectedStudentId}
+                  onChange={setSelectedStudentId}
+                  onSearchChange={setStudentSearch}
+                  searchValue={studentSearch}
+                  placeholder="Select Student"
+                  isLoading={studentsLoading}
+                />
               </div>
-            </div>
+            </motion.div>
 
             {/* Row 3: Issue Method */}
-            <div className="space-y-3">
+            <motion.div variants={itemVariants} className="space-y-3">
               <FieldLabel>Issue Method</FieldLabel>
               <div className="flex items-center gap-6">
                 {(["email", "print", "both", "student dashboard"] as const).map((method) => {
@@ -215,72 +315,70 @@ export function IssueDocumentModal({
                   );
                 })}
               </div>
-            </div>
+            </motion.div>
 
             {/* Separator conditionally rendered if email is shown */}
-            {showEmailSection && (
-              <div className="h-[1px] bg-[#E2E8F0] w-full my-2" />
-            )}
+            <AnimatePresence>
+              {showEmailSection && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="h-[1px] bg-[#E2E8F0] w-full my-2" />
+                  
+                  {/* For Emails Block */}
+                  <div className="flex flex-col gap-4 pb-2">
+                    <h4 className="text-base font-semibold text-[#0F172B] leading-6 font-inter">
+                      For Emails
+                    </h4>
 
-            {/* For Emails Block */}
-            {showEmailSection && (
-              <div className="flex flex-col gap-4 pb-2">
-                <h4 className="text-base font-semibold text-[#0F172B] leading-6 font-inter">
-                  For Emails
-                </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                      <div>
+                        <FieldLabel required>Recipients Email</FieldLabel>
+                        <Input
+                          value={recipientsEmail}
+                          onChange={(e) => setRecipientsEmail(e.target.value)}
+                          placeholder="User@gmail.com"
+                          className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder)}
+                        />
+                      </div>
+                      <div>
+                        <FieldLabel required>Subject</FieldLabel>
+                        <Input
+                          value={emailSubject}
+                          onChange={(e) => setEmailSubject(e.target.value)}
+                          placeholder="Certificate Name"
+                          className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder)}
+                        />
+                      </div>
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                  <div>
-                    <FieldLabel required>Recipients Email</FieldLabel>
-                    <Input
-                      value={recipientsEmail}
-                      onChange={(e) => setRecipientsEmail(e.target.value)}
-                      placeholder="User@gmail.com"
-                      className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder)}
-                    />
+                    <div>
+                      <FieldLabel required>Email Body</FieldLabel>
+                      <Textarea
+                        value={emailBody}
+                        onChange={(e) => setEmailBody(e.target.value)}
+                        placeholder="Lorem ipsum dolor sit amet consectetur. Elementum montes laoreet aliquam nibh adipiscing..."
+                        className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "h-24 resize-none")}
+                      />
+                    </div>
+
+                    {/* Attach as PDF removed - no backend mapping */}
                   </div>
-                  <div>
-                    <FieldLabel required>Subject</FieldLabel>
-                    <Input
-                      value={emailSubject}
-                      onChange={(e) => setEmailSubject(e.target.value)}
-                      placeholder="Certificate Name"
-                      className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder)}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <FieldLabel required>Email Body</FieldLabel>
-                  <Textarea
-                    value={emailBody}
-                    onChange={(e) => setEmailBody(e.target.value)}
-                    placeholder="Lorem ipsum dolor sit amet consectetur. Elementum montes laoreet aliquam nibh adipiscing..."
-                    className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder, "h-24 resize-none")}
-                  />
-                </div>
-
-                <div className="flex items-center gap-2 pt-2">
-                  <Checkbox
-                    id="attachPdf"
-                    checked={attachPdf}
-                    onCheckedChange={(checked) => setAttachPdf(!!checked)}
-                    className="border-[#94A3B8] data-[state=checked]:bg-[#0F172B] data-[state=checked]:border-[#0F172B]"
-                  />
-                  <label
-                    htmlFor="attachPdf"
-                    className="text-sm font-medium text-[#1D293D] cursor-pointer select-none"
-                  >
-                    Attach as PDF
-                  </label>
-                </div>
-              </div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
         {/* Footer (Static) */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-[#E2E8F0]">
+        <motion.div
+          variants={itemVariants}
+          className="flex justify-end gap-3 pt-4 border-t border-[#E2E8F0]"
+        >
           <Button
             type="button"
             variant="ghost"
@@ -292,12 +390,12 @@ export function IssueDocumentModal({
           <Button
             type="button"
             onClick={handleIssue}
+            disabled={isIssuing || !selectedStudentId}
             className={cn(BUTTON_STYLES.primary.md)}
           >
-            Issue Document
+            {isIssuing ? "Issuing..." : "Issue Document"}
           </Button>
-        </div>
-
+        </motion.div>
       </DialogContent>
     </Dialog>
   );

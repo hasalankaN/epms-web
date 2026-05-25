@@ -9,6 +9,7 @@ import { ReferralContent } from "./referral/ReferralContent";
 import { ReferralAgentStats } from "./referral/agents/ReferralAgentStats";
 import { ReferralStudentStats } from "./referral/students/ReferralStudentStats";
 import { itemVariants } from "@/components/ui/dialog";
+import { ReferralSkeleton } from "./DashboardSkeleton";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -21,7 +22,11 @@ const containerVariants = {
 };
 
 export function ReferralSection() {
-  const { data } = useGetDashboardReferral();
+  const { data, isLoading } = useGetDashboardReferral();
+
+  if (isLoading) {
+    return <ReferralSkeleton />;
+  }
 
   return (
     <motion.div

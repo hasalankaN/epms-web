@@ -15,6 +15,7 @@ import { TrendsChart } from "./overview/students-courses/charts/TrendsChart";
 import { CertificatesProgress } from "./overview/students-courses/CertificatesProgress";
 import { UpcomingClasses } from "./overview/students-courses/UpcomingClasses";
 import { SubmissionOverview } from "./overview/students-courses/SubmissionOverview";
+import { OverviewSkeleton } from "./DashboardSkeleton";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -53,7 +54,7 @@ function formatTimeLabel(scheduledAt: string): string {
 
 export function OverviewSection() {
   const [trendDays, setTrendDays] = useState(180);
-  const { data } = useGetDashboardOverview(trendDays);
+  const { data, isLoading } = useGetDashboardOverview(trendDays);
 
   const upcomingClasses = useMemo(
     () =>
@@ -64,6 +65,10 @@ export function OverviewSection() {
       })) ?? undefined,
     [data?.upcomingClasses],
   );
+
+  if (isLoading) {
+    return <OverviewSkeleton />;
+  }
 
   return (
     <motion.div

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
@@ -22,6 +22,33 @@ export function AllTemplates() {
   const documentType = searchParams.get("document_type") as ApiDocumentType | undefined;
   const isActive = searchParams.get("is_active") === "true" ? true : searchParams.get("is_active") === "false" ? false : undefined;
 
+  const [localSearch, setLocalSearch] = useState(search);
+
+  // Sync local search when URL search changes (e.g. back button)
+  useEffect(() => {
+    setLocalSearch(search);
+  }, [search]);
+
+  // Debounce search update to URL
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localSearch.trim() !== search.trim()) {
+        const params = new URLSearchParams(searchParams.toString());
+
+        if (localSearch.trim()) {
+          params.set("search", localSearch.trim());
+        } else {
+          params.delete("search");
+        }
+
+        params.set("page", "1");
+        router.replace(`${pathname}?${params.toString()}`);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [localSearch, search, searchParams, pathname, router]);
+
   const { data, isLoading, isError } = useGetDocumentTemplates({
     page: currentPage,
     limit: 10,
@@ -36,17 +63,11 @@ export function AllTemplates() {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
 
   const handleFilterChange = useCallback((params: {
-    search?: string;
     documentType?: string;
     isActive?: boolean;
   }) => {
     const newParams = new URLSearchParams(searchParams.toString());
     
-    if (params.search !== undefined) {
-      if (params.search) newParams.set("search", params.search);
-      else newParams.delete("search");
-    }
-
     if (params.documentType !== undefined) {
       if (params.documentType) newParams.set("document_type", params.documentType);
       else newParams.delete("document_type");
@@ -63,16 +84,27 @@ export function AllTemplates() {
     setRowSelection({});
   }, [router, pathname, searchParams]);
 
+  const handleClearFilters = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.delete("document_type");
+    params.delete("is_active");
+    params.set("page", "1");
+    router.replace(`${pathname}?${params.toString()}`);
+    setRowSelection({});
+  }, [searchParams, pathname, router]);
+
   return (
     <div className="flex flex-col gap-4">
       <AllTemplateToolbar
         selectedCount={selectedCount}
         totalCount={total}
-        search={search}
-        onSearchChange={(val) => {
-          handleFilterChange({ search: val });
-        }}
+        search={localSearch}
+        onSearchChange={setLocalSearch}
+        documentTypeFilter={documentType || null}
+        isActiveFilter={isActive}
         onFilterChange={handleFilterChange}
+        onClearFilters={handleClearFilters}
         bulkActions={{
           onSelectAll: () => {
             const newSelection: Record<string, boolean> = {};
