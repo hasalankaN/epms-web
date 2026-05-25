@@ -15,13 +15,6 @@ interface UpcomingClassesProps {
   className?: string;
 }
 
-const defaultClasses: ClassSession[] = [
-  { id: "1", name: "Class Session Name", timeLabel: "In 59 minutes" },
-  { id: "2", name: "Class Session Name", timeLabel: "In 2026.01.22" },
-  { id: "3", name: "Class Session Name", timeLabel: "In 2026.01.22" },
-  { id: "4", name: "Class Session Name", timeLabel: "In 2026.01.22" },
-];
-
 function ClassSessionCard({ session }: { session: ClassSession }) {
   return (
     <div className="flex w-full items-start gap-3">
@@ -44,9 +37,12 @@ function ClassSessionCard({ session }: { session: ClassSession }) {
 }
 
 export function UpcomingClasses({
-  classes = defaultClasses,
+  classes =[], // Default to empty array
   className,
 }: UpcomingClassesProps) {
+  
+  const hasClasses = classes && classes.length > 0;
+
   return (
     <div
       className={cn(
@@ -59,11 +55,22 @@ export function UpcomingClasses({
         Upcoming Classes
       </h3>
 
-      {/* Class Sessions */}
+      {/* Class Sessions or Empty State */}
       <div className="flex flex-col gap-2">
-        {classes.map((session) => (
-          <ClassSessionCard key={session.id} session={session} />
-        ))}
+        {hasClasses ? (
+          classes.map((session) => (
+            <ClassSessionCard key={session.id} session={session} />
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <p className="font-sans text-[13px] font-medium text-[#475569]">
+              No upcoming classes
+            </p>
+            <p className="font-sans text-[11px] text-[#90A1B9]">
+              Stay tuned for your next scheduled session.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

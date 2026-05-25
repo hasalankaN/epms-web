@@ -12,6 +12,7 @@ import { itemVariants } from "@/components/ui/dialog";
 import { DateRangeFilter } from "@/components/common/filters/DateRangeFilter";
 import { cn } from "@/lib/utils";
 import { BUTTON_STYLES } from "@/lib/constants/theme";
+import { AnalyticsSkeleton } from "./DashboardSkeleton";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -34,7 +35,7 @@ export function AnalyticsSection() {
 
   const [clearKey, setClearKey] = useState(0);
 
-  const { data } = useGetDashboardAnalytics({
+  const { data, isLoading } = useGetDashboardAnalytics({
     from: dateRange.from?.toISOString(),
     to: dateRange.to?.toISOString(),
   });
@@ -45,6 +46,10 @@ export function AnalyticsSection() {
   }, []);
 
   const hasActiveFilters = dateRange.from !== null || dateRange.to !== null;
+
+  if (isLoading) {
+    return <AnalyticsSkeleton />;
+  }
 
   return (
     <div className="flex flex-col gap-4">

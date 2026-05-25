@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 
 import { Search, MoreHorizontal, X } from "lucide-react";
 
@@ -51,7 +51,6 @@ interface BulkActionsHandlers {
 }
 
 interface FilterChangeParams {
-  search?: string;
   documentType?: string;
   isActive?: boolean;
 }
@@ -62,7 +61,10 @@ interface AllTemplateToolbarProps {
   totalCount: number;
   search: string;
   onSearchChange: (val: string) => void;
+  documentTypeFilter: string | null;
+  isActiveFilter: boolean | undefined;
   onFilterChange: (params: FilterChangeParams) => void;
+  onClearFilters: () => void;
 }
 
 export function AllTemplateToolbar({
@@ -71,12 +73,28 @@ export function AllTemplateToolbar({
   totalCount,
   search,
   onSearchChange,
+  documentTypeFilter,
+  isActiveFilter,
   onFilterChange,
+  onClearFilters,
 }: AllTemplateToolbarProps) {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<FilterSelections>({});
 
-  const hasActiveFilters = Object.keys(activeFilters).length > 0;
+  const activeFilters = useMemo<FilterSelections>(() => {
+    const selections: FilterSelections = {};
+
+    if (documentTypeFilter) {
+      selections.documentType = [documentTypeFilter];
+    }
+
+    if (isActiveFilter !== undefined) {
+      selections.status = [isActiveFilter ? "active" : "inactive"];
+    }
+
+    return selections;
+  }, [documentTypeFilter, isActiveFilter]);
+
+  const hasActiveFilters = !!(documentTypeFilter || isActiveFilter !== undefined);
   const isAllSelected = totalCount > 0 && selectedCount === totalCount;
   const hasSelection = selectedCount > 0;
 
@@ -95,18 +113,22 @@ export function AllTemplateToolbar({
   ];
 
   const handleApplyFilters = useCallback((selections: FilterSelections) => {
-    setActiveFilters(selections);
+    const docType = Array.isArray(selections.documentType)
+      ? (selections.documentType[0] as string)
+      : undefined;
+    
+    let statusKey: string | undefined;
 
-    const docType = (selections.documentType as unknown) as string | undefined;
-    const statusKey = (selections.status as unknown) as string | undefined;
+    if (Array.isArray(selections.status)) {
+      statusKey = selections.status[0] as string;
+    } else {
+      statusKey = undefined;
+    }
+
     const isActive = statusKey === "active" ? true : statusKey === "inactive" ? false : undefined;
 
-    onFilterChange({ documentType: docType, isActive });
-  }, [onFilterChange]);
-
-  const handleClearFilters = useCallback(() => {
-    setActiveFilters({});
-    onFilterChange({});
+    // Passing empty string for docType if undefined to clear URL param if previously set
+    onFilterChange({ documentType: docType || "", isActive });
   }, [onFilterChange]);
 
   const searchInput = (placeholder: string, className?: string) => (
@@ -133,7 +155,7 @@ export function AllTemplateToolbar({
           </div>
           <div className="flex items-center gap-3">
             {hasActiveFilters && (
-              <button type="button" onClick={handleClearFilters} className={cn(BUTTON_STYLES.outline.md, "border-dashed text-[#64748B] hover:text-[#0F172B]")}>
+              <button type="button" onClick={onClearFilters} className={cn(BUTTON_STYLES.outline.md, "border-dashed text-[#64748B] hover:text-[#0F172B]")}>
                 <X className="h-4 w-4" />
                 Clear
               </button>
@@ -150,7 +172,7 @@ export function AllTemplateToolbar({
           </div>
           <div className="flex items-center gap-3">
             {hasActiveFilters && (
-              <button type="button" onClick={handleClearFilters} className={cn(BUTTON_STYLES.outline.md, "border-dashed text-[#64748B] hover:text-[#0F172B]")}>
+              <button type="button" onClick={onClearFilters} className={cn(BUTTON_STYLES.outline.md, "border-dashed text-[#64748B] hover:text-[#0F172B]")}>
                 <X className="h-4 w-4" />
                 Clear
               </button>
@@ -164,7 +186,7 @@ export function AllTemplateToolbar({
           {searchInput("Search by document name", "w-full")}
           <div className="flex items-center gap-2">
             {hasActiveFilters && (
-              <button title="Clear Filters" type="button" onClick={handleClearFilters} className={cn(BUTTON_STYLES.outline.md, "px-3 border-dashed text-[#64748B] hover:text-[#0F172B]")}>
+              <button title="Clear Filters" type="button" onClick={onClearFilters} className={cn(BUTTON_STYLES.outline.md, "px-3 border-dashed text-[#64748B] hover:text-[#0F172B]")}>
                 <X className="h-4 w-4" />
               </button>
             )}
@@ -200,6 +222,7 @@ export function AllTemplateToolbar({
         categories={docTemplateFilterCategories}
         onApply={handleApplyFilters}
         initialSelections={activeFilters}
+        multiSelect={false}
       />
     </>
   );

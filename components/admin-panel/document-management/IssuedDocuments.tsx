@@ -2,9 +2,11 @@
 
 /* eslint-disable padding-line-between-statements */
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+
+import { toast } from "sonner";
 
 import { useGetIssuedDocuments } from "@/hooks/api/documents/useGetIssuedDocuments";
 import { useBulkDeleteIssuedDocuments } from "@/hooks/api/documents/useBulkDeleteIssuedDocuments";
@@ -15,6 +17,7 @@ import type {
 import { IssuedStatsCard } from "@/components/admin-panel/document-management/views/IssuedDocuments/IssuedStatsCard";
 import { IssuedToolbar } from "@/components/admin-panel/document-management/views/IssuedDocuments/IssuedToolbar";
 import { IssuedTable } from "@/components/admin-panel/document-management/views/IssuedDocuments/IssuedTable";
+import { generateIssuedDocumentPDF } from "@/utils/export/PDF/generate-issued-document-pdf";
 
 export function IssuedDocuments() {
   const searchParams = useSearchParams();
@@ -24,6 +27,7 @@ export function IssuedDocuments() {
   const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>(
     {},
   );
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
 
   // URL-based state
   const currentPage = Number(searchParams.get("page")) || 1;
@@ -33,6 +37,33 @@ export function IssuedDocuments() {
     | undefined;
   const issuedFrom = searchParams.get("issued_from") || undefined;
   const issuedTo = searchParams.get("issued_to") || undefined;
+
+  const [localSearch, setLocalSearch] = useState(search);
+
+  // Sync local search when URL search changes (e.g. back button)
+  useEffect(() => {
+    setLocalSearch(search);
+  }, [search]);
+
+  // Debounce search update to URL
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localSearch.trim() !== search.trim()) {
+        const params = new URLSearchParams(searchParams.toString());
+
+        if (localSearch.trim()) {
+          params.set("search", localSearch.trim());
+        } else {
+          params.delete("search");
+        }
+
+        params.set("page", "1");
+        router.replace(`${pathname}?${params.toString()}`);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [localSearch, search, searchParams, pathname, router]);
 
   const { data, isLoading, isError } = useGetIssuedDocuments({
     page: currentPage,
@@ -57,17 +88,11 @@ export function IssuedDocuments() {
 
   const handleFilterChange = useCallback(
     (params: {
-      search?: string;
       documentType?: string;
       issuedFrom?: string;
       issuedTo?: string;
     }) => {
       const newParams = new URLSearchParams(searchParams.toString());
-
-      if (params.search !== undefined) {
-        if (params.search) newParams.set("search", params.search);
-        else newParams.delete("search");
-      }
 
       if (params.documentType !== undefined) {
         if (params.documentType)
@@ -92,6 +117,16 @@ export function IssuedDocuments() {
     [router, pathname, searchParams],
   );
 
+  const handleClearFilters = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("document_type");
+    params.delete("issued_from");
+    params.delete("issued_to");
+    params.set("page", "1");
+    router.replace(`${pathname}?${params.toString()}`);
+    setRowSelection({});
+  }, [searchParams, pathname, router]);
+
   const handleBulkDelete = useCallback(async () => {
     if (!selectedIds.length) return;
     await bulkDelete({
@@ -100,6 +135,23 @@ export function IssuedDocuments() {
     });
     setRowSelection({});
   }, [selectedIds, bulkDelete]);
+
+  const handleExportPDF = useCallback(async () => {
+    setIsExportingPDF(true);
+    try {
+      await generateIssuedDocumentPDF({
+        search: search || undefined,
+        document_type: documentType || undefined,
+        issued_from: issuedFrom || undefined,
+        issued_to: issuedTo || undefined,
+      });
+      toast.success("PDF exported successfully");
+    } catch {
+      toast.error("Failed to export PDF. Please try again.");
+    } finally {
+      setIsExportingPDF(false);
+    }
+  }, [search, documentType, issuedFrom, issuedTo]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -110,9 +162,13 @@ export function IssuedDocuments() {
       <IssuedToolbar
         selectedCount={selectedCount}
         totalCount={totalCount}
-        search={search}
-        onSearchChange={(val) => handleFilterChange({ search: val })}
+        search={localSearch}
+        onSearchChange={setLocalSearch}
+        documentTypeFilter={documentType || null}
+        issuedFromFilter={issuedFrom || null}
+        issuedToFilter={issuedTo || null}
         onFilterChange={handleFilterChange}
+        onClearFilters={handleClearFilters}
         bulkActions={{
           onSelectAll: () => {
             const newSelection: Record<string, boolean> = {};
@@ -126,6 +182,8 @@ export function IssuedDocuments() {
           onDelete: handleBulkDelete,
         }}
         isBulkDeleting={isBulkDeleting}
+        onExportPDF={handleExportPDF}
+        isExportingPDF={isExportingPDF}
       />
 
       {/* Table */}

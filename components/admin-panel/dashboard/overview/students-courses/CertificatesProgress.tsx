@@ -2,6 +2,8 @@
 
 import React from "react";
 
+import { useRouter } from "next/navigation";
+
 import { ArrowRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -30,13 +32,21 @@ export function CertificatesProgress({
   stats = defaultStats,
   className,
 }: CertificatesProgressProps) {
-  const total = stats.completed + stats.issued + stats.downloaded + stats.pending;
+  const router = useRouter();
   
+  const total = stats.completed + stats.issued + stats.downloaded + stats.pending;
+
+  const getPercent = (value: number) => (total > 0 ? (value / total) * 100 : 0);
+
   const percentages = {
-    completed: (stats.completed / total) * 100,
-    issued: (stats.issued / total) * 100,
-    downloaded: (stats.downloaded / total) * 100,
-    pending: (stats.pending / total) * 100,
+    completed: getPercent(stats.completed),
+    issued: getPercent(stats.issued),
+    downloaded: getPercent(stats.downloaded),
+    pending: getPercent(stats.pending),
+  };
+
+  const handleNavigate = () => {
+    router.push("/admin-panel/certificate-management");
   };
 
   return (
@@ -52,7 +62,6 @@ export function CertificatesProgress({
           Certificates
         </h3>
         
-        {/* Legend - Wraps on mobile, row on desktop */}
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 md:flex md:flex-wrap md:items-center md:gap-x-6">
           <div className="flex items-center gap-2">
             <div className="h-3 w-3 shrink-0 rounded bg-[#F59E0B]" />
@@ -81,28 +90,29 @@ export function CertificatesProgress({
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="flex h-2 w-full overflow-hidden rounded-full">
-        <div
-          className="bg-[#F59E0B] transition-all duration-300"
-          style={{ width: `${percentages.completed}%` }}
-        />
-        <div
-          className="bg-[#2563EB] transition-all duration-300"
-          style={{ width: `${percentages.issued}%` }}
-        />
-        <div
-          className="bg-[#16A34A] transition-all duration-300"
-          style={{ width: `${percentages.downloaded}%` }}
-        />
-        <div
-          className="bg-[#FB2C36] transition-all duration-300"
-          style={{ width: `${percentages.pending}%` }}
-        />
+      {/* Progress Bar - Shows gray background if total is 0 */}
+      <div className={cn(
+        "flex h-2 w-full overflow-hidden rounded-full",
+        total === 0 ? "bg-[#E2E8F0]" : "bg-transparent"
+      )}>
+        {total > 0 && (
+          <>
+            <div className="bg-[#F59E0B] transition-all duration-300" style={{ width: `${percentages.completed}%` }} />
+            <div className="bg-[#2563EB] transition-all duration-300" style={{ width: `${percentages.issued}%` }} />
+            <div className="bg-[#16A34A] transition-all duration-300" style={{ width: `${percentages.downloaded}%` }} />
+            <div className="bg-[#FB2C36] transition-all duration-300" style={{ width: `${percentages.pending}%` }} />
+          </>
+        )}
       </div>
 
-      {/* Button */}
-      <button className={cn(BUTTON_STYLES.outline.md, "w-full font-sans text-[13px] font-semibold leading-[18px] text-[#0F172B] md:w-auto md:text-[14px] md:leading-[20px]")}>
+      {/* Button with navigation handler */}
+      <button 
+        onClick={handleNavigate}
+        className={cn(
+          BUTTON_STYLES.outline.md, 
+          "w-full font-sans text-[13px] font-semibold leading-[18px] text-[#0F172B] md:w-auto md:text-[14px] md:leading-[20px]"
+        )}
+      >
         Go to Certificate Section
         <ArrowRight className="h-4 w-4" />
       </button>

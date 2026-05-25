@@ -2,7 +2,7 @@
 
 /* eslint-disable padding-line-between-statements */
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 
 import { Search, MoreHorizontal, X } from "lucide-react";
 
@@ -70,8 +70,14 @@ interface IssuedToolbarProps {
   totalCount: number;
   search: string;
   onSearchChange: (val: string) => void;
+  documentTypeFilter: string | null;
+  issuedFromFilter: string | null;
+  issuedToFilter: string | null;
   onFilterChange: (params: FilterChangeParams) => void;
+  onClearFilters: () => void;
   isBulkDeleting?: boolean;
+  onExportPDF?: () => Promise<void>;
+  isExportingPDF?: boolean;
 }
 
 export function IssuedToolbar({
@@ -80,14 +86,34 @@ export function IssuedToolbar({
   totalCount,
   search,
   onSearchChange,
+  documentTypeFilter,
+  issuedFromFilter,
+  issuedToFilter,
   onFilterChange,
+  onClearFilters,
   isBulkDeleting = false,
+  onExportPDF,
+  isExportingPDF = false,
 }: IssuedToolbarProps) {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<FilterSelections>({});
 
-  const hasActiveFilters = Object.keys(activeFilters).length > 0;
+  const activeFilters = useMemo<FilterSelections>(() => {
+    const selections: FilterSelections = {};
+    if (documentTypeFilter) {
+      selections.documentType = [documentTypeFilter];
+    }
+    if (issuedFromFilter && issuedToFilter) {
+      selections.date = {
+        start: new Date(issuedFromFilter),
+        end: new Date(issuedToFilter),
+      };
+    }
+    
+    return selections;
+  }, [documentTypeFilter, issuedFromFilter, issuedToFilter]);
+
+  const hasActiveFilters = !!(documentTypeFilter || (issuedFromFilter && issuedToFilter));
   const isAllSelected = totalCount > 0 && selectedCount === totalCount;
   const hasSelection = selectedCount > 0;
 
@@ -108,35 +134,24 @@ export function IssuedToolbar({
 
   const handleApplyFilters = useCallback(
     (selections: FilterSelections) => {
-      setActiveFilters(selections);
-
       const docType = Array.isArray(selections.documentType)
         ? (selections.documentType[0] as string)
         : undefined;
-      const dateFrom = (selections.date as any)?.from
-        ? new Date((selections.date as any).from).toISOString().split("T")[0]
+      const dateFrom = (selections.date as any)?.start
+        ? new Date((selections.date as any).start).toISOString().split("T")[0]
         : undefined;
-      const dateTo = (selections.date as any)?.to
-        ? new Date((selections.date as any).to).toISOString().split("T")[0]
+      const dateTo = (selections.date as any)?.end
+        ? new Date((selections.date as any).end).toISOString().split("T")[0]
         : undefined;
 
       onFilterChange({
-        documentType: docType,
-        issuedFrom: dateFrom,
-        issuedTo: dateTo,
+        documentType: docType || "",
+        issuedFrom: dateFrom || "",
+        issuedTo: dateTo || "",
       });
     },
     [onFilterChange],
   );
-
-  const handleClearFilters = useCallback(() => {
-    setActiveFilters({});
-    onFilterChange({
-      documentType: undefined,
-      issuedFrom: undefined,
-      issuedTo: undefined,
-    });
-  }, [onFilterChange]);
 
   return (
     <>
@@ -164,7 +179,7 @@ export function IssuedToolbar({
             {hasActiveFilters && (
               <button
                 type="button"
-                onClick={handleClearFilters}
+                onClick={onClearFilters}
                 className={cn(
                   BUTTON_STYLES.outline.md,
                   "border-dashed text-[#64748B] hover:text-[#0F172B]",
@@ -180,13 +195,15 @@ export function IssuedToolbar({
               className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
             />
             <button
+              onClick={onExportPDF}
+              disabled={isExportingPDF}
               className={cn(
                 BUTTON_STYLES.outline.md,
                 "whitespace-nowrap",
                 buttonTextStyles,
               )}
             >
-              Export
+              {isExportingPDF ? "Exporting..." : "Export"}
             </button>
           </div>
         </div>
@@ -214,7 +231,7 @@ export function IssuedToolbar({
             {hasActiveFilters && (
               <button
                 type="button"
-                onClick={handleClearFilters}
+                onClick={onClearFilters}
                 className={cn(
                   BUTTON_STYLES.outline.md,
                   "border-dashed text-[#64748B] hover:text-[#0F172B]",
@@ -230,13 +247,15 @@ export function IssuedToolbar({
               className={cn(hasActiveFilters && BUTTON_STYLES.active.md)}
             />
             <button
+              onClick={onExportPDF}
+              disabled={isExportingPDF}
               className={cn(
                 BUTTON_STYLES.outline.md,
                 "whitespace-nowrap",
                 buttonTextStyles,
               )}
             >
-              Export
+              {isExportingPDF ? "Exporting..." : "Export"}
             </button>
           </div>
         </div>
@@ -263,7 +282,7 @@ export function IssuedToolbar({
                 <button
                   title="Clear Filters"
                   type="button"
-                  onClick={handleClearFilters}
+                  onClick={onClearFilters}
                   className={cn(
                     BUTTON_STYLES.outline.md,
                     "px-3 border-dashed text-[#64748B] hover:text-[#0F172B]",
@@ -316,13 +335,15 @@ export function IssuedToolbar({
               </DropdownMenu>
             </div>
             <button
+              onClick={onExportPDF}
+              disabled={isExportingPDF}
               className={cn(
                 BUTTON_STYLES.outline.md,
                 "whitespace-nowrap",
                 buttonTextStyles,
               )}
             >
-              Export
+              {isExportingPDF ? "Exporting..." : "Export"}
             </button>
           </div>
         </div>
@@ -334,6 +355,7 @@ export function IssuedToolbar({
         categories={issuedDocFilterCategories}
         onApply={handleApplyFilters}
         initialSelections={activeFilters}
+        multiSelect={false}
       />
 
       <DeleteConfirmationModal
