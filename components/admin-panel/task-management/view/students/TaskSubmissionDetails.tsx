@@ -9,17 +9,36 @@ import { toast } from "sonner";
 import type { TaskSubmissionRow } from "./TaskSubmissionTable";
 import { TaskSubmissionToolbar } from "./TaskSubmissionToolbar";
 import { TaskSubmissionTable } from "./TaskSubmissionTable";
+import type { TaskSubmission } from "@/hooks/api/tasks/useGetTaskDetail";
 
-// ===== MOCK DATA =====
-const mockSubmissions: TaskSubmissionRow[] = Array.from({ length: 15 }, (_, i) => ({
-  id: `submission-${i + 1}`,
-  studentName: `Student Name ${i + 1}`,
-  submittedOn: i % 4 === 3 ? "-" : "2026/01/21",
-  evidence: i % 4 === 3 ? "-" : "View",
-  status: i % 4 === 3 ? "Pending" : "Completed",
-}));
+function formatDate(dateStr: string | Date | null): string {
+  if (!dateStr) {
+    return "-";
+  }
 
-export function TaskSubmissionDetails() {
+  const d = new Date(dateStr);
+
+  if (isNaN(d.getTime())) {
+    return "-";
+  }
+
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+
+  return `${yyyy}/${mm}/${dd}`;
+}
+
+function mapSubmissionStatus(status: string): "Completed" | "Pending" {
+  return status === "COMPLETED" ? "Completed" : "Pending";
+}
+
+interface TaskSubmissionDetailsProps {
+  taskId: string;
+  submissions: TaskSubmission[];
+}
+
+export function TaskSubmissionDetails({ taskId, submissions }: TaskSubmissionDetailsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -29,10 +48,25 @@ export function TaskSubmissionDetails() {
   const currentPage = pageParam ? parseInt(pageParam) : 1;
 
   // ===== SHARED STATE =====
-  const [data] = useState<TaskSubmissionRow[]>(mockSubmissions);
   const [rowSelection, setRowSelection] = useState<{ [key: string]: boolean }>({});
   const [searchValue, setSearchValue] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+
+  // Map backend submissions to frontend row format
+
+  const data: TaskSubmissionRow[] = useMemo(() => {
+    return (submissions || []).map((sub) => ({
+      id: sub.submission_id || `${sub.student_id || sub.staff_id}-pending`,
+      studentName: sub.student_name || sub.staff_name || "Unknown",
+      submittedOn: formatDate(sub.submitted_at),
+      evidence: sub.files && sub.files.length > 0 ? "View" : "-",
+      status: mapSubmissionStatus(sub.status),
+
+      // Extra fields for modal/actions
+      submissionId: sub.submission_id,
+      files: sub.files,
+    }));
+  }, [submissions]);
 
   // ===== DERIVED VALUES =====
   const filteredData = useMemo(() => {
@@ -133,6 +167,7 @@ export function TaskSubmissionDetails() {
         onPageChange={handlePageChange}
         rowSelection={rowSelection}
         setRowSelection={setRowSelection}
+        taskId={taskId}
       />
     </div>
   );

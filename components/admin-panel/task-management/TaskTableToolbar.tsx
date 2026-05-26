@@ -35,8 +35,8 @@ const taskFilterCategories: FilterCategory[] = [
     label: "By Task Status",
     type: "chips",
     items: [
-      { key: "Completed", label: "Completed" },
-      { key: "Pending", label: "Pending" },
+      { key: "COMPLETED", label: "Completed" },
+      { key: "PENDING", label: "Pending" },
     ],
   },
   {
@@ -44,8 +44,8 @@ const taskFilterCategories: FilterCategory[] = [
     label: "By Task Type",
     type: "chips",
     items: [
-      { key: "Staff Task", label: "Staff" },
-      { key: "Batch Task", label: "Batch" },
+      { key: "STAFF", label: "Staff" },
+      { key: "BATCH", label: "Batch" },
     ],
   },
 ];
@@ -61,14 +61,25 @@ interface TaskTableToolbarProps {
   bulkActions: BulkActionsHandlers;
   selectedCount: number;
   totalCount: number;
+  searchValue: string;
+  onSearchChange: (value: string) => void;
+  activeFilters: FilterSelections;
+  onFiltersChange: (filters: FilterSelections) => void;
 }
 
 // ===== COMPONENT =====
-export function TaskTableToolbar({ bulkActions, selectedCount, totalCount }: TaskTableToolbarProps) {
+export function TaskTableToolbar({
+  bulkActions,
+  selectedCount,
+  totalCount,
+  searchValue,
+  onSearchChange,
+  activeFilters,
+  onFiltersChange,
+}: TaskTableToolbarProps) {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isAddPanelOpen, setIsAddPanelOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<FilterSelections>({});
 
   const hasActiveFilters = Object.keys(activeFilters).length > 0;
   const isAllSelected = totalCount > 0 && selectedCount === totalCount;
@@ -90,12 +101,12 @@ export function TaskTableToolbar({ bulkActions, selectedCount, totalCount }: Tas
   ];
 
   const handleApplyFilters = useCallback((selections: FilterSelections) => {
-    setActiveFilters(selections);
-  }, []);
+    onFiltersChange(selections);
+  }, [onFiltersChange]);
 
   const handleClearFilters = useCallback(() => {
-    setActiveFilters({});
-  }, []);
+    onFiltersChange({});
+  }, [onFiltersChange]);
 
   return (
     <>
@@ -111,6 +122,8 @@ export function TaskTableToolbar({ bulkActions, selectedCount, totalCount }: Tas
               <Input
                 type="text"
                 placeholder="Search by task name"
+                value={searchValue}
+                onChange={(e) => onSearchChange(e.target.value)}
                 className={cn(
                   AUTH_INPUT.base,
                   AUTH_INPUT.placeholder,
@@ -155,6 +168,8 @@ export function TaskTableToolbar({ bulkActions, selectedCount, totalCount }: Tas
               <Input
                 type="text"
                 placeholder="Search..."
+                value={searchValue}
+                onChange={(e) => onSearchChange(e.target.value)}
                 className={cn(
                   AUTH_INPUT.base,
                   AUTH_INPUT.placeholder,
@@ -196,6 +211,8 @@ export function TaskTableToolbar({ bulkActions, selectedCount, totalCount }: Tas
             <Input
               type="text"
               placeholder="Search by task name"
+              value={searchValue}
+              onChange={(e) => onSearchChange(e.target.value)}
               className={cn(
                 AUTH_INPUT.base,
                 AUTH_INPUT.placeholder,

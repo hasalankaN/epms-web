@@ -1,6 +1,7 @@
 import React from "react";
 
 import { cn } from "@/lib/utils";
+import type { TaskDetail } from "@/hooks/api/tasks/useGetTaskDetail";
 
 interface TaskStatCardProps {
   title: string;
@@ -23,14 +24,41 @@ function TaskStatCard({ title, value, className }: TaskStatCardProps) {
   );
 }
 
-// Stats data for Task Management
-const statsData = [
-  { title: "Time Remaining", value: "30d : 28m : 45s" },
-  { title: "Total Submitted", value: "55" },
-  { title: "Total Pending", value: "10" },
-];
+interface TaskStatsRowProps {
+  task: TaskDetail;
+}
 
-export function TaskStatsRow() {
+function formatTimeRemaining(dueDateStr: string): string {
+  const due = new Date(dueDateStr);
+  const now = new Date();
+  const diffMs = due.getTime() - now.getTime();
+
+  if (diffMs <= 0) {
+    return "Overdue";
+  }
+
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (days > 0) {
+    return `${days}d : ${hours}h : ${minutes}m`;
+  }
+
+  if (hours > 0) {
+    return `${hours}h : ${minutes}m`;
+  }
+
+  return `${minutes}m`;
+}
+
+export function TaskStatsRow({ task }: TaskStatsRowProps) {
+  const statsData = [
+    { title: "Time Remaining", value: formatTimeRemaining(task.due_date) },
+    { title: "Total Submitted", value: task.completed_count ?? 0 },
+    { title: "Total Pending", value: task.total_pending ?? 0 },
+  ];
+
   return (
     <div className="w-full rounded-[8px] border border-[#E2E8F0] bg-transparent">
       {/* Desktop & Tablet: Flex layout - 3 columns */}

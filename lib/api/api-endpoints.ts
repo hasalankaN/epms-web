@@ -329,4 +329,13 @@ export const API_ENDPOINTS = {
   lookup: {
     GET: `/api/v1/admin/lookup`,
   },
+  tasks: {
+    GET_ALL: `/api/v1/admin/tasks`,
+    CREATE: `/api/v1/admin/tasks`,
+    GET_BY_ID: (id: string) => `/api/v1/admin/tasks/${id}`,
+    DELETE: (id: string) => `/api/v1/admin/tasks/${id}`,
+    DELETE_BULK: `/api/v1/admin/tasks/bulk/delete`,
+    FEEDBACK: (submissionId: string) =>
+      `/api/v1/admin/tasks/submissions/${submissionId}/feedback`,
+  },
 };

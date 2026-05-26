@@ -19,6 +19,7 @@ import { DateRangeCalendar } from "@/components/common/filters/DateRangeCalendar
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useGetStaff } from "@/hooks/api/staff/useGetStaff";
 import { useGetBatches } from "@/hooks/api/batches/useGetBatches";
+import { useCreateTask } from "@/hooks/api/tasks/useCreateTask";
 import { useDebounce } from "@/hooks/useDebounce";
 
 import { cn } from "@/lib/utils";
@@ -57,7 +58,11 @@ const FieldLabel = ({
 export function AddTaskPanel({ isOpen, onClose }: AddTaskPanelProps) {
   const [isDirty, setIsDirty] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
+
+  // Form state
+  const [taskName, setTaskName] = useState("");
   const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
+  const [description, setDescription] = useState("");
   const [assignType, setAssignType] = useState<"Staff" | "Batch">("Staff");
   const [materialImage, setMaterialImage] = useState("");
 
@@ -81,6 +86,8 @@ export function AddTaskPanel({ isOpen, onClose }: AddTaskPanelProps) {
     size: 20,
   });
 
+  const createTask = useCreateTask();
+
   const staffOptions = useMemo(() => {
     return (staffData?.results || []).map((s) => ({
       value: s.userId,
@@ -102,7 +109,9 @@ export function AddTaskPanel({ isOpen, onClose }: AddTaskPanelProps) {
     if (isOpen) {
       setIsDirty(false);
       setShowDiscardModal(false);
+      setTaskName("");
       setDueDate(undefined);
+      setDescription("");
       setAssignType("Staff");
       setMaterialImage("");
       setSelectedStaff("");
@@ -125,13 +134,53 @@ export function AddTaskPanel({ isOpen, onClose }: AddTaskPanelProps) {
     onClose();
   };
 
-  const handleInputChange = () => {
-    if (!isDirty) setIsDirty(true);
-  };
-
   const handleCreate = () => {
-    toast.success("Task created successfully");
-    onClose();
+    // Validation
+    if (!taskName.trim()) {
+      toast.error("Task name is required.");
+
+      return;
+    }
+
+    if (!dueDate) {
+      toast.error("Due date is required.");
+
+      return;
+    }
+
+    if (!description.trim()) {
+      toast.error("Task description is required.");
+
+      return;
+    }
+
+    if (assignType === "Staff" && !selectedStaff) {
+      toast.error("Please select a staff member.");
+
+      return;
+    }
+
+    if (assignType === "Batch" && !selectedBatch) {
+      toast.error("Please select a batch.");
+
+      return;
+    }
+
+    const payload = {
+      name: taskName.trim(),
+      description: description.trim(),
+      due_date: dueDate.toISOString(),
+      type: assignType === "Staff" ? ("STAFF" as const) : ("BATCH" as const),
+      staff_user_ids: assignType === "Staff" ? [selectedStaff] : undefined,
+      batch_ids: assignType === "Batch" ? [selectedBatch] : undefined,
+      material_urls: materialImage ? [materialImage] : undefined,
+    };
+
+    createTask.mutate(payload, {
+      onSuccess: () => {
+        onClose();
+      },
+    });
   };
 
   return (
@@ -189,7 +238,11 @@ export function AddTaskPanel({ isOpen, onClose }: AddTaskPanelProps) {
                       <Input
                         className={cn(AUTH_INPUT.base, AUTH_INPUT.placeholder)}
                         placeholder="lorem ipsum"
-                        onChange={handleInputChange}
+                        value={taskName}
+                        onChange={(e) => {
+                          setTaskName(e.target.value);
+                          setIsDirty(true);
+                        }}
                       />
                     </div>
 
@@ -219,7 +272,7 @@ export function AddTaskPanel({ isOpen, onClose }: AddTaskPanelProps) {
                             endDate={null}
                             onDateChange={(start) => {
                               setDueDate(start || undefined);
-                              handleInputChange();
+                              setIsDirty(true);
                             }}
                           />
                         </PopoverContent>
@@ -232,7 +285,11 @@ export function AddTaskPanel({ isOpen, onClose }: AddTaskPanelProps) {
                       <Textarea
                         className={cn("min-h-[100px] resize-none", AUTH_INPUT.placeholder)}
                         placeholder="eg: Type your notes here"
-                        onChange={handleInputChange}
+                        value={description}
+                        onChange={(e) => {
+                          setDescription(e.target.value);
+                          setIsDirty(true);
+                        }}
                       />
                     </div>
 
@@ -249,7 +306,7 @@ export function AddTaskPanel({ isOpen, onClose }: AddTaskPanelProps) {
                             checked={assignType === "Staff"}
                             onChange={() => {
                               setAssignType("Staff");
-                              handleInputChange();
+                              setIsDirty(true);
                             }}
                             className="accent-[#0F172B] h-4 w-4 cursor-pointer"
                           />
@@ -269,7 +326,7 @@ export function AddTaskPanel({ isOpen, onClose }: AddTaskPanelProps) {
                             checked={assignType === "Batch"}
                             onChange={() => {
                               setAssignType("Batch");
-                              handleInputChange();
+                              setIsDirty(true);
                             }}
                             className="accent-[#0F172B] h-4 w-4 cursor-pointer"
                           />
@@ -292,7 +349,7 @@ export function AddTaskPanel({ isOpen, onClose }: AddTaskPanelProps) {
                           value={selectedStaff}
                           onChange={(val) => {
                             setSelectedStaff(val);
-                            handleInputChange();
+                            setIsDirty(true);
                           }}
                           onSearchChange={setStaffSearch}
                           searchValue={staffSearch}
@@ -306,7 +363,7 @@ export function AddTaskPanel({ isOpen, onClose }: AddTaskPanelProps) {
                           value={selectedBatch}
                           onChange={(val) => {
                             setSelectedBatch(val);
-                            handleInputChange();
+                            setIsDirty(true);
                           }}
                           onSearchChange={setBatchSearch}
                           searchValue={batchSearch}
@@ -339,7 +396,7 @@ export function AddTaskPanel({ isOpen, onClose }: AddTaskPanelProps) {
                           imageUrl={materialImage}
                           setImage={(url) => {
                             setMaterialImage(url);
-                            handleInputChange();
+                            setIsDirty(true);
                           }}
                           removeImage={() => setMaterialImage("")}
                           showSupportedFormats={true}
@@ -359,12 +416,13 @@ export function AddTaskPanel({ isOpen, onClose }: AddTaskPanelProps) {
                 <div className="flex items-center justify-end gap-3 border-t border-[#E2E8F0] px-6 py-4">
                   <Button
                     onClick={handleCreate}
+                    disabled={createTask.isPending}
                     className={cn(
                       BUTTON_STYLES.primary.full,
                       "w-auto px-[38.5px] text-sm font-semibold text-white"
                     )}
                   >
-                    Create
+                    {createTask.isPending ? "Creating..." : "Create"}
                   </Button>
                 </div>
               </motion.div>

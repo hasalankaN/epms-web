@@ -23,8 +23,12 @@ export interface TaskSubmissionRow {
   id: string;
   studentName: string;
   submittedOn: string;
-  evidence: string; // "View" or "-"
+  evidence: string;
   status: "Completed" | "Pending";
+
+  // Extra fields for actions
+  submissionId?: string;
+  files?: { file_url: string; file_name: string }[];
 }
 
 const SUBMISSION_STATUS_OPTIONS = [
@@ -40,6 +44,7 @@ interface TaskSubmissionTableProps {
   isError?: boolean;
   currentPage: number;
   onPageChange: (page: number) => void;
+  taskId: string;
 }
 
 export function TaskSubmissionTable({
@@ -50,6 +55,7 @@ export function TaskSubmissionTable({
   isError = false,
   currentPage,
   onPageChange,
+  taskId,
 }: TaskSubmissionTableProps) {
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<TaskSubmissionRow | null>(null);
@@ -94,6 +100,12 @@ export function TaskSubmissionTable({
     if (action === "delete") {
       setSubmissionToDelete(submission);
       setIsDeleteModalOpen(true);
+
+      return;
+    }
+
+    if (action === "view" && submission.files && submission.files.length > 0) {
+      window.open(submission.files[0].file_url, "_blank");
 
       return;
     }
@@ -221,10 +233,8 @@ export function TaskSubmissionTable({
       <TaskFeedbackModal
         isOpen={isFeedbackModalOpen}
         onClose={() => setIsFeedbackModalOpen(false)}
+        taskId={taskId}
         submission={selectedSubmission}
-        onSendFeedback={(score, feedback) => {
-          console.log("Feedback Submitted:", { score, feedback, submissionId: selectedSubmission?.id });
-        }}
       />
 
       <DeleteConfirmationModal

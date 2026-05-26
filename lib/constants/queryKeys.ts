@@ -94,4 +94,7 @@ export const queryKeys = {
 
   // Lookup
   lookup: "lookup",
+
+  // Tasks
+  tasks: "tasks",
 };

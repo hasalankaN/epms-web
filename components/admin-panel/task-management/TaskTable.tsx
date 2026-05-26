@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
+import { useDeleteTask } from "@/hooks/api/tasks/useDeleteTask";
 
 const TASK_STATUS_OPTIONS = [
   { value: "Completed", bg: "#DFFFF0", text: "#16A34A" },
@@ -34,6 +35,8 @@ interface TaskTableProps {
   isError?: boolean;
   currentPage: number;
   onPageChange: (page: number) => void;
+  totalCount: number;
+  totalPages: number;
 }
 
 export function TaskTable({
@@ -44,22 +47,16 @@ export function TaskTable({
   isError = false,
   currentPage,
   onPageChange,
- }: TaskTableProps) {
+  totalCount,
+  totalPages,
+}: TaskTableProps) {
   const router = useRouter();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<TaskRow | null>(null);
 
-  const itemsPerPage = 10;
+  const deleteMutation = useDeleteTask();
 
-  const totalCount = data.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
   const selectedRowCount = Object.values(rowSelection).filter(Boolean).length;
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-
-    return data.slice(startIndex, startIndex + itemsPerPage);
-  }, [data, currentPage]);
 
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
@@ -80,8 +77,8 @@ export function TaskTable({
       router.push(`/admin-panel/task-management/view/${task.id}`);
 
       return;
-    } 
-    
+    }
+
     if (action === "delete") {
       setTaskToDelete(task);
       setIsDeleteModalOpen(true);
@@ -90,6 +87,17 @@ export function TaskTable({
     }
 
     console.log(`Action: ${action}`, task);
+  };
+
+  const handleConfirmDelete = () => {
+    if (taskToDelete) {
+      deleteMutation.mutate(taskToDelete.id, {
+        onSuccess: () => {
+          setIsDeleteModalOpen(false);
+          setTaskToDelete(null);
+        },
+      });
+    }
   };
 
   const columns: Column<TaskRow>[] = [
@@ -195,7 +203,7 @@ export function TaskTable({
   return (
     <>
       <DataTable
-        data={paginatedData}
+        data={data}
         columns={columns}
         keyExtractor={(item) => item.id}
         isLoading={isLoading}
@@ -214,11 +222,7 @@ export function TaskTable({
       <DeleteConfirmationModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={() => {
-          console.log("Deleted Task:", taskToDelete?.id);
-          setIsDeleteModalOpen(false);
-          setTaskToDelete(null);
-        }}
+        onConfirm={handleConfirmDelete}
         title="Confirm Deletion"
         description="Are you sure you want to delete this task? This action cannot be undone."
       />
