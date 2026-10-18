@@ -1,189 +1,51 @@
 "use client";
 
 import * as React from "react";
-
 import { usePathname } from "next/navigation";
-
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-
+import { ChevronRight } from "lucide-react";
 import type { SidebarNavItem } from "@/data/sidebar";
 
+const PANEL_NAME_MAP: Record<string, string> = {
+  "employee-panel": "Employee",
+  "admin-panel": "Admin",
+  "hr-panel": "HR",
+  "supervisor-panel": "Supervisor",
+};
+
 const formatBreadcrumbSegment = (segment: string): string => {
+  if (PANEL_NAME_MAP[segment]) {
+    return PANEL_NAME_MAP[segment];
+  }
   return segment
     .replace(/-/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-export default function DynamicBreadcrumb({ sidebarData }: { sidebarData: SidebarNavItem[] }) {
+export default function DynamicBreadcrumb({
+  sidebarData,
+}: {
+  sidebarData: SidebarNavItem[];
+}) {
   const pathname = usePathname();
-  
   const pathSegments = pathname.split("/").filter(Boolean);
 
-  const findLinkWithParent = (url: string) => {
-    // Check main items and their children
-    for (const item of sidebarData) {
-      if (item.type === "sub" && item.children) {
-        for (const child of item.children) {
-          if (child.url === url) {
-            return { parentTitle: item.title, linkTitle: child.title };
-          }
-        }
-      }
-      
-      if (item.type === "link" && item.url === url) {
-        return { parentTitle: undefined, linkTitle: item.title };
-      }
-    }
+  // Extract panel prefix name e.g. "Employee"
+  const panelSegment = pathSegments[0];
+  const roleName = PANEL_NAME_MAP[panelSegment] || "Employee";
 
-    return undefined;
-  };
-
-  // Try to find an exact match for the current URL in the sidebar
-  const exactMatch = findLinkWithParent(pathname);
-  const IGNORED_LABELS = ["Admin Panel", "Lecturer Panel", "Referral Panel"];
-
-  // Special case for commission student detail
-  if (pathname.includes("/referral-panel/my-commissions/student/")) {
-    const labels = ["My Commissions", "View Student"];
-
-    return (
-      <Breadcrumb className="hidden lg:flex">
-        <BreadcrumbList>
-          {labels.map((label, index) => {
-            const isLast = index === labels.length - 1;
-
-            return (
-              <React.Fragment key={`${index}-${label}`}>
-                {index > 0 && <BreadcrumbSeparator />}
-                <BreadcrumbItem>
-                  {isLast ? (
-                    <BreadcrumbPage className="text-sm font-normal text-gray-900">{label}</BreadcrumbPage>
-                  ) : (
-                    <span className="text-sm font-normal text-gray-500">{label}</span>
-                  )}
-                </BreadcrumbItem>
-              </React.Fragment>
-            );
-          })}
-        </BreadcrumbList>
-      </Breadcrumb>
-    );
-  }
-
-  if (exactMatch) {
-    const { parentTitle, linkTitle } = exactMatch;
-    
-    const labels = (parentTitle ? [parentTitle, linkTitle] : [linkTitle]).filter(
-      (label) => label && !IGNORED_LABELS.includes(label)
-    );
-
-    // Remove "View" if it's the last item and there are other segments
-    // BUT only if there are at least 3 segments (e.g. Course Management > View > View)
-    // OR if it's a double view
-    if (labels.length > 1) {
-      const lastIsView = labels[labels.length - 1] === "View";
-      const secondLastIsView = labels[labels.length - 2] === "View";
-
-      if (lastIsView && (labels.length >= 3 || secondLastIsView)) {
-        labels.pop();
-      }
-    }
-
-    return (
-      <Breadcrumb className="hidden lg:flex">
-        <BreadcrumbList>
-          {labels.map((label, index) => {
-            const isLast = index === labels.length - 1;
-
-            return (
-              <React.Fragment key={`${index}-${label}`}>
-                {index > 0 && <BreadcrumbSeparator />}
-
-                <BreadcrumbItem>
-                  {isLast ? (
-                    <BreadcrumbPage className="text-sm font-normal text-gray-900">{label}</BreadcrumbPage>
-                  ) : (
-                    <span className="text-sm font-normal text-gray-500">{label}</span>
-                  )}
-                </BreadcrumbItem>
-              </React.Fragment>
-            );
-          })}
-        </BreadcrumbList>
-      </Breadcrumb>
-    );
-  }
-
-  // Fallback: Generate breadcrumbs from path segments
-  const allSegments = pathSegments.map((segment, index) => {
-    const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(segment);
-    const isNumeric = /^\d+$/.test(segment);
-    const isID = isUUID || isNumeric;
-    
-    const parentSegment = index > 0 ? pathSegments[index - 1] : null;
-
-    let formatted = formatBreadcrumbSegment(segment);
-
-    if (isID) {
-      formatted = parentSegment === "courses" ? "View Course" : "View";
-    }
-    
-    return {
-      segment,
-      href: "/" + pathSegments.slice(0, index + 1).join("/"),
-      formatted
-    };
-  });
-
-  const CUSTOM_IGNORED_LABELS = [...IGNORED_LABELS, "Student"];
-
-  const displayedSegments = allSegments.filter(
-    (item) => !CUSTOM_IGNORED_LABELS.includes(item.formatted)
-  );
-
-  const filteredSegments = [...displayedSegments];
-
-  // Remove "View" if it's the last item and there are other segments
-  // BUT only if there are at least 3 segments (e.g. Course Management > View > View or Course Management > Edit > View)
-  // OR if it's a double view
-  if (filteredSegments.length > 1) {
-    const lastIsView = filteredSegments[filteredSegments.length - 1].formatted === "View";
-    const secondLastIsView = filteredSegments[filteredSegments.length - 2].formatted === "View";
-    
-    if (lastIsView && (filteredSegments.length >= 3 || secondLastIsView)) {
-      filteredSegments.pop();
-    }
-  }
+  // Find matching nav title
+  const currentItem = sidebarData.find((item) => item.url === pathname);
+  const pageTitle = currentItem?.title || formatBreadcrumbSegment(pathSegments[pathSegments.length - 1] || "Dashboard");
 
   return (
-    <Breadcrumb className="hidden lg:flex">
-      <BreadcrumbList>
-        {displayedSegments.map((item, index) => {
-          const isLast = index === displayedSegments.length - 1;
-          
-          return (
-            <React.Fragment key={item.href}>
-              {index > 0 && <BreadcrumbSeparator />}
-              
-              <BreadcrumbItem>
-                {isLast ? (
-                  <BreadcrumbPage className="text-sm font-normal text-gray-900">
-                    {item.formatted}
-                  </BreadcrumbPage>
-                ) : (
-                  <span className="text-sm font-normal text-gray-500">{item.formatted}</span>
-                )}
-              </BreadcrumbItem>
-            </React.Fragment>
-          );
-        })}
-      </BreadcrumbList>
-    </Breadcrumb>
+    <nav className="flex items-center gap-1.5 text-xs text-neutral-400 font-normal select-none">
+      <span className="hover:text-neutral-700 transition-colors">
+        {roleName}
+      </span>
+      <ChevronRight className="h-3.5 w-3.5 text-neutral-400 stroke-[1.5]" />
+      <span className="text-neutral-800 font-medium">
+        {pageTitle}
+      </span>
+    </nav>
   );
 }

@@ -1,88 +1,60 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { useMutation } from "@tanstack/react-query";
-
 import { toast } from "sonner";
 
 import { login } from "@/lib/authentication";
-import type { LoginRequest } from "@/types/dto/auth.dto";
 import { useAuthStore } from "@/store/authStore";
+import type { LoginRequest, LoginResponseData } from "@/types/dto/auth.dto";
+import type { CommonResponseDataType } from "@/types/common";
+import { ROLE_PANEL_MAP, type UserRole } from "@/types/roles";
 
-export const { getAuthData, clearAuthData } = useAuthStore.getState();
-
-/**
- * Convert API error messages to user-friendly messages
- */
-function getFriendlyErrorMessage(errorMessage: string): string {
-  const errorMap: Record<string, string> = {
-    'INVALID_LOGIN_CREDENTIALS': 'Invalid email or password. Please try again.',
-  };
-
-  // Check if error message matches any known error code
-  const friendlyMessage = errorMap[errorMessage.toUpperCase().trim()];
-  
-  if (friendlyMessage) {
-    return friendlyMessage;
-  }
-
-  // If it's a code-like message (ALL_CAPS_WITH_UNDERSCORES), make it friendly
-  if (/^[A-Z_]+$/.test(errorMessage.trim())) {
-    return 'Unable to log in. Please check your credentials and try again.';
-  }
-
-  // Return the original message if it's already user-friendly
-  return errorMessage || 'An unexpected error occurred. Please try again.';
-}
-
-export function useLoginMutation() {
+export const useLoginMutation = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const setAuthData = useAuthStore((state) => state.setAuthData);
 
-  return useMutation({
-    mutationFn: async (data: LoginRequest) => {
-      const result = await login(data);
+  return useMutation<
+    CommonResponseDataType<LoginResponseData | null>,
+    Error,
+    LoginRequest
+  >({
+    mutationFn: async (credentials: LoginRequest) => {
+      const result = await login(credentials);
 
-      if (result.status === "FAIL") {
-        throw new Error(result.message ?? "Invalid email or password.");
+      if (result.status === "FAIL" || !result.data) {
+        throw new Error(result.message || "Invalid username or password. Please check your details and try again.");
       }
 
-      // Store auth response in Zustand store (persisted to sessionStorage)
-      if (result.data) {
-        setAuthData(result.data);
-      }
-
-return result;
+      return result;
     },
-    onSuccess: (result) => {
-      toast.success("Logged in successfully.");
+    onSuccess: (data) => {
+      if (!data.data) return;
 
-      // Check for callbackUrl in the current URL
-      const params = new URLSearchParams(window.location.search);
-      const callbackUrl = params.get("callbackUrl");
+      setAuthData(data.data);
+      toast.success("Login successful!");
 
-      if (callbackUrl && callbackUrl.startsWith("/")) {
+      const callbackUrl = searchParams.get("callbackUrl");
+
+      if (callbackUrl) {
         router.push(callbackUrl);
-
-        return;
+        
+return;
       }
 
-      // Redirect to the user's panel dashboard based on role
-      let rolePrefix = result.data?.user?.role?.toLowerCase() ?? "admin";
-      
-      if (rolePrefix === "referral_agent") {
-        rolePrefix = "referral";
-      }
-      
-      router.push(`/${rolePrefix}-panel/dashboard`);
+      const role = data.data.user.role as UserRole;
+      const targetPanel = ROLE_PANEL_MAP[role] || "/admin-panel";
+
+      router.push(`${targetPanel}/dashboard`);
     },
     onError: (error) => {
-      // Convert error message to user-friendly version
-      const friendlyMessage = getFriendlyErrorMessage(error.message);
-      
-      toast.error(friendlyMessage);
-      console.error("Login mutation failed:", error.message);
+      toast.error(error.message || "An unexpected error occurred during login.");
     },
   });
-}
+};
+
+export const clearAuthData = () => {
+  useAuthStore.getState().clearAuthData();
+};

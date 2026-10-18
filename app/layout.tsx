@@ -12,13 +12,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "BINZO",
-  description: "Binzo Learning Management System Admin Panel",
-  icons: {
-    icon: "/mobile-logo.svg",
-    shortcut: "/mobile-logo.svg",
-    apple: "/mobile-logo.svg",
-  },
+  title: "EPMS - Employee Performance Management System",
+  description: "Enterprise Employee Performance and Management System",
 };
 
 export default function RootLayout({

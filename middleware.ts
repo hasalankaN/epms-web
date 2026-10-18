@@ -1,22 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
 import { jwtVerify } from "jose";
+import type { UserRole } from "@/types/roles";
+import { PANEL_PREFIXES, ROLE_PANEL_MAP } from "@/types/roles";
 
-const secretKey = process.env.JWT_SECRET || "secret123";
+const secretKey = process.env.JWT_SECRET || "epms-jwt-secret-2026";
 const key = new TextEncoder().encode(secretKey);
-const SESSION_COOKIE_NAME = "binzo-admin-session";
-
-const PANEL_PREFIXES = ["/admin-panel", "/lecturer-panel", "/referral-panel"];
-
-type Role = "ADMIN" | "LECTURER" | "REFERRAL" | "REFERRAL_AGENT";
-
-const ROLE_PANEL_MAP: Record<string, string> = {
-  ADMIN: "/admin-panel",
-  LECTURER: "/lecturer-panel",
-  REFERRAL: "/referral-panel",
-  REFERRAL_AGENT: "/referral-panel",
-};
+const SESSION_COOKIE_NAME = "epms-session";
 
 async function getSessionFromCookie(request: NextRequest) {
   const cookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
@@ -27,7 +17,7 @@ async function getSessionFromCookie(request: NextRequest) {
     const { payload } = await jwtVerify(cookie, key, { algorithms: ["HS256"] });
 
     return payload as {
-      user: { id: string; email: string; role: Role; privileges: string[] };
+      user: { id: string; email: string; role: UserRole; privileges: string[] };
       expires: string;
     };
   } catch {
@@ -56,11 +46,10 @@ export async function middleware(request: NextRequest) {
 
     if (!session || new Date() > new Date(session.expires)) {
       const signInUrl = new URL("/sign-in", request.url);
-
       return NextResponse.redirect(signInUrl);
     }
 
-    const role = session.user.role as Role;
+    const role = session.user.role;
     const allowedPanel = ROLE_PANEL_MAP[role] || "/admin-panel";
 
     return NextResponse.redirect(new URL(`${allowedPanel}/dashboard`, request.url));
@@ -76,29 +65,24 @@ export async function middleware(request: NextRequest) {
   // No session -> redirect to sign-in with callbackUrl
   if (!session) {
     const signInUrl = new URL("/sign-in", request.url);
-
     signInUrl.searchParams.set("callbackUrl", pathname);
-
     return NextResponse.redirect(signInUrl);
   }
 
   // Check session expiry
   if (new Date() > new Date(session.expires)) {
     const signInUrl = new URL("/sign-in", request.url);
-
     signInUrl.searchParams.set("callbackUrl", pathname);
-
     return NextResponse.redirect(signInUrl);
   }
 
-  const role = session.user.role as Role;
+  const role = session.user.role;
   const allowedPanel = ROLE_PANEL_MAP[role];
   const currentPanel = getPanelFromPath(pathname);
 
   // If the user is accessing a panel that doesn't match their role, redirect to their own panel dashboard
   if (allowedPanel && currentPanel && currentPanel !== allowedPanel) {
     const redirectUrl = new URL(`${allowedPanel}/dashboard`, request.url);
-
     return NextResponse.redirect(redirectUrl);
   }
 
@@ -106,5 +90,11 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard", "/admin-panel/:path*", "/lecturer-panel/:path*", "/referral-panel/:path*"],
+  matcher: [
+    "/dashboard",
+    "/admin-panel/:path*",
+    "/hr-panel/:path*",
+    "/supervisor-panel/:path*",
+    "/employee-panel/:path*",
+  ],
 };

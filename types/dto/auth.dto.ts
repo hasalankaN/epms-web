@@ -4,7 +4,7 @@ import { userSchema } from "./user.dto";
 
 // For the login request form
 export const loginRequestSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email." }),
+  email: z.string().min(1, { message: "Please enter your username or email." }),
   password: z.string().min(1, { message: "Password is required." }),
   rememberMe: z.boolean().optional(),
 });

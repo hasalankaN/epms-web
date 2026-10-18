@@ -1,7 +1,7 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
-import type { LoginResponseData } from '@/types/dto/auth.dto';
+import type { LoginResponseData } from "@/types/dto/auth.dto";
 
 interface AuthState {
   authData: LoginResponseData | null;
@@ -14,21 +14,21 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       authData: null,
-      
+
       setAuthData: (data: LoginResponseData) => {
         set({ authData: data });
       },
-      
+
       clearAuthData: () => {
         set({ authData: null });
       },
-      
+
       getAuthData: () => {
         return get().authData;
       },
     }),
     {
-      name: 'binzo-admin-auth-store',
+      name: "epms-auth-store",
       storage: createJSONStorage(() => sessionStorage),
     }
   )

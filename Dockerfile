@@ -13,7 +13,7 @@ COPY . .
 
 # Add ENV variables
 ENV NEXT_PUBLIC_API_BASE_URL=https://lms-binzo-backend-dev-956769189464.asia-southeast1.run.app
-ENV JWT_SECRET=binzo-admin-jwt-secret-2026
+ENV JWT_SECRET=epms-jwt-secret-2026
 
 # Build the Next.js application
 RUN npm run build

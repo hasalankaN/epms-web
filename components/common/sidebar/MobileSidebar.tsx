@@ -1,15 +1,27 @@
 "use client";
 
 import { useState } from "react";
-
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import {
+  LayoutDashboard,
+  User,
+  Clock,
+  Calendar,
+  ClipboardCheck,
+  GraduationCap,
+  DollarSign,
+  Star,
+  Briefcase,
+  Building2,
+  Settings,
+  Bell,
+  LogOut,
+  Menu,
+  X,
+} from "lucide-react";
 
-import { motion, AnimatePresence } from "framer-motion";
-
-import { LogOut, CircleUser, ChevronsRight } from "lucide-react";
-
+import Logo from "../Logo";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -18,42 +30,73 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { logout } from "@/lib/authentication";
 import type { SidebarNavItem } from "@/data/sidebar";
 import { clearAuthData } from "@/hooks/api/auth/useAuth";
 import { useSession } from "@/components/providers/SessionProvider";
-import {
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarMenuSub,
-  SidebarMenuHeader,
-} from "@/components/ui/sidebar-menu";
+import { ROLE_PANEL_MAP, type UserRole } from "@/types/roles";
+import { cn } from "@/lib/utils";
 
 interface MobileSidebarProps {
   filteredSidebarData: SidebarNavItem[];
 }
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.05,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, x: -20 },
-  show: { opacity: 1, x: 0 },
-};
+function getSidebarIcon(iconName?: string) {
+  switch (iconName?.toLowerCase()) {
+    case "layoutdashboard":
+    case "dashboard":
+    case "dashboard-icon":
+      return LayoutDashboard;
+    case "user":
+    case "profile":
+    case "customers-icon":
+    case "user-gear":
+      return User;
+    case "clock":
+    case "attendance":
+      return Clock;
+    case "calendar":
+    case "leaves":
+    case "leave":
+      return Calendar;
+    case "clipboardcheck":
+    case "tasks":
+    case "list-checks":
+      return ClipboardCheck;
+    case "graduationcap":
+    case "training":
+    case "student":
+      return GraduationCap;
+    case "dollarsign":
+    case "salary":
+    case "invoice":
+    case "payroll":
+      return DollarSign;
+    case "star":
+    case "performance":
+    case "self evaluation":
+    case "reviews":
+    case "chart-bar":
+      return Star;
+    case "briefcase":
+    case "jobs":
+    case "internal jobs":
+    case "stamp":
+      return Briefcase;
+    case "building2":
+    case "building":
+    case "departments":
+      return Building2;
+    case "settings":
+      return Settings;
+    case "bell":
+    case "notifications":
+      return Bell;
+    default:
+      return LayoutDashboard;
+  }
+}
 
 export default function MobileSidebar({ filteredSidebarData }: MobileSidebarProps) {
   const pathname = usePathname();
@@ -62,245 +105,142 @@ export default function MobileSidebar({ filteredSidebarData }: MobileSidebarProp
   const session = useSession();
 
   const getDashboardLink = () => {
-    switch (session?.user?.role) {
-      case "LECTURER":
-        return "/lecturer-panel/dashboard";
-      case "REFERRAL":
-        return "/referral-panel/dashboard";
-      default:
-        return "/admin-panel/dashboard";
-    }
+    const role = session?.user?.role as UserRole;
+    return ROLE_PANEL_MAP[role] ? `${ROLE_PANEL_MAP[role]}/dashboard` : "/admin-panel/dashboard";
   };
 
   const handleLinkClick = () => setIsOpen(false);
 
   const handleLogout = async () => {
     setIsOpen(false);
-    
-    // Clear session storage
     clearAuthData();
-    
     await logout();
     router.push("/sign-in");
   };
 
   const isLinkActive = (url?: string) => {
     if (!url) return false;
-    
-    return pathname.startsWith(url);
+    return pathname === url || pathname.startsWith(`${url}/`);
   };
 
-  const handleProfileClick = () => {
-    setIsOpen(false);
-
-    if (session?.user?.role === "LECTURER") {
-      router.push("/lecturer-panel/profile");
-    }
-  };
-
-  const renderNavItem = (item: SidebarNavItem) => {
-    switch (item.type) {
-      case "header":
-        return (
-          <motion.div variants={itemVariants} key={item.id} whileHover={{ x: 4 }}>
-            <SidebarMenuHeader>{item.title}</SidebarMenuHeader>
-          </motion.div>
-        );
-
-      case "sub":
-        return (
-          <motion.div variants={itemVariants} key={item.id} whileHover={{ x: 4 }}>
-            <Collapsible
-              defaultOpen={item.children?.some((child) => isLinkActive(child.url))}
-            >
-              <SidebarMenuItem>
-                <CollapsibleTrigger className="w-full group">
-                  <SidebarMenuButton
-                    level="main"
-                    icon={item.icon}
-                    className="group-data-[state=open]:bg-gray-100 dark:group-data-[state=open]:bg-gray-800 transition-transform duration-300 hover:translate-x-1"
-                  >
-                    {item.title}
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarMenuSub>
-                    <motion.div
-                      variants={containerVariants}
-                      initial="hidden"
-                      animate="show"
-                      className="flex flex-col gap-1"
-                    >
-                      {item.children?.map((child) => (
-                        <motion.div variants={itemVariants} key={child.id} whileHover={{ x: 4 }}>
-                          <SidebarMenuItem>
-                            {child.external ? (
-                              <a
-                                href={child.url!}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={handleLinkClick}
-                                className="block"
-                              >
-                                <SidebarMenuButton
-                                  level="sub"
-                                  active={false}
-                                  count={child.count}
-                                  className="transition-transform duration-300 hover:translate-x-1"
-                                >
-                                  {child.title}
-                                </SidebarMenuButton>
-                              </a>
-                            ) : (
-                              <Link href={child.url!} onClick={handleLinkClick} prefetch={false}>
-                                <SidebarMenuButton
-                                  level="sub"
-                                  active={isLinkActive(child.url)}
-                                  count={child.count}
-                                  className="transition-transform duration-300 hover:translate-x-1"
-                                >
-                                  {child.title}
-                                </SidebarMenuButton>
-                              </Link>
-                            )}
-                          </SidebarMenuItem>
-                        </motion.div>
-                      ))}
-                    </motion.div>
-                  </SidebarMenuSub>
-                </CollapsibleContent>
-              </SidebarMenuItem>
-            </Collapsible>
-          </motion.div>
-        );
-
-      case "link":
-      default:
-        if (item.external) {
-          return (
-            <motion.div variants={itemVariants} key={item.id} whileHover={{ x: 4 }}>
-              <SidebarMenuItem>
-                <a
-                  href={item.url!}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={handleLinkClick}
-                  className="block"
-                >
-                  <SidebarMenuButton
-                    level="main"
-                    icon={item.icon}
-                    active={false}
-                    className="transition-transform duration-300 hover:translate-x-1"
-                  >
-                    {item.title}
-                  </SidebarMenuButton>
-                </a>
-              </SidebarMenuItem>
-            </motion.div>
-          );
-        }
-        
-        return (
-          <motion.div variants={itemVariants} key={item.id} whileHover={{ x: 4 }}>
-            <SidebarMenuItem>
-              <Link href={item.url!} onClick={handleLinkClick} prefetch={false}>
-                <SidebarMenuButton
-                  level="main"
-                  icon={item.icon}
-                  active={isLinkActive(item.url)}
-                  count={item.count}
-                  className="transition-transform duration-300 hover:translate-x-1"
-                >
-                  {item.title}
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-          </motion.div>
-        );
-    }
-  };
+  const userName = session?.user?.name || "Kasun Perera";
+  const userRole = session?.user?.role ? (session.user.role.charAt(0) + session.user.role.slice(1).toLowerCase()) : "Employee";
+  const initials = userName
+    .split(" ")
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "KP";
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="shrink-0 lg-hidden">
-          <i className="mobsidebar-icon h-5 w-5 shrink-0 text-[#0F172B]" />
+        <Button variant="ghost" size="icon" className="shrink-0 lg:hidden h-9 w-9">
+          <Menu className="h-5 w-5 text-neutral-800" />
           <span className="sr-only">Toggle navigation menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent 
-        side="left" 
+      <SheetContent
+        side="left"
         showCloseButton={false}
-        overlayClassName="bg-[rgba(0,0,0,0.10)]"
-        className="flex w-[280px] flex-col p-0 bg-white dark:bg-slate-950 z-50 h-full data-[state=open]:duration-300 rounded-r-[16px] border-r border-[#E2E8F0] shadow-[2px_0_12px_8px_rgba(202,213,226,0.15)] overflow-hidden"
+        className="flex w-[280px] flex-col p-0 bg-white z-50 h-full border-r border-neutral-200 shadow-xl overflow-hidden"
       >
-        <SheetHeader className="px-6 py-[11px] border-b border-[#E2E8F0] min-h-[62px]">
-          <div className="flex w-full items-center justify-between">
-            <SheetTitle asChild>
-              <Link href={getDashboardLink()} onClick={handleLinkClick} className="flex-shrink-0">
-                <Image 
-                  src="/mobile-logo.svg" 
-                  alt="Binzo" 
-                  width={40} 
-                  height={40} 
-                  className="rounded-full"
-                />
-              </Link>
-            </SheetTitle>
-            <button 
-              onClick={() => setIsOpen(false)}
-              className="flex h-5 w-5 shrink-0 items-center justify-center text-[#0F172B]"
+        <SheetHeader className="px-6 py-4 border-b border-neutral-200 min-h-[64px] flex flex-row items-center justify-between">
+          <SheetTitle asChild>
+            <Link
+              href={getDashboardLink()}
+              onClick={handleLinkClick}
+              className="flex items-center gap-2"
             >
-              <i className="square-close-icon h-5 w-5" />
-              <span className="sr-only">Close</span>
-            </button>
-          </div>
-        </SheetHeader>
-        
-        <ScrollArea className="flex-1">
-          <SidebarMenu className="px-6 py-4 overflow-hidden">
-            <AnimatePresence mode="wait">
-              {isOpen && (
-                <motion.div
-                  key="mobile-menu-container"
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="show"
-                  exit="hidden"
-                  className="flex flex-col gap-1"
-                >
-                  {filteredSidebarData.map(renderNavItem)}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </SidebarMenu>
-        </ScrollArea>
-        <div className="mt-auto border-t border-[#E2E8F0] bg-white p-4 flex flex-col gap-[6px] shadow-[0_-1px_2px_0_rgba(16,24,40,0.05)]">
-          {/* User Profile Item */}
-          <div 
-            onClick={handleProfileClick}
-            className="flex w-[224px] items-center justify-between rounded-[6px] border border-[#E2E8F0] bg-[#F1F5F9] pt-[6px] pr-[7px] pb-[6px] pl-0 cursor-pointer hover:bg-[#F1F5F9]/80 transition-colors"
+              <Logo disableLink />
+            </Link>
+          </SheetTitle>
+          <button
+            onClick={() => setIsOpen(false)}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 transition-colors"
           >
-            <div className="flex items-center gap-2 pl-1 overflow-hidden flex-1">
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white">
-                <CircleUser className="h-4 w-4 text-[#0F172B]" strokeWidth={1.5} />
-              </div>
-              <span className="flex-1 truncate font-[Inter] text-sm font-medium leading-5 text-[#0F172B]">
-                {session?.user?.name || "Lecturer Profile"}
-              </span>
-            </div>
-            <ChevronsRight className="h-4 w-4 text-[#94A3B8]" strokeWidth={1.5} />
-          </div>
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </button>
+        </SheetHeader>
 
-          {/* Logout Button */}
-          <div className="pt-2"> 
-            <Button variant="ghost" className="w-full justify-start gap-3 px-2 h-auto py-2 hover:bg-[#FDF2F8]" onClick={handleLogout}>
-              <LogOut className="h-5 w-5 text-[#0F172B]" />
-              <span className="flex-1 text-left truncate font-[Inter] text-sm font-medium leading-5 text-[#0F172B]">
-                Log out
-              </span>
-            </Button>
+        <ScrollArea className="flex-1 px-3 py-3">
+          <nav className="flex flex-col space-y-0.5">
+            {filteredSidebarData.map((item) => {
+              if (item.type === "header") {
+                return (
+                  <div
+                    key={item.id}
+                    className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider px-3 pt-4 pb-1"
+                  >
+                    {item.title}
+                  </div>
+                );
+              }
+
+              const Icon = getSidebarIcon(item.icon);
+              const active = isLinkActive(item.url);
+
+              return (
+                <Link
+                  key={item.id}
+                  href={item.url || "#"}
+                  onClick={handleLinkClick}
+                  prefetch={false}
+                  className={cn(
+                    "group flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                    active
+                      ? "bg-neutral-100 text-neutral-900 font-semibold"
+                      : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50/90 font-normal"
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      "h-4 w-4 shrink-0 transition-colors",
+                      active
+                        ? "text-neutral-900"
+                        : "text-neutral-500 group-hover:text-neutral-900"
+                    )}
+                  />
+                  <span className="truncate">{item.title}</span>
+
+                  {item.count !== undefined && item.count > 0 && (
+                    <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-neutral-900 px-1.5 text-[10px] font-bold text-white">
+                      {item.count}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+        </ScrollArea>
+
+        {/* Mobile bottom user card */}
+        <div className="p-3 mt-auto border-t border-neutral-100 bg-neutral-50/40">
+          <div className="flex items-center justify-between rounded-xl border border-neutral-200/90 bg-white p-2.5 shadow-xs">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600 font-semibold text-xs">
+                {initials}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-semibold text-neutral-900 leading-tight">
+                  {userName}
+                </p>
+                <p className="truncate text-[11px] text-neutral-400 leading-tight mt-0.5">
+                  {userRole}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 transition-colors shrink-0 ml-1"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="sr-only">Sign out</span>
+            </button>
           </div>
         </div>
       </SheetContent>

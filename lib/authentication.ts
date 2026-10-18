@@ -3,24 +3,24 @@
 import { cookies } from "next/headers";
 
 import { SignJWT, jwtVerify } from "jose";
-
 import axios from "axios";
 
 import api from "./axios";
 import type { CommonResponseDataType } from "@/types/common";
 import type { LoginRequest, LoginResponseData } from "@/types/dto/auth.dto";
+import type { UserRole } from "@/types/roles";
 import { securityLogger } from "./security-logger";
 
-const secretKey = process.env.JWT_SECRET || "secret123";
+const secretKey = process.env.JWT_SECRET || "epms-jwt-secret-2026";
 const key = new TextEncoder().encode(secretKey);
-const SESSION_COOKIE_NAME = "binzo-admin-session";
+const SESSION_COOKIE_NAME = "epms-session";
 
 export type Session = {
   user: {
     id: string;
     name: string;
     email: string;
-    role: string;
+    role: UserRole;
     privileges: string[];
   };
   tokens: {
@@ -42,49 +42,75 @@ export async function decrypt(input: string): Promise<any> {
   try {
     const { payload } = await jwtVerify(input, key, { algorithms: ["HS256"] });
 
-    return payload;
+    
+return payload;
   } catch {
     return null;
   }
 }
 
-//  Login Server Action
+// Login Server Action
 export async function login(data: LoginRequest): Promise<CommonResponseDataType<LoginResponseData | null>> {
   try {
     const { email, password } = data;
 
-    const response = await api.post<CommonResponseDataType<LoginResponseData>>(
-      "/api/v1/auth/login",
-      { email, password }
-    );
+    // Send payload matching backend expectations
+    const payload = {
+      email: email.trim(),
+      password,
+      rememberMe: Boolean(data.rememberMe),
+      deviceToken: "fcm_token_web_12345",
+      deviceId: "device-web-client",
+      deviceType: "web",
+      appVersion: "1.3.0",
+      timeZone: "Asia/Colombo",
+    };
 
-    const apiResponse = response.data;
+    const response = await api.post("/auth/login", payload);
+    const apiData = response.data;
 
-    if (apiResponse.status === "FAIL") {
-      securityLogger.logLoginFailure(email, apiResponse.message || "Login failed");
+    // The backend returns { access_token, refresh_token, user: { userId, firstName, lastName, email, role, status, ... } }
+    const accessToken = apiData.access_token || apiData.id_token || apiData.data?.access_token || apiData.data?.id_token;
+    const refreshToken = apiData.refresh_token || apiData.data?.refresh_token;
+    const rawUser = apiData.user || apiData.data?.user;
 
-      return apiResponse;
+    if (!accessToken || !rawUser) {
+      securityLogger.logLoginFailure(email, "Invalid response from server");
+      return {
+        status: "FAIL",
+        message: "Invalid response from server",
+        data: null,
+      };
     }
 
-    const apiData = apiResponse.data;
+    const roleUpper = (rawUser.role || "EMPLOYEE").toUpperCase() as UserRole;
+    const fullName = [rawUser.firstName, rawUser.lastName].filter(Boolean).join(" ").trim() || rawUser.name || rawUser.email;
+
+    const normalizedUser = {
+      id: rawUser.userId || rawUser.id || "user-id",
+      name: fullName,
+      email: rawUser.email || email,
+      role: roleUpper,
+      status: rawUser.status || "Active",
+    };
 
     const sessionExpires = data.rememberMe
-      ? new Date(Date.now() + 1000 * 60 * 60 * 24 * 7)
-      : new Date(Date.now() + 1000 * apiData.expires_in);
+      ? new Date(Date.now() + 1000 * 60 * 60 * 24 * 30) // 30 days
+      : new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours
 
-    const privileges = apiData.user.role === "ADMIN" ? ["all"] : [];
+    const privileges = roleUpper === "ADMIN" ? ["all"] : [];
 
     const sessionPayload: Session = {
       user: {
-        id: apiData.user.id,
-        name: apiData.user.email,
-        email: apiData.user.email,
-        role: apiData.user.role,
+        id: normalizedUser.id,
+        name: normalizedUser.name,
+        email: normalizedUser.email,
+        role: roleUpper,
         privileges,
       },
       tokens: {
-        accessToken: apiData.id_token,
-        refreshToken: apiData.refresh_token,
+        accessToken: accessToken,
+        refreshToken: refreshToken || accessToken,
       },
       expires: sessionExpires,
     };
@@ -97,33 +123,42 @@ export async function login(data: LoginRequest): Promise<CommonResponseDataType<
     (await cookies()).set(SESSION_COOKIE_NAME, encryptedSession, {
       expires: sessionExpires,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
     });
 
-    securityLogger.logLoginSuccess(apiData.user.id, apiData.user.email);
+    securityLogger.logLoginSuccess(normalizedUser.id, normalizedUser.email);
 
-    return apiResponse;
+    return {
+      status: "SUCCESS",
+      message: "Login successful",
+      data: {
+        id_token: accessToken,
+        refresh_token: refreshToken || accessToken,
+        expires_in: 86400,
+        user: normalizedUser,
+      },
+    };
   } catch (error: any) {
-    console.error("Login Server Action Failed:", error);
+    console.error("Login Server Action Failed:", error?.response?.data || error?.message || error);
+
+    const errorMessage = error?.response?.data?.message || error?.message || "Invalid credentials";
 
     securityLogger.logLoginFailure(
       data.email,
-      error.response?.data?.message || error.message || "Unknown error"
+      errorMessage
     );
 
     return {
       status: "FAIL",
-      message: error.response?.data?.message || "An unexpected server error occurred.",
+      message: errorMessage,
       data: null,
     };
   }
 }
 
-//Session Management Functions
-
+// Session Management Functions
 export async function getSession(): Promise<Session | null> {
-
   const sessionCookie = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
 
   if (!sessionCookie) return null;
@@ -137,17 +172,15 @@ export async function getSession(): Promise<Session | null> {
     if (new Date() > decrypted.expires) {
       securityLogger.logSessionExpired(decrypted.user?.id);
       await removeSession();
-
-      return null;
+      
+return null;
     }
   }
-
 
   return decrypted;
 }
 
 export async function logout() {
-
   const session = await getSession();
 
   if (session?.user?.id) {
@@ -167,8 +200,8 @@ export async function updateTokensInSession(newAccessToken: string, newRefreshTo
 
   if (!session) {
     console.warn("Attempted to update tokens, but no session was found.");
-
-    return;
+    
+return;
   }
 
   session.tokens.accessToken = newAccessToken;
@@ -182,8 +215,8 @@ export async function updateTokensInSession(newAccessToken: string, newRefreshTo
   (await cookies()).set(SESSION_COOKIE_NAME, encryptedSession, {
     expires: new Date(session.expires),
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
   });
 
   console.log("Tokens updated in session cookie.");
@@ -194,7 +227,6 @@ export async function refreshToken(
   token: string
 ): Promise<CommonResponseDataType<{ id_token: string; refresh_token: string; expires_in: number } | null>> {
   try {
-    // We use a direct axios call here to avoid interceptor loops if this call itself fails.
     const response = await axios.post<CommonResponseDataType<{ id_token: string; refresh_token: string; expires_in: number }>>(
       `${api.defaults.baseURL}/api/v1/auth/refresh`,
       { refresh_token: token }

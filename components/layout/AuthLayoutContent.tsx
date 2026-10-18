@@ -1,12 +1,9 @@
 "use client";
 
 import React from "react";
-
-import Image from "next/image";
-
 import { usePathname } from "next/navigation";
-
 import { motion, AnimatePresence } from "framer-motion";
+import { Check, Users } from "lucide-react";
 
 export default function AuthLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -14,108 +11,96 @@ export default function AuthLayoutContent({ children }: { children: React.ReactN
 
   return (
     <div className="flex min-h-screen w-full bg-white relative overflow-hidden">
-      <div className={`flex w-full h-full absolute inset-0 transition-all duration-500 ease-in-out ${isLoginPage ? 'flex-row' : 'flex-row-reverse'}`}>
-        
-         {/* Image Section - Animated */}
-         <motion.div 
-            layout
-            className="hidden lg:flex lg:w-1/2 relative h-full items-center justify-center"
-            style={{
-              background: "var(--Gradient-1, linear-gradient(180deg, #EC4899 0%, #F472B6 50%, #FBCFE8 100%))"
-            }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-         >
-            {/* Logo */}
-            <div className="absolute top-12 left-12 z-20">
-                 <Image
-                  src="/auth-logo.svg"
-                  alt="Binzo Logo"
-                  width={139.32}
-                  height={40}
-                  className="object-contain" // Preserves aspect-ratio
-                  priority
-                />
-            </div>
+      <div
+        className={`flex w-full min-h-screen transition-all duration-500 ease-in-out ${
+          isLoginPage ? "flex-col lg:flex-row" : "flex-col lg:flex-row-reverse"
+        }`}
+      >
+        {/* Left Hero Section (Image 1 Left Side) */}
+        <div className="hidden lg:flex lg:w-1/2 relative min-h-screen flex-col justify-between p-12 lg:p-16 bg-[#09090b] text-white overflow-hidden select-none">
+          {/* Subtle Concentric Rings Pattern (Top Right) */}
+          <div className="absolute -top-12 -right-12 w-[480px] h-[480px] pointer-events-none opacity-20">
+            <svg viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full text-white">
+              <circle cx="360" cy="40" r="120" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" />
+              <circle cx="360" cy="40" r="200" stroke="currentColor" strokeWidth="1" />
+              <circle cx="360" cy="40" r="280" stroke="currentColor" strokeWidth="1" />
+              <circle cx="360" cy="40" r="360" stroke="currentColor" strokeWidth="1" />
+            </svg>
+          </div>
 
+          {/* Top Brand Logo */}
+          <div className="flex items-center gap-3 z-10">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/20 bg-white/5 text-white shadow-sm">
+              <Users className="h-4 w-4" />
+            </div>
+            <span className="text-lg font-bold tracking-tight text-white">EPMS</span>
+          </div>
+
+          {/* Main Hero Content */}
+          <div className="relative z-10 my-auto max-w-xl space-y-8 pr-4">
+            <h1 className="text-4xl xl:text-5xl font-bold tracking-tight text-white leading-[1.15]">
+              People, performance and payroll in one place.
+            </h1>
+
+            <p className="text-neutral-400 text-sm md:text-base leading-relaxed max-w-lg">
+              Track attendance, approve leave, plan training, run evaluations and manage salaries with one system built around your team.
+            </p>
+
+            {/* Feature Bullets with Teal Checkmarks */}
+            <div className="space-y-3.5 pt-2">
+              <div className="flex items-center gap-3">
+                <div className="flex h-5 w-5 items-center justify-center rounded-full text-teal-400">
+                  <Check className="h-4 w-4 stroke-[2.5]" />
+                </div>
+                <span className="text-sm text-neutral-300">Attendance and leave with simple approvals</span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex h-5 w-5 items-center justify-center rounded-full text-teal-400">
+                  <Check className="h-4 w-4 stroke-[2.5]" />
+                </div>
+                <span className="text-sm text-neutral-300">Training, evaluations and KPI tracking</span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex h-5 w-5 items-center justify-center rounded-full text-teal-400">
+                  <Check className="h-4 w-4 stroke-[2.5]" />
+                </div>
+                <span className="text-sm text-neutral-300">Payroll, payslips and internal job postings</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Footer Tagline */}
+          <div className="z-10 text-xs text-neutral-500 font-normal">
+            Employee and Performance Management System
+          </div>
+        </div>
+
+        {/* Right Form Section (Image 1 Right Side) */}
+        <div className="flex w-full items-center justify-center lg:w-1/2 min-h-screen bg-white relative p-6 sm:p-12">
+          {/* Mobile Header Branding */}
+          <div className="absolute top-6 left-6 flex items-center gap-2.5 lg:hidden">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-900 text-white">
+              <Users className="h-4 w-4" />
+            </div>
+            <span className="font-bold text-neutral-900 tracking-tight">EPMS</span>
+          </div>
+
+          <div className="w-full max-w-[420px]">
             <AnimatePresence mode="wait">
               <motion.div
-                key={isLoginPage ? "login-img" : "forgot-img"}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.3 }}
-                className="relative"
-                style={{ width: '403.472px', height: '340.79px' }}
+                key={pathname}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.25 }}
               >
-                 <Image
-                  src={isLoginPage ? "/login-background.svg" : "/forgot-password-background.svg"}
-                  alt="Background illustration"
-                  fill
-                  className="object-contain"
-                  priority
-                />
+                {children}
               </motion.div>
             </AnimatePresence>
-
-            {/* Tagline */}
-            <div className="absolute bottom-12 left-12 right-12 z-20 flex flex-col gap-2">
-                <p style={{ 
-                    color: 'var(--slate-950, #020618)',
-                    fontSize: '16px',
-                    fontWeight: 500,
-                    lineHeight: '24px',
-                    fontFamily: 'Inter, sans-serif'
-                }}>
-                    “Every successful student has a carefully crafted learning journey behind them.”
-                </p>
-               <div className="flex items-center gap-2">
-                 {/* Dash/Line */}
-                 <div className="h-[1px] w-3 bg-slate-700/50"></div>
-                 <p style={{
-                    color: 'var(--slate-700, #314158)',
-                    fontSize: '12px',
-                    fontWeight: 400,
-                    lineHeight: '16px',
-                     fontFamily: 'Inter, sans-serif',
-                     fontFeatureSettings: '"subs" on'
-                 }}>
-                    FROM DEVELOPER TEAM
-                </p>
-               </div>
-            </div>
-         </motion.div>
-
-        {/* Form Section - Animated */}
-        <motion.div 
-            layout
-            className="flex w-full items-center justify-center lg:w-1/2 h-full bg-white relative"
-             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        >
-             {/* Mobile/Tablet Navbar */}
-             <div className="absolute top-0 w-full flex justify-center items-center py-6 lg:hidden z-10 bg-white border-b border-slate-200 shadow-[0_4px_12px_8px_rgba(0,0,0,0.05)]">
-                <Image
-                    src="/mobile-logo.svg"
-                    alt="Binzo Logo"
-                    width={40}
-                    height={40}
-                    className="object-contain"
-                />
-             </div>
-
-             <div className="w-full max-w-sm px-4">
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={pathname}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ duration: 0.3 }}
-                    >
-                        {children}
-                    </motion.div>
-                </AnimatePresence>
-            </div>
-        </motion.div>
+          </div>
+        </div>
       </div>
     </div>
   );

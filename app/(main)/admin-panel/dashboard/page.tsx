@@ -1,179 +1,120 @@
-"use client";
+import React from "react";
 
-import React, { useState } from "react";
+import { Users, Shield, Building2, Activity, ArrowUpRight } from "lucide-react";
 
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
-
-import { motion } from "framer-motion";
-import { FileText, Plus, Zap } from "lucide-react";
-
-import { OverviewSection } from "@/components/admin-panel/dashboard/OverviewSection";
-import { ReferralSection } from "@/components/admin-panel/dashboard/ReferralSection";
-import { AnalyticsSection } from "@/components/admin-panel/dashboard/AnalyticsSection";
-
-// Modals
-import { AddInquiryPanel } from "@/components/admin-panel/inquiry/modals/AddInquiryPanel";
-import { AddComplaintPanel } from "@/components/admin-panel/complaint-management/modals/AddComplaintPanel";
-import { AddIncomePanel } from "@/components/admin-panel/finance/income/OtherIncome/modals/AddIncomePanel";
-import { AddExpensePanel } from "@/components/admin-panel/finance/expenses/modals/AddExpensePanel";
-
-import { itemVariants } from "@/components/ui/dialog";
-import { TAB_STYLES, BUTTON_STYLES } from "@/lib/constants/theme";
-import { cn } from "@/lib/utils";
-import { FilterDropdown, type FilterCategory } from "@/components/common/dropdowns/FilterDropdown";
-
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.08,
-    },
-  },
-};
-
-export type DashboardTabType = "overview" | "referral" | "analytics";
-
-const tabs = [
-  { value: "overview", label: "Overview", icon: "overview-icon" },
-  { value: "referral", label: "Referral", icon: "referral-icon" },
-  { value: "analytics", label: "Analytics", icon: "analytics-icon" },
-] as const;
-
-export default function DashboardPage() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-
-  // Modal States
-  const [isInquiryOpen, setIsInquiryOpen] = useState(false);
-  const [isComplaintOpen, setIsComplaintOpen] = useState(false);
-  const [isIncomeOpen, setIsIncomeOpen] = useState(false);
-  const [isExpenseOpen, setIsExpenseOpen] = useState(false);
-
-  const currentTab = searchParams.get("tab") as DashboardTabType;
-
-  const activeTab = tabs.some((t) => t.value === currentTab)
-    ? currentTab
-    : "overview";
-
-  const handleTabChange = (tabValue: DashboardTabType) => {
-    const params = new URLSearchParams();
-
-    params.set("tab", tabValue);
-    params.set("page", "1");
-    router.replace(`${pathname}?${params.toString()}`);
-  };
-
-  const quickActionCategories: FilterCategory[] = [
-    {
-      key: "quick-actions",
-      label: "Quick Actions",
-      items: [
-        { key: "add-inquiry", label: "Add Inquiry" },
-        { key: "add-complaint", label: "Add Complaint" },
-        { key: "add-income", label: "Add Income" },
-        { key: "add-expense", label: "Add Expense" },
-      ],
-    },
+export default function AdminDashboardPage() {
+  const stats = [
+    { title: "Total Users", value: "248", change: "+12% this month", icon: Users, color: "from-blue-600 to-indigo-600" },
+    { title: "Active Roles", value: "4", change: "Admin, HR, Sup, Emp", icon: Shield, color: "from-purple-600 to-violet-600" },
+    { title: "Departments", value: "8", change: "All operational", icon: Building2, color: "from-emerald-600 to-teal-600" },
+    { title: "System Health", value: "99.9%", change: "Optimal uptime", icon: Activity, color: "from-amber-600 to-orange-600" },
   ];
 
-  const handleQuickAction = (_categoryKey: string, itemKey: string) => {
-    if (itemKey === "add-inquiry") setIsInquiryOpen(true);
-    if (itemKey === "add-complaint") setIsComplaintOpen(true);
-    if (itemKey === "add-income") setIsIncomeOpen(true);
-    if (itemKey === "add-expense") setIsExpenseOpen(true);
-  };
-
   return (
-    <motion.div 
-      initial="hidden" 
-      animate="show" 
-      variants={containerVariants}
-      className="space-y-3 pt-3 pl-4 pr-6 pb-6"
-    >
-      {/* Header Section */}
-      <motion.div variants={itemVariants} className="flex items-center justify-between gap-4">
-        <h1 className="group cursor-default text-left font-sans text-xl sm:text-2xl font-semibold leading-tight sm:leading-[38px] text-[#0F172B] whitespace-nowrap">
-          Welcome Back!{" "}
-          <span className="wave-on-hover wave-once">
-            👋
-          </span>
+    <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Admin Dashboard
         </h1>
-        <div className="flex items-center gap-3">
-          <FilterDropdown
-            label="Quick Action"
-            categories={quickActionCategories}
-            triggerIcon={Zap}
-            onFilterSelect={handleQuickAction}
-            responsive={true}
-            className="h-9 sm:h-10"
-          />
-          <button className={cn(BUTTON_STYLES.secondary.md, "h-9 sm:h-10 px-3 sm:px-4 text-sm font-semibold")}>
-            <Plus className="h-5 w-5" />
-            <span className="hidden sm:inline">Add New Student</span>
-          </button>
-          <button className={BUTTON_STYLES.primary.responsive}>
-            <FileText className="h-5 w-5 sm:hidden" />
-            <span className="hidden sm:inline">Generate Report</span>
-          </button>
-        </div>
-      </motion.div>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          System overview, user privileges, and EPMS infrastructure controls.
+        </p>
+      </div>
 
-      {/* Tabs Section */}
-      <motion.div variants={itemVariants} className="overflow-x-auto pb-2 sm:pb-0">
-        <div className={TAB_STYLES.container}>
-          {tabs.map((tab) => {
-            return (
-              <button
-                key={tab.value}
-                onClick={() => handleTabChange(tab.value)}
-                className={cn(
-                  TAB_STYLES.triggerBase,
-                  activeTab === tab.value
-                    ? TAB_STYLES.active
-                    : TAB_STYLES.inactive
-                )}
+      {/* Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {stats.map((stat, idx) => {
+          const Icon = stat.icon;
+
+          
+return (
+            <div
+              key={idx}
+              className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-xs transition-all hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  {stat.title}
+                </span>
+                <div className={`p-2.5 rounded-lg bg-gradient-to-tr ${stat.color} text-white shadow-sm`}>
+                  <Icon className="h-4 w-4" />
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {stat.value}
+                </div>
+                <div className="mt-1 flex items-center text-xs text-slate-500">
+                  <span className="text-emerald-600 font-medium inline-flex items-center">
+                    {stat.change}
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Quick Action & Info Panels */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+            System Administration Quickstart
+          </h2>
+          <p className="text-sm text-slate-500 mt-1">
+            This EPMS project is ready for building your custom administrative views.
+          </p>
+          <div className="mt-6 space-y-3">
+            {[
+              { title: "Manage System Users", desc: "Create, invite, or adjust roles across departments", href: "/admin-panel/users" },
+              { title: "Configure Roles & Privileges", desc: "Fine-tune access controls for HR, Supervisors, and Employees", href: "/admin-panel/departments" },
+              { title: "Review System Audit Logs", desc: "Track security events and login sessions", href: "/admin-panel/audit-logs" },
+            ].map((action, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between p-4 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-slate-100 transition-colors dark:border-slate-800/80 dark:bg-slate-800/30 dark:hover:bg-slate-800/60"
               >
-                <span className={cn(TAB_STYLES.icon, tab.icon)} />
-                {tab.label}
-              </button>
-            );
-          })}
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    {action.title}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {action.desc}
+                  </p>
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-slate-400" />
+              </div>
+            ))}
+          </div>
         </div>
-      </motion.div>
 
-      <motion.div 
-        key={activeTab}
-        initial="hidden"
-        animate="show"
-        variants={containerVariants}
-        className="mt-6"
-      >
-        {activeTab === "overview" && <OverviewSection />}
-        {activeTab === "referral" && <ReferralSection />}
-        {activeTab === "analytics" && <AnalyticsSection />}
-      </motion.div>
-
-      {/* Modals */}
-      <AddInquiryPanel 
-        isOpen={isInquiryOpen} 
-        onClose={() => setIsInquiryOpen(false)} 
-      />
-      <AddComplaintPanel 
-        isOpen={isComplaintOpen} 
-        onClose={() => setIsComplaintOpen(false)} 
-      />
-      <AddIncomePanel 
-        isOpen={isIncomeOpen} 
-        onClose={() => setIsIncomeOpen(false)} 
-      />
-      <AddExpensePanel 
-        isOpen={isExpenseOpen} 
-        onClose={() => setIsExpenseOpen(false)} 
-        activeTab="general-expense"
-      />
-    </motion.div>
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+            Active EPMS Environment
+          </h2>
+          <div className="mt-4 space-y-3 text-xs text-slate-600 dark:text-slate-300">
+            <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-slate-500">Framework</span>
+              <span className="font-medium">Next.js 15 (App Router)</span>
+            </div>
+            <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-slate-500">Session Cookie</span>
+              <span className="font-medium font-mono text-[11px]">epms-session</span>
+            </div>
+            <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-slate-500">Supported Roles</span>
+              <span className="font-medium">ADMIN, HR, SUPERVISOR, EMPLOYEE</span>
+            </div>
+            <div className="flex justify-between py-2">
+              <span className="text-slate-500">Status</span>
+              <span className="inline-flex items-center gap-1.5 text-emerald-600 font-medium">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> Ready
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
