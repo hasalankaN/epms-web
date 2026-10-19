@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+
 import {
   LayoutDashboard,
   User,
@@ -106,6 +108,7 @@ export default function MobileSidebar({ filteredSidebarData }: MobileSidebarProp
 
   const getDashboardLink = () => {
     const role = session?.user?.role as UserRole;
+
     return ROLE_PANEL_MAP[role] ? `${ROLE_PANEL_MAP[role]}/dashboard` : "/admin-panel/dashboard";
   };
 
@@ -120,11 +123,13 @@ export default function MobileSidebar({ filteredSidebarData }: MobileSidebarProp
 
   const isLinkActive = (url?: string) => {
     if (!url) return false;
+
     return pathname === url || pathname.startsWith(`${url}/`);
   };
 
   const userName = session?.user?.name || "Kasun Perera";
   const userRole = session?.user?.role ? (session.user.role.charAt(0) + session.user.role.slice(1).toLowerCase()) : "Employee";
+
   const initials = userName
     .split(" ")
     .filter(Boolean)

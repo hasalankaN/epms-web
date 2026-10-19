@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+
 import Link from "next/link";
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Eye, EyeOff, AlertCircle } from "lucide-react";
@@ -52,6 +54,7 @@ export function LoginForm() {
   useEffect(() => {
     const loadSavedCredentials = async () => {
       const credentials = await loadCredentials();
+
       if (credentials) {
         form.reset({
           email: credentials.email,
@@ -88,6 +91,7 @@ export function LoginForm() {
   // Prototype quick-fill shortcut helper
   const handlePrototypeShortcut = (role: "Employee" | "Supervisor" | "HR" | "Admin") => {
     setErrorMessage(null);
+
     switch (role) {
       case "Admin":
         form.setValue("email", "epms.admin@yopmail.com");

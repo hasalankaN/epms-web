@@ -1,8 +1,11 @@
 "use client";
 
 import * as React from "react";
+
 import { usePathname } from "next/navigation";
+
 import { ChevronRight } from "lucide-react";
+
 import type { SidebarNavItem } from "@/data/sidebar";
 
 const PANEL_NAME_MAP: Record<string, string> = {
@@ -16,6 +19,7 @@ const formatBreadcrumbSegment = (segment: string): string => {
   if (PANEL_NAME_MAP[segment]) {
     return PANEL_NAME_MAP[segment];
   }
+
   return segment
     .replace(/-/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());

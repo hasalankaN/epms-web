@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+
 import {
   Calendar,
   Clock,
@@ -10,6 +11,7 @@ import {
   Star,
   Check,
 } from "lucide-react";
+
 import { useSession } from "@/components/providers/SessionProvider";
 import { Button } from "@/components/ui/button";
 
@@ -18,6 +20,7 @@ export default function EmployeeDashboardPage() {
   const firstName = session?.user?.name?.split(" ")[0] || "Kasun";
 
   const [clockedIn, setClockedIn] = useState(false);
+
   const [tasks, setTasks] = useState([
     {
       id: 1,
