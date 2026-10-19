@@ -42,7 +42,7 @@ export function LoginForm() {
   const form = useForm<LoginRequest>({
     resolver: zodResolver(loginRequestSchema),
     defaultValues: {
-      email: "kasun.perera",
+      email: "",
       password: "",
       rememberMe: true,
     },
@@ -86,30 +86,6 @@ export function LoginForm() {
         },
       }
     );
-  };
-
-  // Prototype quick-fill shortcut helper
-  const handlePrototypeShortcut = (role: "Employee" | "Supervisor" | "HR" | "Admin") => {
-    setErrorMessage(null);
-
-    switch (role) {
-      case "Admin":
-        form.setValue("email", "epms.admin@yopmail.com");
-        form.setValue("password", "admin1234");
-        break;
-      case "Employee":
-        form.setValue("email", "kasun.perera");
-        form.setValue("password", "admin1234");
-        break;
-      case "Supervisor":
-        form.setValue("email", "supervisor@yopmail.com");
-        form.setValue("password", "admin1234");
-        break;
-      case "HR":
-        form.setValue("email", "hr@yopmail.com");
-        form.setValue("password", "admin1234");
-        break;
-    }
   };
 
   return (
@@ -241,50 +217,6 @@ export function LoginForm() {
           </Button>
         </form>
       </Form>
-
-      {/* Prototype shortcuts divider */}
-      <div className="relative my-4">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-neutral-200" />
-        </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="bg-white px-3 text-neutral-400 font-normal">
-            Prototype shortcuts
-          </span>
-        </div>
-      </div>
-
-      {/* Prototype Shortcuts 2x2 Grid */}
-      <div className="grid grid-cols-2 gap-2.5">
-        <button
-          type="button"
-          onClick={() => handlePrototypeShortcut("Employee")}
-          className="h-10 rounded-lg border border-neutral-200 bg-white text-xs font-medium text-neutral-800 hover:bg-neutral-50 transition-colors flex items-center justify-center"
-        >
-          Employee
-        </button>
-        <button
-          type="button"
-          onClick={() => handlePrototypeShortcut("Supervisor")}
-          className="h-10 rounded-lg border border-neutral-200 bg-white text-xs font-medium text-neutral-800 hover:bg-neutral-50 transition-colors flex items-center justify-center"
-        >
-          Supervisor
-        </button>
-        <button
-          type="button"
-          onClick={() => handlePrototypeShortcut("HR")}
-          className="h-10 rounded-lg border border-neutral-200 bg-white text-xs font-medium text-neutral-800 hover:bg-neutral-50 transition-colors flex items-center justify-center"
-        >
-          HR
-        </button>
-        <button
-          type="button"
-          onClick={() => handlePrototypeShortcut("Admin")}
-          className="h-10 rounded-lg border border-neutral-200 bg-white text-xs font-medium text-neutral-800 hover:bg-neutral-50 transition-colors flex items-center justify-center"
-        >
-          Admin
-        </button>
-      </div>
     </div>
   );
 }

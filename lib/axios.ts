@@ -31,7 +31,10 @@ const processQueue = (
 };
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || process.env.BASE_URL,
+  baseURL:
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.BASE_URL ||
+    "http://162.35.190.49:3000",
   timeout: 15000,
   headers: {
     "Content-Type": "application/json",
