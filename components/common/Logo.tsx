@@ -1,30 +1,54 @@
 import React from "react";
 
+import Image from "next/image";
 import Link from "next/link";
-
-import { Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 interface LogoProps {
   className?: string;
   disableLink?: boolean;
+  showText?: boolean;
+  text?: string;
+  size?: number;
 }
 
-const Logo = ({ className, disableLink = false }: LogoProps) => {
+const Logo = ({
+  className,
+  disableLink = false,
+  showText = true,
+  text = "Source Code",
+  size = 32,
+}: LogoProps) => {
   const logoContent = (
     <div className="flex items-center gap-2.5">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-900 text-white shadow-xs">
-        <Users className="h-4 w-4 stroke-[2]" />
+      <div
+        className="relative shrink-0 overflow-hidden rounded-lg bg-white border border-neutral-200/80 shadow-xs"
+        style={{ width: `${size}px`, height: `${size}px` }}
+      >
+        <Image
+          src="/images/logo.jpg"
+          alt="Logo"
+          fill
+          sizes={`${size}px`}
+          className="object-contain"
+          priority
+        />
       </div>
-      <span className="text-base font-bold tracking-tight text-neutral-900 dark:text-white font-sans">
-        EPMS
-      </span>
+      {showText && (
+        <span className="text-base font-bold tracking-tight text-neutral-900 dark:text-white font-sans">
+          {text}
+        </span>
+      )}
     </div>
   );
 
   if (disableLink) {
-    return <div className={cn("inline-flex items-center", className)}>{logoContent}</div>;
+    return (
+      <div className={cn("inline-flex items-center", className)}>
+        {logoContent}
+      </div>
+    );
   }
 
   return (
