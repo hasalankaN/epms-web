@@ -2,10 +2,11 @@
 
 import React from "react";
 
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Users } from "lucide-react";
+import { Check } from "lucide-react";
 
 export default function AuthLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -32,10 +33,19 @@ export default function AuthLayoutContent({ children }: { children: React.ReactN
 
           {/* Top Brand Logo */}
           <div className="flex items-center gap-3 z-10">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/20 bg-white/5 text-white shadow-sm">
-              <Users className="h-4 w-4" />
+            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-white p-0.5 shadow-sm border border-white/20">
+              <Image
+                src="/images/logo.jpg"
+                alt="Source Code Logo"
+                fill
+                sizes="40px"
+                className="object-contain"
+                priority
+              />
             </div>
-            <span className="text-lg font-bold tracking-tight text-white">EPMS</span>
+            <span className="text-lg font-bold tracking-tight text-white">
+              Source Code
+            </span>
           </div>
 
           {/* Main Hero Content */}
@@ -83,10 +93,19 @@ export default function AuthLayoutContent({ children }: { children: React.ReactN
         <div className="flex w-full items-center justify-center lg:w-1/2 min-h-screen bg-white relative p-6 sm:p-12">
           {/* Mobile Header Branding */}
           <div className="absolute top-6 left-6 flex items-center gap-2.5 lg:hidden">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-900 text-white">
-              <Users className="h-4 w-4" />
+            <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-white border border-neutral-200/80 shadow-xs">
+              <Image
+                src="/images/logo.jpg"
+                alt="Source Code Logo"
+                fill
+                sizes="36px"
+                className="object-contain"
+                priority
+              />
             </div>
-            <span className="font-bold text-neutral-900 tracking-tight">EPMS</span>
+            <span className="font-bold text-neutral-900 tracking-tight">
+              Source Code
+            </span>
           </div>
 
           <div className="w-full max-w-[420px]">
