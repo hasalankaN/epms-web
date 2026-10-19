@@ -1,7 +1,9 @@
 "use client";
 
 import React from "react";
+
 import { usePathname } from "next/navigation";
+
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Users } from "lucide-react";
 

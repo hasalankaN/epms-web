@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+
 import { Bell, Search } from "lucide-react";
 
 import MobileSidebar from "../sidebar/MobileSidebar";

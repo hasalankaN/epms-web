@@ -76,6 +76,7 @@ export async function login(data: LoginRequest): Promise<CommonResponseDataType<
 
     if (!accessToken || !rawUser) {
       securityLogger.logLoginFailure(email, "Invalid response from server");
+
       return {
         status: "FAIL",
         message: "Invalid response from server",
