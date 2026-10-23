@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
+
 import { Check, BellOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -9,8 +10,10 @@ import type { NotificationDataType } from "@/types/notifications";
 import NotificationItem from "./NotificationItem";
 
 interface NotificationsListProps {
+
   /** Initial notifications array coming from the server page */
   initialNotifications: NotificationDataType[];
+
   /** Short description shown under the page title */
   subtitle?: string;
 }
@@ -21,6 +24,7 @@ const NotificationsList: React.FC<NotificationsListProps> = ({
 }) => {
   const [notifications, setNotifications] =
     useState<NotificationDataType[]>(initialNotifications);
+
   const [isPending, startTransition] = useTransition();
 
   /* ── helpers ── */
@@ -73,11 +77,12 @@ const NotificationsList: React.FC<NotificationsListProps> = ({
       <div className="flex flex-1 flex-col rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden min-h-0">
 
         {notifications.length === 0 ? (
+
           /* Empty state */
           <div className="flex flex-1 flex-col items-center justify-center gap-3 text-neutral-400">
             <BellOff className="h-10 w-10 opacity-40" />
             <p className="text-sm font-medium">No notifications yet</p>
-            <p className="text-xs">We'll let you know when something arrives.</p>
+            <p className="text-xs">We&apos;ll let you know when something arrives.</p>
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto">

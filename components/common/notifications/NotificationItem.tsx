@@ -1,14 +1,16 @@
 "use client";
 
 import React from "react";
+
 import {
+  Bell,
   CheckCircle,
   ClipboardList,
-  GraduationCap,
   DollarSign,
+  GraduationCap,
   User,
-  Bell,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import type { NotificationDataType, NotificationType } from "@/types/notifications";
 
