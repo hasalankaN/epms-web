@@ -49,4 +49,19 @@ export const hrSidebarData: SidebarNavItem[] = [
     icon: "chart-bar",
     value: "reviews",
   },
+  {
+    id: 7,
+    type: "header",
+    title: "INBOX",
+  },
+  {
+    id: 8,
+    type: "link",
+    title: "Notifications",
+    url: "/hr-panel/notifications",
+    icon: "Bell",
+    value: "notifications",
+    count: 2,
+  },
 ];
+

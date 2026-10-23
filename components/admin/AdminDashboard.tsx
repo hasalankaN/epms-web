@@ -31,9 +31,9 @@ const stats = [
     color: "from-emerald-600 to-teal-600",
   },
   {
-    title: "System Health",
-    value: "99.9%",
-    change: "Optimal uptime",
+    title: "Pending Requests",
+    value: "05",
+    change: "03 Leave, 02 Account",
     icon: Activity,
     color: "from-amber-600 to-orange-600",
   },

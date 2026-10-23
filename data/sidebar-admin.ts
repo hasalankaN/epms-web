@@ -38,8 +38,8 @@ export const adminSidebarData: SidebarNavItem[] = [
   {
     id: 6,
     type: "link",
-    title: "System Audit Logs",
-    url: "/admin-panel/audit-logs",
+    title: "Account Requests",
+    url: "/admin-panel/account-request",
     icon: "ClipboardCheck",
     value: "audit-logs",
   },
