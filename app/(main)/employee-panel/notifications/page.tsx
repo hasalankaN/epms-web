@@ -1,8 +1,9 @@
 import React from "react";
+
 import type { NotificationDataType } from "@/types/notifications";
 import NotificationsList from "@/components/common/notifications/NotificationsList";
 
-// TODO: Replace with real API call  →  const data = await fetchEmployeeNotifications(session.user.id);
+
 const MOCK_NOTIFICATIONS: NotificationDataType[] = [
   {
     id: "1",

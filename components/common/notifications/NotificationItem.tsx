@@ -14,7 +14,6 @@ import {
 import { cn } from "@/lib/utils";
 import type { NotificationDataType, NotificationType } from "@/types/notifications";
 
-/* ─── Icon map ──────────────────────────────────────────────────────────── */
 const ICON_MAP: Record<
   NotificationType,
   { icon: React.ElementType; bg: string; color: string }
@@ -28,13 +27,12 @@ const ICON_MAP: Record<
   general:  { icon: Bell,           bg: "bg-neutral-100", color: "text-neutral-500" },
 };
 
-/* ─── Props ─────────────────────────────────────────────────────────────── */
+
 interface NotificationItemProps {
   notification: NotificationDataType;
   onMarkRead?: (id: string) => void;
 }
 
-/* ─── Component ─────────────────────────────────────────────────────────── */
 const NotificationItem: React.FC<NotificationItemProps> = ({
   notification,
   onMarkRead,
