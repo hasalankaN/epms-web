@@ -41,4 +41,18 @@ export const supervisorSidebarData: SidebarNavItem[] = [
     icon: "stamp",
     value: "approvals",
   },
+  {
+    id: 6,
+    type: "header",
+    title: "INBOX",
+  },
+  {
+    id: 7,
+    type: "link",
+    title: "Notifications",
+    url: "/supervisor-panel/notifications",
+    icon: "Bell",
+    value: "notifications",
+    count: 2,
+  },
 ];
