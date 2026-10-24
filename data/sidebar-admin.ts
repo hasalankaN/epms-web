@@ -23,7 +23,7 @@ export const adminSidebarData: SidebarNavItem[] = [
     id: 4,
     type: "link",
     title: "User Management",
-    url: "/admin-panel/users",
+    url: "/admin-panel/user-managment",
     icon: "User",
     value: "users",
   },
