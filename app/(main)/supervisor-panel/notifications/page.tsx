@@ -31,7 +31,7 @@ const MOCK_NOTIFICATIONS: NotificationDataType[] = [
   {
     id: "4",
     title: "Performance review due",
-    message: "Q3 performance reviews are due by Oct 31.",
+    message: "Q3 performance reviews are due by Octomber 31.",
     type: "general",
     createdAt: "Oct 12",
     isRead: true,
