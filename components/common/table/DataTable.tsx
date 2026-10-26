@@ -222,7 +222,7 @@ export function DataTable<T>({
             <tr className="h-[36px] border-b border-[#E7E7EB] bg-[#FDF2F8] hover:bg-[#FDF2F8]">
               {columns.map((col, index) => (
                 <th
-                  key={col.id || index}
+                  key={col.id || `col-${index}`}
                   className={cn(
                     "h-9 px-2 text-left align-middle font-semibold text-[#1D293D] whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
                     col.headerClassName || col.className
@@ -234,7 +234,7 @@ export function DataTable<T>({
             </tr>
           </thead>
           <motion.tbody
-            key={data?.length > 0 ? `table-body-${data.length}-${keyExtractor(data[0])}` : "empty-table-body"}
+            key={data?.length > 0 ? `table-body-${data.length}-${keyExtractor(data[0]) || 0}` : "empty-table-body"}
             initial="hidden"
             animate="show"
             variants={{
@@ -249,33 +249,36 @@ export function DataTable<T>({
             className="[&_tr:last-child]:border-0"
           >
             {data.length > 0 ? (
-              data.map((item) => (
-                <motion.tr
-                  key={keyExtractor(item)}
-                  variants={itemVariants}
-                  className={cn(
-                    "h-[50px] border-b border-[#E7E5E4] transition-colors hover:bg-[#FFF9FC] data-[state=selected]:bg-muted",
-                    rowClassName?.(item)
-                  )}
-                >
-                  {columns.map((col, index) => (
-                    <td
-                      key={col.id || index}
-                      className={cn(
-                        "p-1.5 align-middle whitespace-nowrap",
-                        showCheckboxes && "[&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
-                        col.className
-                      )}
-                    >
-                      {col.cell
-                        ? col.cell(item)
-                        : col.accessorKey
-                          ? (item[col.accessorKey] as React.ReactNode)
-                          : null}
-                    </td>
-                  ))}
-                </motion.tr>
-              ))
+              data.map((item, index) => {
+                const rowKey = keyExtractor(item) || `row-${index}`;
+                return (
+                  <motion.tr
+                    key={rowKey}
+                    variants={itemVariants}
+                    className={cn(
+                      "h-[50px] border-b border-[#E7E5E4] transition-colors hover:bg-[#FFF9FC] data-[state=selected]:bg-muted",
+                      rowClassName?.(item)
+                    )}
+                  >
+                    {columns.map((col, colIndex) => (
+                      <td
+                        key={col.id || `cell-${index}-${colIndex}`}
+                        className={cn(
+                          "p-1.5 align-middle whitespace-nowrap",
+                          showCheckboxes && "[&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+                          col.className
+                        )}
+                      >
+                        {col.cell
+                          ? col.cell(item)
+                          : col.accessorKey
+                            ? (item[col.accessorKey] as React.ReactNode)
+                            : null}
+                      </td>
+                    ))}
+                  </motion.tr>
+                );
+              })
             ) : (
               <tr>
                 <td colSpan={columns.length} className="h-full">

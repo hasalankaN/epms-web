@@ -344,4 +344,14 @@ export const API_ENDPOINTS = {
     FEEDBACK: (submissionId: string) =>
       `/api/v1/admin/tasks/submissions/${submissionId}/feedback`,
   },
+  departments: {
+    GET_ALL: `/department`,
+    CREATE: `/department/create`,
+    UPDATE: (id: string) => `/department/${id}`,
+    DELETE: (id: string) => `/department/${id}`,
+  },
+  positions: {
+    GET_ALL: `/positions`,
+    CREATE: `/positions/create`,
+  },
 };
