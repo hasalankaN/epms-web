@@ -97,4 +97,8 @@ export const queryKeys = {
 
   // Tasks
   tasks: "tasks",
+
+  // Departments & Positions
+  departments: "departments",
+  positions: "positions",
 };

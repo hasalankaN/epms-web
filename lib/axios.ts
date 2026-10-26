@@ -44,10 +44,34 @@ const api = axios.create({
 
 // Request Interceptor: Attach bearer token
 api.interceptors.request.use(async (config) => {
-  const session = await getSession();
+  let token: string | undefined;
 
-  if (session?.tokens.accessToken) {
-    config.headers.Authorization = `Bearer ${session.tokens.accessToken}`;
+  try {
+    const session = await getSession();
+    if (session?.tokens?.accessToken) {
+      token = session.tokens.accessToken;
+    }
+  } catch {
+    // getSession may fail if called in non-action client context
+  }
+
+  if (!token && typeof window !== "undefined") {
+    try {
+      const stored = sessionStorage.getItem("epms-auth-store");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        token =
+          parsed?.state?.authData?.id_token ||
+          parsed?.state?.authData?.tokens?.accessToken ||
+          parsed?.state?.authData?.access_token;
+      }
+    } catch {
+      // ignore JSON parse error
+    }
+  }
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
 
   return config;
