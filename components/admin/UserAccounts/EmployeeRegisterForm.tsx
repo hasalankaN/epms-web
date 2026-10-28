@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -14,18 +14,16 @@ import {
   MapPin,
   Briefcase,
   CheckCircle2,
+  RefreshCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import {
-  MOCK_DEPARTMENTS,
-  MOCK_POSITIONS,
-  MOCK_SUPERVISORS,
-} from "@/data/userManagementData";
 import { employeeRegisterSchema, EmployeeRegisterFormValues } from "../../../types/schemas/employeeSchema";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { departmentService } from "@/lib/api/department.service";
+import { positionService } from "@/lib/api/position.service";
+import { employeeService, SupervisorOption } from "@/lib/api/employee.service";
 
 /* ─── Field wrapper ─────────────────────────────────────────────────── */
 function Field({
@@ -103,29 +101,81 @@ const inputCls =
 const subInputCls =
   "h-8 w-full rounded-md border border-slate-200 bg-slate-50 px-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100 dark:focus:bg-slate-800";
 
+/* ─── OrgOption shape expected by SearchableSelect ───────────────────── */
+interface OrgOption {
+  value: string;
+  label: string;
+  subLabel?: string;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════ */
 
 export function EmployeeRegisterForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  // Combo box search states
-  const [deptSearch, setDeptSearch] = useState("");
-  const [posSearch, setPosSearch] = useState("");
-  const [supSearch, setSupSearch] = useState("");
+  /* ── Dropdown data from API ── */
+  const [departments, setDepartments] = useState<OrgOption[]>([]);
+  const [positions, setPositions]     = useState<OrgOption[]>([]);
+  const [supervisors, setSupervisors] = useState<OrgOption[]>([]);
+  const [loadingOrg, setLoadingOrg]   = useState(true);
 
-  // Filtered options
+  /* ── Search states ── */
+  const [deptSearch, setDeptSearch] = useState("");
+  const [posSearch, setPosSearch]   = useState("");
+  const [supSearch, setSupSearch]   = useState("");
+
+  /* ── Load departments, positions & supervisors on mount ── */
+  const loadOrgData = useCallback(async () => {
+    setLoadingOrg(true);
+    try {
+      const [deptRes, posRes, supRes] = await Promise.all([
+        departmentService.getDepartments({ page: 1, pageSize: 100 }),
+        positionService.getPositions({ page: 1, pageSize: 100 }),
+        employeeService.getSupervisors({ page: 1, pageSize: 100 }),
+      ]);
+
+      setDepartments(
+        deptRes.items.map((d) => ({
+          value: d.id,
+          label: d.departmentName,
+          subLabel: d.location ?? undefined,
+        }))
+      );
+
+      setPositions(
+        posRes.items.map((p) => ({
+          value: p.id,
+          label: p.positionName,
+          subLabel: p.description ?? undefined,
+        }))
+      );
+
+      setSupervisors(supRes.items);
+    } catch (err) {
+      console.error("Failed to load organisation data:", err);
+      toast.error("Could not load departments / positions. Please refresh.");
+    } finally {
+      setLoadingOrg(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadOrgData();
+  }, [loadOrgData]);
+
+  /* ── Filtered options ── */
   const filteredDepts = useMemo(
-    () => MOCK_DEPARTMENTS.filter((d) => d.label.toLowerCase().includes(deptSearch.toLowerCase())),
-    [deptSearch]
+    () => departments.filter((d) => d.label.toLowerCase().includes(deptSearch.toLowerCase())),
+    [departments, deptSearch]
   );
   const filteredPositions = useMemo(
-    () => MOCK_POSITIONS.filter((p) => p.label.toLowerCase().includes(posSearch.toLowerCase())),
-    [posSearch]
+    () => positions.filter((p) => p.label.toLowerCase().includes(posSearch.toLowerCase())),
+    [positions, posSearch]
   );
   const filteredSups = useMemo(
-    () => MOCK_SUPERVISORS.filter((s) => s.label.toLowerCase().includes(supSearch.toLowerCase())),
-    [supSearch]
+    () => supervisors.filter((s) => s.label.toLowerCase().includes(supSearch.toLowerCase())),
+    [supervisors, supSearch]
   );
 
   const {
@@ -157,18 +207,13 @@ export function EmployeeRegisterForm() {
   const onSubmit = async (data: EmployeeRegisterFormValues) => {
     setIsSubmitting(true);
     try {
-      const response = await fetch("/employee/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to register employee");
+      await employeeService.registerEmployee(data);
       setSubmitted(true);
-      toast.success("Employee registered successfully!");
+      toast.success("Employee registered successfully! Login credentials have been emailed.");
       reset();
-    } catch (error) {
-      toast.error("An error occurred while registering employee.");
-      console.error(error);
+    } catch (error: any) {
+      // Axios interceptor already shows a toast — only log for debugging
+      console.error("Employee registration error:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -183,7 +228,9 @@ export function EmployeeRegisterForm() {
         </div>
         <div>
           <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Employee Registered!</h2>
-          <p className="text-sm text-slate-500 mt-1">The employee account has been created successfully.</p>
+          <p className="text-sm text-slate-500 mt-1">
+            The employee account has been created and login credentials have been emailed.
+          </p>
         </div>
         <Button
           size="sm"
@@ -209,6 +256,9 @@ export function EmployeeRegisterForm() {
           <Field label="Last Name" error={errors.last_name?.message}>
             <input {...register("last_name")} className={inputCls} placeholder="Silva" />
           </Field>
+          <Field label="Employee Number" error={errors.employee_no?.message}>
+            <input {...register("employee_no")} className={inputCls} placeholder="EMP-0001" />
+          </Field>
           <Field label="EPF Number" error={errors.epf_no?.message}>
             <input {...register("epf_no")} className={inputCls} placeholder="EPF-10294" />
           </Field>
@@ -231,7 +281,26 @@ export function EmployeeRegisterForm() {
 
       {/* ── SECTION 2: Organisation ── */}
       <FormCard>
-        <SectionHeader icon={Briefcase} title="Organisation" step={2} />
+        <SectionHeader
+          icon={Briefcase}
+          title="Organisation"
+          step={2}
+          action={
+            loadingOrg ? (
+              <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-400">
+                <Loader2 className="h-3 w-3 animate-spin" /> Loading…
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={loadOrgData}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-500 hover:bg-slate-100 transition dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+              >
+                <RefreshCcw className="h-3 w-3" /> Refresh
+              </button>
+            )
+          }
+        />
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
           {/* Department */}
@@ -246,7 +315,7 @@ export function EmployeeRegisterForm() {
                   onChange={field.onChange}
                   searchValue={deptSearch}
                   onSearchChange={setDeptSearch}
-                  placeholder="Select department…"
+                  placeholder={loadingOrg ? "Loading…" : "Select department…"}
                   searchPlaceholder="Search departments…"
                   emptyMessage="No departments found"
                   error={!!errors.department_id}
@@ -267,7 +336,7 @@ export function EmployeeRegisterForm() {
                   onChange={field.onChange}
                   searchValue={posSearch}
                   onSearchChange={setPosSearch}
-                  placeholder="Select position…"
+                  placeholder={loadingOrg ? "Loading…" : "Select position…"}
                   searchPlaceholder="Search positions…"
                   emptyMessage="No positions found"
                   error={!!errors.position_id}
@@ -288,7 +357,7 @@ export function EmployeeRegisterForm() {
                   onChange={field.onChange}
                   searchValue={supSearch}
                   onSearchChange={setSupSearch}
-                  placeholder="Select supervisor…"
+                  placeholder={loadingOrg ? "Loading…" : "Select supervisor…"}
                   searchPlaceholder="Search supervisors…"
                   emptyMessage="No supervisors found"
                 />
