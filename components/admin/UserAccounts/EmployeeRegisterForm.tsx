@@ -256,9 +256,6 @@ export function EmployeeRegisterForm() {
           <Field label="Last Name" error={errors.last_name?.message}>
             <input {...register("last_name")} className={inputCls} placeholder="Silva" />
           </Field>
-          <Field label="Employee Number" error={errors.employee_no?.message}>
-            <input {...register("employee_no")} className={inputCls} placeholder="EMP-0001" />
-          </Field>
           <Field label="EPF Number" error={errors.epf_no?.message}>
             <input {...register("epf_no")} className={inputCls} placeholder="EPF-10294" />
           </Field>
