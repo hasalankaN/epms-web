@@ -354,4 +354,8 @@ export const API_ENDPOINTS = {
     GET_ALL: `/positions`,
     CREATE: `/positions/create`,
   },
+  employee: {
+    REGISTER: `/employee/register`,
+    GET_SUPERVISORS: `/employee/supervisors`,
+  },
 };
