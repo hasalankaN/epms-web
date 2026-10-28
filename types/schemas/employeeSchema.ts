@@ -5,7 +5,6 @@ export const employeeRegisterSchema = z.object({
     last_name: z.string().min(1, "Last name is required"),
     dob: z.string().min(1, "Date of birth is required"),
     join_date: z.string().min(1, "Join date is required"),
-    employee_no: z.string().min(1, "Employee number is required"),
     epf_no: z.string().min(1, "EPF number is required"),
     work_email: z.string().email("Invalid work email format"),
     personal_email: z.string().email("Invalid personal email format").optional().or(z.literal("")),
