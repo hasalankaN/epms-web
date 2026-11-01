@@ -30,20 +30,36 @@ const processQueue = (
   failedQueue = [];
 };
 
+let serverHttpsAgent: any = undefined;
+if (typeof window === "undefined") {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const https = require("https");
+    serverHttpsAgent = new https.Agent({ rejectUnauthorized: false });
+  } catch {
+    // browser or edge fallback
+  }
+}
+
 const api = axios.create({
   baseURL:
     process.env.NEXT_PUBLIC_API_BASE_URL ||
     process.env.BASE_URL ||
     "http://162.35.190.49:3000",
-  timeout: 15000,
+  timeout: 10000,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
+  httpsAgent: serverHttpsAgent,
 });
 
 // Request Interceptor: Attach bearer token
 api.interceptors.request.use(async (config) => {
+  if (config.url?.includes("/login") || config.url?.includes("/auth/refresh")) {
+    return config;
+  }
+
   let token: string | undefined;
 
   try {
@@ -92,6 +108,7 @@ api.interceptors.response.use(
     // Add safety check: originalRequest might be undefined if error occurs before request is formed
     const isAuthEndpoint = originalRequest?.url
       ? originalRequest.url.includes("/auth/login") ||
+        originalRequest.url.includes("/admin/login") ||
         originalRequest.url.includes("/auth/register") ||
         originalRequest.url.includes("/auth/refresh") ||
         originalRequest.url.includes("/auth/verify-and-sync") ||
@@ -133,6 +150,8 @@ api.interceptors.response.use(
           }>
         >(`${api.defaults.baseURL}/auth/refresh`, {
           refresh_token: session.tokens.refreshToken,
+        }, {
+          httpsAgent: serverHttpsAgent,
         });
 
         const newAccessToken = data.data.id_token;
