@@ -10,20 +10,28 @@ import type { NotificationDataType } from "@/types/notifications";
 import NotificationItem from "./NotificationItem";
 
 interface NotificationsListProps {
-
   /** Initial notifications array coming from the server page */
   initialNotifications: NotificationDataType[];
 
   /** Short description shown under the page title */
   subtitle?: string;
+
+  onMarkRead?: (id: string) => void;
+  onMarkAllRead?: () => void;
 }
 
 const NotificationsList: React.FC<NotificationsListProps> = ({
   initialNotifications,
   subtitle = "Your latest updates and alerts.",
+  onMarkRead,
+  onMarkAllRead,
 }) => {
   const [notifications, setNotifications] =
     useState<NotificationDataType[]>(initialNotifications);
+
+  React.useEffect(() => {
+    setNotifications(initialNotifications);
+  }, [initialNotifications]);
 
   const [isPending, startTransition] = useTransition();
 
@@ -31,6 +39,7 @@ const NotificationsList: React.FC<NotificationsListProps> = ({
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const markRead = (id: string) => {
+    onMarkRead?.(id);
     startTransition(() => {
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
@@ -39,6 +48,7 @@ const NotificationsList: React.FC<NotificationsListProps> = ({
   };
 
   const markAllRead = () => {
+    onMarkAllRead?.();
     startTransition(() => {
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     });

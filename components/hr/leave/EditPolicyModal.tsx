@@ -34,10 +34,10 @@ export function EditPolicyModal({
 
   useEffect(() => {
     if (policy) {
-      setDaysPerYear(policy.daysPerYear);
-      setCarryForward(policy.carryForward);
-      setMaxCarryForwardDays(policy.maxCarryForwardDays);
-      setRulesDescription(policy.rulesDescription);
+      setDaysPerYear(policy.daysPerYear ?? policy.annualQuota ?? 14);
+      setCarryForward(Boolean(policy.carryForward));
+      setMaxCarryForwardDays(policy.maxCarryForwardDays ?? policy.carryForwardLimit ?? 0);
+      setRulesDescription(policy.rulesDescription ?? "");
     }
   }, [policy]);
 

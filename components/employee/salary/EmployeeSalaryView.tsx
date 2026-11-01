@@ -151,7 +151,7 @@ export function EmployeeSalaryView() {
               <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
                 <table className="w-full text-xs text-left">
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {salarySummary.allowances.map((al) => (
+                    {salarySummary.allowances.map((al: any) => (
                       <tr key={al.id} className="hover:bg-slate-50/50">
                         <td className="p-3 text-slate-700 dark:text-slate-300">{al.description}</td>
                         <td className="p-3 text-right font-mono font-semibold text-emerald-600">
@@ -172,7 +172,7 @@ export function EmployeeSalaryView() {
               <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
                 <table className="w-full text-xs text-left">
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {salarySummary.deductions.map((dd) => (
+                    {salarySummary.deductions.map((dd: any) => (
                       <tr key={dd.id} className="hover:bg-slate-50/50">
                         <td className="p-3 text-slate-700 dark:text-slate-300">{dd.description}</td>
                         <td className="p-3 text-right font-mono font-semibold text-rose-600">

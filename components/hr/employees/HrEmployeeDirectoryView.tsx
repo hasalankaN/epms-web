@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Users,
@@ -25,113 +25,33 @@ import { AssignSupervisorModal } from "./AssignSupervisorModal";
 import { ChangeRoleModal } from "./ChangeRoleModal";
 import { EditEmployeeModal } from "./EditEmployeeModal";
 import { toast } from "sonner";
+import { employeeService, type HrEmployeeRecord } from "@/lib/api/employee.service";
 
-export interface HrEmployeeRecord {
-  id: string;
-  name: string;
-  code: string;
-  nic: string;
-  department: string;
-  position: string;
-  supervisor: string;
-  joinDate: string;
-  role: string;
-  status: "ACTIVE" | "INACTIVE" | "ON_LEAVE";
-}
-
-const initialHrEmployees: HrEmployeeRecord[] = [
-  {
-    id: "emp-1042",
-    name: "Nuwan Perera",
-    code: "EMP-1042",
-    nic: "199418204910",
-    department: "Technology",
-    position: "Senior Software Engineer",
-    supervisor: "Kanishka Bandara",
-    joinDate: "2022-03-01",
-    role: "EMPLOYEE",
-    status: "ACTIVE",
-  },
-  {
-    id: "emp-1015",
-    name: "Dilani Wickramasinghe",
-    code: "EMP-1015",
-    nic: "199623801234",
-    department: "Technology",
-    position: "Software Engineer",
-    supervisor: "Kanishka Bandara",
-    joinDate: "2023-01-15",
-    role: "EMPLOYEE",
-    status: "ACTIVE",
-  },
-  {
-    id: "emp-1002",
-    name: "Kanishka Bandara",
-    code: "EMP-1002",
-    nic: "198810204911",
-    department: "Technology",
-    position: "Lead Solutions Architect",
-    supervisor: "Dr. Asanka Pathirana",
-    joinDate: "2020-06-01",
-    role: "SUPERVISOR",
-    status: "ACTIVE",
-  },
-  {
-    id: "emp-1022",
-    name: "Kasun Jayasuriya",
-    code: "EMP-1022",
-    nic: "199345678901",
-    department: "Technology",
-    position: "Quality Assurance Engineer",
-    supervisor: "Kanishka Bandara",
-    joinDate: "2023-05-10",
-    role: "EMPLOYEE",
-    status: "ACTIVE",
-  },
-  {
-    id: "emp-2001",
-    name: "Chamari Atapattu",
-    code: "EMP-2001",
-    nic: "199187654321",
-    department: "Human Resources",
-    position: "Senior HR Manager",
-    supervisor: "Board of Directors",
-    joinDate: "2021-02-01",
-    role: "HR",
-    status: "ACTIVE",
-  },
-  {
-    id: "emp-2045",
-    name: "Menaka Alwis",
-    code: "EMP-2045",
-    nic: "199512345678",
-    department: "Finance & Accounting",
-    position: "Finance Executive",
-    supervisor: "Rohan De Silva",
-    joinDate: "2026-10-15",
-    role: "EMPLOYEE",
-    status: "ACTIVE",
-  },
-  {
-    id: "emp-0992",
-    name: "Buddhika Jayawardena",
-    code: "EMP-0992",
-    nic: "198909876543",
-    department: "Operations",
-    position: "Operations Supervisor",
-    supervisor: "Rohan De Silva",
-    joinDate: "2019-11-01",
-    role: "SUPERVISOR",
-    status: "INACTIVE",
-  },
-];
+export type { HrEmployeeRecord };
 
 export function HrEmployeeDirectoryView() {
   const router = useRouter();
-  const [employees, setEmployees] = useState<HrEmployeeRecord[]>(initialHrEmployees);
+  const [employees, setEmployees] = useState<HrEmployeeRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
+
+  useEffect(() => {
+    setIsLoading(true);
+    employeeService
+      .getHrEmployees()
+      .then((data) => {
+        setEmployees(data || []);
+      })
+      .catch((err) => {
+        console.error("Failed to load HR employees:", err);
+        setEmployees([]);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, []);
 
   const [selectedForEdit, setSelectedForEdit] = useState<HrEmployeeRecord | null>(null);
   const [selectedForSupervisor, setSelectedForSupervisor] = useState<HrEmployeeRecord | null>(null);
@@ -310,7 +230,7 @@ export function HrEmployeeDirectoryView() {
           </select>
 
           <Button
-            onClick={() => router.push(`/admin-panel/user-managment/add-employee`)}
+            onClick={() => router.push(`/hr-panel/employees/add-employee`)}
             className="bg-[#E60076] hover:bg-[#d0006a] text-white text-xs gap-1.5 font-semibold"
           >
             <UserPlus className="h-4 w-4" /> Add Employee

@@ -18,6 +18,11 @@ export interface JobPosting {
   applicantCount: number;
   isOpen: boolean;
   status: "OPEN" | "CLOSED";
+  location?: string;
+  employmentType?: string;
+  experienceLevel?: string;
+  salaryRange?: string;
+  deadline?: string;
 }
 
 export interface JobApplication {
@@ -39,9 +44,16 @@ export interface InterviewSchedule {
   id: string;
   applicationId: string;
   candidateName: string;
+  candidateEmail?: string;
+  jobTitle?: string;
   vacancyTitle: string;
+  round?: string;
+  date?: string;
+  time?: string;
   dateTime: string;
+  interviewer?: string;
   interviewerName: string;
+  meetingLink?: string;
   status: "SCHEDULED" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
   notes?: string;
 }

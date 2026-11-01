@@ -23,6 +23,7 @@ export interface SelfEvaluation {
   overallRating: number;
   achievements: string;
   goals: string;
+  challenges?: string;
   supervisorRating?: number;
   supervisorFeedback?: string;
   supervisorComments?: string;
@@ -38,12 +39,18 @@ export interface PerformanceReviewItem {
   employeeName: string;
   employeeCode?: string;
   departmentName?: string;
+  positionName?: string;
   quarter: string;
+  period?: string;
   date: string;
   reviewerName: string;
   rating: number; // 1-5
   comments: string;
   feedback: string;
+  strengths?: string;
+  areasOfImprovement?: string;
+  status?: any;
+  reviewedAt?: string;
   compensation?: string;
 }
 
@@ -53,7 +60,11 @@ export interface EvaluationMeeting {
   employeeName: string;
   employeeCode: string;
   dateTime: string;
+  date?: string;
+  time?: string;
   location: string;
+  meetingLink?: string;
+  agenda?: string;
   notes?: string;
   status: "SCHEDULED" | "COMPLETED" | "CANCELLED";
 }
@@ -79,10 +90,13 @@ export interface RewardRecord {
   employeeId: string;
   employeeName: string;
   employeeCode: string;
-  departmentName: string;
-  type: "BONUS" | "INCENTIVE" | "RECOGNITION";
+  departmentName?: string;
+  type?: "BONUS" | "INCENTIVE" | "RECOGNITION";
+  rewardType?: any;
   amount?: number;
   reason: string;
-  date: string;
+  date?: string;
+  effectiveMonth?: string;
+  status?: string;
 }
 

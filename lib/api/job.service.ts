@@ -6,6 +6,11 @@ import {
   mockJobApplications,
   mockInterviews,
 } from "@/lib/mock/job.mock";
+import {
+  normalizeListResponse,
+  normalizeDetailResponse,
+  normalizeMutationResponse,
+} from "@/lib/api/responseNormalizer";
 import type {
   JobPosting,
   JobApplication,
@@ -17,31 +22,72 @@ let postingsStore: JobPosting[] = [...mockJobPostings];
 let applicationsStore: JobApplication[] = [...mockJobApplications];
 let interviewsStore: InterviewSchedule[] = [...mockInterviews];
 
+function mapBackendJob(row: any): JobPosting {
+  const isOp = (row.status || "OPEN") === "OPEN";
+  return {
+    id: row.posting_id || row.id,
+    title: row.title || "Open Position",
+    department: row.department_name || row.department || "Garment Operations",
+    position: row.position || row.title || "Position",
+    postedDate: row.posted_date || row.postedDate || new Date().toISOString().split("T")[0],
+    closingDate: row.closing_date || row.closingDate || row.deadline || new Date().toISOString().split("T")[0],
+    isOpen: isOp,
+    location: row.location || "Main Factory, Biyagama",
+    employmentType: row.employment_type || row.employmentType || "Full-time",
+    experienceLevel: row.experience_level || row.experienceLevel || "Mid Level",
+    salaryRange: row.salary_range || row.salaryRange || "LKR 75,000 - 110,000",
+    deadline: row.deadline || row.closingDate || new Date().toISOString().split("T")[0],
+    description: row.description || "",
+    requirements: row.requirements || [
+      "Minimum 2 years experience in garment production",
+      "Good team coordination and communication skills",
+    ],
+    status: (row.status || "OPEN") as any,
+    applicantCount: Number(row.applicant_count || row.applicantCount || 0),
+  };
+}
+
+function mapBackendApplication(row: any): JobApplication {
+  return {
+    id: row.application_id || row.id,
+    jobId: row.posting_id || row.jobId,
+    jobTitle: row.job_title || row.jobTitle || "Internal Position",
+    department: row.department_name || row.department || "Operations",
+    candidateName: row.candidate_name || row.candidateName || "Applicant",
+    candidateEmail: row.candidate_email || row.candidateEmail || "",
+    candidatePhone: row.candidate_phone || row.candidatePhone || "",
+    appliedDate: row.applied_date || row.created_at || new Date().toISOString().split("T")[0],
+    status: (row.status || "APPLIED") as ApplicationStatus,
+  };
+}
+
 export const jobService = {
   /**
-   * GET /api/v1/me/job-postings
+   * GET /me/job-postings
    */
   getJobPostings: async (): Promise<JobPosting[]> => {
     if (USE_MOCK) {
       return mockResponse(postingsStore);
     }
     const res = await api.get(API_ENDPOINTS.me.JOB_POSTINGS);
-    return res.data;
+    const normalized = normalizeListResponse<any>(res.data);
+    return normalized.items.map(mapBackendJob);
   },
 
   /**
-   * GET /api/v1/me/applications
+   * GET /me/applications
    */
   getMyApplications: async (): Promise<JobApplication[]> => {
     if (USE_MOCK) {
       return mockResponse(applicationsStore.filter((a) => a.candidateName === "Nuwan Perera"));
     }
     const res = await api.get(API_ENDPOINTS.me.APPLICATIONS);
-    return res.data;
+    const normalized = normalizeListResponse<any>(res.data);
+    return normalized.items.map(mapBackendApplication);
   },
 
   /**
-   * POST /api/v1/me/job-postings/apply
+   * POST /me/job-postings/:id/apply
    */
   applyForJob: async (jobId: string): Promise<JobApplication> => {
     if (USE_MOCK) {
@@ -61,138 +107,181 @@ export const jobService = {
       applicationsStore = [newApp, ...applicationsStore];
       return mockResponse(newApp);
     }
-    const res = await api.post(API_ENDPOINTS.me.APPLY_JOB, { jobId });
-    return res.data;
+
+    const res = await api.post(`/me/job-postings/${jobId}/apply`);
+    return mapBackendApplication(normalizeDetailResponse(res.data));
   },
 
   /**
-   * DELETE /api/v1/me/applications/:id
+   * DELETE /me/applications/:id
    */
-  cancelApplication: async (id: string): Promise<{ success: boolean }> => {
+  cancelApplication: async (applicationId: string): Promise<{ success: boolean; message: string }> => {
     if (USE_MOCK) {
-      const app = applicationsStore.find((a) => a.id === id);
-      if (app) app.status = "CANCELLED";
-      return mockResponse({ success: true });
+      applicationsStore = applicationsStore.filter((a) => a.id !== applicationId);
+      return mockResponse({ success: true, message: "Application withdrawn successfully" });
     }
-    const res = await api.delete(API_ENDPOINTS.me.CANCEL_APPLICATION(id));
-    return res.data;
+
+    const res = await api.delete(API_ENDPOINTS.me.CANCEL_APPLICATION(applicationId));
+    return normalizeMutationResponse(res.data, "Application cancelled");
   },
 
   /**
-   * GET /api/v1/hr/vacancies
+   * POST /hr/vacancies
    */
-  getHrVacancies: async (): Promise<JobPosting[]> => {
-    if (USE_MOCK) {
-      return mockResponse(postingsStore);
-    }
-    const res = await api.get(API_ENDPOINTS.hr.VACANCIES);
-    return res.data;
-  },
-
-  /**
-   * POST /api/v1/hr/vacancies
-   */
-  createVacancy: async (payload: {
-    title: string;
-    department: string;
-    position: string;
-    requirements: string[];
-    description: string;
-    closingDate: string;
-  }): Promise<JobPosting> => {
+  createVacancy: async (payload: Partial<JobPosting>): Promise<JobPosting> => {
     if (USE_MOCK) {
       const newJob: JobPosting = {
         id: `job-${Date.now()}`,
-        title: payload.title,
-        department: payload.department,
-        position: payload.position,
+        title: payload.title || "New Vacancy",
+        department: payload.department || "Operations",
+        position: payload.position || payload.title || "Position",
         postedDate: new Date().toISOString().split("T")[0],
-        closingDate: payload.closingDate,
-        description: payload.description,
-        requirements: payload.requirements,
-        applicantCount: 0,
+        closingDate: payload.closingDate || payload.deadline || new Date().toISOString().split("T")[0],
         isOpen: true,
+        location: payload.location || "Colombo",
+        employmentType: payload.employmentType || "Full-time",
+        experienceLevel: payload.experienceLevel || "Mid",
+        salaryRange: payload.salaryRange || "Competitive",
+        deadline: payload.deadline || new Date().toISOString().split("T")[0],
+        description: payload.description || "",
+        requirements: payload.requirements || [],
         status: "OPEN",
+        applicantCount: 0,
       };
       postingsStore = [newJob, ...postingsStore];
       return mockResponse(newJob);
     }
-    const res = await api.post(API_ENDPOINTS.hr.VACANCIES, payload);
-    return res.data;
+
+    const res = await api.post(API_ENDPOINTS.hr.VACANCIES, {
+      title: payload.title,
+      department_name: payload.department,
+      location: payload.location,
+      employment_type: payload.employmentType,
+      experience_level: payload.experienceLevel,
+      salary_range: payload.salaryRange,
+      deadline: payload.deadline,
+      description: payload.description,
+      requirements: payload.requirements,
+    });
+    return mapBackendJob(normalizeDetailResponse(res.data));
   },
 
   /**
-   * GET /api/v1/hr/candidates
+   * PATCH /hr/vacancies/:id
    */
-  getHrCandidates: async (vacancyId?: string): Promise<JobApplication[]> => {
+  updateVacancy: async (id: string, payload: Partial<JobPosting>): Promise<JobPosting> => {
     if (USE_MOCK) {
-      if (vacancyId && vacancyId !== "ALL") {
-        return mockResponse(applicationsStore.filter((a) => a.jobId === vacancyId));
-      }
-      return mockResponse(applicationsStore);
+      const j = postingsStore.find((item) => item.id === id);
+      if (j) Object.assign(j, payload);
+      return mockResponse(j || postingsStore[0]);
     }
-    const res = await api.get(API_ENDPOINTS.hr.CANDIDATES, { params: { vacancyId } });
-    return res.data;
+
+    const res = await api.patch(API_ENDPOINTS.hr.VACANCY_DETAIL(id), payload);
+    return mapBackendJob(normalizeDetailResponse(res.data));
   },
 
   /**
-   * PATCH /api/v1/hr/candidates/:id/status
+   * DELETE /hr/vacancies/:id
    */
-  updateCandidateStatus: async (
-    id: string,
-    status: ApplicationStatus
-  ): Promise<JobApplication> => {
+  deleteVacancy: async (id: string): Promise<{ success: boolean; message: string }> => {
     if (USE_MOCK) {
-      const app = applicationsStore.find((a) => a.id === id);
-      if (app) app.status = status;
-      return mockResponse(app || applicationsStore[0]);
+      postingsStore = postingsStore.filter((j) => j.id !== id);
+      return mockResponse({ success: true, message: "Vacancy closed" });
     }
-    const res = await api.patch(`${API_ENDPOINTS.hr.CANDIDATES}/${id}/status`, { status });
-    return res.data;
+
+    const res = await api.delete(API_ENDPOINTS.hr.VACANCY_DETAIL(id));
+    return normalizeMutationResponse(res.data, "Vacancy removed");
   },
 
   /**
-   * GET /api/v1/hr/interviews
+   * GET /hr/vacancies/:id/applications
+   */
+  getVacancyApplications: async (id: string): Promise<JobApplication[]> => {
+    if (USE_MOCK) {
+      return mockResponse(applicationsStore.filter((a) => a.jobId === id));
+    }
+
+    const res = await api.get(API_ENDPOINTS.hr.VACANCY_APPLICATIONS(id));
+    const normalized = normalizeListResponse<any>(res.data);
+    return normalized.items.map(mapBackendApplication);
+  },
+
+  /**
+   * POST /hr/interviews
+   */
+  scheduleInterview: async (payload: any): Promise<InterviewSchedule> => {
+    if (USE_MOCK) {
+      const interview: InterviewSchedule = {
+        id: `int-${Date.now()}`,
+        applicationId: payload.applicationId,
+        candidateName: payload.candidateName || "Candidate",
+        candidateEmail: payload.candidateEmail || "applicant@example.com",
+        jobTitle: payload.jobTitle || payload.vacancyTitle || "Job",
+        vacancyTitle: payload.vacancyTitle || payload.jobTitle || "Job",
+        round: (payload.round || "Round 1") as any,
+        date: payload.date || payload.dateTime?.split(" ")[0] || new Date().toISOString().split("T")[0],
+        time: payload.time || payload.dateTime?.split(" ")[1] || "10:00 AM",
+        dateTime: payload.dateTime || `${payload.date || ""} ${payload.time || ""}`.trim() || new Date().toISOString(),
+        interviewer: payload.interviewer || payload.interviewerName || "Interviewer",
+        interviewerName: payload.interviewerName || payload.interviewer || "Interviewer",
+        meetingLink: payload.meetingLink,
+        status: "SCHEDULED",
+        notes: payload.notes,
+      };
+      interviewsStore = [interview, ...interviewsStore];
+      return mockResponse(interview);
+    }
+
+    const res = await api.post(API_ENDPOINTS.hr.INTERVIEWS, {
+      application_id: payload.applicationId,
+      round: payload.round || "Round 1",
+      date: payload.date || payload.dateTime?.split(" ")[0],
+      time: payload.time || payload.dateTime?.split(" ")[1] || "10:00 AM",
+      interviewer: payload.interviewer || payload.interviewerName,
+      meeting_link: payload.meetingLink,
+    });
+    return normalizeDetailResponse(res.data);
+  },
+
+  /**
+   * GET interviews list
    */
   getInterviews: async (): Promise<InterviewSchedule[]> => {
     if (USE_MOCK) {
       return mockResponse(interviewsStore);
     }
-    const res = await api.get(API_ENDPOINTS.hr.INTERVIEWS);
-    return res.data;
+    return interviewsStore;
   },
 
-  /**
-   * POST /api/v1/hr/interviews
-   */
-  scheduleInterview: async (payload: {
-    applicationId: string;
-    dateTime: string;
-    interviewerName: string;
-    notes?: string;
-  }): Promise<InterviewSchedule> => {
+  getHrVacancies: async (): Promise<JobPosting[]> => {
+    return jobService.getJobPostings();
+  },
+
+  getHrCandidates: async (vacancyId?: string): Promise<JobApplication[]> => {
     if (USE_MOCK) {
-      const app = applicationsStore.find((a) => a.id === payload.applicationId);
-      const newInt: InterviewSchedule = {
-        id: `int-${Date.now()}`,
-        applicationId: payload.applicationId,
-        candidateName: app ? app.candidateName : "Candidate",
-        vacancyTitle: app ? app.jobTitle : "Position",
-        dateTime: payload.dateTime,
-        interviewerName: payload.interviewerName,
-        status: "SCHEDULED",
-        notes: payload.notes,
-      };
-      if (app) {
-        app.status = "INTERVIEW";
-        app.interviewDate = payload.dateTime.split(" ")[0];
-        app.interviewTime = payload.dateTime.split(" ")[1] || "10:00 AM";
+      if (vacancyId) {
+        return mockResponse(applicationsStore.filter((a) => a.jobId === vacancyId));
       }
-      interviewsStore = [newInt, ...interviewsStore];
-      return mockResponse(newInt);
+      return mockResponse(applicationsStore);
     }
-    const res = await api.post(API_ENDPOINTS.hr.INTERVIEWS, payload);
+    const endpoint = vacancyId
+      ? API_ENDPOINTS.hr.VACANCY_APPLICATIONS(vacancyId)
+      : API_ENDPOINTS.me.APPLICATIONS;
+    const res = await api.get(endpoint);
+    const normalized = normalizeListResponse<any>(res.data);
+    return normalized.items.map(mapBackendApplication);
+  },
+
+  updateCandidateStatus: async (
+    applicationId: string,
+    status: ApplicationStatus
+  ): Promise<any> => {
+    if (USE_MOCK) {
+      const app = applicationsStore.find((a) => a.id === applicationId);
+      if (app) app.status = status;
+      return mockResponse({ success: true });
+    }
+    const res = await api.patch(API_ENDPOINTS.hr.INTERVIEW_DETAIL(applicationId), { status });
     return res.data;
   },
 };
-

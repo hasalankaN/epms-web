@@ -113,7 +113,18 @@ interface OrgOption {
 
 /* ═══════════════════════════════════════════════════════════════════════ */
 
-export function EmployeeRegisterForm() {
+import { usePathname, useRouter } from "next/navigation";
+
+export interface EmployeeRegisterFormProps {
+  mode?: "hr" | "admin";
+  onSuccessRedirect?: string;
+}
+
+export function EmployeeRegisterForm({ mode: propMode, onSuccessRedirect }: EmployeeRegisterFormProps = {}) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const isHr = propMode === "hr" || pathname?.startsWith("/hr-panel");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -214,12 +225,19 @@ export function EmployeeRegisterForm() {
     setIsSubmitting(true);
 
     try {
-      await employeeService.registerEmployee(data);
-      setSubmitted(true);
-      toast.success("Employee registered successfully! Login credentials have been emailed.");
+      if (isHr) {
+        // HR submits account request to Admin via POST /hr/employee-request
+        await employeeService.createEmployeeRequest(data);
+        setSubmitted(true);
+        toast.success("Employee account request submitted to Admin for approval!");
+      } else {
+        // Admin directly registers employee via POST /employee/register
+        await employeeService.registerEmployee(data);
+        setSubmitted(true);
+        toast.success("Employee registered successfully! Login credentials have been emailed.");
+      }
       reset();
     } catch (error: any) {
-      // Axios interceptor already shows a toast — only log for debugging
       console.error("Employee registration error:", error);
     } finally {
       setIsSubmitting(false);
@@ -234,18 +252,31 @@ export function EmployeeRegisterForm() {
           <CheckCircle2 className="h-8 w-8 text-emerald-600" />
         </div>
         <div>
-          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Employee Registered!</h2>
-          <p className="text-sm text-slate-500 mt-1">
-            The employee account has been created and login credentials have been emailed.
+          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+            {isHr ? "Account Request Submitted!" : "Employee Registered!"}
+          </h2>
+          <p className="text-sm text-slate-500 mt-1 max-w-md">
+            {isHr
+              ? "The new employee account request has been submitted to Admin for approval. Once approved, the portal account will be active."
+              : "The employee account has been created and login credentials have been emailed."}
           </p>
         </div>
-        <Button
-          size="sm"
-          className="mt-2 bg-indigo-600 hover:bg-indigo-500 text-white"
-          onClick={() => setSubmitted(false)}
-        >
-          Register Another
-        </Button>
+        <div className="flex items-center gap-3 mt-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => router.push(onSuccessRedirect || (isHr ? "/hr-panel/employees" : "/admin-panel/user-managment"))}
+          >
+            {isHr ? "Back to Directory" : "Back to Users"}
+          </Button>
+          <Button
+            size="sm"
+            className="bg-[#E60076] hover:bg-[#d0006a] text-white"
+            onClick={() => setSubmitted(false)}
+          >
+            {isHr ? "Submit Another Request" : "Register Another"}
+          </Button>
+        </div>
       </FormCard>
     );
   }

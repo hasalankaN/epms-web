@@ -10,10 +10,13 @@ export interface ProductionRecord {
   projectName: string;
   clientName: string;
   expectedUnits: number;
+  targetUnits?: number;
   actualUnits: number;
   achievementPercentage: number;
+  efficiencyRate?: number;
   rating: number; // 1-5
   supervisorComment?: string;
+  supervisorComments?: string;
   specialRemarks?: string;
   approvalStatus: ProductionApprovalStatus;
 }
@@ -25,12 +28,18 @@ export interface ProductionStats {
   approvedPct: number;
   totalExpected?: number;
   totalActual?: number;
+  monthlyTarget?: number;
+  achievedUnits?: number;
+  averageEfficiency?: number;
+  averageSupervisorRating?: number;
 }
 
 export interface ReviewProductionDto {
   recordId: string;
-  rating: number;
-  supervisorComment: string;
-  approvalStatus: "APPROVED" | "REJECTED";
+  rating?: number;
+  supervisorComment?: string;
+  comments?: string;
+  decision?: "APPROVED" | "REJECTED";
+  approvalStatus?: "APPROVED" | "REJECTED";
 }
 

@@ -39,7 +39,7 @@ export const useDecideAccountRequestMutation = () => {
       id: string;
       decision: "APPROVED" | "REJECTED";
       adminComment?: string;
-    }) => accountRequestService.decideAccountRequest(id, decision, adminComment),
+    }) => accountRequestService.decideAccountRequest(id, decision, adminComment || ""),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [queryKeys.adminAccountRequests] });
       toast.success(

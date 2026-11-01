@@ -53,12 +53,15 @@ export interface PlanTrainingDto {
   name: string;
   description: string;
   date: string;
+  startDate?: string;
+  endDate?: string;
   startTime: string;
   endTime: string;
   mode: TrainingMode;
   venue: string;
   instructors: string[];
   participantIds: string[];
+  participantEmployeeIds?: string[];
   budget: number;
 }
 

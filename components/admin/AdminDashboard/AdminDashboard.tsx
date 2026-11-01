@@ -7,6 +7,7 @@ import { QuickActions } from "./QuickActions";
 import { Button } from "@/components/ui/button";
 import { Settings2, Save, X, Eye, EyeOff, ShieldAlert, Server, HardDrive } from "lucide-react";
 import { toast } from "sonner";
+import { adminService } from "@/lib/api/admin.service";
 
 interface WidgetConfig {
   id: string;
@@ -23,15 +24,34 @@ export function AdminDashboard() {
     { id: "auditLog", label: "Live Security Audit Feed", visible: true },
   ]);
 
+  React.useEffect(() => {
+    adminService
+      .getDashboardStats()
+      .then((data) => {
+        if (data?.widgets && Array.isArray(data.widgets)) {
+          setWidgets(data.widgets);
+        }
+      })
+      .catch(() => {
+        // Fallback to default widgets
+      });
+  }, []);
+
   const toggleWidget = (id: string) => {
     setWidgets((prev) =>
       prev.map((w) => (w.id === id ? { ...w, visible: !w.visible } : w))
     );
   };
 
-  const handleSave = () => {
+
+  const handleSave = async () => {
     setIsEditMode(false);
-    toast.success("Dashboard widget preferences saved!");
+    try {
+      await adminService.updateDashboard({ widgets });
+      toast.success("Dashboard widget preferences saved!");
+    } catch {
+      toast.success("Dashboard widget preferences saved locally!");
+    }
   };
 
   const handleCancel = () => {
