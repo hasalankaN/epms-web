@@ -31,20 +31,18 @@ export function HRQuickActions({
     {
       id: "add-employee",
       title: "Add New Employee",
-      code: "#31",
       icon: UserPlus,
-      textColor: "text-blue-600 dark:text-blue-400",
-      bgColor: "bg-blue-50 dark:bg-blue-950/40",
-      borderColor: "hover:border-blue-300 dark:hover:border-blue-700",
-      description: "Register personnel record",
+      textColor: "text-[#E60076]",
+      bgColor: "bg-pink-50 dark:bg-pink-950/40",
+      borderColor: "hover:border-[#E60076]/40",
+      description: "Submit employee request",
       onClick: () => {
-        router.push("/admin-panel/user-accounts");
+        router.push("/hr-panel/employees/add-employee");
       },
     },
     {
       id: "plan-training",
       title: "Plan Training",
-      code: "#35",
       icon: GraduationCap,
       textColor: "text-indigo-600 dark:text-indigo-400",
       bgColor: "bg-indigo-50 dark:bg-indigo-950/40",
@@ -55,7 +53,6 @@ export function HRQuickActions({
     {
       id: "create-vacancy",
       title: "Create Vacancy",
-      code: "#60",
       icon: Briefcase,
       textColor: "text-teal-600 dark:text-teal-400",
       bgColor: "bg-teal-50 dark:bg-teal-950/40",
@@ -66,7 +63,6 @@ export function HRQuickActions({
     {
       id: "send-notification",
       title: "Send Notification",
-      code: "#63",
       icon: BellRing,
       textColor: "text-emerald-600 dark:text-emerald-400",
       bgColor: "bg-emerald-50 dark:bg-emerald-950/40",
@@ -77,12 +73,11 @@ export function HRQuickActions({
     {
       id: "generate-reports",
       title: "Generate Reports",
-      code: "Audit",
       icon: FileSpreadsheet,
       textColor: "text-purple-600 dark:text-purple-400",
       bgColor: "bg-purple-50 dark:bg-purple-950/40",
       borderColor: "hover:border-purple-300 dark:hover:border-purple-700",
-      description: "Leave, Training, Salary",
+      description: "Export summary metrics",
       onClick: onGenerateReportsClick,
     },
   ];
@@ -116,9 +111,6 @@ return (
                 >
                   <Icon className="h-4 w-4" />
                 </div>
-                <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
-                  {act.code}
-                </span>
               </div>
 
               <div className="mt-3">

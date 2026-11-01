@@ -22,21 +22,11 @@ export function TodayAttendanceWidget({
   attendance,
   onViewDetails,
 }: TodayAttendanceWidgetProps) {
-  const presentPct = Math.round(
-    (attendance.present / attendance.totalEmployees) * 100
-  );
-
-  const latePct = Math.round(
-    (attendance.late / attendance.totalEmployees) * 100
-  );
-
-  const absentPct = Math.round(
-    (attendance.absent / attendance.totalEmployees) * 100
-  );
-
-  const earlyPct = Math.round(
-    (attendance.earlyDeparture / attendance.totalEmployees) * 100
-  );
+  const total = attendance.totalEmployees || 0;
+  const presentPct = total > 0 ? Math.round((attendance.present / total) * 100) : 0;
+  const latePct = total > 0 ? Math.round((attendance.late / total) * 100) : 0;
+  const absentPct = total > 0 ? Math.round((attendance.absent / total) * 100) : 0;
+  const earlyPct = total > 0 ? Math.round((attendance.earlyDeparture / total) * 100) : 0;
 
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs transition-all">
@@ -50,9 +40,6 @@ export function TodayAttendanceWidget({
               <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
                 Today’s Attendance Overview
               </h3>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 font-semibold">
-                #33
-              </span>
             </div>
             <p className="text-[11px] text-slate-500">
               Real-time punch-ins for {attendance.totalEmployees} workforce members

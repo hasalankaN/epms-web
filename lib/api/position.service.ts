@@ -40,6 +40,7 @@ export const positionService = {
 
     const items: PositionItem[] = rawItems.map((item: any, idx: number) => ({
       id: item.position_id || item.id || item._id || item.positionId || `pos-${idx}`,
+      positionCode: item.position_code || item.positionCode || item.code || `POS-${String(idx + 1).padStart(4, "0")}`,
       positionName: item.position_name || item.positionName || item.name || item.title || "Unnamed Position",
       description: item.description || "",
       effectiveDate: item.effective_date || item.effectiveDate || item.date || "",

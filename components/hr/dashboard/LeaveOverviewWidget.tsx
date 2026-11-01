@@ -31,9 +31,6 @@ export function LeaveOverviewWidget({
                 <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
                   Leave Overview & Balances
                 </h3>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300 font-semibold">
-                  #42
-                </span>
               </div>
               <p className="text-[11px] text-slate-500">
                 Out-of-office roster & low quota balance alerts
@@ -140,7 +137,7 @@ export function LeaveOverviewWidget({
       </div>
 
       <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400 flex items-center justify-between mt-2">
-        <span>Track Leave Balances (#42)</span>
+        <span>Leave Quotas & Deductions</span>
         <span className="font-mono text-[10px] text-slate-500">Calendar Synced</span>
       </div>
     </div>

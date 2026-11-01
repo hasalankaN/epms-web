@@ -56,9 +56,6 @@ export function PendingTrainingBudgetsWidget({
                 <Badge variant="Pending" className="text-[10px] h-5 px-1.5 font-bold">
                   {pendingBudgets.length} Proposals
                 </Badge>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 font-semibold">
-                  #38
-                </span>
               </div>
               <p className="text-[11px] text-slate-500">
                 Departmental upskilling budget clearance requests
@@ -142,7 +139,7 @@ export function PendingTrainingBudgetsWidget({
       </div>
 
       <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400 flex items-center justify-between mt-2">
-        <span>Approve Training Budget (#38)</span>
+        <span>Training Budget Clearance</span>
         <span className="font-mono text-[10px] text-slate-500">Finance Ledger Synced</span>
       </div>
     </div>

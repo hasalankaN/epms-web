@@ -29,9 +29,6 @@ export function EmployeeSummaryWidget({
                 <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
                   Workforce & Department Summary
                 </h3>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 font-semibold">
-                  #29, #47
-                </span>
               </div>
               <p className="text-[11px] text-slate-500">
                 Staff distribution, operational departments & new onboarding
@@ -93,24 +90,27 @@ export function EmployeeSummaryWidget({
             Department Headcount Distribution
           </span>
           <div className="space-y-2">
-            {data.departments.map((dept, idx) => {
-              const pct = Math.round((dept.count / data.totalEmployees) * 100);
+            {data.departments.length === 0 ? (
+              <p className="text-xs text-slate-400 py-1">No department staff records yet.</p>
+            ) : (
+              data.departments.map((dept, idx) => {
+                const pct = data.totalEmployees > 0 ? Math.round((dept.count / data.totalEmployees) * 100) : 0;
 
-              
-return (
-                <div key={idx} className="space-y-1">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="font-medium text-slate-700 dark:text-slate-300">
-                      {dept.department}
-                    </span>
-                    <span className="font-mono text-slate-500">
-                      {dept.count} ({pct}%)
-                    </span>
+                return (
+                  <div key={idx} className="space-y-1">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-medium text-slate-700 dark:text-slate-300">
+                        {dept.department}
+                      </span>
+                      <span className="font-mono text-slate-500">
+                        {dept.count} ({pct}%)
+                      </span>
+                    </div>
+                    <Progress value={pct} className="h-1.5" />
                   </div>
-                  <Progress value={pct} className="h-1.5" />
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -146,8 +146,8 @@ return (
       </div>
 
       <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400 flex items-center justify-between mt-3">
-        <span>View Employee Information, Departments (#29, #47)</span>
-        <span className="font-mono text-[10px] text-slate-500">6 Active Departments</span>
+        <span>Workforce Operations & Distribution</span>
+        <span className="font-mono text-[10px] text-slate-500">Live Department Metrics</span>
       </div>
     </div>
   );
