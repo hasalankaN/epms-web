@@ -24,7 +24,7 @@ import {
   useDepartmentPerformanceQuery,
   useRewardsQuery,
 } from "@/hooks/api/performance/usePerformance";
-import type { PerformanceReviewItem, RewardRecord } from "@/types/dto/performance.dto";
+import type { PerformanceReviewItem, RewardRecord, DepartmentPerformance } from "@/types/dto/performance.dto";
 
 export function HrPerformanceView() {
   const [activeTab, setActiveTab] = useState<"reviews" | "departments" | "rewards" | "feedback">("reviews");
@@ -38,7 +38,8 @@ export function HrPerformanceView() {
 
   // Queries
   const { data: reviews = [], isLoading: isReviewsLoading } = useMyReviewsQuery();
-  const { data: departments = [], isLoading: isDeptsLoading } = useDepartmentPerformanceQuery();
+  const { data: deptData, isLoading: isDeptsLoading } = useDepartmentPerformanceQuery();
+  const departments: DepartmentPerformance[] = Array.isArray(deptData) ? deptData : (deptData ? [deptData] : []);
   const { data: rewards = [], isLoading: isRewardsLoading } = useRewardsQuery();
 
   const reviewColumns: Column<PerformanceReviewItem>[] = [
@@ -308,7 +309,7 @@ export function HrPerformanceView() {
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground mb-2">Top Performers In Department:</p>
                   <div className="space-y-1.5">
-                    {dept.rankings.slice(0, 3).map((r) => (
+                    {dept.rankings?.slice(0, 3).map((r: any) => (
                       <div key={r.employeeId} className="flex justify-between items-center text-xs p-2 rounded bg-muted/20">
                         <span className="font-medium">{r.rank}. {r.employeeName} ({r.employeeCode})</span>
                         <span className="font-bold text-[#E60076]">{r.rating.toFixed(1)} / 5.0</span>

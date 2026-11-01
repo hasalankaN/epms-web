@@ -68,6 +68,7 @@ export const queryKeys = {
   enrollments: "enrollments",
 
   // Notifications
+  notifications: "notifications",
   notificationsSent: "notificationsSent",
   notificationsScheduled: "notificationsScheduled",
   notificationsResponseLogs: "notificationsResponseLogs",

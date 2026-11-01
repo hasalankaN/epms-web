@@ -131,7 +131,7 @@ api.interceptors.response.use(
             refresh_token: string;
             expires_in: number;
           }>
-        >(`${api.defaults.baseURL}/api/v1/auth/refresh`, {
+        >(`${api.defaults.baseURL}/auth/refresh`, {
           refresh_token: session.tokens.refreshToken,
         });
 

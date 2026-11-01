@@ -300,7 +300,7 @@ export function SupervisorMemberDetailView({ empId }: SupervisorMemberDetailView
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {leavesList.map((l) => (
+              {leavesList.map((l: any) => (
                 <tr key={l.id}>
                   <td className="p-3 text-slate-500">{l.appliedOn}</td>
                   <td className="p-3 font-semibold">{l.type}</td>

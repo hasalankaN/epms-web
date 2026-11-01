@@ -8,8 +8,11 @@ export interface TaskItem {
   dueDate: string;
   assignedByName: string;
   assignedById?: string;
+  assignedBy?: string;
   assignedToName: string;
   assignedToId: string;
+  assignedToCode?: string;
+  departmentName?: string;
   status: TaskStatus;
   priority: TaskPriority;
   createdAt: string;
@@ -22,6 +25,8 @@ export interface CreateTaskDto {
   description: string;
   dueDate: string;
   assignedToId: string;
+  assignedToName?: string;
+  assignedToCode?: string;
   priority: TaskPriority;
 }
 

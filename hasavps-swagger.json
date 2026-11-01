@@ -1,0 +1,2289 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_getHello",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/files/upload": {
+      "post": {
+        "operationId": "FilesController_upload",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "File uploaded"
+          }
+        },
+        "summary": "Upload a single file to Google Cloud Storage",
+        "tags": [
+          "Files"
+        ]
+      }
+    },
+    "/files/signed-url": {
+      "post": {
+        "operationId": "FilesController_signedUrl",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignedUrlDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed URL generated"
+          }
+        },
+        "summary": "Generate signed URL for an existing GCS object",
+        "tags": [
+          "Files"
+        ]
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        },
+        "summary": "Register a new user with email/password",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/validate-email": {
+      "post": {
+        "operationId": "AuthController_validateEmail",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateEmailDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email verified successfully"
+          },
+          "400": {
+            "description": "Invalid OTP or expired"
+          }
+        },
+        "summary": "Verify email with OTP code",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful"
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        },
+        "summary": "Login with email and password",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/firebase/auth": {
+      "post": {
+        "operationId": "AuthController_firebaseAuth",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FirebaseAuthDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful"
+          },
+          "400": {
+            "description": "Invalid Firebase token"
+          }
+        },
+        "summary": "Authenticate with Firebase token",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/firebase/sync-user": {
+      "post": {
+        "operationId": "AuthController_syncFirebaseUser",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FirebaseSyncUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated successfully"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "summary": "Sync user profile from Firebase",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refreshToken",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tokens refreshed successfully"
+          },
+          "401": {
+            "description": "Invalid or expired refresh token"
+          }
+        },
+        "summary": "Refresh access token using refresh token",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/resend-otp": {
+      "post": {
+        "operationId": "AuthController_resendOtp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendOtpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP sent successfully"
+          },
+          "400": {
+            "description": "Too many requests"
+          }
+        },
+        "summary": "Request OTP for password reset",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/validate-otp-for-reset": {
+      "post": {
+        "operationId": "AuthController_validateOtpForReset",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateOtpForResetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP validated, reset token issued"
+          },
+          "400": {
+            "description": "Invalid OTP"
+          }
+        },
+        "summary": "Validate OTP and get reset token",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/reset-password-with-token": {
+      "post": {
+        "operationId": "AuthController_resetPasswordWithToken",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordWithTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset successfully"
+          },
+          "400": {
+            "description": "Invalid or expired token"
+          }
+        },
+        "summary": "Reset password using reset token",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/change-password": {
+      "post": {
+        "operationId": "AuthController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password changed successfully"
+          },
+          "400": {
+            "description": "Invalid current password"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change password for logged-in user",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Logged out successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Logout (client must discard tokens)",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/admin/login": {
+      "post": {
+        "operationId": "AdminController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminLoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Login successful"
+          }
+        },
+        "summary": "Admin login",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/register": {
+      "post": {
+        "operationId": "AdminController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminRegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Admin created and credentials emailed"
+          }
+        },
+        "summary": "Register a new admin",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/{adminId}": {
+      "patch": {
+        "operationId": "AdminController_updateDetails",
+        "parameters": [
+          {
+            "name": "adminId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUpdateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Admin updated"
+          }
+        },
+        "summary": "Update admin account details",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/{adminId}/password": {
+      "post": {
+        "operationId": "AdminController_updatePassword",
+        "parameters": [
+          {
+            "name": "adminId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUpdatePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password updated and emailed"
+          }
+        },
+        "summary": "Update admin password (sends new password by email)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/password/send-otp": {
+      "post": {
+        "operationId": "AdminController_sendPasswordOtp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendPasswordOtpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP sent if email exists"
+          }
+        },
+        "summary": "Send password verification OTP to admin email",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/password/confirm-otp": {
+      "post": {
+        "operationId": "AdminController_confirmPasswordOtp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmPasswordOtpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP confirmed"
+          }
+        },
+        "summary": "Confirm password OTP for admin email",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/password/reset": {
+      "post": {
+        "operationId": "AdminController_resetPassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset successful"
+          }
+        },
+        "summary": "Reset password using confirmed reset token",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin": {
+      "get": {
+        "operationId": "AdminController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "john",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of admins"
+          }
+        },
+        "summary": "List admins with pagination and search",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/employee-requests": {
+      "get": {
+        "operationId": "AdminController_listEmployeeRequests",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by status: PENDING | APPROVED | REJECTED",
+            "schema": {
+              "example": "PENDING",
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by employee name, EPF, or email",
+            "schema": {
+              "example": "Kamal",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of employee account requests"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Admin view all employee account requests with filters and pagination",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/employee-requests/{id}": {
+      "get": {
+        "operationId": "AdminController_getEmployeeRequestById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Request UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request details"
+          },
+          "404": {
+            "description": "Request not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Admin get full details of an employee account request",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/employee-requests/{id}/accept": {
+      "patch": {
+        "operationId": "AdminController_acceptEmployeeRequest",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Request UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request approved and employee created"
+          },
+          "400": {
+            "description": "Request is not pending or user already exists"
+          },
+          "404": {
+            "description": "Request not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Admin accept/approve employee account request (creates employee & user account, sends credentials email, notifies HR)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/employee-requests/{id}/reject": {
+      "patch": {
+        "operationId": "AdminController_rejectEmployeeRequest",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Request UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request rejected"
+          },
+          "400": {
+            "description": "Request is not pending"
+          },
+          "404": {
+            "description": "Request not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Admin reject employee account request with reason (notifies HR)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/notifications": {
+      "get": {
+        "operationId": "NotificationsController_getMyNotifications",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "unreadOnly",
+            "required": false,
+            "in": "query",
+            "description": "Filter only unread notifications",
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by notification type",
+            "schema": {
+              "example": "EMPLOYEE_ACCOUNT_REQUEST",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notifications list retrieved successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get current user notifications (with unread count, pagination and filter)",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/read-all": {
+      "patch": {
+        "operationId": "NotificationsController_markAllRead",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "All notifications marked as read"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark all notifications as read for current user",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/{id}/read": {
+      "patch": {
+        "operationId": "NotificationsController_markRead",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Notification UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification marked as read"
+          },
+          "404": {
+            "description": "Notification not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a specific notification as read",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/employee/register": {
+      "post": {
+        "operationId": "EmployeeController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeRegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Employee created and credentials emailed"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register a new employee directly (Admin / HR)",
+        "tags": [
+          "employee"
+        ]
+      }
+    },
+    "/employee": {
+      "get": {
+        "operationId": "EmployeeController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by employee name, EPF no, email, department, or position",
+            "schema": {
+              "example": "Kamal",
+              "type": "string"
+            }
+          },
+          {
+            "name": "departmentId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by department ID",
+            "schema": {
+              "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+              "type": "string"
+            }
+          },
+          {
+            "name": "positionId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by position ID",
+            "schema": {
+              "example": "b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by user account status (e.g. Active, Inactive)",
+            "schema": {
+              "example": "Active",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of employees retrieved successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "View all employees with position name, department, user status, supervisor, and all related data",
+        "tags": [
+          "employee"
+        ]
+      }
+    },
+    "/employee/supervisors": {
+      "get": {
+        "description": "Returns all employees that are assigned as a supervisor to at least one other employee. Supports pagination and optional search by supervisor name or position name.",
+        "operationId": "EmployeeController_getSupervisors",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by supervisor name or position name",
+            "schema": {
+              "example": "Kamal",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated supervisor list with position and department details"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get list of supervisors (employees who supervise others)",
+        "tags": [
+          "employee"
+        ]
+      }
+    },
+    "/employee/{id}": {
+      "get": {
+        "operationId": "EmployeeController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Employee UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Employee details"
+          },
+          "404": {
+            "description": "Employee not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get single employee by ID with complete details (position, department, user, contacts, qualifications, dependents)",
+        "tags": [
+          "employee"
+        ]
+      }
+    },
+    "/department/create": {
+      "post": {
+        "operationId": "DepartmentController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDepartmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Department created successfully"
+          },
+          "409": {
+            "description": "Department with this name already exists"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new department",
+        "tags": [
+          "department"
+        ]
+      }
+    },
+    "/department": {
+      "get": {
+        "operationId": "DepartmentController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "john",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of departments"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List departments with pagination and search",
+        "tags": [
+          "department"
+        ]
+      }
+    },
+    "/department/{id}": {
+      "patch": {
+        "operationId": "DepartmentController_update",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDepartmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Department updated successfully"
+          },
+          "404": {
+            "description": "Department not found"
+          },
+          "409": {
+            "description": "Department name already exists"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update an existing department by ID",
+        "tags": [
+          "department"
+        ]
+      },
+      "delete": {
+        "operationId": "DepartmentController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Department UUID / ID",
+            "schema": {
+              "example": "uuid-1234-5678",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Department deleted successfully"
+          },
+          "404": {
+            "description": "Department not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a department by ID (Admin only)",
+        "tags": [
+          "department"
+        ]
+      }
+    },
+    "/positions/create": {
+      "post": {
+        "operationId": "PositionsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePositionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Position created successfully"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Create a new position",
+        "tags": [
+          "positions"
+        ]
+      }
+    },
+    "/positions": {
+      "get": {
+        "operationId": "PositionsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "position name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of departments"
+          }
+        },
+        "summary": "List departments with pagination and search",
+        "tags": [
+          "positions"
+        ]
+      }
+    },
+    "/hr/employee-request": {
+      "post": {
+        "operationId": "HrController_createEmployeeRequest",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEmployeeRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Employee request submitted and notification sent to Admin"
+          },
+          "400": {
+            "description": "Validation error or duplicate email/EPF"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Submit a new employee account request to Admin for approval (HR)",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/employee-requests": {
+      "get": {
+        "operationId": "HrController_listEmployeeRequests",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by status: PENDING | APPROVED | REJECTED",
+            "schema": {
+              "example": "PENDING",
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by employee name, EPF, or email",
+            "schema": {
+              "example": "Kamal",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of requests"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List employee account requests submitted by HR with pagination and filters",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/employee-requests/{id}": {
+      "get": {
+        "operationId": "HrController_getEmployeeRequestById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Request UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request details"
+          },
+          "404": {
+            "description": "Request not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get employee account request details by ID",
+        "tags": [
+          "hr"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "EPMS API",
+    "description": "API documentation for EPMS",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "SignedUrlDto": {
+        "type": "object",
+        "properties": {
+          "filename": {
+            "type": "string",
+            "description": "Filename (path) of the existing object in GCS"
+          },
+          "expiresInSeconds": {
+            "type": "number",
+            "description": "Expiration in seconds (default 86400 = 24 hours)"
+          }
+        },
+        "required": [
+          "filename"
+        ]
+      },
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "example": "John",
+            "description": "User first name"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Doe",
+            "description": "User last name"
+          },
+          "email": {
+            "type": "string",
+            "example": "john.doe@example.com",
+            "description": "User email address"
+          },
+          "password": {
+            "type": "string",
+            "example": "Password123!",
+            "description": "Password (min 8 chars, must contain uppercase, lowercase, number and special character)"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "example": "+1234567890",
+            "description": "Phone number with country code"
+          },
+          "countryCode": {
+            "type": "string",
+            "example": "+1",
+            "description": "Country code"
+          }
+        },
+        "required": [
+          "firstName",
+          "lastName",
+          "email",
+          "password"
+        ]
+      },
+      "ValidateEmailDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "john.doe@example.com",
+            "description": "User email address"
+          },
+          "otpCode": {
+            "type": "string",
+            "example": "1234",
+            "description": "4-digit OTP code sent to email"
+          }
+        },
+        "required": [
+          "email",
+          "otpCode"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "john.doe@example.com",
+            "description": "User email address"
+          },
+          "password": {
+            "type": "string",
+            "example": "Password123!",
+            "description": "User password"
+          },
+          "rememberMe": {
+            "type": "boolean",
+            "example": false,
+            "description": "Remember me for extended session"
+          },
+          "deviceToken": {
+            "type": "string",
+            "example": "fcm_token_12345",
+            "description": "Device push token"
+          },
+          "deviceId": {
+            "type": "string",
+            "example": "device-uuid-1234",
+            "description": "Device unique id"
+          },
+          "deviceType": {
+            "type": "string",
+            "example": "android",
+            "description": "Device type (android|ios|web)"
+          },
+          "appVersion": {
+            "type": "string",
+            "example": "1.3.0",
+            "description": "Application version"
+          },
+          "timeZone": {
+            "type": "string",
+            "example": "Asia/Colombo",
+            "description": "User time zone"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "FirebaseAuthDto": {
+        "type": "object",
+        "properties": {
+          "firebaseToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFmODhiODE0MjljYzQ1MWEzMzVjMmY1Y...",
+            "description": "Firebase ID token from client SDK"
+          }
+        },
+        "required": [
+          "firebaseToken"
+        ]
+      },
+      "FirebaseSyncUserDto": {
+        "type": "object",
+        "properties": {
+          "firebaseToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFmODhiODE0MjljYzQ1MWEzMzVjMmY1Y...",
+            "description": "Firebase ID token from client SDK"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "example": "+1234567890",
+            "description": "Phone number with country code"
+          },
+          "countryCode": {
+            "type": "string",
+            "example": "+1",
+            "description": "Country code"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "John",
+            "description": "User first name"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Doe",
+            "description": "User last name"
+          },
+          "isSeller": {
+            "type": "boolean",
+            "example": true,
+            "description": "Is user a seller"
+          },
+          "isBuyer": {
+            "type": "boolean",
+            "example": true,
+            "description": "Is user a buyer"
+          }
+        },
+        "required": [
+          "firebaseToken"
+        ]
+      },
+      "RefreshTokenDto": {
+        "type": "object",
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ...",
+            "description": "Refresh token received from login or previous refresh"
+          }
+        },
+        "required": [
+          "refresh_token"
+        ]
+      },
+      "ResendOtpDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "john.doe@example.com",
+            "description": "User email address to resend OTP"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "ValidateOtpForResetDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "john.doe@example.com",
+            "description": "User email address"
+          },
+          "otpCode": {
+            "type": "string",
+            "example": "1234",
+            "description": "4-digit OTP code sent for password reset"
+          }
+        },
+        "required": [
+          "email",
+          "otpCode"
+        ]
+      },
+      "ResetPasswordWithTokenDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "john.doe@example.com",
+            "description": "User email address"
+          },
+          "resetToken": {
+            "type": "string",
+            "example": "abc123def456ghi789jkl",
+            "description": "Reset token received after OTP validation"
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "NewPassword123!",
+            "description": "New password (min 8 chars, must contain uppercase, lowercase, number and special character)"
+          }
+        },
+        "required": [
+          "email",
+          "resetToken",
+          "newPassword"
+        ]
+      },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "example": "Password123!",
+            "description": "Current password"
+          },
+          "new_password": {
+            "type": "string",
+            "example": "NewPassword123!",
+            "description": "New password (min 8 chars, must contain uppercase, lowercase, number and special character)"
+          }
+        },
+        "required": [
+          "current_password",
+          "new_password"
+        ]
+      },
+      "AdminLoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "plainpassword"
+          },
+          "rememberMe": {
+            "type": "boolean",
+            "example": false
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "AdminRegisterDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "plainpassword"
+          },
+          "countryCode": {
+            "type": "string",
+            "example": "+94"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "example": "0777123456"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Admin"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "User"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "countryCode",
+          "phoneNumber",
+          "firstName",
+          "lastName"
+        ]
+      },
+      "AdminUpdateDto": {
+        "type": "object",
+        "properties": {
+          "countryCode": {
+            "type": "string",
+            "example": "+94"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "example": "0777123456"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Admin"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "User"
+          },
+          "email": {
+            "type": "string",
+            "example": "admin-new@example.com"
+          }
+        }
+      },
+      "AdminUpdatePasswordDto": {
+        "type": "object",
+        "properties": {
+          "newPassword": {
+            "type": "string",
+            "example": "newSecurePassword123"
+          }
+        },
+        "required": [
+          "newPassword"
+        ]
+      },
+      "SendPasswordOtpDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "ConfirmPasswordOtpDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          },
+          "otp": {
+            "type": "string",
+            "example": "123456"
+          }
+        },
+        "required": [
+          "email",
+          "otp"
+        ]
+      },
+      "ResetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          },
+          "resetToken": {
+            "type": "string",
+            "example": "a1b2c3d4e5f6...",
+            "description": "Reset token returned from confirm-otp"
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "newSecurePassword123"
+          }
+        },
+        "required": [
+          "email",
+          "resetToken",
+          "newPassword"
+        ]
+      },
+      "RejectRequestDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "example": "Position requirements not met or duplicate documentation",
+            "description": "Reason for rejection"
+          }
+        }
+      },
+      "EmergencyContactDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Saman Perera"
+          },
+          "relationship": {
+            "type": "string",
+            "example": "Spouse"
+          },
+          "mobile": {
+            "type": "string",
+            "example": "+94771234567"
+          },
+          "home_tp": {
+            "type": "string",
+            "example": "+94112345678"
+          },
+          "work_tp": {
+            "type": "string",
+            "example": "+94118765432"
+          }
+        },
+        "required": [
+          "name",
+          "relationship",
+          "mobile"
+        ]
+      },
+      "QualificationDto": {
+        "type": "object",
+        "properties": {
+          "qualification_title": {
+            "type": "string",
+            "example": "BSc in Computer Science"
+          },
+          "institute": {
+            "type": "string",
+            "example": "University of Colombo"
+          },
+          "completed_year": {
+            "type": "number",
+            "example": 2022
+          }
+        },
+        "required": [
+          "qualification_title"
+        ]
+      },
+      "DependentDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Nimali Perera"
+          },
+          "relationship": {
+            "type": "string",
+            "example": "Wife"
+          },
+          "dob": {
+            "type": "string",
+            "example": "1995-08-20"
+          },
+          "mobile": {
+            "type": "string",
+            "example": "+94770000000"
+          }
+        },
+        "required": [
+          "name",
+          "relationship"
+        ]
+      },
+      "EmployeeRegisterDto": {
+        "type": "object",
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "example": "Kamal"
+          },
+          "last_name": {
+            "type": "string",
+            "example": "Silva"
+          },
+          "dob": {
+            "type": "string",
+            "example": "1995-08-20"
+          },
+          "join_date": {
+            "type": "string",
+            "example": "2024-01-15"
+          },
+          "employee_no": {
+            "type": "string",
+            "example": "EMP-0001",
+            "description": "Readable employee number (auto-generated if omitted)"
+          },
+          "epf_no": {
+            "type": "string",
+            "example": "EPF-10294"
+          },
+          "work_email": {
+            "type": "string",
+            "example": "kamal.silva@company.com"
+          },
+          "personal_email": {
+            "type": "string",
+            "example": "kamal.personal@gmail.com"
+          },
+          "mobile_no": {
+            "type": "string",
+            "example": "+94712345678"
+          },
+          "home_tp": {
+            "type": "string",
+            "example": "+94112223334"
+          },
+          "street": {
+            "type": "string",
+            "example": "123, Main Street"
+          },
+          "city": {
+            "type": "string",
+            "example": "Colombo"
+          },
+          "province": {
+            "type": "string",
+            "example": "Western"
+          },
+          "country": {
+            "type": "string",
+            "example": "Sri Lanka"
+          },
+          "department_id": {
+            "type": "string",
+            "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          },
+          "position_id": {
+            "type": "string",
+            "example": "b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          },
+          "supervisor_id": {
+            "type": "string",
+            "example": "c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a33"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "hr",
+              "supervisor",
+              "employee"
+            ],
+            "example": "employee",
+            "description": "User role if account is created"
+          },
+          "emergency_contacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmergencyContactDto"
+            }
+          },
+          "qualifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QualificationDto"
+            }
+          },
+          "dependents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DependentDto"
+            }
+          }
+        },
+        "required": [
+          "first_name",
+          "last_name",
+          "dob",
+          "join_date",
+          "epf_no",
+          "work_email"
+        ]
+      },
+      "CreateDepartmentDto": {
+        "type": "object",
+        "properties": {
+          "departmentCode": {
+            "type": "string",
+            "example": "DEP-0001",
+            "description": "Custom readable department code (auto-generated if omitted)"
+          },
+          "departmentName": {
+            "type": "string",
+            "example": "Marketing",
+            "description": "Department name"
+          },
+          "location": {
+            "type": "string",
+            "example": "Colombo Office, Level 4",
+            "description": "Location"
+          },
+          "deptPhone": {
+            "type": "string",
+            "example": "+94112345678",
+            "description": "Department Phone"
+          }
+        },
+        "required": [
+          "departmentName",
+          "location",
+          "deptPhone"
+        ]
+      },
+      "UpdateDepartmentDto": {
+        "type": "object",
+        "properties": {
+          "departmentCode": {
+            "type": "string",
+            "example": "DEP-0001",
+            "description": "Custom readable department code (auto-generated if omitted)"
+          },
+          "departmentName": {
+            "type": "string",
+            "example": "Marketing",
+            "description": "Department name"
+          },
+          "location": {
+            "type": "string",
+            "example": "Colombo Office, Level 4",
+            "description": "Location"
+          },
+          "deptPhone": {
+            "type": "string",
+            "example": "+94112345678",
+            "description": "Department Phone"
+          },
+          "id": {
+            "type": "string",
+            "description": "Department ID / UUID",
+            "example": "d3b07384-d113-4607-9580-da0d20d36e2f"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "CreatePositionDto": {
+        "type": "object",
+        "properties": {
+          "positionCode": {
+            "type": "string",
+            "example": "POS-0001",
+            "description": "Readable position code (auto-generated if omitted)"
+          },
+          "positionName": {
+            "type": "string",
+            "example": "Senior Software Engineer",
+            "description": "Position name (Max 100 characters)"
+          },
+          "description": {
+            "type": "string",
+            "example": "Responsible for leading backend architecture and development",
+            "description": "Detailed description of the position"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "example": "2026-01-01",
+            "description": "Effective date in YYYY-MM-DD format"
+          }
+        },
+        "required": [
+          "positionName"
+        ]
+      },
+      "CreateEmployeeRequestDto": {
+        "type": "object",
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "example": "Kamal"
+          },
+          "last_name": {
+            "type": "string",
+            "example": "Silva"
+          },
+          "dob": {
+            "type": "string",
+            "example": "1995-08-20"
+          },
+          "join_date": {
+            "type": "string",
+            "example": "2024-01-15"
+          },
+          "employee_no": {
+            "type": "string",
+            "example": "EMP-0001",
+            "description": "Readable employee number (auto-generated if omitted)"
+          },
+          "epf_no": {
+            "type": "string",
+            "example": "EPF-10294"
+          },
+          "work_email": {
+            "type": "string",
+            "example": "kamal.silva@company.com"
+          },
+          "personal_email": {
+            "type": "string",
+            "example": "kamal.personal@gmail.com"
+          },
+          "mobile_no": {
+            "type": "string",
+            "example": "+94712345678"
+          },
+          "home_tp": {
+            "type": "string",
+            "example": "+94112223334"
+          },
+          "street": {
+            "type": "string",
+            "example": "123, Main Street"
+          },
+          "city": {
+            "type": "string",
+            "example": "Colombo"
+          },
+          "province": {
+            "type": "string",
+            "example": "Western"
+          },
+          "country": {
+            "type": "string",
+            "example": "Sri Lanka"
+          },
+          "department_id": {
+            "type": "string",
+            "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          },
+          "position_id": {
+            "type": "string",
+            "example": "b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          },
+          "supervisor_id": {
+            "type": "string",
+            "example": "c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a33"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "hr",
+              "supervisor",
+              "employee"
+            ],
+            "example": "employee",
+            "description": "Role assigned once account is approved"
+          },
+          "emergency_contacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmergencyContactDto"
+            }
+          },
+          "qualifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QualificationDto"
+            }
+          },
+          "dependents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DependentDto"
+            }
+          }
+        },
+        "required": [
+          "first_name",
+          "last_name",
+          "dob",
+          "join_date",
+          "epf_no",
+          "work_email"
+        ]
+      }
+    }
+  }
+}

@@ -21,6 +21,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
+import { toast } from "sonner";
+import { adminService } from "@/lib/api/admin.service";
 import type { UserRecord } from "@/data/userManagementData";
 import { MOCK_USERS } from "@/data/userManagementData";
 import type { UserRole } from "@/types/roles";
@@ -28,13 +30,57 @@ import type { UserRole } from "@/types/roles";
 const ITEMS_PER_PAGE = 8;
 
 export function UserManagementTable() {
+  const [users, setUsers] = useState<UserRecord[]>(MOCK_USERS);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRole | "ALL">("ALL");
   const [currentPage, setCurrentPage] = useState(1);
 
+  React.useEffect(() => {
+    adminService
+      .getAccounts()
+      .then((accs) => {
+        if (accs && accs.length > 0) {
+          const mapped: UserRecord[] = accs.map((a) => {
+            const name = a.name || a.username || "EPMS User";
+            const initials = name
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .substring(0, 2)
+              .toUpperCase();
+            return {
+              id: a.id,
+              name,
+              email: a.email,
+              role: (a.role?.toUpperCase() || "EMPLOYEE") as UserRole,
+              department: a.department || "General",
+              status: a.isActive ? "Active" : "Inactive",
+              joinDate: a.createdAt?.split("T")[0] || "2026-01-01",
+              avatarInitials: initials || "EU",
+              avatarColor: "from-pink-500 to-rose-600",
+            };
+          });
+          setUsers(mapped);
+        }
+      })
+      .catch(() => {
+        // Fallback to initial mock users
+      });
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    try {
+      await adminService.deleteAccount(id);
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+      toast.success("Account deactivated successfully");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to deactivate account");
+    }
+  };
+
   // Filtered data
   const filtered = useMemo(() => {
-    return MOCK_USERS.filter((u) => {
+    return users.filter((u) => {
       const matchesSearch =
         search.trim() === "" ||
         u.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -44,7 +90,7 @@ export function UserManagementTable() {
 
       return matchesSearch && matchesRole;
     });
-  }, [search, roleFilter]);
+  }, [users, search, roleFilter]);
 
   // Reset to page 1 when filters change
   const handleSearchChange = (v: string) => {
@@ -159,7 +205,10 @@ export function UserManagementTable() {
               Edit Role
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="flex items-center gap-2 text-xs text-red-600 focus:text-red-600 focus:bg-red-50">
+            <DropdownMenuItem
+              onClick={() => handleDelete(item.id)}
+              className="flex items-center gap-2 text-xs text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+            >
               <Trash2 className="h-3.5 w-3.5" />
               Deactivate
             </DropdownMenuItem>
@@ -177,7 +226,7 @@ export function UserManagementTable() {
         onSearchChange={handleSearchChange}
         roleFilter={roleFilter}
         onRoleFilterChange={handleRoleChange}
-        totalCount={MOCK_USERS.length}
+        totalCount={users.length}
         filteredCount={filtered.length}
       />
 

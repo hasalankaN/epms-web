@@ -66,13 +66,29 @@ export async function login(data: LoginRequest): Promise<CommonResponseDataType<
       timeZone: "Asia/Colombo",
     };
 
-    const response = await api.post("/auth/login", payload);
+    let response;
+    try {
+      response = await api.post("/auth/login", payload);
+    } catch (err: any) {
+      if (err?.response?.status === 401 || err?.response?.status === 400) {
+        try {
+          response = await api.post("/admin/login", {
+            email: payload.email,
+            password: payload.password,
+            rememberMe: payload.rememberMe,
+          });
+        } catch {
+          throw err;
+        }
+      } else {
+        throw err;
+      }
+    }
     const apiData = response.data;
 
-    // The backend returns { access_token, refresh_token, user: { userId, firstName, lastName, email, role, status, ... } }
     const accessToken = apiData.access_token || apiData.id_token || apiData.data?.access_token || apiData.data?.id_token;
     const refreshToken = apiData.refresh_token || apiData.data?.refresh_token;
-    const rawUser = apiData.user || apiData.data?.user;
+    const rawUser = apiData.user || apiData.data?.user || apiData.admin || apiData.data?.admin;
 
     if (!accessToken || !rawUser) {
       securityLogger.logLoginFailure(email, "Invalid response from server");
@@ -88,7 +104,7 @@ export async function login(data: LoginRequest): Promise<CommonResponseDataType<
     const fullName = [rawUser.firstName, rawUser.lastName].filter(Boolean).join(" ").trim() || rawUser.name || rawUser.email;
 
     const normalizedUser = {
-      id: rawUser.userId || rawUser.id || "user-id",
+      id: rawUser.userId || rawUser.adminId || rawUser.id || "user-id",
       name: fullName,
       email: rawUser.email || email,
       role: roleUpper,
@@ -188,6 +204,12 @@ export async function logout() {
     securityLogger.logLogout(session.user.id);
   }
 
+  try {
+    await api.post("/auth/logout");
+  } catch {
+    // Ignore error if already logged out or expired
+  }
+
   (await cookies()).set(SESSION_COOKIE_NAME, "", { expires: new Date(0) });
 }
 
@@ -229,7 +251,7 @@ export async function refreshToken(
 ): Promise<CommonResponseDataType<{ id_token: string; refresh_token: string; expires_in: number } | null>> {
   try {
     const response = await axios.post<CommonResponseDataType<{ id_token: string; refresh_token: string; expires_in: number }>>(
-      `${api.defaults.baseURL}/api/v1/auth/refresh`,
+      `${api.defaults.baseURL}/auth/refresh`,
       { refresh_token: token }
     );
 

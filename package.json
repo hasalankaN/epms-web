@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint --dir app --dir components --dir hooks --dir lib --dir schemas --dir store --dir transformers --dir types --dir utils",
     "lint:fix": "next lint --fix --dir app --dir components --dir hooks --dir lib --dir schemas --dir store --dir transformers --dir types --dir utils",
-    "format": "prettier --write \"**/*.{js,jsx,ts,tsx}\""
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx}\"",
+    "endpoints:check": "node scripts/endpoint-coverage.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.2",

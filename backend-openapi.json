@@ -1,0 +1,6188 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_getHello",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/files/upload": {
+      "post": {
+        "operationId": "FilesController_upload",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "File uploaded"
+          }
+        },
+        "summary": "Upload a single file to Google Cloud Storage",
+        "tags": [
+          "Files"
+        ]
+      }
+    },
+    "/files/signed-url": {
+      "post": {
+        "operationId": "FilesController_signedUrl",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignedUrlDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed URL generated"
+          }
+        },
+        "summary": "Generate signed URL for an existing GCS object",
+        "tags": [
+          "Files"
+        ]
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        },
+        "summary": "Register a new user with email/password",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/validate-email": {
+      "post": {
+        "operationId": "AuthController_validateEmail",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateEmailDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email verified successfully"
+          },
+          "400": {
+            "description": "Invalid OTP or expired"
+          }
+        },
+        "summary": "Verify email with OTP code",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful"
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        },
+        "summary": "Login with email and password",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/firebase/auth": {
+      "post": {
+        "operationId": "AuthController_firebaseAuth",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FirebaseAuthDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful"
+          },
+          "400": {
+            "description": "Invalid Firebase token"
+          }
+        },
+        "summary": "Authenticate with Firebase token",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/firebase/sync-user": {
+      "post": {
+        "operationId": "AuthController_syncFirebaseUser",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FirebaseSyncUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated successfully"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "summary": "Sync user profile from Firebase",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refreshToken",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tokens refreshed successfully"
+          },
+          "401": {
+            "description": "Invalid or expired refresh token"
+          }
+        },
+        "summary": "Refresh access token using refresh token",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/resend-otp": {
+      "post": {
+        "operationId": "AuthController_resendOtp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendOtpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP sent successfully"
+          },
+          "400": {
+            "description": "Too many requests"
+          }
+        },
+        "summary": "Request OTP for password reset",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/validate-otp-for-reset": {
+      "post": {
+        "operationId": "AuthController_validateOtpForReset",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateOtpForResetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP validated, reset token issued"
+          },
+          "400": {
+            "description": "Invalid OTP"
+          }
+        },
+        "summary": "Validate OTP and get reset token",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/reset-password-with-token": {
+      "post": {
+        "operationId": "AuthController_resetPasswordWithToken",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordWithTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset successfully"
+          },
+          "400": {
+            "description": "Invalid or expired token"
+          }
+        },
+        "summary": "Reset password using reset token",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/change-password": {
+      "post": {
+        "operationId": "AuthController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password changed successfully"
+          },
+          "400": {
+            "description": "Invalid current password"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change password for logged-in user",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Logged out successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Logout (client must discard tokens)",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/admin/login": {
+      "post": {
+        "operationId": "AdminController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminLoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Login successful"
+          }
+        },
+        "summary": "Admin login",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/register": {
+      "post": {
+        "operationId": "AdminController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminRegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Admin created and credentials emailed"
+          }
+        },
+        "summary": "Register a new admin",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/{adminId}": {
+      "patch": {
+        "operationId": "AdminController_updateDetails",
+        "parameters": [
+          {
+            "name": "adminId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUpdateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Admin updated"
+          }
+        },
+        "summary": "Update admin account details",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/{adminId}/password": {
+      "post": {
+        "operationId": "AdminController_updatePassword",
+        "parameters": [
+          {
+            "name": "adminId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUpdatePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password updated and emailed"
+          }
+        },
+        "summary": "Update admin password (sends new password by email)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/password/send-otp": {
+      "post": {
+        "operationId": "AdminController_sendPasswordOtp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendPasswordOtpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP sent if email exists"
+          }
+        },
+        "summary": "Send password verification OTP to admin email",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/password/confirm-otp": {
+      "post": {
+        "operationId": "AdminController_confirmPasswordOtp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmPasswordOtpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP confirmed"
+          }
+        },
+        "summary": "Confirm password OTP for admin email",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/password/reset": {
+      "post": {
+        "operationId": "AdminController_resetPassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset successful"
+          }
+        },
+        "summary": "Reset password using confirmed reset token",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin": {
+      "get": {
+        "operationId": "AdminController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "john",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of admins"
+          }
+        },
+        "summary": "List admins with pagination and search",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/employee-requests": {
+      "get": {
+        "operationId": "AdminController_listEmployeeRequests",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by status: PENDING | APPROVED | REJECTED",
+            "schema": {
+              "example": "PENDING",
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by employee name, EPF, or email",
+            "schema": {
+              "example": "Kamal",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of employee account requests"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Admin view all employee account requests with filters and pagination",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/employee-requests/{id}": {
+      "get": {
+        "operationId": "AdminController_getEmployeeRequestById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Request UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request details"
+          },
+          "404": {
+            "description": "Request not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Admin get full details of an employee account request",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/employee-requests/{id}/accept": {
+      "patch": {
+        "operationId": "AdminController_acceptEmployeeRequest",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Request UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request approved and employee created"
+          },
+          "400": {
+            "description": "Request is not pending or user already exists"
+          },
+          "404": {
+            "description": "Request not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Admin accept/approve employee account request (creates employee & user account, sends credentials email, notifies HR)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/employee-requests/{id}/reject": {
+      "patch": {
+        "operationId": "AdminController_rejectEmployeeRequest",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Request UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request rejected"
+          },
+          "400": {
+            "description": "Request is not pending"
+          },
+          "404": {
+            "description": "Request not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Admin reject employee account request with reason (notifies HR)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/profile": {
+      "get": {
+        "operationId": "AdminController_getProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get admin own profile",
+        "tags": [
+          "admin"
+        ]
+      },
+      "patch": {
+        "operationId": "AdminController_updateProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update admin own profile",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/employees": {
+      "get": {
+        "operationId": "AdminController_getAllEmployees",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "View all employee data",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/employees/{id}": {
+      "get": {
+        "operationId": "AdminController_getEmployeeById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "View single employee data",
+        "tags": [
+          "admin"
+        ]
+      },
+      "patch": {
+        "operationId": "AdminController_updateEmployee",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit employee data",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/employees/{id}/delete": {
+      "post": {
+        "operationId": "AdminController_deleteEmployee",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete employee data (soft)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/employees/{id}/role": {
+      "patch": {
+        "operationId": "AdminController_assignEmployeeRole",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Assign or change an employee role",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/roles": {
+      "get": {
+        "operationId": "AdminController_getRoles",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all roles",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "AdminController_createRole",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create role (with permissions)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/roles/{id}": {
+      "patch": {
+        "operationId": "AdminController_updateRole",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Role ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit role",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/roles/{id}/delete": {
+      "post": {
+        "operationId": "AdminController_deleteRole",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Role ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete role (blocked if users are assigned)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/accounts": {
+      "get": {
+        "operationId": "AdminController_getAccounts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all accounts",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "AdminController_createAccount",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create account (username, email, role, temporary password)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/accounts/{id}": {
+      "patch": {
+        "operationId": "AdminController_updateAccount",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "User/Account ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update account details, status, reset password",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/accounts/{id}/delete": {
+      "post": {
+        "operationId": "AdminController_deleteAccount",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "User/Account ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete or deactivate account",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/requests": {
+      "get": {
+        "operationId": "AdminController_getRequests",
+        "parameters": [
+          {
+            "name": "status",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List HR requests with optional status filter",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/requests/{id}/decision": {
+      "patch": {
+        "operationId": "AdminController_decideRequest",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Request ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve or reject request with comment",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/dashboard": {
+      "get": {
+        "operationId": "AdminController_getDashboard",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "System statistics",
+        "tags": [
+          "admin"
+        ]
+      },
+      "patch": {
+        "operationId": "AdminController_updateDashboard",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit dashboard widget configuration",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/notifications": {
+      "get": {
+        "operationId": "AdminController_getNotifications",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get admin notifications",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/notifications": {
+      "get": {
+        "operationId": "NotificationsController_getMyNotifications",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "unreadOnly",
+            "required": false,
+            "in": "query",
+            "description": "Filter only unread notifications",
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by notification type",
+            "schema": {
+              "example": "EMPLOYEE_ACCOUNT_REQUEST",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notifications list retrieved successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get current user notifications (with unread count, pagination and filter)",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/read-all": {
+      "patch": {
+        "operationId": "NotificationsController_markAllRead",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "All notifications marked as read"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark all notifications as read for current user",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/{id}/read": {
+      "patch": {
+        "operationId": "NotificationsController_markRead",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Notification UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification marked as read"
+          },
+          "404": {
+            "description": "Notification not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a specific notification as read",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/employee/register": {
+      "post": {
+        "operationId": "EmployeeController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeRegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Employee created and credentials emailed"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register a new employee directly (Admin / HR)",
+        "tags": [
+          "employee"
+        ]
+      }
+    },
+    "/employee": {
+      "get": {
+        "operationId": "EmployeeController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by employee name, EPF no, email, department, or position",
+            "schema": {
+              "example": "Kamal",
+              "type": "string"
+            }
+          },
+          {
+            "name": "departmentId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by department ID",
+            "schema": {
+              "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+              "type": "string"
+            }
+          },
+          {
+            "name": "positionId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by position ID",
+            "schema": {
+              "example": "b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by user account status (e.g. Active, Inactive)",
+            "schema": {
+              "example": "Active",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of employees retrieved successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "View all employees with position name, department, user status, supervisor, and all related data",
+        "tags": [
+          "employee"
+        ]
+      }
+    },
+    "/employee/supervisors": {
+      "get": {
+        "description": "Returns all employees that are assigned as a supervisor to at least one other employee. Supports pagination and optional search by supervisor name or position name.",
+        "operationId": "EmployeeController_getSupervisors",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by supervisor name or position name",
+            "schema": {
+              "example": "Kamal",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated supervisor list with position and department details"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get list of supervisors (employees who supervise others)",
+        "tags": [
+          "employee"
+        ]
+      }
+    },
+    "/employee/{id}": {
+      "get": {
+        "operationId": "EmployeeController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Employee UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Employee details"
+          },
+          "404": {
+            "description": "Employee not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get single employee by ID with complete details (position, department, user, contacts, qualifications, dependents)",
+        "tags": [
+          "employee"
+        ]
+      }
+    },
+    "/department/create": {
+      "post": {
+        "operationId": "DepartmentController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDepartmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Department created successfully"
+          },
+          "409": {
+            "description": "Department with this name already exists"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new department",
+        "tags": [
+          "department"
+        ]
+      }
+    },
+    "/department": {
+      "get": {
+        "operationId": "DepartmentController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "john",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of departments"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List departments with pagination and search",
+        "tags": [
+          "department"
+        ]
+      }
+    },
+    "/department/{id}": {
+      "patch": {
+        "operationId": "DepartmentController_update",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDepartmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Department updated successfully"
+          },
+          "404": {
+            "description": "Department not found"
+          },
+          "409": {
+            "description": "Department name already exists"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update an existing department by ID",
+        "tags": [
+          "department"
+        ]
+      },
+      "delete": {
+        "operationId": "DepartmentController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Department UUID / ID",
+            "schema": {
+              "example": "uuid-1234-5678",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Department deleted successfully"
+          },
+          "404": {
+            "description": "Department not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a department by ID (Admin only)",
+        "tags": [
+          "department"
+        ]
+      }
+    },
+    "/positions/create": {
+      "post": {
+        "operationId": "PositionsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePositionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Position created successfully"
+          }
+        },
+        "summary": "Create a new position",
+        "tags": [
+          "positions"
+        ]
+      }
+    },
+    "/positions": {
+      "get": {
+        "operationId": "PositionsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "position name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of positions"
+          }
+        },
+        "summary": "List all positions with pagination and search",
+        "tags": [
+          "positions"
+        ]
+      }
+    },
+    "/positions/{id}": {
+      "get": {
+        "operationId": "PositionsController_getOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Position UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Position details"
+          },
+          "404": {
+            "description": "Position not found"
+          }
+        },
+        "summary": "Get a single position by ID",
+        "tags": [
+          "positions"
+        ]
+      },
+      "patch": {
+        "operationId": "PositionsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Position UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePositionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Position updated"
+          },
+          "404": {
+            "description": "Position not found"
+          }
+        },
+        "summary": "Update a position",
+        "tags": [
+          "positions"
+        ]
+      },
+      "delete": {
+        "operationId": "PositionsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Position UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Position deleted"
+          },
+          "404": {
+            "description": "Position not found"
+          }
+        },
+        "summary": "Delete a position",
+        "tags": [
+          "positions"
+        ]
+      }
+    },
+    "/hr/employee-request": {
+      "post": {
+        "operationId": "HrController_createEmployeeRequest",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEmployeeRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Submit a new employee account request to Admin for approval (HR)",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/employee-requests": {
+      "get": {
+        "operationId": "HrController_listEmployeeRequests",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by status: PENDING | APPROVED | REJECTED",
+            "schema": {
+              "example": "PENDING",
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by employee name, EPF, or email",
+            "schema": {
+              "example": "Kamal",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List employee account requests submitted by HR with pagination and filters",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/employee-requests/{id}": {
+      "get": {
+        "operationId": "HrController_getEmployeeRequestById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Request UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get employee account request details by ID",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/profile": {
+      "get": {
+        "operationId": "HrController_getProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "View HR own profile",
+        "tags": [
+          "hr"
+        ]
+      },
+      "patch": {
+        "operationId": "HrController_updateProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update HR own profile",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/employees": {
+      "get": {
+        "operationId": "HrController_getEmployees",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all employees",
+        "tags": [
+          "hr"
+        ]
+      },
+      "post": {
+        "operationId": "HrController_createEmployee",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create new employee directly",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/employees/{id}": {
+      "get": {
+        "operationId": "HrController_getEmployeeById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get employee by ID",
+        "tags": [
+          "hr"
+        ]
+      },
+      "patch": {
+        "operationId": "HrController_updateEmployee",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update employee details",
+        "tags": [
+          "hr"
+        ]
+      },
+      "delete": {
+        "operationId": "HrController_deleteEmployee",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete employee",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/employees/{id}/supervisor": {
+      "patch": {
+        "operationId": "HrController_updateEmployeeSupervisor",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Assign supervisor to employee",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/employees/{id}/roles": {
+      "get": {
+        "operationId": "HrController_getEmployeeRoles",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get employee roles",
+        "tags": [
+          "hr"
+        ]
+      },
+      "patch": {
+        "operationId": "HrController_updateEmployeeRoles",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update employee role",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/requests/profile-updates": {
+      "get": {
+        "operationId": "HrController_getProfileUpdateRequests",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all profile update requests",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/requests/profile-updates/{id}": {
+      "patch": {
+        "operationId": "HrController_decideProfileUpdateRequest",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Request ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve / reject profile update request with comment",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/attendance": {
+      "get": {
+        "operationId": "HrController_getAttendance",
+        "parameters": [
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "empId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get attendance records",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/attendance/{empId}/summary": {
+      "get": {
+        "operationId": "HrController_getAttendanceSummary",
+        "parameters": [
+          {
+            "name": "empId",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get attendance summary for employee",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/attendance/notify": {
+      "post": {
+        "operationId": "HrController_notifyAttendance",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send attendance notification / warning to employee",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/attendance/overtime": {
+      "get": {
+        "operationId": "HrController_getOvertime",
+        "parameters": [
+          {
+            "name": "minHours",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get overtime records",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/trainings": {
+      "post": {
+        "operationId": "HrController_createTraining",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create new training",
+        "tags": [
+          "hr"
+        ]
+      },
+      "get": {
+        "operationId": "HrController_getTrainings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List trainings",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/trainings/{id}": {
+      "get": {
+        "operationId": "HrController_getTrainingById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Training ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get training by ID",
+        "tags": [
+          "hr"
+        ]
+      },
+      "patch": {
+        "operationId": "HrController_updateTraining",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Training ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update training details",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/trainings/{id}/attendance": {
+      "get": {
+        "operationId": "HrController_getTrainingAttendance",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Training ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get training attendance",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/trainings/{id}/evaluation": {
+      "post": {
+        "operationId": "HrController_submitHrTrainingEvaluation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Training ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Submit training evaluation for participant",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/trainings/{id}/report": {
+      "get": {
+        "operationId": "HrController_getTrainingReport",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Training ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get training report",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/trainings/{id}/budget": {
+      "patch": {
+        "operationId": "HrController_updateTrainingBudget",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Training ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update training budget and approval status",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/trainings/{id}/materials": {
+      "post": {
+        "operationId": "HrController_createTrainingMaterial",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Training ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload training material",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/trainings/{id}/materials/{materialId}": {
+      "patch": {
+        "operationId": "HrController_updateTrainingMaterial",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Training ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "materialId",
+            "required": true,
+            "in": "path",
+            "description": "Material ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update training material",
+        "tags": [
+          "hr"
+        ]
+      },
+      "delete": {
+        "operationId": "HrController_deleteTrainingMaterial",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Training ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "materialId",
+            "required": true,
+            "in": "path",
+            "description": "Material ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete training material",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/leaves": {
+      "get": {
+        "operationId": "HrController_getLeaves",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all leave requests",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/leaves/{id}/decision": {
+      "patch": {
+        "operationId": "HrController_decideLeave",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Leave ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "HR approve or reject leave request",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/leave-balances/{empId}": {
+      "get": {
+        "operationId": "HrController_getLeaveBalances",
+        "parameters": [
+          {
+            "name": "empId",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get leave balances of employee",
+        "tags": [
+          "hr"
+        ]
+      },
+      "patch": {
+        "operationId": "HrController_updateLeaveBalance",
+        "parameters": [
+          {
+            "name": "empId",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update leave balance for employee",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/leaves/special": {
+      "post": {
+        "operationId": "HrController_createSpecialLeave",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Grant special leave to employee",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/leave-policies": {
+      "get": {
+        "operationId": "HrController_getLeavePolicies",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all leave policies",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/leave-policies/{leaveType}": {
+      "get": {
+        "operationId": "HrController_getLeavePolicy",
+        "parameters": [
+          {
+            "name": "leaveType",
+            "required": true,
+            "in": "path",
+            "description": "Leave type (e.g. ANNUAL, CASUAL, MEDICAL)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get leave policy for leave type",
+        "tags": [
+          "hr"
+        ]
+      },
+      "patch": {
+        "operationId": "HrController_updateLeavePolicy",
+        "parameters": [
+          {
+            "name": "leaveType",
+            "required": true,
+            "in": "path",
+            "description": "Leave type",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update leave policy",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/production": {
+      "get": {
+        "operationId": "HrController_getProduction",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get production logs",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/production/report": {
+      "get": {
+        "operationId": "HrController_getProductionReport",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get production report summary",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/performance-reviews": {
+      "get": {
+        "operationId": "HrController_getPerformanceReviews",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get performance reviews",
+        "tags": [
+          "hr"
+        ]
+      },
+      "post": {
+        "operationId": "HrController_createPerformanceReview",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create performance review",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/performance-reviews/{id}/feedback": {
+      "post": {
+        "operationId": "HrController_addReviewFeedback",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Review ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add feedback or reward to performance review",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/compensation": {
+      "post": {
+        "operationId": "HrController_createCompensation",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record compensation or bonus",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/departments/{id}/performance": {
+      "get": {
+        "operationId": "HrController_getDepartmentPerformance",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Department ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get department performance metrics",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/departments": {
+      "post": {
+        "operationId": "HrController_createDepartment",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create department",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/departments/{id}": {
+      "delete": {
+        "operationId": "HrController_deleteDepartment",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Department ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete department (blocked if employees assigned)",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/positions": {
+      "post": {
+        "operationId": "HrController_createPosition",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create position",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/positions/{id}": {
+      "patch": {
+        "operationId": "HrController_updatePosition",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Position ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update position",
+        "tags": [
+          "hr"
+        ]
+      },
+      "delete": {
+        "operationId": "HrController_deletePosition",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Position ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete position (blocked if employees assigned)",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/positions/{id}/assign": {
+      "post": {
+        "operationId": "HrController_assignPosition",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Position ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Assign position to employee",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/positions/transfer": {
+      "post": {
+        "operationId": "HrController_transferPosition",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Transfer employee position",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/positions/{id}/history": {
+      "get": {
+        "operationId": "HrController_getPositionHistory",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Position ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get position history",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/salaries/{empId}": {
+      "get": {
+        "operationId": "HrController_getSalary",
+        "parameters": [
+          {
+            "name": "empId",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get employee current salary details",
+        "tags": [
+          "hr"
+        ]
+      },
+      "patch": {
+        "operationId": "HrController_updateSalary",
+        "parameters": [
+          {
+            "name": "empId",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update salary (append-only with effectiveDate)",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/salaries/{empId}/deductions": {
+      "post": {
+        "operationId": "HrController_addDeduction",
+        "parameters": [
+          {
+            "name": "empId",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add deduction to employee salary",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/salaries/{empId}/deductions/{id}": {
+      "delete": {
+        "operationId": "HrController_deleteDeduction",
+        "parameters": [
+          {
+            "name": "empId",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Deduction ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete deduction",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/salaries/{empId}/allowances": {
+      "post": {
+        "operationId": "HrController_addAllowance",
+        "parameters": [
+          {
+            "name": "empId",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add allowance to employee salary",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/salaries/{empId}/allowances/{id}": {
+      "delete": {
+        "operationId": "HrController_deleteAllowance",
+        "parameters": [
+          {
+            "name": "empId",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Allowance ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete allowance",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/bonuses": {
+      "post": {
+        "operationId": "HrController_createBonus",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add bonus to employee",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/salaries/{empId}/history": {
+      "get": {
+        "operationId": "HrController_getSalaryHistory",
+        "parameters": [
+          {
+            "name": "empId",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get employee salary history",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/salary-slips": {
+      "post": {
+        "operationId": "HrController_createSalarySlip",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Generate salary slip (calculates net salary)",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/salary-slips/{id}/download": {
+      "get": {
+        "operationId": "HrController_downloadSalarySlip",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Slip ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Download salary slip by ID",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/salary-reports": {
+      "get": {
+        "operationId": "HrController_getSalaryReports",
+        "parameters": [
+          {
+            "name": "month",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get salary reports",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/vacancies": {
+      "post": {
+        "operationId": "HrController_createVacancy",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create vacancy",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/vacancies/{id}": {
+      "patch": {
+        "operationId": "HrController_updateVacancy",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Vacancy ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update vacancy",
+        "tags": [
+          "hr"
+        ]
+      },
+      "delete": {
+        "operationId": "HrController_deleteVacancy",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Vacancy ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete vacancy",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/vacancies/{id}/applications": {
+      "get": {
+        "operationId": "HrController_getVacancyApplications",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Vacancy ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get applications for vacancy",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/candidates": {
+      "post": {
+        "operationId": "HrController_createCandidate",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add external candidate",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/candidates/{id}": {
+      "delete": {
+        "operationId": "HrController_deleteCandidate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Candidate ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete candidate",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/interviews": {
+      "post": {
+        "operationId": "HrController_createInterview",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Schedule interview (validates no conflicts)",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/interviews/{id}": {
+      "patch": {
+        "operationId": "HrController_updateInterview",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Interview ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update interview",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/notifications": {
+      "post": {
+        "operationId": "HrController_createNotification",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create HR notification",
+        "tags": [
+          "hr"
+        ]
+      },
+      "get": {
+        "operationId": "HrController_getNotifications",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get HR notifications",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/notifications/{id}": {
+      "patch": {
+        "operationId": "HrController_updateNotification",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Notification ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update notification",
+        "tags": [
+          "hr"
+        ]
+      },
+      "delete": {
+        "operationId": "HrController_deleteNotification",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Notification ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete notification",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/reports/attendance": {
+      "get": {
+        "operationId": "HrController_getAttendanceReport",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get attendance report",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/reports/performance": {
+      "get": {
+        "operationId": "HrController_getPerformanceReport",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get performance report",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/reports/employees": {
+      "get": {
+        "operationId": "HrController_getEmployeesReport",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get employees report",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/reports/training": {
+      "get": {
+        "operationId": "HrController_getTrainingReports",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get training report",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/reports/leave": {
+      "get": {
+        "operationId": "HrController_getLeaveReport",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get leave report",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/reports/production": {
+      "get": {
+        "operationId": "HrController_getProductionReports",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get production report",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/reports/salary": {
+      "get": {
+        "operationId": "HrController_getSalaryReportSummary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get salary report",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/reports": {
+      "get": {
+        "operationId": "HrController_getReportsHistory",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get generated reports history",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/requests/account": {
+      "post": {
+        "operationId": "HrController_createAccountRequest",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send account request (create, deactivate, role change) to Admin",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/me/profile": {
+      "get": {
+        "operationId": "MeController_getProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get employee own profile with personal details, work experience, qualifications, emergency contacts, dependents",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/profile-update-requests": {
+      "post": {
+        "operationId": "MeController_createProfileUpdateRequest",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send profile update request (creates Request, notifies HR)",
+        "tags": [
+          "me"
+        ]
+      },
+      "get": {
+        "operationId": "MeController_getProfileUpdateRequests",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Status of own profile update requests",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/leaves": {
+      "post": {
+        "operationId": "MeController_submitLeave",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Submit leave request (validate balance and dates, notify Supervisor)",
+        "tags": [
+          "me"
+        ]
+      },
+      "get": {
+        "operationId": "MeController_getLeaves",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Leave history and status",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/leave-balances": {
+      "get": {
+        "operationId": "MeController_getLeaveBalances",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Balances per leave type",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/attendance/clock-in": {
+      "post": {
+        "operationId": "MeController_clockIn",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "One open record per day; flag late if after configured start time",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/attendance/clock-out": {
+      "post": {
+        "operationId": "MeController_clockOut",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Calculate work hours, early departure",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/attendance": {
+      "get": {
+        "operationId": "MeController_getAttendance",
+        "parameters": [
+          {
+            "name": "late",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "earlyDeparture",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "absent",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "History with filters (late, early departure, absent)",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/attendance/adjustments": {
+      "post": {
+        "operationId": "MeController_requestAttendanceAdjustment",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Request attendance adjustment (correct time + reason)",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/tasks": {
+      "get": {
+        "operationId": "MeController_getTasks",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Assigned tasks",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/tasks/{id}/status": {
+      "patch": {
+        "operationId": "MeController_updateTaskStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Task ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update task status",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/production": {
+      "get": {
+        "operationId": "MeController_getProduction",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Production and target history",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/trainings": {
+      "get": {
+        "operationId": "MeController_getTrainings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Schedule (date, time, mode, status)",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/trainings/{id}/materials": {
+      "get": {
+        "operationId": "MeController_getTrainingMaterials",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Training ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List and download materials",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/trainings/{id}/evaluation": {
+      "post": {
+        "operationId": "MeController_submitTrainingEvaluation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Training ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Submit training evaluation (only after completion, once)",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/salary": {
+      "get": {
+        "operationId": "MeController_getSalary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Basic salary, allowances, deductions, net",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/salary-slips": {
+      "get": {
+        "operationId": "MeController_getSalarySlips",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Own salary slips",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/salary-slips/{id}/download": {
+      "get": {
+        "operationId": "MeController_downloadSalarySlip",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Salary Slip ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Download own salary slip",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/job-postings": {
+      "get": {
+        "operationId": "MeController_getJobPostings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open internal vacancies",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/job-postings/{id}/apply": {
+      "post": {
+        "operationId": "MeController_applyForJob",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Job Posting ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Apply for job (no duplicates, before closing date)",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/applications": {
+      "get": {
+        "operationId": "MeController_getApplications",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Own applications and status",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/applications/{id}": {
+      "delete": {
+        "operationId": "MeController_cancelApplication",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Application ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel application",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/notifications": {
+      "get": {
+        "operationId": "MeController_getNotifications",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List notifications",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/notifications/read-all": {
+      "patch": {
+        "operationId": "MeController_markAllNotificationsRead",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark all notifications as read",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/notifications/{id}/read": {
+      "patch": {
+        "operationId": "MeController_markNotificationRead",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Notification ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark notification as read",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/self-evaluations/current": {
+      "get": {
+        "operationId": "MeController_getCurrentSelfEvaluation",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The open self evaluation form",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/self-evaluations": {
+      "post": {
+        "operationId": "MeController_submitSelfEvaluation",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Submit self evaluation (ratings + comments)",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/performance-reviews": {
+      "get": {
+        "operationId": "MeController_getPerformanceReviews",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reviews received",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/supervisor/profile": {
+      "get": {
+        "operationId": "SupervisorController_getProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "View supervisor own profile",
+        "tags": [
+          "supervisor"
+        ]
+      },
+      "patch": {
+        "operationId": "SupervisorController_updateProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit supervisor own profile",
+        "tags": [
+          "supervisor"
+        ]
+      }
+    },
+    "/supervisor/team": {
+      "get": {
+        "operationId": "SupervisorController_getTeam",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get team members",
+        "tags": [
+          "supervisor"
+        ]
+      }
+    },
+    "/supervisor/team/{empId}": {
+      "get": {
+        "operationId": "SupervisorController_getTeamMember",
+        "parameters": [
+          {
+            "name": "empId",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "View employee data (within team)",
+        "tags": [
+          "supervisor"
+        ]
+      },
+      "patch": {
+        "operationId": "SupervisorController_updateTeamMember",
+        "parameters": [
+          {
+            "name": "empId",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit employee data (within team)",
+        "tags": [
+          "supervisor"
+        ]
+      },
+      "delete": {
+        "operationId": "SupervisorController_deleteTeamMember",
+        "parameters": [
+          {
+            "name": "empId",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete employee data / remove from team",
+        "tags": [
+          "supervisor"
+        ]
+      }
+    },
+    "/supervisor/team/{empId}/self-evaluation": {
+      "get": {
+        "operationId": "SupervisorController_getTeamMemberSelfEvaluation",
+        "parameters": [
+          {
+            "name": "empId",
+            "required": true,
+            "in": "path",
+            "description": "Employee ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Employee self evaluation and attendance history",
+        "tags": [
+          "supervisor"
+        ]
+      }
+    },
+    "/supervisor/leaves": {
+      "get": {
+        "operationId": "SupervisorController_getLeaves",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Team leave requests with balance validation result",
+        "tags": [
+          "supervisor"
+        ]
+      }
+    },
+    "/supervisor/leaves/{id}/decision": {
+      "patch": {
+        "operationId": "SupervisorController_decideLeave",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Leave ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve or reject leave; escalate: true sends to HR; updates balance; notifies employee",
+        "tags": [
+          "supervisor"
+        ]
+      }
+    },
+    "/supervisor/performance-evaluations": {
+      "post": {
+        "operationId": "SupervisorController_submitPerformanceEvaluation",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Submit performance evaluation (rating, comments, final status)",
+        "tags": [
+          "supervisor"
+        ]
+      }
+    },
+    "/supervisor/evaluation-meetings": {
+      "post": {
+        "operationId": "SupervisorController_scheduleEvaluationMeeting",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Schedule evaluation meeting, conflict check, notify employee",
+        "tags": [
+          "supervisor"
+        ]
+      }
+    },
+    "/supervisor/trainings/attendance": {
+      "get": {
+        "operationId": "SupervisorController_getTrainingsAttendance",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Training attendance of team",
+        "tags": [
+          "supervisor"
+        ]
+      }
+    },
+    "/supervisor/attendance": {
+      "get": {
+        "operationId": "SupervisorController_getAttendance",
+        "parameters": [
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Team attendance",
+        "tags": [
+          "supervisor"
+        ]
+      }
+    },
+    "/supervisor/attendance/{id}": {
+      "patch": {
+        "operationId": "SupervisorController_editAttendanceRecord",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Attendance ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit attendance record",
+        "tags": [
+          "supervisor"
+        ]
+      }
+    },
+    "/supervisor/attendance/adjustments/{id}": {
+      "patch": {
+        "operationId": "SupervisorController_decideAdjustment",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Adjustment ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve or reject adjustment request",
+        "tags": [
+          "supervisor"
+        ]
+      }
+    },
+    "/supervisor/tasks": {
+      "post": {
+        "operationId": "SupervisorController_assignTask",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Assign task to employee",
+        "tags": [
+          "supervisor"
+        ]
+      }
+    },
+    "/supervisor/tasks/{id}": {
+      "patch": {
+        "operationId": "SupervisorController_updateTask",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Task ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit task",
+        "tags": [
+          "supervisor"
+        ]
+      },
+      "delete": {
+        "operationId": "SupervisorController_deleteTask",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Task ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete task",
+        "tags": [
+          "supervisor"
+        ]
+      }
+    },
+    "/supervisor/production": {
+      "get": {
+        "operationId": "SupervisorController_getProduction",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Review production",
+        "tags": [
+          "supervisor"
+        ]
+      }
+    },
+    "/supervisor/production/{id}/approval": {
+      "patch": {
+        "operationId": "SupervisorController_approveProduction",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Production ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve production, add supervisor comment and rating",
+        "tags": [
+          "supervisor"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "EPMS API",
+    "description": "API documentation for EPMS",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "SignedUrlDto": {
+        "type": "object",
+        "properties": {
+          "filename": {
+            "type": "string",
+            "description": "Filename (path) of the existing object in GCS"
+          },
+          "expiresInSeconds": {
+            "type": "number",
+            "description": "Expiration in seconds (default 86400 = 24 hours)"
+          }
+        },
+        "required": [
+          "filename"
+        ]
+      },
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "example": "John",
+            "description": "User first name"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Doe",
+            "description": "User last name"
+          },
+          "email": {
+            "type": "string",
+            "example": "john.doe@example.com",
+            "description": "User email address"
+          },
+          "password": {
+            "type": "string",
+            "example": "Password123!",
+            "description": "Password (min 8 chars, must contain uppercase, lowercase, number and special character)"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "example": "+1234567890",
+            "description": "Phone number with country code"
+          },
+          "countryCode": {
+            "type": "string",
+            "example": "+1",
+            "description": "Country code"
+          }
+        },
+        "required": [
+          "firstName",
+          "lastName",
+          "email",
+          "password"
+        ]
+      },
+      "ValidateEmailDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "john.doe@example.com",
+            "description": "User email address"
+          },
+          "otpCode": {
+            "type": "string",
+            "example": "1234",
+            "description": "4-digit OTP code sent to email"
+          }
+        },
+        "required": [
+          "email",
+          "otpCode"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "john.doe@example.com",
+            "description": "User email address"
+          },
+          "password": {
+            "type": "string",
+            "example": "Password123!",
+            "description": "User password"
+          },
+          "rememberMe": {
+            "type": "boolean",
+            "example": false,
+            "description": "Remember me for extended session"
+          },
+          "deviceToken": {
+            "type": "string",
+            "example": "fcm_token_12345",
+            "description": "Device push token"
+          },
+          "deviceId": {
+            "type": "string",
+            "example": "device-uuid-1234",
+            "description": "Device unique id"
+          },
+          "deviceType": {
+            "type": "string",
+            "example": "android",
+            "description": "Device type (android|ios|web)"
+          },
+          "appVersion": {
+            "type": "string",
+            "example": "1.3.0",
+            "description": "Application version"
+          },
+          "timeZone": {
+            "type": "string",
+            "example": "Asia/Colombo",
+            "description": "User time zone"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "FirebaseAuthDto": {
+        "type": "object",
+        "properties": {
+          "firebaseToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFmODhiODE0MjljYzQ1MWEzMzVjMmY1Y...",
+            "description": "Firebase ID token from client SDK"
+          }
+        },
+        "required": [
+          "firebaseToken"
+        ]
+      },
+      "FirebaseSyncUserDto": {
+        "type": "object",
+        "properties": {
+          "firebaseToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFmODhiODE0MjljYzQ1MWEzMzVjMmY1Y...",
+            "description": "Firebase ID token from client SDK"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "example": "+1234567890",
+            "description": "Phone number with country code"
+          },
+          "countryCode": {
+            "type": "string",
+            "example": "+1",
+            "description": "Country code"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "John",
+            "description": "User first name"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Doe",
+            "description": "User last name"
+          },
+          "isSeller": {
+            "type": "boolean",
+            "example": true,
+            "description": "Is user a seller"
+          },
+          "isBuyer": {
+            "type": "boolean",
+            "example": true,
+            "description": "Is user a buyer"
+          }
+        },
+        "required": [
+          "firebaseToken"
+        ]
+      },
+      "RefreshTokenDto": {
+        "type": "object",
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ...",
+            "description": "Refresh token received from login or previous refresh"
+          }
+        },
+        "required": [
+          "refresh_token"
+        ]
+      },
+      "ResendOtpDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "john.doe@example.com",
+            "description": "User email address to resend OTP"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "ValidateOtpForResetDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "john.doe@example.com",
+            "description": "User email address"
+          },
+          "otpCode": {
+            "type": "string",
+            "example": "1234",
+            "description": "4-digit OTP code sent for password reset"
+          }
+        },
+        "required": [
+          "email",
+          "otpCode"
+        ]
+      },
+      "ResetPasswordWithTokenDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "john.doe@example.com",
+            "description": "User email address"
+          },
+          "resetToken": {
+            "type": "string",
+            "example": "abc123def456ghi789jkl",
+            "description": "Reset token received after OTP validation"
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "NewPassword123!",
+            "description": "New password (min 8 chars, must contain uppercase, lowercase, number and special character)"
+          }
+        },
+        "required": [
+          "email",
+          "resetToken",
+          "newPassword"
+        ]
+      },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "example": "Password123!",
+            "description": "Current password"
+          },
+          "new_password": {
+            "type": "string",
+            "example": "NewPassword123!",
+            "description": "New password (min 8 chars, must contain uppercase, lowercase, number and special character)"
+          }
+        },
+        "required": [
+          "current_password",
+          "new_password"
+        ]
+      },
+      "AdminLoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "plainpassword"
+          },
+          "rememberMe": {
+            "type": "boolean",
+            "example": false
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "AdminRegisterDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "plainpassword"
+          },
+          "countryCode": {
+            "type": "string",
+            "example": "+94"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "example": "0777123456"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Admin"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "User"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "countryCode",
+          "phoneNumber",
+          "firstName",
+          "lastName"
+        ]
+      },
+      "AdminUpdateDto": {
+        "type": "object",
+        "properties": {
+          "countryCode": {
+            "type": "string",
+            "example": "+94"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "example": "0777123456"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Admin"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "User"
+          },
+          "email": {
+            "type": "string",
+            "example": "admin-new@example.com"
+          }
+        }
+      },
+      "AdminUpdatePasswordDto": {
+        "type": "object",
+        "properties": {
+          "newPassword": {
+            "type": "string",
+            "example": "newSecurePassword123"
+          }
+        },
+        "required": [
+          "newPassword"
+        ]
+      },
+      "SendPasswordOtpDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "ConfirmPasswordOtpDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          },
+          "otp": {
+            "type": "string",
+            "example": "123456"
+          }
+        },
+        "required": [
+          "email",
+          "otp"
+        ]
+      },
+      "ResetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          },
+          "resetToken": {
+            "type": "string",
+            "example": "a1b2c3d4e5f6...",
+            "description": "Reset token returned from confirm-otp"
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "newSecurePassword123"
+          }
+        },
+        "required": [
+          "email",
+          "resetToken",
+          "newPassword"
+        ]
+      },
+      "RejectRequestDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "example": "Position requirements not met or duplicate documentation",
+            "description": "Reason for rejection"
+          }
+        }
+      },
+      "EmergencyContactDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Saman Perera"
+          },
+          "relationship": {
+            "type": "string",
+            "example": "Spouse"
+          },
+          "mobile": {
+            "type": "string",
+            "example": "+94771234567"
+          },
+          "home_tp": {
+            "type": "string",
+            "example": "+94112345678"
+          },
+          "work_tp": {
+            "type": "string",
+            "example": "+94118765432"
+          }
+        },
+        "required": [
+          "name",
+          "relationship",
+          "mobile"
+        ]
+      },
+      "QualificationDto": {
+        "type": "object",
+        "properties": {
+          "qualification_title": {
+            "type": "string",
+            "example": "BSc in Computer Science"
+          },
+          "institute": {
+            "type": "string",
+            "example": "University of Colombo"
+          },
+          "completed_year": {
+            "type": "number",
+            "example": 2022
+          }
+        },
+        "required": [
+          "qualification_title"
+        ]
+      },
+      "DependentDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Nimali Perera"
+          },
+          "relationship": {
+            "type": "string",
+            "example": "Wife"
+          },
+          "dob": {
+            "type": "string",
+            "example": "1995-08-20"
+          },
+          "mobile": {
+            "type": "string",
+            "example": "+94770000000"
+          }
+        },
+        "required": [
+          "name",
+          "relationship"
+        ]
+      },
+      "EmployeeRegisterDto": {
+        "type": "object",
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "example": "Kamal"
+          },
+          "last_name": {
+            "type": "string",
+            "example": "Silva"
+          },
+          "dob": {
+            "type": "string",
+            "example": "1995-08-20"
+          },
+          "join_date": {
+            "type": "string",
+            "example": "2024-01-15"
+          },
+          "employee_no": {
+            "type": "string",
+            "example": "EMP-0001",
+            "description": "Readable employee number (auto-generated if omitted)"
+          },
+          "epf_no": {
+            "type": "string",
+            "example": "EPF-10294"
+          },
+          "work_email": {
+            "type": "string",
+            "example": "kamal.silva@company.com"
+          },
+          "personal_email": {
+            "type": "string",
+            "example": "kamal.personal@gmail.com"
+          },
+          "mobile_no": {
+            "type": "string",
+            "example": "+94712345678"
+          },
+          "home_tp": {
+            "type": "string",
+            "example": "+94112223334"
+          },
+          "street": {
+            "type": "string",
+            "example": "123, Main Street"
+          },
+          "city": {
+            "type": "string",
+            "example": "Colombo"
+          },
+          "province": {
+            "type": "string",
+            "example": "Western"
+          },
+          "country": {
+            "type": "string",
+            "example": "Sri Lanka"
+          },
+          "department_id": {
+            "type": "string",
+            "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          },
+          "position_id": {
+            "type": "string",
+            "example": "b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          },
+          "supervisor_id": {
+            "type": "string",
+            "example": "c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a33"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "hr",
+              "supervisor",
+              "employee"
+            ],
+            "example": "employee",
+            "description": "User role if account is created"
+          },
+          "emergency_contacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmergencyContactDto"
+            }
+          },
+          "qualifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QualificationDto"
+            }
+          },
+          "dependents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DependentDto"
+            }
+          }
+        },
+        "required": [
+          "first_name",
+          "last_name",
+          "dob",
+          "join_date",
+          "epf_no",
+          "work_email"
+        ]
+      },
+      "CreateDepartmentDto": {
+        "type": "object",
+        "properties": {
+          "departmentCode": {
+            "type": "string",
+            "example": "DEP-0001",
+            "description": "Custom readable department code (auto-generated if omitted)"
+          },
+          "departmentName": {
+            "type": "string",
+            "example": "Marketing",
+            "description": "Department name"
+          },
+          "location": {
+            "type": "string",
+            "example": "Colombo Office, Level 4",
+            "description": "Location"
+          },
+          "deptPhone": {
+            "type": "string",
+            "example": "+94112345678",
+            "description": "Department Phone"
+          }
+        },
+        "required": [
+          "departmentName",
+          "location",
+          "deptPhone"
+        ]
+      },
+      "UpdateDepartmentDto": {
+        "type": "object",
+        "properties": {
+          "departmentCode": {
+            "type": "string",
+            "example": "DEP-0001",
+            "description": "Custom readable department code (auto-generated if omitted)"
+          },
+          "departmentName": {
+            "type": "string",
+            "example": "Marketing",
+            "description": "Department name"
+          },
+          "location": {
+            "type": "string",
+            "example": "Colombo Office, Level 4",
+            "description": "Location"
+          },
+          "deptPhone": {
+            "type": "string",
+            "example": "+94112345678",
+            "description": "Department Phone"
+          },
+          "id": {
+            "type": "string",
+            "description": "Department ID / UUID",
+            "example": "d3b07384-d113-4607-9580-da0d20d36e2f"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "CreatePositionDto": {
+        "type": "object",
+        "properties": {
+          "positionCode": {
+            "type": "string",
+            "example": "POS-0001",
+            "description": "Readable position code (auto-generated if omitted)"
+          },
+          "positionName": {
+            "type": "string",
+            "example": "Senior Software Engineer",
+            "description": "Position name (Max 100 characters)"
+          },
+          "description": {
+            "type": "string",
+            "example": "Responsible for leading backend architecture and development",
+            "description": "Detailed description of the position"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "example": "2026-01-01",
+            "description": "Effective date in YYYY-MM-DD format"
+          }
+        },
+        "required": [
+          "positionName"
+        ]
+      },
+      "UpdatePositionDto": {
+        "type": "object",
+        "properties": {
+          "positionName": {
+            "type": "string",
+            "example": "Senior Software Engineer",
+            "description": "Position name"
+          },
+          "description": {
+            "type": "string",
+            "example": "Leads backend architecture",
+            "description": "Description"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "example": "2026-06-01",
+            "description": "Effective date YYYY-MM-DD"
+          }
+        }
+      },
+      "CreateEmployeeRequestDto": {
+        "type": "object",
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "example": "Kamal"
+          },
+          "last_name": {
+            "type": "string",
+            "example": "Silva"
+          },
+          "dob": {
+            "type": "string",
+            "example": "1995-08-20"
+          },
+          "join_date": {
+            "type": "string",
+            "example": "2024-01-15"
+          },
+          "employee_no": {
+            "type": "string",
+            "example": "EMP-0001",
+            "description": "Readable employee number (auto-generated if omitted)"
+          },
+          "epf_no": {
+            "type": "string",
+            "example": "EPF-10294"
+          },
+          "work_email": {
+            "type": "string",
+            "example": "kamal.silva@company.com"
+          },
+          "personal_email": {
+            "type": "string",
+            "example": "kamal.personal@gmail.com"
+          },
+          "mobile_no": {
+            "type": "string",
+            "example": "+94712345678"
+          },
+          "home_tp": {
+            "type": "string",
+            "example": "+94112223334"
+          },
+          "street": {
+            "type": "string",
+            "example": "123, Main Street"
+          },
+          "city": {
+            "type": "string",
+            "example": "Colombo"
+          },
+          "province": {
+            "type": "string",
+            "example": "Western"
+          },
+          "country": {
+            "type": "string",
+            "example": "Sri Lanka"
+          },
+          "department_id": {
+            "type": "string",
+            "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          },
+          "position_id": {
+            "type": "string",
+            "example": "b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          },
+          "supervisor_id": {
+            "type": "string",
+            "example": "c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a33"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "hr",
+              "supervisor",
+              "employee"
+            ],
+            "example": "employee",
+            "description": "Role assigned once account is approved"
+          },
+          "emergency_contacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmergencyContactDto"
+            }
+          },
+          "qualifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QualificationDto"
+            }
+          },
+          "dependents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DependentDto"
+            }
+          }
+        },
+        "required": [
+          "first_name",
+          "last_name",
+          "dob",
+          "join_date",
+          "epf_no",
+          "work_email"
+        ]
+      }
+    }
+  }
+}

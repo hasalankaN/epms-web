@@ -3,8 +3,10 @@ export type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED" | "ESCALATED" | "C
 
 export interface LeaveBalance {
   type: LeaveType;
+  leaveType?: LeaveType;
   label: string;
   total: number;
+  allocated?: number;
   used: number;
   pending: number;
   remaining: number;
@@ -20,11 +22,15 @@ export interface LeaveApplication {
   type: LeaveType;
   fromDate: string;
   toDate: string;
+  startDate?: string;
+  endDate?: string;
   days: number;
   reason: string;
   note?: string;
   status: LeaveStatus;
   decisionComment?: string;
+  decisionBy?: string;
+  appliedAt?: string;
   escalatedTo?: string;
   balanceAfterApproval?: number;
 }
@@ -33,6 +39,9 @@ export interface CreateLeaveDto {
   type: LeaveType;
   fromDate: string;
   toDate: string;
+  startDate?: string;
+  endDate?: string;
+  days?: number;
   reason: string;
   note?: string;
 }
@@ -40,17 +49,23 @@ export interface CreateLeaveDto {
 export interface LeavePolicy {
   id: string;
   leaveType: LeaveType;
-  label: string;
-  daysPerYear: number;
-  carryForward: boolean;
-  maxCarryForwardDays: number;
-  rulesDescription: string;
+  label?: string;
+  daysPerYear?: number;
+  carryForward?: boolean;
+  maxCarryForwardDays?: number;
+  rulesDescription?: string;
+  annualQuota?: number;
+  carryForwardLimit?: number;
+  requiresDocumentProof?: boolean;
+  applicableGender?: string;
+  updatedAt?: string;
 }
 
 export interface AdjustLeaveBalanceDto {
   employeeId: string;
   leaveType: LeaveType;
-  newBalance: number;
+  newBalance?: number;
+  adjustedDays?: number;
   reason: string;
 }
 

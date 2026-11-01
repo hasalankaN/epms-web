@@ -54,6 +54,7 @@ export interface EmployeeProfile {
   epfNo: string;
   joinDate: string;
   qualification: string;
+  qualifications?: { id: string; title: string; institute?: string; year?: string }[];
   departmentName: string;
   positionName: string;
   supervisorName: string;

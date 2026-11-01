@@ -300,7 +300,7 @@ export function SupervisorDashboard() {
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Leave Requests ({pendingLeaves.length})
             </span>
-            {pendingLeaves.slice(0, 3).map((leave) => (
+            {pendingLeaves.slice(0, 3).map((leave: any) => (
               <div
                 key={leave.id}
                 className="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs"

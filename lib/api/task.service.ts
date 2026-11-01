@@ -2,6 +2,11 @@ import api from "@/lib/axios";
 import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
 import { mockResponse, paginateArray, USE_MOCK, type PaginatedResult } from "@/lib/mock/mockUtils";
 import { mockTasks } from "@/lib/mock/task.mock";
+import {
+  normalizeListResponse,
+  normalizeDetailResponse,
+  normalizeMutationResponse,
+} from "@/lib/api/responseNormalizer";
 import type {
   TaskItem,
   CreateTaskDto,
@@ -20,9 +25,27 @@ export interface TaskFilterQuery {
   assignedToId?: string;
 }
 
+function mapBackendTask(row: any): TaskItem {
+  return {
+    id: row.task_id || row.id,
+    title: row.title || "Untitled Task",
+    description: row.description || "",
+    assignedToId: row.emp_id || row.assignedToId || "",
+    assignedToName: row.assigned_to_name || row.assignedToName || "Team Member",
+    assignedToCode: row.assigned_to_code || row.assignedToCode || "EMP",
+    departmentName: row.department_name || row.departmentName || "Operations",
+    priority: (row.priority?.toUpperCase() || "MEDIUM") as any,
+    status: (row.status?.toUpperCase() || "TODO") as TaskStatus,
+    dueDate: row.due_date || row.dueDate || new Date().toISOString().slice(0, 10),
+    assignedBy: row.assigned_by || row.assignedBy || "Supervisor",
+    assignedByName: row.assigned_by || row.assignedByName || "Supervisor",
+    createdAt: row.created_at || row.createdAt || new Date().toISOString(),
+  };
+}
+
 export const taskService = {
   /**
-   * GET /api/v1/me/tasks
+   * GET /me/tasks
    */
   getMyTasks: async (
     query: TaskFilterQuery = {}
@@ -45,12 +68,37 @@ export const taskService = {
       }
       return mockResponse(paginateArray(filtered, query.page || 1, query.pageSize || 10));
     }
-    const res = await api.get(API_ENDPOINTS.me.TASKS, { params: query });
-    return res.data;
+
+    const res = await api.get(API_ENDPOINTS.me.TASKS);
+    const normalized = normalizeListResponse<any>(res.data);
+    let items = normalized.items.map(mapBackendTask);
+
+    if (query.status && query.status !== "ALL") {
+      items = items.filter((t) => t.status === query.status);
+    }
+    if (query.priority && query.priority !== "ALL") {
+      items = items.filter((t) => t.priority === query.priority);
+    }
+    if (query.search) {
+      const s = query.search.toLowerCase();
+      items = items.filter((t) => t.title.toLowerCase().includes(s) || t.description.toLowerCase().includes(s));
+    }
+
+    const page = query.page || 1;
+    const pageSize = query.pageSize || 10;
+    const paginated = items.slice((page - 1) * pageSize, page * pageSize);
+
+    return {
+      items: paginated,
+      total: items.length,
+      page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(items.length / pageSize)),
+    };
   },
 
   /**
-   * GET /api/v1/supervisor/tasks
+   * GET /supervisor/tasks
    */
   getTeamTasks: async (
     query: TaskFilterQuery = {}
@@ -60,28 +108,22 @@ export const taskService = {
       if (query.status && query.status !== "ALL") {
         filtered = filtered.filter((t) => t.status === query.status);
       }
-      if (query.priority && query.priority !== "ALL") {
-        filtered = filtered.filter((t) => t.priority === query.priority);
-      }
-      if (query.assignedToId && query.assignedToId !== "ALL") {
-        filtered = filtered.filter((t) => t.assignedToId === query.assignedToId);
-      }
-      if (query.search) {
-        const s = query.search.toLowerCase();
-        filtered = filtered.filter(
-          (t) =>
-            t.title.toLowerCase().includes(s) ||
-            t.assignedToName.toLowerCase().includes(s)
-        );
-      }
       return mockResponse(paginateArray(filtered, query.page || 1, query.pageSize || 10));
     }
-    const res = await api.get(API_ENDPOINTS.supervisor.TASKS, { params: query });
-    return res.data;
+
+    const res = await api.get(API_ENDPOINTS.supervisor.TASKS);
+    const normalized = normalizeListResponse<any>(res.data);
+    return {
+      items: normalized.items.map(mapBackendTask),
+      total: normalized.total,
+      page: normalized.page,
+      pageSize: normalized.pageSize,
+      totalPages: normalized.totalPages,
+    };
   },
 
   /**
-   * PATCH /api/v1/me/tasks/:id/status
+   * PATCH /me/tasks/:id/status
    */
   updateTaskStatus: async (
     id: string,
@@ -91,69 +133,84 @@ export const taskService = {
       const task = tasksStore.find((t) => t.id === id);
       if (task) {
         task.status = status;
-        if (!task.statusHistory) task.statusHistory = [];
-        task.statusHistory.push({
-          status,
-          changedAt: new Date().toISOString().replace("T", " ").substring(0, 16),
-          changedBy: "Nuwan Perera",
-        });
       }
       return mockResponse(task || tasksStore[0]);
     }
+
     const res = await api.patch(API_ENDPOINTS.me.TASK_STATUS(id), { status });
-    return res.data;
+    return mapBackendTask(normalizeDetailResponse(res.data));
   },
 
   /**
-   * POST /api/v1/supervisor/tasks
+   * POST /supervisor/tasks
    */
   createTask: async (payload: CreateTaskDto): Promise<TaskItem> => {
     if (USE_MOCK) {
       const newTask: TaskItem = {
-        id: `tsk-${Date.now()}`,
+        id: `task-${Date.now()}`,
         title: payload.title,
         description: payload.description,
-        dueDate: payload.dueDate,
-        assignedByName: "Kanishka Bandara",
-        assignedById: "emp-1002",
-        assignedToName: payload.assignedToId === "emp-1015" ? "Dilani Wickramasinghe" : "Nuwan Perera",
         assignedToId: payload.assignedToId,
-        status: "TODO",
+        assignedToName: payload.assignedToName || "Team Member",
+        assignedToCode: "EMP-ASSIGNED",
+        departmentName: "Operations",
         priority: payload.priority,
-        createdAt: new Date().toISOString().split("T")[0],
+        status: "TODO",
+        dueDate: payload.dueDate,
+        assignedBy: "Supervisor",
+        assignedByName: "Supervisor",
+        createdAt: new Date().toLocaleDateString(),
       };
       tasksStore = [newTask, ...tasksStore];
       return mockResponse(newTask);
     }
-    const res = await api.post(API_ENDPOINTS.supervisor.TASKS, payload);
-    return res.data;
+
+    const res = await api.post(API_ENDPOINTS.supervisor.TASKS, {
+      emp_id: payload.assignedToId,
+      title: payload.title,
+      description: payload.description,
+      priority: payload.priority,
+      due_date: payload.dueDate,
+    });
+    return mapBackendTask(normalizeDetailResponse(res.data));
   },
 
   /**
-   * PATCH /api/v1/supervisor/tasks/:id
+   * PATCH /supervisor/tasks/:id
    */
-  updateTask: async (id: string, payload: UpdateTaskDto): Promise<TaskItem> => {
+  updateTask: async (
+    id: string,
+    payload: UpdateTaskDto
+  ): Promise<TaskItem> => {
     if (USE_MOCK) {
-      const task = tasksStore.find((t) => t.id === id);
-      if (task) {
-        Object.assign(task, payload);
+      const t = tasksStore.find((item) => item.id === id);
+      if (t) {
+        Object.assign(t, payload);
       }
-      return mockResponse(task || tasksStore[0]);
+      return mockResponse(t || tasksStore[0]);
     }
-    const res = await api.patch(API_ENDPOINTS.supervisor.TASK_DETAIL(id), payload);
-    return res.data;
+
+    const res = await api.patch(API_ENDPOINTS.supervisor.TASK_DETAIL(id), {
+      emp_id: payload.assignedToId,
+      title: payload.title,
+      description: payload.description,
+      priority: payload.priority,
+      due_date: payload.dueDate,
+      status: payload.status,
+    });
+    return mapBackendTask(normalizeDetailResponse(res.data));
   },
 
   /**
-   * DELETE /api/v1/supervisor/tasks/:id
+   * DELETE /supervisor/tasks/:id
    */
-  deleteTask: async (id: string): Promise<{ success: boolean }> => {
+  deleteTask: async (id: string): Promise<{ success: boolean; message: string }> => {
     if (USE_MOCK) {
       tasksStore = tasksStore.filter((t) => t.id !== id);
-      return mockResponse({ success: true });
+      return mockResponse({ success: true, message: "Task removed successfully" });
     }
+
     const res = await api.delete(API_ENDPOINTS.supervisor.TASK_DETAIL(id));
-    return res.data;
+    return normalizeMutationResponse(res.data, "Task deleted successfully");
   },
 };
-
