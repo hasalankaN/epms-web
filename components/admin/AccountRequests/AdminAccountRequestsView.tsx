@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { DataTable, type Column } from "@/components/common/table/DataTable";
 import { ReviewAccountRequestModal } from "./ReviewAccountRequestModal";
-import { useAccountRequestsQuery } from "@/hooks/api/accountRequests/useAccountRequests";
+import { useAdminEmployeeRequestsQuery } from "@/hooks/api/accountRequests/useAccountRequests";
 import type { AccountRequestItem } from "@/types/dto/accountRequest.dto";
 
 export function AdminAccountRequestsView() {
@@ -23,14 +23,20 @@ export function AdminAccountRequestsView() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedRequest, setSelectedRequest] = useState<AccountRequestItem | null>(null);
 
-  const { data: requests = [], isLoading } = useAccountRequestsQuery(statusFilter);
+  const queryParams: Record<string, any> = { page: 1, pageSize: 50 };
+  if (statusFilter !== "ALL") queryParams.status = statusFilter;
+  if (search.trim()) queryParams.search = search.trim();
+
+  const { data: requests = [], isLoading } = useAdminEmployeeRequestsQuery(queryParams);
 
   const filteredRequests = requests.filter((r) => {
     if (!search) return true;
+    const term = search.toLowerCase();
     return (
-      r.employeeName.toLowerCase().includes(search.toLowerCase()) ||
-      r.employeeCode.toLowerCase().includes(search.toLowerCase()) ||
-      r.reason.toLowerCase().includes(search.toLowerCase())
+      r.employeeName?.toLowerCase().includes(term) ||
+      r.employeeCode?.toLowerCase().includes(term) ||
+      r.reason?.toLowerCase().includes(term) ||
+      r.departmentName?.toLowerCase().includes(term)
     );
   });
 

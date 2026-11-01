@@ -1,6 +1,10 @@
 import api from "@/lib/axios";
 import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
-import { normalizeListResponse, normalizeDetailResponse, normalizeMutationResponse } from "@/lib/api/responseNormalizer";
+import {
+  normalizeListResponse,
+  normalizeDetailResponse,
+  normalizeMutationResponse,
+} from "@/lib/api/responseNormalizer";
 import type { EmployeeRegisterFormValues } from "@/types/schemas/employeeSchema";
 
 /* ─── Supervisor option (used in the register form dropdown) ──────────── */
@@ -92,7 +96,24 @@ export const employeeService = {
       API_ENDPOINTS.hr.EMPLOYEE_REQUEST,
       payload
     );
-    return response.data;
+    if (
+      response.data?.success === false ||
+      response.data?.data?.success === false
+    ) {
+      throw new Error(
+        response.data.message ||
+          response.data.data?.message ||
+          "Failed to submit employee account request"
+      );
+    }
+    const result = normalizeMutationResponse(
+      response.data,
+      "Employee account request submitted successfully"
+    );
+    if (!result.success) {
+      throw new Error(result.message);
+    }
+    return { success: true, message: result.message };
   },
 
   /**

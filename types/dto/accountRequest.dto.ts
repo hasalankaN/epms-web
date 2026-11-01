@@ -9,6 +9,7 @@ export interface AccountRequestItem {
   employeeCode: string;
   employeeEmail: string;
   departmentName: string;
+  positionName?: string;
   requestedBy: string;
   requestedAt: string;
   status: RequestStatus;
@@ -18,6 +19,20 @@ export interface AccountRequestItem {
   decisionComment?: string;
   decisionAt?: string;
   proposedUsername?: string;
+  mobileNo?: string;
+  personalEmail?: string;
+  dob?: string;
+  joinDate?: string;
+  street?: string;
+  city?: string;
+  province?: string;
+  country?: string;
+  emergencyContacts?: any[];
+  qualifications?: any[];
+  dependents?: any[];
+  rejectionReason?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
 }
 
 export interface CreateAccountRequestDto {

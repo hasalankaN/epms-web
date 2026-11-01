@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { usePlanTrainingMutation } from "@/hooks/api/training/useTraining";
+import { employeeService, type HrEmployeeRecord } from "@/lib/api/employee.service";
 import type { TrainingMode } from "@/types/dto/training.dto";
+import { Loader2 } from "lucide-react";
 
 interface PlanTrainingModalProps {
   open: boolean;
@@ -38,11 +40,22 @@ export function PlanTrainingModal({
   const [instructor, setInstructor] = useState("");
 
   // Step 3: Participants
-  const [selectedEmployees, setSelectedEmployees] = useState<string[]>([
-    "EMP-001",
-    "EMP-002",
-    "EMP-003",
-  ]);
+  const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
+  const [availableEmployees, setAvailableEmployees] = useState<HrEmployeeRecord[]>([]);
+  const [isLoadingEmployees, setIsLoadingEmployees] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setIsLoadingEmployees(true);
+      employeeService
+        .getHrEmployees()
+        .then((res) => {
+          setAvailableEmployees(res || []);
+        })
+        .catch(() => setAvailableEmployees([]))
+        .finally(() => setIsLoadingEmployees(false));
+    }
+  }, [open]);
 
   // Step 4: Budget
   const [budget, setBudget] = useState("85000");
@@ -204,30 +217,35 @@ export function PlanTrainingModal({
             <div className="space-y-3">
               <Label>Enrolled Participants ({selectedEmployees.length} Selected)</Label>
               <div className="p-3 border rounded-md max-h-48 overflow-y-auto space-y-2 text-xs">
-                {[
-                  { id: "EMP-001", name: "Kavinda Perera (Stitching Line A)" },
-                  { id: "EMP-002", name: "Nuwan Disanayake (QA Section)" },
-                  { id: "EMP-003", name: "Sanduni Jayawardena (Sewing)" },
-                  { id: "EMP-004", name: "Thilina Fernando (Maintenance)" },
-                  { id: "EMP-005", name: "Dilani Silva (Logistics)" },
-                  { id: "EMP-006", name: "Roshan Alwis (HR Coordinator)" },
-                ].map((emp) => (
-                  <label key={emp.id} className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedEmployees.includes(emp.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedEmployees([...selectedEmployees, emp.id]);
-                        } else {
-                          setSelectedEmployees(selectedEmployees.filter((id) => id !== emp.id));
-                        }
-                      }}
-                      className="rounded border-gray-300 text-[#E60076] focus:ring-[#E60076]"
-                    />
-                    <span>{emp.name}</span>
-                  </label>
-                ))}
+                {isLoadingEmployees ? (
+                  <div className="flex items-center justify-center py-6 text-muted-foreground gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-[#E60076]" />
+                    <span>Loading employees from directory...</span>
+                  </div>
+                ) : availableEmployees.length === 0 ? (
+                  <p className="text-center py-4 text-muted-foreground">
+                    No active employees found in directory.
+                  </p>
+                ) : (
+                  availableEmployees.map((emp) => (
+                    <label key={emp.id} className="flex items-center space-x-2 cursor-pointer hover:bg-muted/30 p-1 rounded">
+                      <input
+                        type="checkbox"
+                        checked={selectedEmployees.includes(emp.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedEmployees([...selectedEmployees, emp.id]);
+                          } else {
+                            setSelectedEmployees(selectedEmployees.filter((id) => id !== emp.id));
+                          }
+                        }}
+                        className="rounded border-gray-300 text-[#E60076] focus:ring-[#E60076]"
+                      />
+                      <span className="font-medium text-foreground">{emp.name}</span>
+                      <span className="text-muted-foreground">({emp.code || emp.department})</span>
+                    </label>
+                  ))
+                )}
               </div>
               <p className="text-[11px] text-muted-foreground">
                 All selected workers will receive an in-app invite and automated attendance logging.

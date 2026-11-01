@@ -23,6 +23,7 @@ import { PlanTrainingModal } from "./dashboard/modals/PlanTrainingModal";
 import { CreateVacancyModal } from "./dashboard/modals/CreateVacancyModal";
 import { SendNotificationModal } from "./dashboard/modals/SendNotificationModal";
 import { GenerateReportsModal } from "./dashboard/modals/GenerateReportsModal";
+import { useHrTrainingsQuery } from "@/hooks/api/training/useTraining";
 
 import {
   initialProfileUpdateRequests,
@@ -30,18 +31,13 @@ import {
   initialTrainingBudgets,
   todayAttendanceData,
   initialAttendanceIssues,
-  initialUpcomingTrainings,
   initialRecruitmentOverview,
   employeeSummaryData,
   leaveOverviewData,
   initialRecentNotifications,
 } from "@/data/hrDashboardData";
 
-import type {
-  UpcomingTrainingSession,
-  OpenVacancy,
-  RecentNotificationItem,
-} from "@/types/hrDashboard";
+import type { OpenVacancy, RecentNotificationItem } from "@/types/hrDashboard";
 
 export function HRDashboard() {
   const router = useRouter();
@@ -63,9 +59,29 @@ export function HRDashboard() {
     initialAttendanceIssues
   );
 
-  const [upcomingTrainings, setUpcomingTrainings] = useState(
-    initialUpcomingTrainings
-  );
+  const { data: trainingData } = useHrTrainingsQuery({
+    page: 1,
+    pageSize: 5,
+    status: "UPCOMING",
+  });
+
+  const upcomingTrainings = (trainingData?.items || []).map((training) => ({
+    id: training.id,
+    title: training.name,
+    department: (training as any).department || "Operations",
+    date: training.date,
+    time: `${training.startTime} - ${training.endTime}`,
+    trainer: training.instructors[0] || "Trainer",
+    venueOrPlatform: training.venue,
+    registeredCount: training.participantsCount || 0,
+    maxCapacity: (training as any).maxCapacity || 30,
+    status:
+      training.status === "COMPLETED"
+        ? ("COMPLETED" as const)
+        : training.status === "ONGOING"
+          ? ("IN_PROGRESS" as const)
+          : ("SCHEDULED" as const),
+  }));
 
   const [recruitment, setRecruitment] = useState(
     initialRecruitmentOverview
@@ -140,11 +156,6 @@ export function HRDashboard() {
       )
     );
     toast.info(`Compliance log updated for ${employeeId}.`);
-  };
-
-  // Quick action additions
-  const handleTrainingAdded = (training: UpcomingTrainingSession) => {
-    setUpcomingTrainings((prev) => [training, ...prev]);
   };
 
   const handleVacancyCreated = (vac: OpenVacancy) => {
@@ -283,7 +294,6 @@ export function HRDashboard() {
       <PlanTrainingModal
         open={isPlanTrainingOpen}
         onOpenChange={setIsPlanTrainingOpen}
-        onTrainingAdded={handleTrainingAdded}
       />
       <CreateVacancyModal
         open={isCreateVacancyOpen}

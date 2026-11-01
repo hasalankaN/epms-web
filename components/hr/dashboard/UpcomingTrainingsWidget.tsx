@@ -58,9 +58,9 @@ export function UpcomingTrainingsWidget({
             </div>
           ) : (
             trainings.map((session) => {
-              const capacityPct = Math.round(
-                (session.registeredCount / session.maxCapacity) * 100
-              );
+              const capacityPct = session.maxCapacity
+                ? Math.round((session.registeredCount / session.maxCapacity) * 100)
+                : 0;
 
               
 return (
@@ -74,7 +74,8 @@ return (
                         {session.title}
                       </h4>
                       <p className="text-[11px] text-slate-500 mt-0.5">
-                        {session.department} • Trainer: {session.trainer}
+                        {session.department ? `${session.department} • ` : ""}
+                        Trainer: {session.trainer}
                       </p>
                     </div>
                     <Badge variant="outline" className="text-[10px] font-mono shrink-0">
@@ -94,15 +95,19 @@ return (
                     <div className="flex items-center gap-1 ml-auto text-indigo-600 dark:text-indigo-400 font-medium">
                       <Users className="h-3 w-3" />
                       <span>
-                        {session.registeredCount} / {session.maxCapacity} Enrolled
+                        {session.maxCapacity
+                          ? `${session.registeredCount} / ${session.maxCapacity} Enrolled`
+                          : `${session.registeredCount} Enrolled`}
                       </span>
                     </div>
                   </div>
 
                   {/* Enrollment progress bar */}
-                  <div className="mt-2">
-                    <Progress value={capacityPct} className="h-1.5" />
-                  </div>
+                  {session.maxCapacity && (
+                    <div className="mt-2">
+                      <Progress value={capacityPct} className="h-1.5" />
+                    </div>
+                  )}
                 </div>
               );
             })

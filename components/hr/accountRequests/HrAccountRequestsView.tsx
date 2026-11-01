@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { DataTable, type Column } from "@/components/common/table/DataTable";
 import { NewAccountRequestModal } from "./NewAccountRequestModal";
-import { useAccountRequestsQuery } from "@/hooks/api/accountRequests/useAccountRequests";
+import { useHrEmployeeRequestsQuery } from "@/hooks/api/accountRequests/useAccountRequests";
 import type { AccountRequestItem } from "@/types/dto/accountRequest.dto";
 
 export function HrAccountRequestsView() {
@@ -24,14 +24,23 @@ export function HrAccountRequestsView() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { data: requests = [], isLoading } = useAccountRequestsQuery(statusFilter);
+  const queryParams: Record<string, any> = { page: 1, pageSize: 50 };
+  if (statusFilter !== "ALL") queryParams.status = statusFilter;
+  if (search.trim()) queryParams.search = search.trim();
+
+  const {
+    data: requests = [],
+    isLoading,
+    isError,
+  } = useHrEmployeeRequestsQuery(queryParams);
 
   const filteredRequests = requests.filter((r) => {
     if (!search) return true;
+    const term = search.toLowerCase();
     return (
-      r.employeeName.toLowerCase().includes(search.toLowerCase()) ||
-      r.employeeCode.toLowerCase().includes(search.toLowerCase()) ||
-      r.reason.toLowerCase().includes(search.toLowerCase())
+      r.employeeName?.toLowerCase().includes(term) ||
+      r.employeeCode?.toLowerCase().includes(term) ||
+      r.reason?.toLowerCase().includes(term)
     );
   });
 
@@ -109,11 +118,18 @@ export function HrAccountRequestsView() {
 
         <div className="flex items-center gap-2">
           <Button
-            className="bg-[#E60076] hover:bg-[#c40064] text-white gap-2"
+            variant="outline"
+            className="gap-2"
             onClick={() => setIsModalOpen(true)}
           >
+            Role / Deactivation Request
+          </Button>
+          <Button
+            className="bg-[#E60076] hover:bg-[#c40064] text-white gap-2"
+            onClick={() => window.location.href = "/hr-panel/employees/add-employee"}
+          >
             <PlusCircle className="w-4 h-4" />
-            New Account Request
+            Create Employee Request
           </Button>
         </div>
       </div>
@@ -143,12 +159,18 @@ export function HrAccountRequestsView() {
         </div>
 
         <div className="rounded-lg border bg-card shadow-sm">
-          <DataTable
-            columns={columns}
-            data={filteredRequests}
-            isLoading={isLoading}
-            keyExtractor={(item) => item.id}
-          />
+          {isError ? (
+            <p className="p-6 text-sm text-destructive">
+              Could not load account requests. Please try again.
+            </p>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={filteredRequests}
+              isLoading={isLoading}
+              keyExtractor={(item) => item.id}
+            />
+          )}
         </div>
       </div>
 
@@ -160,4 +182,3 @@ export function HrAccountRequestsView() {
     </div>
   );
 }
-

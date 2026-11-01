@@ -197,7 +197,18 @@ export const trainingService = {
       budget: payload.budget,
       participants: payload.participantEmployeeIds || payload.participantIds || [],
     });
-    return mapBackendTraining(normalizeDetailResponse(res.data));
+    if (res.data?.success === false || res.data?.data?.success === false) {
+      throw new Error(
+        res.data.message ||
+          res.data.data?.message ||
+          "Failed to plan training session"
+      );
+    }
+    const result = normalizeDetailResponse<any>(res.data);
+    if (result?.success === false) {
+      throw new Error(result.message || "Failed to plan training session");
+    }
+    return mapBackendTraining(result?.data ?? result);
   },
 
   /**

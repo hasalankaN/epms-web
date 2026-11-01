@@ -18,7 +18,7 @@ import { StatusBadge } from "@/components/common/StatusBadge";
 import { DataTable, type Column } from "@/components/common/table/DataTable";
 import { PlanTrainingModal } from "./PlanTrainingModal";
 import { HrTrainingDetailDrawer } from "./HrTrainingDetailDrawer";
-import { useMyTrainingsQuery } from "@/hooks/api/training/useTraining";
+import { useHrTrainingsQuery } from "@/hooks/api/training/useTraining";
 import type { TrainingItem } from "@/types/dto/training.dto";
 
 export function HrTrainingView() {
@@ -29,7 +29,7 @@ export function HrTrainingView() {
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [selectedTraining, setSelectedTraining] = useState<TrainingItem | null>(null);
 
-  const { data: trainingData, isLoading } = useMyTrainingsQuery({
+  const { data: trainingData, isLoading } = useHrTrainingsQuery({
     search,
     status: statusFilter,
   });
@@ -197,4 +197,3 @@ export function HrTrainingView() {
     </div>
   );
 }
-

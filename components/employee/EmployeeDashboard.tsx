@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-
+import Link from "next/link";
 import {
   Calendar,
   Clock,
@@ -14,53 +14,23 @@ import {
 
 import { useSession } from "@/components/providers/SessionProvider";
 import { Button } from "@/components/ui/button";
-
-const initialTasks = [
-  {
-    id: 1,
-    title: "Prepare sprint demo slides",
-    assignee: "Assigned by Nuwan Silva · due today",
-    status: "In progress",
-    statusClass: "bg-blue-50 text-blue-600 border border-blue-200/60",
-    completed: false,
-  },
-  {
-    id: 2,
-    title: "Fix login validation bug",
-    assignee: "Assigned by Nuwan Silva · due Oct 21",
-    status: "To do",
-    statusClass: "bg-neutral-100 text-neutral-600 border border-neutral-200/60",
-    completed: false,
-  },
-  {
-    id: 3,
-    title: "Write API docs for leave module",
-    assignee: "Assigned by Nuwan Silva · due Oct 23",
-    status: "To do",
-    statusClass: "bg-neutral-100 text-neutral-600 border border-neutral-200/60",
-    completed: false,
-  },
-  {
-    id: 4,
-    title: "Review pull request #128",
-    assignee: "Assigned by Nuwan Silva · due Oct 24",
-    status: "In review",
-    statusClass: "bg-purple-50 text-purple-600 border border-purple-200/60",
-    completed: false,
-  },
-];
+import { useMyTasksQuery, useUpdateTaskStatusMutation } from "@/hooks/api/tasks/useTasks";
 
 export function EmployeeDashboard() {
   const session = useSession();
-  const firstName = session?.user?.name?.split(" ")[0] || "Kasun";
+  const firstName = session?.user?.name?.split(" ")[0] || "Employee";
 
   const [clockedIn, setClockedIn] = useState(false);
-  const [tasks, setTasks] = useState(initialTasks);
 
-  const toggleTask = (id: number) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
-    );
+  const { data: tasksData, isLoading: isTasksLoading } = useMyTasksQuery();
+  const updateStatusMutation = useUpdateTaskStatusMutation();
+
+  const taskItems = tasksData?.items || [];
+  const openCount = taskItems.filter((t) => t.status !== "DONE").length;
+
+  const toggleTask = (task: any) => {
+    const nextStatus = task.status === "DONE" ? "IN_PROGRESS" : "DONE";
+    updateStatusMutation.mutate({ id: task.id, status: nextStatus });
   };
 
   return (
@@ -301,52 +271,65 @@ export function EmployeeDashboard() {
             <div>
               <h2 className="text-sm font-semibold text-neutral-900">My tasks</h2>
               <p className="text-xs text-neutral-400 mt-0.5">
-                4 open, 1 due today
+                {openCount} open tasks
               </p>
             </div>
             <Button
+              asChild
               variant="outline"
               size="sm"
               className="h-8 px-3 text-xs font-medium rounded-lg border-neutral-200 text-neutral-700 hover:bg-neutral-50"
             >
-              View all
+              <Link href="/employee-panel/tasks">View all</Link>
             </Button>
           </div>
 
           <div className="divide-y divide-neutral-100">
-            {tasks.map((task) => (
-              <div
-                key={task.id}
-                className="py-3.5 flex items-center justify-between gap-3 hover:bg-neutral-50/50 px-1 rounded-md transition-colors"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <input
-                    type="checkbox"
-                    checked={task.completed}
-                    onChange={() => toggleTask(task.id)}
-                    className="h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900 cursor-pointer"
-                  />
-                  <div className="min-w-0">
-                    <p
-                      className={`text-xs font-semibold text-neutral-800 truncate ${
-                        task.completed ? "line-through text-neutral-400" : ""
-                      }`}
-                    >
-                      {task.title}
-                    </p>
-                    <p className="text-[11px] text-neutral-400 truncate mt-0.5">
-                      {task.assignee}
-                    </p>
-                  </div>
-                </div>
-
-                <span
-                  className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full shrink-0 ${task.statusClass}`}
+            {isTasksLoading ? (
+              <p className="text-xs text-neutral-400 py-6 text-center">Loading tasks...</p>
+            ) : taskItems.length === 0 ? (
+              <p className="text-xs text-neutral-400 py-6 text-center">No tasks assigned yet.</p>
+            ) : (
+              taskItems.slice(0, 5).map((task) => (
+                <div
+                  key={task.id}
+                  className="py-3.5 flex items-center justify-between gap-3 hover:bg-neutral-50/50 px-1 rounded-md transition-colors"
                 >
-                  {task.status}
-                </span>
-              </div>
-            ))}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <input
+                      type="checkbox"
+                      checked={task.status === "DONE"}
+                      onChange={() => toggleTask(task)}
+                      className="h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900 cursor-pointer"
+                    />
+                    <div className="min-w-0">
+                      <p
+                        className={`text-xs font-semibold text-neutral-800 truncate ${
+                          task.status === "DONE" ? "line-through text-neutral-400" : ""
+                        }`}
+                      >
+                        {task.title}
+                      </p>
+                      <p className="text-[11px] text-neutral-400 truncate mt-0.5">
+                        Due: {task.dueDate} · {task.priority}
+                      </p>
+                    </div>
+                  </div>
+
+                  <span
+                    className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full shrink-0 ${
+                      task.status === "DONE"
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+                        : task.status === "IN_PROGRESS"
+                        ? "bg-blue-50 text-blue-600 border border-blue-200/60"
+                        : "bg-neutral-100 text-neutral-600 border border-neutral-200/60"
+                    }`}
+                  >
+                    {task.status.replace("_", " ")}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
 

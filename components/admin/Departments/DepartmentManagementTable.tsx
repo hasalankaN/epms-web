@@ -38,25 +38,8 @@ import type {
   CreateDepartmentDto,
   UpdateDepartmentDto,
 } from "@/types/dto/department.dto";
-import { MOCK_DEPARTMENTS } from "@/data/userManagementData";
 
 const ITEMS_PER_PAGE = 8;
-
-// Fallback initial data in case backend is offline or empty during dev
-const INITIAL_FALLBACK_DEPARTMENTS: DepartmentItem[] = MOCK_DEPARTMENTS.map(
-  (d, idx) => ({
-    id: d.value,
-    departmentName: d.label,
-    location:
-      idx % 2 === 0
-        ? "Colombo HQ - Floor 3"
-        : idx % 3 === 0
-        ? "Kandy Regional Branch"
-        : "Main Tech Tower - Level 4",
-    deptPhone: `+94 11 200 440${idx + 1}`,
-    employeeCount: Math.floor(Math.random() * 20) + 5,
-  })
-);
 
 export function DepartmentManagementTable() {
   const [search, setSearch] = useState("");
@@ -78,31 +61,11 @@ export function DepartmentManagementTable() {
   const updateMutation = useUpdateDepartmentMutation();
   const deleteMutation = useDeleteDepartmentMutation();
 
-  // Determine items to display (fallback to mock if API returns empty array or error)
   const displayItems: DepartmentItem[] = useMemo(() => {
-    if (apiResponse?.items) {
-      return apiResponse.items;
-    }
+    return apiResponse?.items || [];
+  }, [apiResponse]);
 
-
-    // If backend returns nothing or error, filter our fallback items by search
-    if (search.trim()) {
-      const q = search.toLowerCase();
-
-      
-return INITIAL_FALLBACK_DEPARTMENTS.filter(
-        (d) =>
-          d.departmentName.toLowerCase().includes(q) ||
-          d.location.toLowerCase().includes(q) ||
-          d.deptPhone.toLowerCase().includes(q)
-      );
-    }
-
-    
-return INITIAL_FALLBACK_DEPARTMENTS;
-  }, [apiResponse, search]);
-
-  const totalCount = apiResponse?.total ?? displayItems.length;
+  const totalCount = apiResponse?.total ?? 0;
   const totalPages = apiResponse?.totalPages ?? Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
 
   // Handlers
