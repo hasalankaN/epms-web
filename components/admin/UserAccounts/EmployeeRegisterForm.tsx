@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 
 import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   User,
@@ -27,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { departmentService } from "@/lib/api/department.service";
 import { positionService } from "@/lib/api/position.service";
 import { employeeService, SupervisorOption } from "@/lib/api/employee.service";
+import { queryKeys } from "@/lib/constants/queryKeys";
 
 /* ─── Field wrapper ─────────────────────────────────────────────────── */
 function Field({
@@ -123,6 +125,7 @@ export interface EmployeeRegisterFormProps {
 export function EmployeeRegisterForm({ mode: propMode, onSuccessRedirect }: EmployeeRegisterFormProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const isHr = propMode === "hr" || pathname?.startsWith("/hr-panel");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -228,6 +231,10 @@ export function EmployeeRegisterForm({ mode: propMode, onSuccessRedirect }: Empl
       if (isHr) {
         // HR submits account request to Admin via POST /hr/employee-request
         await employeeService.createEmployeeRequest(data);
+        await queryClient.invalidateQueries({
+          queryKey: [queryKeys.adminAccountRequests],
+        });
+
         setSubmitted(true);
         toast.success("Employee account request submitted to Admin for approval!");
       } else {
@@ -239,6 +246,9 @@ export function EmployeeRegisterForm({ mode: propMode, onSuccessRedirect }: Empl
       reset();
     } catch (error: any) {
       console.error("Employee registration error:", error);
+      if (!error?.response) {
+        toast.error(error?.message || "Failed to submit employee account request.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -257,7 +267,7 @@ export function EmployeeRegisterForm({ mode: propMode, onSuccessRedirect }: Empl
           </h2>
           <p className="text-sm text-slate-500 mt-1 max-w-md">
             {isHr
-              ? "The new employee account request has been submitted to Admin for approval. Once approved, the portal account will be active."
+              ? "The request is available in Account Requests. The employee will appear in the directory after Admin approves it."
               : "The employee account has been created and login credentials have been emailed."}
           </p>
         </div>
@@ -267,7 +277,7 @@ export function EmployeeRegisterForm({ mode: propMode, onSuccessRedirect }: Empl
             variant="outline"
             onClick={() => router.push(onSuccessRedirect || (isHr ? "/hr-panel/employees" : "/admin-panel/user-managment"))}
           >
-            {isHr ? "Back to Directory" : "Back to Users"}
+            {isHr ? "View Account Requests" : "Back to Users"}
           </Button>
           <Button
             size="sm"

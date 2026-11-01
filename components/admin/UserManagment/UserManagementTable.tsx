@@ -24,22 +24,23 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { adminService } from "@/lib/api/admin.service";
 import type { UserRecord } from "@/data/userManagementData";
-import { MOCK_USERS } from "@/data/userManagementData";
 import type { UserRole } from "@/types/roles";
 
 const ITEMS_PER_PAGE = 8;
 
 export function UserManagementTable() {
-  const [users, setUsers] = useState<UserRecord[]>(MOCK_USERS);
+  const [users, setUsers] = useState<UserRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRole | "ALL">("ALL");
   const [currentPage, setCurrentPage] = useState(1);
 
   React.useEffect(() => {
+    setIsLoading(true);
     adminService
       .getAccounts()
       .then((accs) => {
-        if (accs && accs.length > 0) {
+        if (accs) {
           const mapped: UserRecord[] = accs.map((a) => {
             const name = a.name || a.username || "EPMS User";
             const initials = name
@@ -61,10 +62,16 @@ export function UserManagementTable() {
             };
           });
           setUsers(mapped);
+        } else {
+          setUsers([]);
         }
       })
-      .catch(() => {
-        // Fallback to initial mock users
+      .catch((err) => {
+        console.error("Failed to load user accounts:", err);
+        setUsers([]);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   }, []);
 
@@ -234,6 +241,7 @@ export function UserManagementTable() {
       <DataTable<UserRecord>
         data={paginated}
         columns={columns}
+        isLoading={isLoading}
         keyExtractor={(item) => item.id}
         showCheckboxes={false}
         tableContainerClassName="h-auto"

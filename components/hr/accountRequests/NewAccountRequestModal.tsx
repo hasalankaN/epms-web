@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCreateAccountRequestMutation } from "@/hooks/api/accountRequests/useAccountRequests";
+import { employeeService, type HrEmployeeRecord } from "@/lib/api/employee.service";
 import type { AccountRequestType } from "@/types/dto/accountRequest.dto";
+import { toast } from "sonner";
 
 interface NewAccountRequestModalProps {
   open: boolean;
@@ -24,15 +26,31 @@ export function NewAccountRequestModal({
   onOpenChange,
 }: NewAccountRequestModalProps) {
   const [type, setType] = useState<AccountRequestType>("CREATE_ACCOUNT");
-  const [employeeId, setEmployeeId] = useState("EMP-001");
+  const [employeeId, setEmployeeId] = useState("");
+  const [employees, setEmployees] = useState<HrEmployeeRecord[]>([]);
+  const [isLoadingEmployees, setIsLoadingEmployees] = useState(false);
   const [proposedRole, setProposedRole] = useState("EMPLOYEE");
   const [reason, setReason] = useState("");
 
   const createMutation = useCreateAccountRequestMutation();
 
+  useEffect(() => {
+    if (!open) return;
+
+    setIsLoadingEmployees(true);
+    employeeService
+      .getHrEmployees()
+      .then(setEmployees)
+      .catch((error) => {
+        console.error("Failed to load employees for account request:", error);
+        toast.error("Could not load employees. Please try again.");
+      })
+      .finally(() => setIsLoadingEmployees(false));
+  }, [open]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reason.trim()) return;
+    if (!employeeId || !reason.trim()) return;
 
     createMutation.mutate(
       {
@@ -76,13 +94,18 @@ export function NewAccountRequestModal({
             <select
               value={employeeId}
               onChange={(e) => setEmployeeId(e.target.value)}
+              disabled={isLoadingEmployees || employees.length === 0}
+              required
               className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
-              <option value="EMP-001">Kavinda Perera (EMP-001) - Production</option>
-              <option value="EMP-002">Nuwan Disanayake (EMP-002) - Quality</option>
-              <option value="EMP-003">Sanduni Jayawardena (EMP-003) - Sewing</option>
-              <option value="EMP-004">Thilina Fernando (EMP-004) - Maintenance</option>
-              <option value="EMP-005">Dilani Silva (EMP-005) - Warehouse</option>
+              <option value="">
+                {isLoadingEmployees ? "Loading employees..." : "Select an employee"}
+              </option>
+              {employees.map((employee) => (
+                <option key={employee.id} value={employee.id}>
+                  {employee.name} ({employee.code}) - {employee.department}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -125,7 +148,11 @@ export function NewAccountRequestModal({
             <Button
               type="submit"
               className="bg-[#E60076] hover:bg-[#c40064] text-white"
-              disabled={createMutation.isPending}
+              disabled={
+                createMutation.isPending ||
+                isLoadingEmployees ||
+                employees.length === 0
+              }
             >
               {createMutation.isPending ? "Submitting..." : "Send to Administrator"}
             </Button>
@@ -135,4 +162,3 @@ export function NewAccountRequestModal({
     </Dialog>
   );
 }
-

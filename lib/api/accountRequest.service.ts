@@ -1,7 +1,5 @@
 import api from "@/lib/axios";
 import { API_ENDPOINTS } from "@/lib/api/api-endpoints";
-import { mockResponse, USE_MOCK } from "@/lib/mock/mockUtils";
-import { mockAccountRequests } from "@/lib/mock/accountRequest.mock";
 import {
   normalizeListResponse,
   normalizeDetailResponse,
@@ -12,144 +10,256 @@ import type {
   CreateAccountRequestDto,
 } from "@/types/dto/accountRequest.dto";
 
-let accountRequestsStore: AccountRequestItem[] = [...mockAccountRequests];
+export function mapBackendAccountRequest(row: any): AccountRequestItem {
+  if (!row) {
+    return {
+      id: "",
+      type: "CREATE_ACCOUNT",
+      employeeId: "",
+      employeeName: "Unknown",
+      employeeCode: "EMP-REQ",
+      employeeEmail: "",
+      departmentName: "General",
+      requestedBy: "HR Department",
+      requestedAt: new Date().toISOString(),
+      status: "PENDING",
+      reason: "",
+    };
+  }
 
-function mapBackendAccountRequest(row: any): AccountRequestItem {
+  const requestType = row.request_type || row.type;
+  const type =
+    requestType === "ACCOUNT_CREATE" || requestType === "CREATE_ACCOUNT"
+      ? "CREATE_ACCOUNT"
+      : requestType === "CHANGE_ROLE" || requestType === "ROLE_CHANGE"
+        ? "CHANGE_ROLE"
+        : requestType === "DEACTIVATE_ACCOUNT" || requestType === "ACCOUNT_DEACTIVATE"
+          ? "DEACTIVATE_ACCOUNT"
+          : row.employee_no || row.epf_no || row.first_name
+            ? "CREATE_ACCOUNT"
+            : "DEACTIVATE_ACCOUNT";
+
+  const firstName = row.first_name || "";
+  const lastName = row.last_name || "";
+  const fullName =
+    `${firstName} ${lastName}`.trim() ||
+    row.name ||
+    row.employee_name ||
+    (row.requestedBy ? `${row.requestedBy.first_name} ${row.requestedBy.last_name}`.trim() : "Employee");
+
+  const deptName =
+    row.department?.department_name ||
+    row.department?.name ||
+    row.departmentName ||
+    "Engineering";
+
+  const posName =
+    row.position?.position_name ||
+    row.position?.name ||
+    row.positionName ||
+    row.role ||
+    "Staff";
+
+  let requestedByStr = "HR Department";
+  if (row.requestedBy) {
+    requestedByStr = `${row.requestedBy.first_name || ""} ${row.requestedBy.last_name || ""}`.trim() || row.requestedBy.email || "HR";
+  } else if (row.requested_by_name) {
+    requestedByStr = row.requested_by_name;
+  }
+
   return {
-    id: row.id || row.request_id,
-    type: (row.type || (row.employee_no ? "CREATE_ACCOUNT" : "DEACTIVATE_ACCOUNT")) as any,
-    employeeId: row.employee_id || row.target_emp_id || row.id,
-    employeeName: `${row.first_name || ""} ${row.last_name || ""}`.trim() || row.requestedBy?.first_name || "Employee",
+    id: String(row.id || row.request_id || ""),
+    type,
+    employeeId: row.id || row.target_emp_id || row.employee_id || "",
+    employeeName: fullName,
     employeeCode: row.employee_no || row.epf_no || "EMP-REQ",
-    employeeEmail: row.work_email || row.email || "staff@epms.lk",
-    departmentName: row.department?.department_name || row.departmentName || "General",
-    requestedBy: row.requestedBy ? `${row.requestedBy.first_name} ${row.requestedBy.last_name}` : "HR Department",
+    employeeEmail: row.work_email || row.personal_email || row.email || "",
+    departmentName: deptName,
+    positionName: posName,
+    requestedBy: requestedByStr,
     requestedAt: row.created_at || row.requested_date || new Date().toISOString(),
-    status: (row.status || "PENDING") as "PENDING" | "APPROVED" | "REJECTED",
-    proposedRole: row.role || "EMPLOYEE",
-    reason: row.reason || "Account action requested",
-    decisionComment: row.decision_comment || row.admin_comment,
-    decisionAt: row.decision_date || row.reviewed_at,
+    status: (row.status?.toUpperCase() || "PENDING") as "PENDING" | "APPROVED" | "REJECTED",
+    proposedRole: (row.role?.toUpperCase() || "EMPLOYEE"),
+    reason: row.reason || `Employee account request for ${fullName}`,
+    adminComment: row.rejection_reason || row.decision_comment || row.admin_comment,
+    decisionComment: row.rejection_reason || row.decision_comment || row.admin_comment,
+    decisionAt: row.reviewed_at || row.decision_date,
+    mobileNo: row.mobile_no,
+    personalEmail: row.personal_email,
+    dob: row.dob,
+    joinDate: row.join_date,
+    street: row.street,
+    city: row.city,
+    province: row.province,
+    country: row.country,
+    emergencyContacts: row.emergency_contacts || [],
+    qualifications: row.qualifications || [],
+    dependents: row.dependents || [],
+    rejectionReason: row.rejection_reason,
+    reviewedBy: row.reviewed_by,
+    reviewedAt: row.reviewed_at,
   };
 }
 
 export const accountRequestService = {
   /**
-   * GET /hr/employee-requests or /admin/employee-requests (with fallback to /admin/requests)
+   * GET /admin/employee-requests  — Admin view of all employee account requests
+   */
+  getAdminEmployeeRequests: async (params: Record<string, any> = {}): Promise<AccountRequestItem[]> => {
+    const res = await api.get(API_ENDPOINTS.adminEpms.EMPLOYEE_REQUESTS, { params });
+    const normalized = normalizeListResponse<any>(res.data);
+    return normalized.items.map(mapBackendAccountRequest);
+  },
+
+  /**
+   * GET /admin/employee-requests/:id  — Admin view single employee account request
+   */
+  getAdminEmployeeRequestById: async (id: string): Promise<AccountRequestItem> => {
+    const res = await api.get(API_ENDPOINTS.adminEpms.EMPLOYEE_REQUEST_DETAIL(id));
+    return mapBackendAccountRequest(normalizeDetailResponse(res.data));
+  },
+
+  /**
+   * PATCH /admin/employee-requests/:id/accept  — Admin accept request & create user
+   */
+  acceptEmployeeRequest: async (id: string): Promise<any> => {
+    const res = await api.patch(API_ENDPOINTS.adminEpms.EMPLOYEE_REQUEST_ACCEPT(id));
+    return normalizeMutationResponse(res.data, "Employee account request accepted and account created");
+  },
+
+  /**
+   * PATCH /admin/employee-requests/:id/reject  — Admin reject request with reason
+   */
+  rejectEmployeeRequest: async (id: string, reason: string): Promise<any> => {
+    const res = await api.patch(API_ENDPOINTS.adminEpms.EMPLOYEE_REQUEST_REJECT(id), { reason });
+    return normalizeMutationResponse(res.data, "Employee account request rejected");
+  },
+
+  /**
+   * GET /hr/employee-requests  — HR view of submitted employee account requests
+   */
+  getHrEmployeeRequests: async (params: Record<string, any> = {}): Promise<AccountRequestItem[]> => {
+    const res = await api.get(API_ENDPOINTS.hr.EMPLOYEE_REQUESTS, { params });
+    const normalized = normalizeListResponse<any>(res.data);
+    return normalized.items.map(mapBackendAccountRequest);
+  },
+
+  /**
+   * GET /hr/employee-requests/:id  — HR view single request details
+   */
+  getHrEmployeeRequestById: async (id: string): Promise<AccountRequestItem> => {
+    const res = await api.get(API_ENDPOINTS.hr.EMPLOYEE_REQUEST_DETAIL(id));
+    return mapBackendAccountRequest(normalizeDetailResponse(res.data));
+  },
+
+  /**
+   * Unified loader for both Admin and HR panels
    */
   getAccountRequests: async (status?: string): Promise<AccountRequestItem[]> => {
-    if (USE_MOCK) {
-      if (status && status !== "ALL") {
-        return mockResponse(accountRequestsStore.filter((r) => r.status === status));
-      }
-      return mockResponse(accountRequestsStore);
-    }
-
-    const params: any = {};
+    const params: Record<string, any> = { page: 1, pageSize: 50 };
     if (status && status !== "ALL") params.status = status;
 
+    // Try Admin endpoint first
     try {
-      // Primary HR/Admin Employee Account Requests endpoint
-      const res = await api.get(API_ENDPOINTS.hr.EMPLOYEE_REQUESTS, { params });
+      const res = await api.get(API_ENDPOINTS.adminEpms.EMPLOYEE_REQUESTS, { params });
       const normalized = normalizeListResponse<any>(res.data);
       return normalized.items.map(mapBackendAccountRequest);
     } catch {
-      // Fallback to admin requests
+      // Fallback to HR endpoint
       try {
-        const resAdmin = await api.get(API_ENDPOINTS.adminEpms.REQUESTS, { params });
-        const normalized = normalizeListResponse<any>(resAdmin.data);
+        const resHr = await api.get(API_ENDPOINTS.hr.EMPLOYEE_REQUESTS, { params });
+        const normalized = normalizeListResponse<any>(resHr.data);
         return normalized.items.map(mapBackendAccountRequest);
       } catch {
-        return accountRequestsStore;
+        // Fallback to general admin requests
+        try {
+          const resGen = await api.get(API_ENDPOINTS.adminEpms.REQUESTS, { params });
+          const normalized = normalizeListResponse<any>(resGen.data);
+          return normalized.items.map(mapBackendAccountRequest);
+        } catch {
+          return [];
+        }
       }
     }
   },
 
   /**
-   * POST /hr/employee-request (for CREATE_ACCOUNT) OR POST /hr/requests/account (for DEACTIVATE / ROLE_CHANGE)
+   * POST /hr/requests/account for account deactivation, and role changes.
    */
   createAccountRequest: async (
     payload: CreateAccountRequestDto
   ): Promise<AccountRequestItem> => {
-    if (USE_MOCK) {
-      const newReq: AccountRequestItem = {
-        id: `ar-${Date.now()}`,
-        type: payload.type,
-        employeeId: payload.employeeId,
-        employeeName: payload.employeeId === "emp-1042" ? "Nuwan Perera" : "Selected Employee",
-        employeeCode: payload.employeeId === "emp-1042" ? "EMP-1042" : "EMP-NEW",
-        employeeEmail: "employee@epms.lk",
-        departmentName: "Technology",
-        requestedBy: "Chamari Atapattu (HR)",
-        requestedAt: new Date().toLocaleString(),
-        status: "PENDING",
-        proposedRole: payload.proposedRole || "EMPLOYEE",
-        reason: payload.reason,
-      };
-      accountRequestsStore = [newReq, ...accountRequestsStore];
-      return mockResponse(newReq);
-    }
+    const requestType =
+      payload.type === "CREATE_ACCOUNT"
+        ? "ACCOUNT_CREATE"
+        : payload.type === "DEACTIVATE_ACCOUNT"
+          ? "ACCOUNT_DEACTIVATE"
+          : "ROLE_CHANGE";
 
-    if (payload.type === "CREATE_ACCOUNT") {
-      // Uses /hr/employee-request
-      const res = await api.post(API_ENDPOINTS.hr.EMPLOYEE_REQUEST, {
-        first_name: payload.firstName || "New",
-        last_name: payload.lastName || "Employee",
-        work_email: payload.workEmail || "staff@epms.lk",
-        epf_no: payload.epfNo || "EPF-AUTO",
-        dob: payload.dob || "1995-01-01",
-        join_date: payload.joinDate || new Date().toISOString().slice(0, 10),
-        department_id: payload.departmentId,
-        position_id: payload.positionId,
-      });
-      return mapBackendAccountRequest(normalizeDetailResponse(res.data));
-    } else {
-      // Uses /hr/requests/account (DEACTIVATE_ACCOUNT / ROLE_CHANGE)
-      const res = await api.post(API_ENDPOINTS.hr.ACCOUNT_REQUESTS, {
-        request_type: payload.type === "DEACTIVATE_ACCOUNT" ? "ACCOUNT_DEACTIVATE" : "ROLE_CHANGE",
-        target_emp_id: payload.employeeId,
-        reason: payload.reason,
-        request_data: {
-          role: payload.proposedRole,
-        },
-      });
-      return mapBackendAccountRequest(normalizeDetailResponse(res.data));
+    const isUuid = Boolean(payload.employeeId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(payload.employeeId));
+
+    const res = await api.post(API_ENDPOINTS.hr.ACCOUNT_REQUESTS, {
+      request_type: requestType,
+      ...(isUuid ? { target_emp_id: payload.employeeId } : {}),
+      reason: payload.reason,
+      request_data: {
+        role: payload.proposedRole,
+        employee_id: payload.employeeId,
+      },
+    });
+
+    if (res.data?.success === false || res.data?.data?.success === false) {
+      throw new Error(
+        res.data.message ||
+          res.data.data?.message ||
+          "Failed to submit account request"
+      );
     }
+    return mapBackendAccountRequest(normalizeDetailResponse(res.data));
   },
 
   /**
-   * PATCH /admin/employee-requests/:id/accept or reject, OR /admin/requests/:id/decision
+   * Admin decision dispatch
    */
   decideAccountRequest: async (
     id: string,
     decision: "APPROVED" | "REJECTED",
     comment: string
   ): Promise<AccountRequestItem> => {
-    if (USE_MOCK) {
-      const req = accountRequestsStore.find((r) => r.id === id);
-      if (req) {
-        req.status = decision;
-        req.decisionComment = comment;
-        req.decisionAt = new Date().toLocaleString();
-      }
-      return mockResponse(req || accountRequestsStore[0]);
-    }
-
     try {
       if (decision === "APPROVED") {
-        const res = await api.patch(API_ENDPOINTS.adminEpms.EMPLOYEE_REQUEST_ACCEPT(id));
-        return mapBackendAccountRequest(normalizeDetailResponse(res.data));
+        await accountRequestService.acceptEmployeeRequest(id);
       } else {
-        const res = await api.patch(API_ENDPOINTS.adminEpms.EMPLOYEE_REQUEST_REJECT(id), { reason: comment });
-        return mapBackendAccountRequest(normalizeDetailResponse(res.data));
+        await accountRequestService.rejectEmployeeRequest(id, comment || "Request rejected by administrator");
       }
+      return accountRequestService.getAdminEmployeeRequestById(id);
     } catch {
-      // Fallback to /admin/requests/:id/decision
+      // Fallback for general requests (/admin/requests/:id/decision)
       const res = await api.patch(API_ENDPOINTS.adminEpms.REQUEST_DECISION(id), {
         decision,
         comment,
       });
       return mapBackendAccountRequest(normalizeDetailResponse(res.data));
     }
+  },
+
+  getAdminEmployeeRequest: async (id: string): Promise<AccountRequestItem> => {
+    return accountRequestService.getAdminEmployeeRequestById(id);
+  },
+
+  getHrEmployeeRequest: async (id: string): Promise<AccountRequestItem> => {
+    return accountRequestService.getHrEmployeeRequestById(id);
+  },
+
+  acceptEmployeeRequestAlias: async (id: string) => {
+    return accountRequestService.acceptEmployeeRequest(id);
+  },
+
+  rejectEmployeeRequestAlias: async (id: string, reason: string) => {
+    return accountRequestService.rejectEmployeeRequest(id, reason);
+  },
+
+  getAdminRequests: async (params?: any) => {
+    return accountRequestService.getAdminEmployeeRequests(params);
   },
 };

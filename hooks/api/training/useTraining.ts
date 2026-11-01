@@ -11,6 +11,13 @@ export const useMyTrainingsQuery = (query: TrainingFilterQuery = {}) => {
   });
 };
 
+export const useHrTrainingsQuery = (query: TrainingFilterQuery = {}) => {
+  return useQuery({
+    queryKey: [queryKeys.hrTrainings, query],
+    queryFn: () => trainingService.getHrTrainings(query),
+  });
+};
+
 export const useTeamTrainingAttendanceQuery = () => {
   return useQuery({
     queryKey: [queryKeys.teamTrainings],
@@ -40,6 +47,7 @@ export const usePlanTrainingMutation = () => {
   return useMutation({
     mutationFn: (payload: PlanTrainingDto) => trainingService.planTraining(payload),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [queryKeys.hrTrainings] });
       queryClient.invalidateQueries({ queryKey: [queryKeys.employeeTrainings] });
       queryClient.invalidateQueries({ queryKey: [queryKeys.teamTrainings] });
       toast.success("Training session planned and participants notified!");
@@ -49,4 +57,3 @@ export const usePlanTrainingMutation = () => {
     },
   });
 };
-

@@ -23,20 +23,8 @@ import type {
   PositionItem,
   CreatePositionDto,
 } from "@/types/dto/position.dto";
-import { MOCK_POSITIONS } from "@/data/userManagementData";
 
 const ITEMS_PER_PAGE = 8;
-
-// Fallback initial mock data if API is offline or returns empty during local demo
-const INITIAL_FALLBACK_POSITIONS: PositionItem[] = MOCK_POSITIONS.map(
-  (p, idx) => ({
-    id: p.value,
-    positionName: p.label,
-    description: `Core role responsible for ${p.label.toLowerCase()} responsibilities, reporting to department head.`,
-    effectiveDate: `2025-0${(idx % 9) + 1}-15`,
-    employeeCount: Math.floor(Math.random() * 12) + 1,
-  })
-);
 
 export function PositionManagementTable() {
   const [search, setSearch] = useState("");
@@ -56,26 +44,10 @@ export function PositionManagementTable() {
 
   // Determine items to display
   const displayItems: PositionItem[] = useMemo(() => {
-    if (apiResponse?.items) {
-      return apiResponse.items;
-    }
+    return apiResponse?.items || [];
+  }, [apiResponse]);
 
-    if (search.trim()) {
-      const q = search.toLowerCase();
-
-      
-return INITIAL_FALLBACK_POSITIONS.filter(
-        (p) =>
-          p.positionName.toLowerCase().includes(q) ||
-          (p.description && p.description.toLowerCase().includes(q))
-      );
-    }
-
-    
-return INITIAL_FALLBACK_POSITIONS;
-  }, [apiResponse, search]);
-
-  const totalCount = apiResponse?.total ?? displayItems.length;
+  const totalCount = apiResponse?.total ?? 0;
   const totalPages = apiResponse?.totalPages ?? Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
 
   // Handlers

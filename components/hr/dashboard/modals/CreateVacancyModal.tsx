@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { useCreateVacancyMutation } from "@/hooks/api/jobs/useJobs";
 import type { OpenVacancy } from "@/types/hrDashboard";
 
 interface CreateVacancyModalProps {
@@ -45,44 +46,48 @@ export function CreateVacancyModal({
   const [openings, setOpenings] = useState("1");
   const [deadline, setDeadline] = useState("");
   const [description, setDescription] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const createVacancyMutation = useCreateVacancyMutation();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!title || !deadline) {
       toast.error("Please fill in the job title and deadline date.");
-      
-return;
+      return;
     }
 
-    setIsSubmitting(true);
-    setTimeout(() => {
-      const newVac: OpenVacancy = {
-        id: `VAC-${Math.floor(100 + Math.random() * 900)}`,
+    createVacancyMutation.mutate(
+      {
         title,
         department,
-        type,
-        openings: parseInt(openings) || 1,
-        applicationsCount: 0,
-        upcomingInterviews: 0,
-        deadline,
-        status: "OPEN",
-      };
-
-      if (onVacancyCreated) {
-        onVacancyCreated(newVac);
+        position: title,
+        requirements: ["Experience in apparel / operations"],
+        description: description || "Job opening created via HR Portal.",
+        closingDate: deadline,
+      },
+      {
+        onSuccess: (data: any) => {
+          if (onVacancyCreated) {
+            onVacancyCreated({
+              id: data?.id || `VAC-${Date.now()}`,
+              title,
+              department,
+              type,
+              openings: parseInt(openings) || 1,
+              applicationsCount: 0,
+              upcomingInterviews: 0,
+              deadline,
+              status: "OPEN",
+            });
+          }
+          onOpenChange(false);
+          setTitle("");
+          setDeadline("");
+          setDescription("");
+        },
       }
-
-      toast.success("Job vacancy successfully published! (#60)");
-      setIsSubmitting(false);
-      onOpenChange(false);
-
-      // Reset
-      setTitle("");
-      setDeadline("");
-      setDescription("");
-    }, 400);
+    );
   };
 
   return (
@@ -200,10 +205,10 @@ return;
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={createVacancyMutation.isPending}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
-              {isSubmitting ? "Publishing..." : "Post Vacancy"}
+              {createVacancyMutation.isPending ? "Publishing..." : "Post Vacancy"}
             </Button>
           </DialogFooter>
         </form>
