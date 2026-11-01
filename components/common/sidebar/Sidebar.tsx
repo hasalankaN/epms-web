@@ -19,6 +19,10 @@ import {
   Settings,
   Bell,
   LogOut,
+  UserPlus,
+  FileText,
+  Activity,
+  CheckSquare,
 } from "lucide-react";
 
 import Logo from "../Logo";
@@ -45,6 +49,9 @@ function getSidebarIcon(iconName?: string) {
     case "customers-icon":
     case "user-gear":
       return User;
+    case "user-add":
+    case "userplus":
+      return UserPlus;
     case "clock":
     case "attendance":
       return Clock;
@@ -74,8 +81,18 @@ function getSidebarIcon(iconName?: string) {
     case "briefcase":
     case "jobs":
     case "internal jobs":
-    case "stamp":
       return Briefcase;
+    case "stamp":
+    case "approvals":
+    case "checksquare":
+      return CheckSquare;
+    case "reports":
+    case "filetext":
+    case "file-text":
+      return FileText;
+    case "production":
+    case "activity":
+      return Activity;
     case "building2":
     case "building":
     case "departments":

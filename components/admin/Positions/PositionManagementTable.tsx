@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+
 import {
   Briefcase,
   Calendar,
   FileText,
 } from "lucide-react";
 
-import { DataTable, Column } from "@/components/common/table/DataTable";
+import type { Column } from "@/components/common/table/DataTable";
+import { DataTable } from "@/components/common/table/DataTable";
 import { PositionTableToolbar } from "./PositionTableToolbar";
 import { PositionModal } from "./PositionModal";
 import { PositionBadge } from "./PositionBadge";
@@ -57,15 +59,20 @@ export function PositionManagementTable() {
     if (apiResponse?.items) {
       return apiResponse.items;
     }
+
     if (search.trim()) {
       const q = search.toLowerCase();
-      return INITIAL_FALLBACK_POSITIONS.filter(
+
+      
+return INITIAL_FALLBACK_POSITIONS.filter(
         (p) =>
           p.positionName.toLowerCase().includes(q) ||
           (p.description && p.description.toLowerCase().includes(q))
       );
     }
-    return INITIAL_FALLBACK_POSITIONS;
+
+    
+return INITIAL_FALLBACK_POSITIONS;
   }, [apiResponse, search]);
 
   const totalCount = apiResponse?.total ?? displayItems.length;

@@ -57,13 +57,21 @@ export const employeeSidebarData: SidebarNavItem[] = [
   {
     id: 8,
     type: "link",
+    title: "Production",
+    url: "/employee-panel/production",
+    icon: "production",
+    value: "production",
+  },
+  {
+    id: 9,
+    type: "link",
     title: "Training",
     url: "/employee-panel/training",
     icon: "GraduationCap",
     value: "training",
   },
   {
-    id: 9,
+    id: 10,
     type: "link",
     title: "Salary",
     url: "/employee-panel/salary",
@@ -71,7 +79,7 @@ export const employeeSidebarData: SidebarNavItem[] = [
     value: "salary",
   },
   {
-    id: 10,
+    id: 11,
     type: "link",
     title: "Self Evaluation",
     url: "/employee-panel/performance",
@@ -79,7 +87,7 @@ export const employeeSidebarData: SidebarNavItem[] = [
     value: "performance",
   },
   {
-    id: 11,
+    id: 12,
     type: "link",
     title: "Internal Jobs",
     url: "/employee-panel/jobs",
@@ -89,12 +97,12 @@ export const employeeSidebarData: SidebarNavItem[] = [
 
   // INBOX
   {
-    id: 12,
+    id: 13,
     type: "header",
     title: "INBOX",
   },
   {
-    id: 13,
+    id: 14,
     type: "link",
     title: "Notifications",
     url: "/employee-panel/notifications",

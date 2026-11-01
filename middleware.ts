@@ -80,8 +80,13 @@ export async function middleware(request: NextRequest) {
   const allowedPanel = ROLE_PANEL_MAP[role];
   const currentPanel = getPanelFromPath(pathname);
 
-  // If the user is accessing a panel that doesn't match their role, redirect to their own panel dashboard
-  if (allowedPanel && currentPanel && currentPanel !== allowedPanel) {
+  // If the user is accessing a panel that doesn't match their role, redirect to their own panel dashboard.
+  // Supervisors and HR can also access employee-panel for their own employee tasks (attendance, leaves, salary, etc.)
+  const isAllowed =
+    currentPanel === allowedPanel ||
+    ((role === "SUPERVISOR" || role === "HR") && currentPanel === "/employee-panel");
+
+  if (allowedPanel && currentPanel && !isAllowed) {
     const redirectUrl = new URL(`${allowedPanel}/dashboard`, request.url);
     return NextResponse.redirect(redirectUrl);
   }

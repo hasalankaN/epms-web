@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useCallback } from "react";
+
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -17,8 +18,10 @@ import {
   RefreshCcw,
 } from "lucide-react";
 import { toast } from "sonner";
+
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { employeeRegisterSchema, EmployeeRegisterFormValues } from "../../../types/schemas/employeeSchema";
+import type { EmployeeRegisterFormValues } from "../../../types/schemas/employeeSchema";
+import { employeeRegisterSchema } from "../../../types/schemas/employeeSchema";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { departmentService } from "@/lib/api/department.service";
@@ -128,6 +131,7 @@ export function EmployeeRegisterForm() {
   /* ── Load departments, positions & supervisors on mount ── */
   const loadOrgData = useCallback(async () => {
     setLoadingOrg(true);
+
     try {
       const [deptRes, posRes, supRes] = await Promise.all([
         departmentService.getDepartments({ page: 1, pageSize: 100 }),
@@ -169,10 +173,12 @@ export function EmployeeRegisterForm() {
     () => departments.filter((d) => d.label.toLowerCase().includes(deptSearch.toLowerCase())),
     [departments, deptSearch]
   );
+
   const filteredPositions = useMemo(
     () => positions.filter((p) => p.label.toLowerCase().includes(posSearch.toLowerCase())),
     [positions, posSearch]
   );
+
   const filteredSups = useMemo(
     () => supervisors.filter((s) => s.label.toLowerCase().includes(supSearch.toLowerCase())),
     [supervisors, supSearch]
@@ -206,6 +212,7 @@ export function EmployeeRegisterForm() {
 
   const onSubmit = async (data: EmployeeRegisterFormValues) => {
     setIsSubmitting(true);
+
     try {
       await employeeService.registerEmployee(data);
       setSubmitted(true);

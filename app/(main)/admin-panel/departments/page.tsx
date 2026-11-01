@@ -1,8 +1,11 @@
 "use client";
 
 import React, { Suspense } from "react";
+
 import { useSearchParams, useRouter } from "next/navigation";
+
 import { Building2, Briefcase } from "lucide-react";
+
 import { DepartmentManagementTable } from "@/components/admin/Departments/DepartmentManagementTable";
 import { PositionManagementTable } from "@/components/admin/Positions/PositionManagementTable";
 
@@ -14,6 +17,7 @@ function DepartmentsAndRolesContent() {
 
   const handleTabChange = (tab: "departments" | "roles") => {
     const params = new URLSearchParams(searchParams.toString());
+
     params.set("tab", tab);
     router.replace(`/admin-panel/departments?${params.toString()}`);
   };

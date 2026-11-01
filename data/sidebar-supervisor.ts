@@ -1,16 +1,29 @@
 import type { SidebarNavItem } from "./sidebar";
 
 export const supervisorSidebarData: SidebarNavItem[] = [
+  // OVERVIEW
   {
     id: 1,
+    type: "header",
+    title: "OVERVIEW",
+  },
+  {
+    id: 2,
     type: "link",
     title: "Dashboard",
     url: "/supervisor-panel/dashboard",
     icon: "dashboard-icon",
     value: "dashboard",
   },
+
+  // TEAM MANAGEMENT
   {
-    id: 2,
+    id: 3,
+    type: "header",
+    title: "TEAM MANAGEMENT",
+  },
+  {
+    id: 4,
     type: "link",
     title: "My Team",
     url: "/supervisor-panel/team",
@@ -18,7 +31,23 @@ export const supervisorSidebarData: SidebarNavItem[] = [
     value: "team",
   },
   {
-    id: 3,
+    id: 5,
+    type: "link",
+    title: "Approvals",
+    url: "/supervisor-panel/approvals",
+    icon: "approvals",
+    value: "approvals",
+  },
+  {
+    id: 6,
+    type: "link",
+    title: "Team Attendance",
+    url: "/supervisor-panel/attendance",
+    icon: "clock",
+    value: "attendance",
+  },
+  {
+    id: 7,
     type: "link",
     title: "Task Allocations",
     url: "/supervisor-panel/tasks",
@@ -26,33 +55,43 @@ export const supervisorSidebarData: SidebarNavItem[] = [
     value: "tasks",
   },
   {
-    id: 4,
+    id: 8,
     type: "link",
     title: "Appraisals & KPIs",
     url: "/supervisor-panel/kpis",
-    icon: "chart-bar",
+    icon: "star",
     value: "kpis",
   },
   {
-    id: 5,
+    id: 9,
     type: "link",
-    title: "Leave Approvals",
-    url: "/supervisor-panel/approvals",
-    icon: "stamp",
-    value: "approvals",
+    title: "Team Training",
+    url: "/supervisor-panel/training",
+    icon: "training",
+    value: "training",
   },
+
+  // SETTINGS & INBOX
   {
-    id: 6,
+    id: 10,
     type: "header",
-    title: "INBOX",
+    title: "INBOX & ACCOUNT",
   },
   {
-    id: 7,
+    id: 11,
     type: "link",
     title: "Notifications",
     url: "/supervisor-panel/notifications",
     icon: "Bell",
     value: "notifications",
     count: 2,
+  },
+  {
+    id: 12,
+    type: "link",
+    title: "Profile & Settings",
+    url: "/supervisor-panel/settings",
+    icon: "settings",
+    value: "settings",
   },
 ];

@@ -1,4 +1,4 @@
-import { StatItem } from "../../../data/adminDashboardData";
+import type { StatItem } from "../../../data/adminDashboardData";
 
 interface MetricCardProps {
   stat: StatItem;

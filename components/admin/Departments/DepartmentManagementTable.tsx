@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+
 import {
   MoreHorizontal,
   Edit2,
@@ -11,7 +12,8 @@ import {
   Layers,
 } from "lucide-react";
 
-import { DataTable, Column } from "@/components/common/table/DataTable";
+import type { Column } from "@/components/common/table/DataTable";
+import { DataTable } from "@/components/common/table/DataTable";
 import { DepartmentTableToolbar } from "./DepartmentTableToolbar";
 import { DepartmentModal } from "./DepartmentModal";
 import { DeleteConfirmationModal } from "@/components/common/DeleteConfirmationModal";
@@ -81,17 +83,23 @@ export function DepartmentManagementTable() {
     if (apiResponse?.items) {
       return apiResponse.items;
     }
+
+
     // If backend returns nothing or error, filter our fallback items by search
     if (search.trim()) {
       const q = search.toLowerCase();
-      return INITIAL_FALLBACK_DEPARTMENTS.filter(
+
+      
+return INITIAL_FALLBACK_DEPARTMENTS.filter(
         (d) =>
           d.departmentName.toLowerCase().includes(q) ||
           d.location.toLowerCase().includes(q) ||
           d.deptPhone.toLowerCase().includes(q)
       );
     }
-    return INITIAL_FALLBACK_DEPARTMENTS;
+
+    
+return INITIAL_FALLBACK_DEPARTMENTS;
   }, [apiResponse, search]);
 
   const totalCount = apiResponse?.total ?? displayItems.length;
@@ -123,6 +131,7 @@ export function DepartmentManagementTable() {
       } else {
         await createMutation.mutateAsync(data as CreateDepartmentDto);
       }
+
       setIsModalOpen(false);
       setEditingDepartment(null);
     } catch {
@@ -132,6 +141,7 @@ export function DepartmentManagementTable() {
 
   const handleDeleteConfirm = async () => {
     if (!deletingDepartment) return;
+
     try {
       await deleteMutation.mutateAsync(deletingDepartment.id);
       setDeletingDepartment(null);

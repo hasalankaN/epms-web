@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+
 import { departmentService } from "@/lib/api/department.service";
 import { queryKeys } from "@/lib/constants/queryKeys";
 import type {
@@ -32,6 +33,7 @@ export const useCreateDepartmentMutation = () => {
         error?.response?.data?.message ||
         error?.message ||
         "Failed to create department. Department may already exist.";
+
       toast.error(msg);
     },
   });
@@ -52,6 +54,7 @@ export const useUpdateDepartmentMutation = () => {
         error?.response?.data?.message ||
         error?.message ||
         "Failed to update department.";
+
       toast.error(msg);
     },
   });
@@ -71,6 +74,7 @@ export const useDeleteDepartmentMutation = () => {
         error?.response?.data?.message ||
         error?.message ||
         "Failed to delete department.";
+
       toast.error(msg);
     },
   });

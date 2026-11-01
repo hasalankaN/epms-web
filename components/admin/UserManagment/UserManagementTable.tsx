@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+
 import Link from "next/link";
+
 import { MoreHorizontal, Eye, UserCog, Trash2 } from "lucide-react";
 
-import { DataTable, Column } from "@/components/common/table/DataTable";
+import type { Column } from "@/components/common/table/DataTable";
+import { DataTable } from "@/components/common/table/DataTable";
 import { UserRoleBadge } from "./UserRoleBadge";
 import { UserTableToolbar } from "./UserTableToolbar";
 import { Badge } from "@/components/ui/badge";
@@ -18,8 +21,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-import { MOCK_USERS, UserRecord } from "@/data/userManagementData";
-import { UserRole } from "@/types/roles";
+import type { UserRecord } from "@/data/userManagementData";
+import { MOCK_USERS } from "@/data/userManagementData";
+import type { UserRole } from "@/types/roles";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -47,6 +51,7 @@ export function UserManagementTable() {
     setSearch(v);
     setCurrentPage(1);
   };
+
   const handleRoleChange = (v: UserRole | "ALL") => {
     setRoleFilter(v);
     setCurrentPage(1);
@@ -54,6 +59,7 @@ export function UserManagementTable() {
 
   // Paginated slice
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+
   const paginated = filtered.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE

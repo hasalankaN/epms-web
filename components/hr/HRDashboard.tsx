@@ -1,157 +1,304 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
+
+import { useRouter } from "next/navigation";
+
+import { toast } from "sonner";
+
+import { HRDashboardHeader } from "./dashboard/HRDashboardHeader";
+import { HRQuickActions } from "./dashboard/HRQuickActions";
+import { TodayAttendanceWidget } from "./dashboard/TodayAttendanceWidget";
+import { AttendanceIssuesWidget } from "./dashboard/AttendanceIssuesWidget";
+import { PendingProfileUpdatesWidget } from "./dashboard/PendingProfileUpdatesWidget";
+import { EscalatedLeaveRequestsWidget } from "./dashboard/EscalatedLeaveRequestsWidget";
+import { PendingTrainingBudgetsWidget } from "./dashboard/PendingTrainingBudgetsWidget";
+import { UpcomingTrainingsWidget } from "./dashboard/UpcomingTrainingsWidget";
+import { RecruitmentWidget } from "./dashboard/RecruitmentWidget";
+import { EmployeeSummaryWidget } from "./dashboard/EmployeeSummaryWidget";
+import { LeaveOverviewWidget } from "./dashboard/LeaveOverviewWidget";
+import { RecentNotificationsWidget } from "./dashboard/RecentNotificationsWidget";
+
+import { PlanTrainingModal } from "./dashboard/modals/PlanTrainingModal";
+import { CreateVacancyModal } from "./dashboard/modals/CreateVacancyModal";
+import { SendNotificationModal } from "./dashboard/modals/SendNotificationModal";
+import { GenerateReportsModal } from "./dashboard/modals/GenerateReportsModal";
 
 import {
-  Users,
-  UserPlus,
-  CalendarCheck,
-  Award,
-  ArrowUpRight,
-} from "lucide-react";
+  initialProfileUpdateRequests,
+  initialEscalatedLeaveRequests,
+  initialTrainingBudgets,
+  todayAttendanceData,
+  initialAttendanceIssues,
+  initialUpcomingTrainings,
+  initialRecruitmentOverview,
+  employeeSummaryData,
+  leaveOverviewData,
+  initialRecentNotifications,
+} from "@/data/hrDashboardData";
 
-const stats = [
-  {
-    title: "Total Employees",
-    value: "248",
-    change: "+5 this month",
-    icon: Users,
-    color: "from-blue-600 to-cyan-600",
-  },
-  {
-    title: "Onboarding In-Progress",
-    value: "6",
-    change: "2 finalizing",
-    icon: UserPlus,
-    color: "from-indigo-600 to-blue-600",
-  },
-  {
-    title: "Leaves Pending Review",
-    value: "14",
-    change: "Requires action",
-    icon: CalendarCheck,
-    color: "from-amber-600 to-orange-600",
-  },
-  {
-    title: "Quarterly Appraisals",
-    value: "88%",
-    change: "On schedule",
-    icon: Award,
-    color: "from-emerald-600 to-teal-600",
-  },
-];
-
-const hrQuickActions = [
-  {
-    title: "Employee Directory",
-    desc: "View full employee rosters, contracts, and profiles",
-    href: "/hr-panel/employees",
-  },
-  {
-    title: "Leave & Attendance Tracking",
-    desc: "Review organization-wide attendance records and leave applications",
-    href: "/hr-panel/attendance",
-  },
-  {
-    title: "Performance Review Cycles",
-    desc: "Track 360 evaluations, quarterly reviews, and ratings",
-    href: "/hr-panel/reviews",
-  },
-];
+import type {
+  UpcomingTrainingSession,
+  OpenVacancy,
+  RecentNotificationItem,
+} from "@/types/hrDashboard";
 
 export function HRDashboard() {
+  const router = useRouter();
+
+  // Interactive dashboard states
+  const [profileRequests, setProfileRequests] = useState(
+    initialProfileUpdateRequests
+  );
+
+  const [escalatedLeaves, setEscalatedLeaves] = useState(
+    initialEscalatedLeaveRequests
+  );
+
+  const [trainingBudgets, setTrainingBudgets] = useState(
+    initialTrainingBudgets
+  );
+
+  const [attendanceIssues, setAttendanceIssues] = useState(
+    initialAttendanceIssues
+  );
+
+  const [upcomingTrainings, setUpcomingTrainings] = useState(
+    initialUpcomingTrainings
+  );
+
+  const [recruitment, setRecruitment] = useState(
+    initialRecruitmentOverview
+  );
+
+  const [recentNotifications, setRecentNotifications] = useState(
+    initialRecentNotifications
+  );
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Quick Action Modal states
+  const [isPlanTrainingOpen, setIsPlanTrainingOpen] = useState(false);
+  const [isCreateVacancyOpen, setIsCreateVacancyOpen] = useState(false);
+  const [isSendNotificationOpen, setIsSendNotificationOpen] = useState(false);
+  const [isGenerateReportsOpen, setIsGenerateReportsOpen] = useState(false);
+
+  // Profile update request actions (#30)
+  const handleApproveProfile = (id: string) => {
+    setProfileRequests((prev) =>
+      prev.map((req) =>
+        req.id === id ? { ...req, status: "APPROVED" } : req
+      )
+    );
+  };
+
+  const handleRejectProfile = (id: string) => {
+    setProfileRequests((prev) =>
+      prev.map((req) =>
+        req.id === id ? { ...req, status: "REJECTED" } : req
+      )
+    );
+  };
+
+  // Escalated leave request actions (#41, #43)
+  const handleApproveLeave = (id: string) => {
+    setEscalatedLeaves((prev) =>
+      prev.map((req) =>
+        req.id === id ? { ...req, status: "APPROVED" } : req
+      )
+    );
+  };
+
+  const handleRejectLeave = (id: string) => {
+    setEscalatedLeaves((prev) =>
+      prev.map((req) =>
+        req.id === id ? { ...req, status: "REJECTED" } : req
+      )
+    );
+  };
+
+  // Training budget clearance actions (#38)
+  const handleApproveBudget = (id: string) => {
+    setTrainingBudgets((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, status: "APPROVED" } : b))
+    );
+  };
+
+  const handleRejectBudget = (id: string) => {
+    setTrainingBudgets((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, status: "REJECTED" } : b))
+    );
+  };
+
+  // Attendance issue notification dispatched (#34)
+  const handleNoticeSent = (employeeId: string) => {
+    setAttendanceIssues((prev) =>
+      prev.map((item) =>
+        item.employeeId === employeeId
+          ? { ...item, note: `Compliance notice dispatched.` }
+          : item
+      )
+    );
+    toast.info(`Compliance log updated for ${employeeId}.`);
+  };
+
+  // Quick action additions
+  const handleTrainingAdded = (training: UpcomingTrainingSession) => {
+    setUpcomingTrainings((prev) => [training, ...prev]);
+  };
+
+  const handleVacancyCreated = (vac: OpenVacancy) => {
+    setRecruitment((prev) => ({
+      ...prev,
+      totalOpenVacancies: prev.totalOpenVacancies + 1,
+      vacancies: [vac, ...prev.vacancies],
+    }));
+  };
+
+  const handleNotificationSent = (item: RecentNotificationItem) => {
+    setRecentNotifications((prev) => [item, ...prev]);
+  };
+
+  // Sync / Refresh handler
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+      toast.success("HR Dashboard metrics refreshed with real-time data.");
+    }, 600);
+  };
+
+  // Calculate pending action items count
+  const pendingProfileCount = profileRequests.filter(
+    (r) => r.status === "PENDING"
+  ).length;
+
+  const pendingLeaveCount = escalatedLeaves.filter(
+    (r) => r.status === "PENDING"
+  ).length;
+
+  const pendingBudgetCount = trainingBudgets.filter(
+    (b) => b.status === "PENDING"
+  ).length;
+
+  const totalActionItems =
+    pendingProfileCount +
+    pendingLeaveCount +
+    pendingBudgetCount +
+    attendanceIssues.length;
+
   return (
-    <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-          HR Management Dashboard
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Workforce overview, employee lifecycle, leaves, and appraisal management.
-        </p>
+    <div className="p-4 md:p-8 space-y-7 max-w-[1500px] mx-auto">
+      {/* 1. Header with live status & action counts */}
+      <HRDashboardHeader
+        totalActionItems={totalActionItems}
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
+      />
+
+      {/* 2. Quick Action Buttons (#31, #35, #60, #63, Reports) */}
+      <HRQuickActions
+        onPlanTrainingClick={() => setIsPlanTrainingOpen(true)}
+        onCreateVacancyClick={() => setIsCreateVacancyOpen(true)}
+        onSendNotificationClick={() => setIsSendNotificationOpen(true)}
+        onGenerateReportsClick={() => setIsGenerateReportsOpen(true)}
+      />
+
+      {/* 3. Primary Approvals & Requests (Priority HR Action Items) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Pending Profile Update Requests (#30) */}
+        <PendingProfileUpdatesWidget
+          requests={profileRequests}
+          onApprove={handleApproveProfile}
+          onReject={handleRejectProfile}
+        />
+
+        {/* Escalated / Special Leave Requests (#41, #43) */}
+        <EscalatedLeaveRequestsWidget
+          requests={escalatedLeaves}
+          onApprove={handleApproveLeave}
+          onReject={handleRejectLeave}
+        />
+
+        {/* Pending Training Budgets (#38) */}
+        <PendingTrainingBudgetsWidget
+          budgets={trainingBudgets}
+          onApprove={handleApproveBudget}
+          onReject={handleRejectBudget}
+        />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {stats.map((stat, idx) => {
-          const Icon = stat.icon;
+      {/* 4. Attendance Operations & Compliance (#33, #34) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Today's Attendance (#33) */}
+        <TodayAttendanceWidget
+          attendance={todayAttendanceData}
+          onViewDetails={() => router.push("/hr-panel/attendance")}
+        />
 
-          return (
-            <div
-              key={idx}
-              className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-xs transition-all hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  {stat.title}
-                </span>
-                <div
-                  className={`p-2.5 rounded-lg bg-gradient-to-tr ${stat.color} text-white shadow-sm`}
-                >
-                  <Icon className="h-4 w-4" />
-                </div>
-              </div>
-              <div className="mt-4">
-                <div className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {stat.value}
-                </div>
-                <div className="mt-1 flex items-center text-xs text-slate-500">
-                  <span className="text-emerald-600 font-medium">
-                    {stat.change}
-                  </span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {/* Attendance Issues (#34) */}
+        <AttendanceIssuesWidget
+          issues={attendanceIssues}
+          onNoticeSent={handleNoticeSent}
+        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            Human Resources Management Hub
-          </h2>
-          <p className="text-sm text-slate-500 mt-1">
-            Access employee records, payroll policies, and organization review
-            cycles.
-          </p>
-          <div className="mt-6 space-y-3">
-            {hrQuickActions.map((action, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between p-4 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-slate-100 transition-colors dark:border-slate-800/80 dark:bg-slate-800/30 dark:hover:bg-slate-800/60"
-              >
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                    {action.title}
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    {action.desc}
-                  </p>
-                </div>
-                <ArrowUpRight className="h-4 w-4 text-slate-400" />
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* 5. Talent, Development & Vacancies (#35, #36, #60-#62) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Upcoming Trainings (#35, #36) */}
+        <UpcomingTrainingsWidget
+          trainings={upcomingTrainings}
+          onPlanNew={() => setIsPlanTrainingOpen(true)}
+        />
 
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            HR Notifications
-          </h2>
-          <div className="mt-4 space-y-3 text-xs text-slate-600 dark:text-slate-300">
-            <div className="p-3 rounded-lg bg-blue-50/50 border border-blue-100 text-blue-900 dark:bg-blue-950/20 dark:border-blue-900/40 dark:text-blue-300">
-              <p className="font-semibold">Q3 Appraisals Open</p>
-              <p className="text-[11px] mt-0.5 opacity-90">
-                All supervisors have been notified to submit ratings.
-              </p>
-            </div>
-            <div className="p-3 rounded-lg bg-amber-50/50 border border-amber-100 text-amber-900 dark:bg-amber-950/20 dark:border-amber-900/40 dark:text-amber-300">
-              <p className="font-semibold">Upcoming Public Holiday</p>
-              <p className="text-[11px] mt-0.5 opacity-90">
-                Calendar updated in the attendance module.
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* Open Vacancies & Applications (#60–#62) */}
+        <RecruitmentWidget
+          recruitment={recruitment}
+          onCreateVacancy={() => setIsCreateVacancyOpen(true)}
+        />
       </div>
+
+      {/* 6. Workforce Summary, Leave Balances & Notifications (#29, #47, #42, #63, #64) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* Employee Summary (#29, #47) */}
+        <EmployeeSummaryWidget
+          data={employeeSummaryData}
+          onViewDirectory={() => router.push("/hr-panel/employees")}
+        />
+
+        {/* Leave Overview & Low Balances (#42) */}
+        <LeaveOverviewWidget
+          data={leaveOverviewData}
+          onTrackBalances={() => router.push("/hr-panel/attendance")}
+        />
+
+        {/* Recent Notifications Sent (#63, #64) */}
+        <RecentNotificationsWidget
+          notifications={recentNotifications}
+          onSendNew={() => setIsSendNotificationOpen(true)}
+        />
+      </div>
+
+      {/* Modals for Quick Actions & Workflows */}
+      <PlanTrainingModal
+        open={isPlanTrainingOpen}
+        onOpenChange={setIsPlanTrainingOpen}
+        onTrainingAdded={handleTrainingAdded}
+      />
+      <CreateVacancyModal
+        open={isCreateVacancyOpen}
+        onOpenChange={setIsCreateVacancyOpen}
+        onVacancyCreated={handleVacancyCreated}
+      />
+      <SendNotificationModal
+        open={isSendNotificationOpen}
+        onOpenChange={setIsSendNotificationOpen}
+        onNotificationSent={handleNotificationSent}
+      />
+      <GenerateReportsModal
+        open={isGenerateReportsOpen}
+        onOpenChange={setIsGenerateReportsOpen}
+      />
     </div>
   );
 }

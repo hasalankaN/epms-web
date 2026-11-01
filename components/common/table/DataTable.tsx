@@ -251,7 +251,9 @@ export function DataTable<T>({
             {data.length > 0 ? (
               data.map((item, index) => {
                 const rowKey = keyExtractor(item) || `row-${index}`;
-                return (
+
+                
+return (
                   <motion.tr
                     key={rowKey}
                     variants={itemVariants}

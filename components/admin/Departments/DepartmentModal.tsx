@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+
 import { Building2, Phone, MapPin, Loader2 } from "lucide-react";
+
 import {
   Dialog,
   DialogContent,
@@ -47,22 +49,28 @@ export function DepartmentModal({
       setLocation("");
       setDeptPhone("");
     }
+
     setErrors({});
   }, [initialData, isOpen]);
 
   const validate = () => {
     const errs: Record<string, string> = {};
+
     if (!departmentName.trim()) {
       errs.departmentName = "Department name is required";
     }
+
     if (!location.trim()) {
       errs.location = "Location is required";
     }
+
     if (!deptPhone.trim()) {
       errs.deptPhone = "Department phone is required";
     }
+
     setErrors(errs);
-    return Object.keys(errs).length === 0;
+    
+return Object.keys(errs).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
