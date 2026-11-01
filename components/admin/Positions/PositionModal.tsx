@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+
 import { Briefcase, Calendar, AlignLeft, Loader2 } from "lucide-react";
+
 import {
   Dialog,
   DialogContent,
@@ -38,6 +40,7 @@ export function PositionModal({
     if (isOpen) {
       setPositionName("");
       setDescription("");
+
       // Default to today
       setEffectiveDate(new Date().toISOString().split("T")[0]);
       setErrors({});
@@ -46,13 +49,16 @@ export function PositionModal({
 
   const validate = () => {
     const errs: Record<string, string> = {};
+
     if (!positionName.trim()) {
       errs.positionName = "Position / Role name is required";
     } else if (positionName.length > 100) {
       errs.positionName = "Position name must be less than 100 characters";
     }
+
     setErrors(errs);
-    return Object.keys(errs).length === 0;
+    
+return Object.keys(errs).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

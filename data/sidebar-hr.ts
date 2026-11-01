@@ -1,16 +1,29 @@
 import type { SidebarNavItem } from "./sidebar";
 
 export const hrSidebarData: SidebarNavItem[] = [
+  // OVERVIEW
   {
     id: 1,
+    type: "header",
+    title: "OVERVIEW",
+  },
+  {
+    id: 2,
     type: "link",
     title: "Dashboard",
     url: "/hr-panel/dashboard",
     icon: "dashboard-icon",
     value: "dashboard",
   },
+
+  // HR MANAGEMENT
   {
-    id: 2,
+    id: 3,
+    type: "header",
+    title: "HR MANAGEMENT",
+  },
+  {
+    id: 4,
     type: "link",
     title: "Employee Directory",
     url: "/hr-panel/employees",
@@ -18,44 +31,102 @@ export const hrSidebarData: SidebarNavItem[] = [
     value: "employees",
   },
   {
-    id: 3,
-    type: "link",
-    title: "Recruitment & Onboarding",
-    url: "/hr-panel/recruitment",
-    icon: "student",
-    value: "recruitment",
-  },
-  {
-    id: 4,
-    type: "link",
-    title: "Leave & Attendance",
-    url: "/hr-panel/attendance",
-    icon: "calendar",
-    value: "attendance",
-  },
-  {
     id: 5,
     type: "link",
-    title: "Payroll & Compensation",
-    url: "/hr-panel/payroll",
-    icon: "invoice",
-    value: "payroll",
+    title: "Profile Requests",
+    url: "/hr-panel/requests",
+    icon: "profile",
+    value: "requests",
   },
   {
     id: 6,
     type: "link",
-    title: "Performance Reviews",
-    url: "/hr-panel/reviews",
-    icon: "chart-bar",
-    value: "reviews",
+    title: "Attendance",
+    url: "/hr-panel/attendance",
+    icon: "clock",
+    value: "attendance",
   },
   {
     id: 7,
+    type: "link",
+    title: "Leave Management",
+    url: "/hr-panel/leave",
+    icon: "calendar",
+    value: "leave",
+  },
+  {
+    id: 8,
+    type: "link",
+    title: "Salary & Payroll",
+    url: "/hr-panel/payroll",
+    icon: "payroll",
+    value: "payroll",
+  },
+  {
+    id: 9,
+    type: "link",
+    title: "Recruitment",
+    url: "/hr-panel/recruitment",
+    icon: "user-add",
+    value: "recruitment",
+  },
+  {
+    id: 10,
+    type: "link",
+    title: "Training",
+    url: "/hr-panel/training",
+    icon: "training",
+    value: "training",
+  },
+  {
+    id: 11,
+    type: "link",
+    title: "Performance",
+    url: "/hr-panel/performance",
+    icon: "star",
+    value: "performance",
+  },
+  {
+    id: 12,
+    type: "link",
+    title: "Production",
+    url: "/hr-panel/production",
+    icon: "production",
+    value: "production",
+  },
+  {
+    id: 13,
+    type: "link",
+    title: "Organization",
+    url: "/hr-panel/organization",
+    icon: "building2",
+    value: "organization",
+  },
+  {
+    id: 14,
+    type: "link",
+    title: "Reports",
+    url: "/hr-panel/reports",
+    icon: "reports",
+    value: "reports",
+  },
+  {
+    id: 15,
+    type: "link",
+    title: "Account Requests",
+    url: "/hr-panel/account-requests",
+    icon: "clipboardcheck",
+    value: "account-requests",
+  },
+
+  // INBOX
+  {
+    id: 16,
     type: "header",
     title: "INBOX",
   },
   {
-    id: 8,
+    id: 17,
     type: "link",
     title: "Notifications",
     url: "/hr-panel/notifications",
@@ -64,4 +135,3 @@ export const hrSidebarData: SidebarNavItem[] = [
     count: 2,
   },
 ];
-

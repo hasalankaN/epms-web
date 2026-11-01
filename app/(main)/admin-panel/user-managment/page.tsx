@@ -1,4 +1,5 @@
 import React from "react";
+
 import { UserManagementTable } from "@/components/admin/UserManagment/UserManagementTable";
 
 export default function UserManagementPage() {

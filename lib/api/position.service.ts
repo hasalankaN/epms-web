@@ -12,6 +12,7 @@ export const positionService = {
     query: PositionListQuery = { page: 1, pageSize: 10 }
   ): Promise<PositionListResponse> => {
     const params = new URLSearchParams();
+
     if (query.page) params.append("page", String(query.page));
     if (query.pageSize) params.append("pageSize", String(query.pageSize));
     if (query.search?.trim()) params.append("search", query.search.trim());
@@ -69,8 +70,11 @@ export const positionService = {
       API_ENDPOINTS.positions.CREATE,
       payload
     );
+
     const resData = response.data?.data || response.data;
-    return {
+
+    
+return {
       id: resData?.position_id || resData?.id || resData?._id || `pos-${Date.now()}`,
       positionName: resData?.position_name || resData?.positionName || payload.positionName,
       description: resData?.description || payload.description,

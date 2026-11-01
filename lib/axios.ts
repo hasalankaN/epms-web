@@ -48,6 +48,7 @@ api.interceptors.request.use(async (config) => {
 
   try {
     const session = await getSession();
+
     if (session?.tokens?.accessToken) {
       token = session.tokens.accessToken;
     }
@@ -58,8 +59,10 @@ api.interceptors.request.use(async (config) => {
   if (!token && typeof window !== "undefined") {
     try {
       const stored = sessionStorage.getItem("epms-auth-store");
+
       if (stored) {
         const parsed = JSON.parse(stored);
+
         token =
           parsed?.state?.authData?.id_token ||
           parsed?.state?.authData?.tokens?.accessToken ||

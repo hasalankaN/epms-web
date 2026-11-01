@@ -1,6 +1,8 @@
 import React from "react";
-import { Badge } from "@/components/ui/badge";
+
 import { Shield, Briefcase, Award } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
 
 interface PositionBadgeProps {
   title: string;

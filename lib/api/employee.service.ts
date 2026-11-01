@@ -36,7 +36,9 @@ export const employeeService = {
       API_ENDPOINTS.employee.REGISTER,
       payload
     );
-    return response.data;
+
+    
+return response.data;
   },
 
   /**
@@ -49,6 +51,7 @@ export const employeeService = {
     query: SupervisorListQuery = { page: 1, pageSize: 100 }
   ): Promise<SupervisorListResponse> => {
     const params = new URLSearchParams();
+
     if (query.page) params.append("page", String(query.page));
     if (query.pageSize) params.append("pageSize", String(query.pageSize));
     if (query.search?.trim()) params.append("search", query.search.trim());
@@ -75,9 +78,12 @@ export const employeeService = {
       const firstName = item.first_name || item.firstName || "";
       const lastName = item.last_name || item.lastName || "";
       const fullName = item.full_name || item.name || `${firstName} ${lastName}`.trim() || "Unknown";
+
       const positionName =
         item.position_name || item.positionName || item.position?.position_name || item.position?.positionName || "";
-      return {
+
+      
+return {
         value:
           item.employee_id ||
           item.id ||
@@ -92,6 +98,7 @@ export const employeeService = {
 
     const pageSize = data?.meta?.pageSize ?? query.pageSize ?? 100;
     const page = data?.meta?.page ?? query.page ?? 1;
+
     const totalPages =
       data?.meta?.totalPages ?? Math.max(1, Math.ceil(total / pageSize));
 

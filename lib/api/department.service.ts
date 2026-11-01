@@ -13,6 +13,7 @@ export const departmentService = {
     query: DepartmentListQuery = { page: 1, pageSize: 10 }
   ): Promise<DepartmentListResponse> => {
     const params = new URLSearchParams();
+
     if (query.page) params.append("page", String(query.page));
     if (query.pageSize) params.append("pageSize", String(query.pageSize));
     if (query.search?.trim()) params.append("search", query.search.trim());
@@ -69,8 +70,11 @@ export const departmentService = {
       API_ENDPOINTS.departments.CREATE,
       payload
     );
+
     const resData = response.data?.data || response.data;
-    return {
+
+    
+return {
       id: resData?.department_id || resData?.id || resData?._id || `dept-${Date.now()}`,
       departmentName: resData?.department_name || resData?.departmentName || payload.departmentName,
       location: resData?.location || payload.location,
@@ -91,8 +95,11 @@ export const departmentService = {
         id,
       }
     );
+
     const resData = response.data?.data || response.data;
-    return {
+
+    
+return {
       id,
       departmentName: resData?.department_name || resData?.departmentName || payload.departmentName || "",
       location: resData?.location || payload.location || "",

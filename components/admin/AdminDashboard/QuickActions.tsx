@@ -1,4 +1,5 @@
 import { ArrowUpRight } from "lucide-react";
+
 import { adminQuickActions } from "../../../data/adminDashboardData";
 
 export function QuickActions() {

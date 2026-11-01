@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+
 import { positionService } from "@/lib/api/position.service";
 import { queryKeys } from "@/lib/constants/queryKeys";
 import type {
@@ -31,6 +32,7 @@ export const useCreatePositionMutation = () => {
         error?.response?.data?.message ||
         error?.message ||
         "Failed to create position.";
+
       toast.error(msg);
     },
   });

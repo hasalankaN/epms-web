@@ -1,7 +1,11 @@
 "use client";
 
 import React from "react";
+
+import Link from "next/link";
+
 import { Search, SlidersHorizontal } from "lucide-react";
+
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -12,8 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ROLE_OPTIONS } from "@/data/userManagementData";
-import { UserRole } from "@/types/roles";
-import Link from "next/link";
+import type { UserRole } from "@/types/roles";
 
 interface UserTableToolbarProps {
   search: string;
