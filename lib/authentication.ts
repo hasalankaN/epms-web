@@ -4,8 +4,11 @@ import { cookies } from "next/headers";
 
 import { SignJWT, jwtVerify } from "jose";
 import axios from "axios";
+import https from "https";
 
 import api from "./axios";
+
+const authHttpsAgent = new https.Agent({ rejectUnauthorized: false });
 import type { CommonResponseDataType } from "@/types/common";
 import type { LoginRequest, LoginResponseData } from "@/types/dto/auth.dto";
 import type { UserRole } from "@/types/roles";
@@ -66,16 +69,29 @@ export async function login(data: LoginRequest): Promise<CommonResponseDataType<
       timeZone: "Asia/Colombo",
     };
 
+    const baseURL =
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      process.env.BASE_URL ||
+      "https://hasavps.ooguy.com";
+
     let response;
     try {
-      response = await api.post("/auth/login", payload);
+      response = await axios.post(`${baseURL}/auth/login`, payload, {
+        headers: { "Content-Type": "application/json" },
+        httpsAgent: authHttpsAgent,
+        timeout: 8000,
+      });
     } catch (err: any) {
       if (err?.response?.status === 401 || err?.response?.status === 400) {
         try {
-          response = await api.post("/admin/login", {
+          response = await axios.post(`${baseURL}/admin/login`, {
             email: payload.email,
             password: payload.password,
             rememberMe: payload.rememberMe,
+          }, {
+            headers: { "Content-Type": "application/json" },
+            httpsAgent: authHttpsAgent,
+            timeout: 8000,
           });
         } catch {
           throw err;
