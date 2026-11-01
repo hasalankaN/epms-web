@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { HRDashboardHeader } from "./dashboard/HRDashboardHeader";
 import { HRQuickActions } from "./dashboard/HRQuickActions";
@@ -24,46 +23,62 @@ import { CreateVacancyModal } from "./dashboard/modals/CreateVacancyModal";
 import { SendNotificationModal } from "./dashboard/modals/SendNotificationModal";
 import { GenerateReportsModal } from "./dashboard/modals/GenerateReportsModal";
 import { useHrTrainingsQuery } from "@/hooks/api/training/useTraining";
+import { useHrVacanciesQuery } from "@/hooks/api/jobs/useJobs";
+import { employeeService, type HrEmployeeRecord } from "@/lib/api/employee.service";
 
-import {
-  initialProfileUpdateRequests,
-  initialEscalatedLeaveRequests,
-  initialTrainingBudgets,
-  todayAttendanceData,
-  initialAttendanceIssues,
-  initialRecruitmentOverview,
-  employeeSummaryData,
-  leaveOverviewData,
-  initialRecentNotifications,
-} from "@/data/hrDashboardData";
-
-import type { OpenVacancy, RecentNotificationItem } from "@/types/hrDashboard";
+import type {
+  OpenVacancy,
+  RecentNotificationItem,
+  ProfileUpdateRequest,
+  EscalatedLeaveRequest,
+  TrainingBudgetRequest,
+  AttendanceIssueEmployee,
+  RecruitmentOverview,
+  EmployeeSummaryData,
+  TodayAttendanceSummary,
+  LeaveOverviewData,
+} from "@/types/hrDashboard";
 
 export function HRDashboard() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  // Interactive dashboard states
-  const [profileRequests, setProfileRequests] = useState(
-    initialProfileUpdateRequests
-  );
+  // Interactive dashboard states (initialized clean, no fake seed data)
+  const [profileRequests, setProfileRequests] = useState<ProfileUpdateRequest[]>([]);
+  const [escalatedLeaves, setEscalatedLeaves] = useState<EscalatedLeaveRequest[]>([]);
+  const [trainingBudgets, setTrainingBudgets] = useState<TrainingBudgetRequest[]>([]);
+  const [attendanceIssues, setAttendanceIssues] = useState<AttendanceIssueEmployee[]>([]);
+  const [recentNotifications, setRecentNotifications] = useState<RecentNotificationItem[]>([]);
+  const [employeeRecords, setEmployeeRecords] = useState<HrEmployeeRecord[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const [escalatedLeaves, setEscalatedLeaves] = useState(
-    initialEscalatedLeaveRequests
-  );
+  // Quick Action Modal states
+  const [isPlanTrainingOpen, setIsPlanTrainingOpen] = useState(false);
+  const [isCreateVacancyOpen, setIsCreateVacancyOpen] = useState(false);
+  const [isSendNotificationOpen, setIsSendNotificationOpen] = useState(false);
+  const [isGenerateReportsOpen, setIsGenerateReportsOpen] = useState(false);
 
-  const [trainingBudgets, setTrainingBudgets] = useState(
-    initialTrainingBudgets
-  );
-
-  const [attendanceIssues, setAttendanceIssues] = useState(
-    initialAttendanceIssues
-  );
-
-  const { data: trainingData } = useHrTrainingsQuery({
+  // Fetch HR Trainings from Backend
+  const { data: trainingData, refetch: refetchTrainings } = useHrTrainingsQuery({
     page: 1,
     pageSize: 5,
     status: "UPCOMING",
   });
+
+  // Fetch HR Vacancies from Backend
+  const { data: hrVacancies = [], refetch: refetchVacancies } = useHrVacanciesQuery();
+
+  // Load real employees from directory
+  const loadEmployees = () => {
+    employeeService
+      .getHrEmployees()
+      .then((data) => setEmployeeRecords(data || []))
+      .catch(() => setEmployeeRecords([]));
+  };
+
+  useEffect(() => {
+    loadEmployees();
+  }, []);
 
   const upcomingTrainings = (trainingData?.items || []).map((training) => ({
     id: training.id,
@@ -71,7 +86,7 @@ export function HRDashboard() {
     department: (training as any).department || "Operations",
     date: training.date,
     time: `${training.startTime} - ${training.endTime}`,
-    trainer: training.instructors[0] || "Trainer",
+    trainer: training.instructors[0] || "Senior Trainer",
     venueOrPlatform: training.venue,
     registeredCount: training.participantsCount || 0,
     maxCapacity: (training as any).maxCapacity || 30,
@@ -83,120 +98,192 @@ export function HRDashboard() {
           : ("SCHEDULED" as const),
   }));
 
-  const [recruitment, setRecruitment] = useState(
-    initialRecruitmentOverview
-  );
+  const recruitmentOverview: RecruitmentOverview = useMemo(() => {
+    const mappedVacancies: OpenVacancy[] = (hrVacancies || []).map((v) => ({
+      id: v.id,
+      title: v.title,
+      department: v.department || "General",
+      type: v.employmentType || "Full-Time",
+      openings: 1,
+      applicationsCount: v.applicantCount || 0,
+      upcomingInterviews: 0,
+      deadline: v.deadline || v.closingDate || "",
+      status: v.isOpen ? "OPEN" : "CLOSING_SOON",
+    }));
 
-  const [recentNotifications, setRecentNotifications] = useState(
-    initialRecentNotifications
-  );
+    return {
+      totalOpenVacancies: (hrVacancies || []).filter((v) => v.isOpen).length,
+      newApplicationsThisWeek: (hrVacancies || []).reduce(
+        (acc, curr) => acc + (curr.applicantCount || 0),
+        0
+      ),
+      interviewsScheduledThisWeek: 0,
+      vacancies: mappedVacancies,
+    };
+  }, [hrVacancies]);
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const employeeSummary: EmployeeSummaryData = useMemo(() => {
+    if (employeeRecords.length > 0) {
+      const deptMap = new Map<string, number>();
+      employeeRecords.forEach((emp) => {
+        const d = emp.department || "General";
+        deptMap.set(d, (deptMap.get(d) || 0) + 1);
+      });
 
-  // Quick Action Modal states
-  const [isPlanTrainingOpen, setIsPlanTrainingOpen] = useState(false);
-  const [isCreateVacancyOpen, setIsCreateVacancyOpen] = useState(false);
-  const [isSendNotificationOpen, setIsSendNotificationOpen] = useState(false);
-  const [isGenerateReportsOpen, setIsGenerateReportsOpen] = useState(false);
+      const depts = Array.from(deptMap.entries()).map(([department, count]) => ({
+        department,
+        count,
+        color: "#E60076",
+      }));
 
-  // Profile update request actions (#30)
+      return {
+        totalEmployees: employeeRecords.length,
+        activeEmployees: employeeRecords.filter((e) => e.status === "ACTIVE").length,
+        onProbation: employeeRecords.filter(
+          (e) => e.role?.toLowerCase()?.includes("intern") || e.status === "ON_LEAVE"
+        ).length,
+        contractEmployees: 0,
+        departments: depts,
+        newJoinersThisMonth: employeeRecords.slice(0, 4).map((e) => ({
+          id: e.id,
+          name: e.name,
+          role: e.position,
+          department: e.department,
+          avatarInitials: e.name
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .slice(0, 2)
+            .toUpperCase(),
+          joinDate: e.joinDate || "Recent",
+        })),
+      };
+    }
+
+    return {
+      totalEmployees: 0,
+      activeEmployees: 0,
+      onProbation: 0,
+      contractEmployees: 0,
+      departments: [],
+      newJoinersThisMonth: [],
+    };
+  }, [employeeRecords]);
+
+  const todayAttendance: TodayAttendanceSummary = useMemo(() => {
+    const total = employeeRecords.length;
+    const active = employeeRecords.filter((e) => e.status === "ACTIVE").length;
+    const onLeave = employeeRecords.filter((e) => e.status === "ON_LEAVE").length;
+
+    return {
+      date: new Date().toISOString().split("T")[0],
+      totalEmployees: total,
+      present: active,
+      late: 0,
+      absent: Math.max(0, total - active - onLeave),
+      earlyDeparture: 0,
+      onTimeRate: total > 0 ? Math.round((active / total) * 100) : 100,
+    };
+  }, [employeeRecords]);
+
+  const leaveOverview: LeaveOverviewData = useMemo(() => {
+    return {
+      onLeaveToday: employeeRecords
+        .filter((e) => e.status === "ON_LEAVE")
+        .map((e) => ({
+          id: e.id,
+          employeeName: e.name,
+          department: e.department,
+          leaveType: "Approved Leave",
+          returnDate: "Next Shift",
+        })),
+      lowBalanceEmployees: [],
+    };
+  }, [employeeRecords]);
+
+  // Actions
   const handleApproveProfile = (id: string) => {
     setProfileRequests((prev) =>
-      prev.map((req) =>
-        req.id === id ? { ...req, status: "APPROVED" } : req
-      )
+      prev.map((req) => (req.id === id ? { ...req, status: "APPROVED" } : req))
     );
+    toast.success("Profile update approved.");
   };
 
   const handleRejectProfile = (id: string) => {
     setProfileRequests((prev) =>
-      prev.map((req) =>
-        req.id === id ? { ...req, status: "REJECTED" } : req
-      )
+      prev.map((req) => (req.id === id ? { ...req, status: "REJECTED" } : req))
     );
+    toast.info("Profile update rejected.");
   };
 
-  // Escalated leave request actions (#41, #43)
   const handleApproveLeave = (id: string) => {
     setEscalatedLeaves((prev) =>
-      prev.map((req) =>
-        req.id === id ? { ...req, status: "APPROVED" } : req
-      )
+      prev.map((req) => (req.id === id ? { ...req, status: "APPROVED" } : req))
     );
+    toast.success("Escalated leave approved.");
   };
 
   const handleRejectLeave = (id: string) => {
     setEscalatedLeaves((prev) =>
-      prev.map((req) =>
-        req.id === id ? { ...req, status: "REJECTED" } : req
-      )
+      prev.map((req) => (req.id === id ? { ...req, status: "REJECTED" } : req))
     );
+    toast.info("Escalated leave rejected.");
   };
 
-  // Training budget clearance actions (#38)
   const handleApproveBudget = (id: string) => {
     setTrainingBudgets((prev) =>
       prev.map((b) => (b.id === id ? { ...b, status: "APPROVED" } : b))
     );
+    toast.success("Training budget cleared.");
   };
 
   const handleRejectBudget = (id: string) => {
     setTrainingBudgets((prev) =>
       prev.map((b) => (b.id === id ? { ...b, status: "REJECTED" } : b))
     );
+    toast.info("Training budget rejected.");
   };
 
-  // Attendance issue notification dispatched (#34)
   const handleNoticeSent = (employeeId: string) => {
     setAttendanceIssues((prev) =>
       prev.map((item) =>
         item.employeeId === employeeId
-          ? { ...item, note: `Compliance notice dispatched.` }
+          ? { ...item, note: "Compliance notice dispatched." }
           : item
       )
     );
     toast.info(`Compliance log updated for ${employeeId}.`);
   };
 
-  const handleVacancyCreated = (vac: OpenVacancy) => {
-    setRecruitment((prev) => ({
-      ...prev,
-      totalOpenVacancies: prev.totalOpenVacancies + 1,
-      vacancies: [vac, ...prev.vacancies],
-    }));
+  const handleVacancyCreated = () => {
+    refetchVacancies();
   };
 
   const handleNotificationSent = (item: RecentNotificationItem) => {
     setRecentNotifications((prev) => [item, ...prev]);
   };
 
-  // Sync / Refresh handler
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    setTimeout(() => {
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries(),
+        refetchTrainings(),
+        refetchVacancies(),
+      ]);
+      loadEmployees();
+      toast.success("HR Dashboard refreshed with real-time data.");
+    } finally {
       setIsRefreshing(false);
-      toast.success("HR Dashboard metrics refreshed with real-time data.");
-    }, 600);
+    }
   };
 
-  // Calculate pending action items count
-  const pendingProfileCount = profileRequests.filter(
-    (r) => r.status === "PENDING"
-  ).length;
-
-  const pendingLeaveCount = escalatedLeaves.filter(
-    (r) => r.status === "PENDING"
-  ).length;
-
-  const pendingBudgetCount = trainingBudgets.filter(
-    (b) => b.status === "PENDING"
-  ).length;
+  const pendingProfileCount = profileRequests.filter((r) => r.status === "PENDING").length;
+  const pendingLeaveCount = escalatedLeaves.filter((r) => r.status === "PENDING").length;
+  const pendingBudgetCount = trainingBudgets.filter((b) => b.status === "PENDING").length;
 
   const totalActionItems =
-    pendingProfileCount +
-    pendingLeaveCount +
-    pendingBudgetCount +
-    attendanceIssues.length;
+    pendingProfileCount + pendingLeaveCount + pendingBudgetCount + attendanceIssues.length;
 
   return (
     <div className="p-4 md:p-8 space-y-7 max-w-[1500px] mx-auto">
@@ -207,7 +294,7 @@ export function HRDashboard() {
         isRefreshing={isRefreshing}
       />
 
-      {/* 2. Quick Action Buttons (#31, #35, #60, #63, Reports) */}
+      {/* 2. Quick Action Buttons */}
       <HRQuickActions
         onPlanTrainingClick={() => setIsPlanTrainingOpen(true)}
         onCreateVacancyClick={() => setIsCreateVacancyOpen(true)}
@@ -217,21 +304,18 @@ export function HRDashboard() {
 
       {/* 3. Primary Approvals & Requests (Priority HR Action Items) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Pending Profile Update Requests (#30) */}
         <PendingProfileUpdatesWidget
           requests={profileRequests}
           onApprove={handleApproveProfile}
           onReject={handleRejectProfile}
         />
 
-        {/* Escalated / Special Leave Requests (#41, #43) */}
         <EscalatedLeaveRequestsWidget
           requests={escalatedLeaves}
           onApprove={handleApproveLeave}
           onReject={handleRejectLeave}
         />
 
-        {/* Pending Training Budgets (#38) */}
         <PendingTrainingBudgetsWidget
           budgets={trainingBudgets}
           onApprove={handleApproveBudget}
@@ -239,51 +323,44 @@ export function HRDashboard() {
         />
       </div>
 
-      {/* 4. Attendance Operations & Compliance (#33, #34) */}
+      {/* 4. Attendance Operations & Compliance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Today's Attendance (#33) */}
         <TodayAttendanceWidget
-          attendance={todayAttendanceData}
+          attendance={todayAttendance}
           onViewDetails={() => router.push("/hr-panel/attendance")}
         />
 
-        {/* Attendance Issues (#34) */}
         <AttendanceIssuesWidget
           issues={attendanceIssues}
           onNoticeSent={handleNoticeSent}
         />
       </div>
 
-      {/* 5. Talent, Development & Vacancies (#35, #36, #60-#62) */}
+      {/* 5. Talent, Development & Vacancies */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Upcoming Trainings (#35, #36) */}
         <UpcomingTrainingsWidget
           trainings={upcomingTrainings}
           onPlanNew={() => setIsPlanTrainingOpen(true)}
         />
 
-        {/* Open Vacancies & Applications (#60–#62) */}
         <RecruitmentWidget
-          recruitment={recruitment}
+          recruitment={recruitmentOverview}
           onCreateVacancy={() => setIsCreateVacancyOpen(true)}
         />
       </div>
 
-      {/* 6. Workforce Summary, Leave Balances & Notifications (#29, #47, #42, #63, #64) */}
+      {/* 6. Workforce Summary, Leave Balances & Notifications */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {/* Employee Summary (#29, #47) */}
         <EmployeeSummaryWidget
-          data={employeeSummaryData}
+          data={employeeSummary}
           onViewDirectory={() => router.push("/hr-panel/employees")}
         />
 
-        {/* Leave Overview & Low Balances (#42) */}
         <LeaveOverviewWidget
-          data={leaveOverviewData}
+          data={leaveOverview}
           onTrackBalances={() => router.push("/hr-panel/attendance")}
         />
 
-        {/* Recent Notifications Sent (#63, #64) */}
         <RecentNotificationsWidget
           notifications={recentNotifications}
           onSendNew={() => setIsSendNotificationOpen(true)}

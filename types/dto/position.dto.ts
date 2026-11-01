@@ -1,6 +1,8 @@
 export interface PositionItem {
   id: string;
   position_id?: string;
+  positionCode?: string;
+  position_code?: string;
   positionName: string;
   position_name?: string;
   description?: string;

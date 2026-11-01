@@ -30,9 +30,6 @@ export function UpcomingTrainingsWidget({
                 <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
                   Upcoming Training Sessions
                 </h3>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 font-semibold">
-                  #35, #36
-                </span>
               </div>
               <p className="text-[11px] text-slate-500">
                 Scheduled skill enrichment programs & participant progress
@@ -116,7 +113,7 @@ return (
       </div>
 
       <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400 flex items-center justify-between mt-2">
-        <span>Plan Training, Track Progress (#35, #36)</span>
+        <span>Corporate Training Schedule</span>
         <span className="text-indigo-600 hover:underline cursor-pointer">
           View Training Matrix
         </span>

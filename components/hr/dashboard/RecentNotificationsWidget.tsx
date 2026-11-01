@@ -29,9 +29,6 @@ export function RecentNotificationsWidget({
                 <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
                   Recent Dispatched Notifications
                 </h3>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 font-semibold">
-                  #63, #64
-                </span>
               </div>
               <p className="text-[11px] text-slate-500">
                 Audited HR announcements, circulars & delivery receipts
@@ -96,8 +93,8 @@ export function RecentNotificationsWidget({
       </div>
 
       <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400 flex items-center justify-between mt-2">
-        <span>Send/Manage Notifications (#63, #64)</span>
-        <span className="font-mono text-[10px] text-slate-500">Live Socket Delivery</span>
+        <span>Corporate Bulletins & Memos</span>
+        <span className="font-mono text-[10px] text-slate-500">Live Delivery</span>
       </div>
     </div>
   );

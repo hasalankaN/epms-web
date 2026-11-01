@@ -29,9 +29,6 @@ export function RecruitmentWidget({
                 <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
                   Open Vacancies & Applications
                 </h3>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300 font-semibold">
-                  #60–#62
-                </span>
               </div>
               <p className="text-[11px] text-slate-500">
                 Talent pipeline, candidate screening & interview schedules
@@ -126,7 +123,7 @@ export function RecruitmentWidget({
       </div>
 
       <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400 flex items-center justify-between mt-2">
-        <span>Vacancy, Candidates, Interviews (#60–#62)</span>
+        <span>Talent Acquisition & Sourcing</span>
         <span className="text-teal-600 hover:underline cursor-pointer">
           Applicant Tracking System (ATS)
         </span>

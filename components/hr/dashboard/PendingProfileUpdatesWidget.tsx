@@ -61,9 +61,6 @@ export function PendingProfileUpdatesWidget({
                   <Badge variant="Pending" className="text-[10px] h-5 px-1.5 font-bold">
                     {pendingList.length} Pending
                   </Badge>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 font-semibold">
-                    #30
-                  </span>
                 </div>
                 <p className="text-[11px] text-slate-500">
                   Employee self-service record change submissions awaiting HR approval

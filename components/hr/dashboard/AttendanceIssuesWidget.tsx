@@ -45,9 +45,6 @@ export function AttendanceIssuesWidget({
                   <Badge variant="destructive" className="text-[10px] h-5 px-1.5 font-bold">
                     {issues.length} Flagged
                   </Badge>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 font-semibold">
-                    #34
-                  </span>
                 </div>
                 <p className="text-[11px] text-slate-500">
                   Employees exceeding monthly lateness or unnotified absence limits
@@ -122,7 +119,7 @@ export function AttendanceIssuesWidget({
         <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400 flex items-center justify-between mt-2">
           <span>Threshold: &gt;3 Lates or &gt;2 Absences</span>
           <span className="text-blue-600 dark:text-blue-400 cursor-pointer hover:underline">
-            Compliance Policy (#34)
+            Compliance Policy
           </span>
         </div>
       </div>
